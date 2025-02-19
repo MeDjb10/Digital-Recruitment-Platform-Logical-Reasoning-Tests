@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - test-service
+      - ai-service
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+
+  test-service:
+    build:
+      context: ./test-service
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3000"
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    ports:
+      - "3003:5000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:4200"
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local
