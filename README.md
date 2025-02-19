@@ -1,0 +1,2 @@
+# Digital Recruitment Platform Logical Reasoning Tests
+ This repository hosts the source code for the final year project: Digital Recruitment Platform (Tests de Raisonnement Logique). The project modernizes the recruitment process by transitioning from traditional, manual testing methods (paper/Excel-based) to a fully digital, web-based solution. It leverages AI to automate candidate evaluation and report generation, ensuring a smarter, faster, and fairer hiring process.
