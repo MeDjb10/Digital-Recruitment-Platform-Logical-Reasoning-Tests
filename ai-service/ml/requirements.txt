@@ -1,0 +1,5 @@
+numpy
+pandas
+scikit-learn
+transformers
+jupyter  # Optional: for experimenting in notebooks
