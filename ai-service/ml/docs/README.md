@@ -155,5 +155,4 @@ plt.savefig("../docs/cluster_visualization.png")  # Save plot
 - Mohamed Taleb Mouelhi  
 
 📅 Last Updated: 23/02/2025  
-```
 
