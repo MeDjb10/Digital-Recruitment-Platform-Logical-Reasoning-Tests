@@ -1,68 +1,65 @@
-# Detailed Backlog – Digital Recruitment Platform (Logical Reasoning Tests)
-
-This backlog is organized by features and contains detailed user stories, business values, priorities, complexities, and MoSCoW classifications.
-
----
-
-## Feature 1: Test Management
-
-| **ID** | **User Story** | **Business Value** | **Priority** | **Complexity** | **MoSCoW** |
-|--------|----------------|--------------------|--------------|----------------|------------|
-| **RL-001** | As a Super Admin, I want to create, modify, and delete logical reasoning questions (logic of propositions) so that test content can be managed dynamically. | High | 1 | 8 | MUST |
-| **RL-002** | As an Admin, I want to add difficulty levels (Easy, Medium, Hard) to questions so that tests are better differentiated. | High | 2 | 5 | MUST |
-| **RL-003** | As a Candidate, I want to take a timed logical reasoning test so that my performance is measured objectively. | Critical | 1 | 7 | MUST |
-| **RL-004** | As a Candidate, I want my responses to be automatically saved in case of disconnection to avoid losing progress. | Medium | 2 | 4 | SHOULD |
-| **RL-005** | As a Candidate, I want clear instructions and an intuitive test interface so that I can easily understand how to proceed. | Medium | 2 | 3 | SHOULD |
+# Recruitment Platform - Product Backlog  
+*MoSCoW Prioritized User Stories with Business Value and Complexity*  
 
 ---
 
-## Feature 2: Score Calculation
+## 📋 **Product Backlog**  
 
-| **ID** | **User Story** | **Business Value** | **Priority** | **Complexity** | **MoSCoW** |
-|--------|----------------|--------------------|--------------|----------------|------------|
-| **RL-006** | As a Candidate, I want the score to be automatically calculated after the test so that I receive immediate feedback. | High | 1 | 6 | MUST |
-| **RL-007** | As a Candidate, I want to view my overall score and a breakdown by category (e.g., numerical logic, sequential logic) to understand my performance. | High | 1 | 5 | MUST |
-| **RL-008** | As an Admin, I want detailed performance analysis of test results so that I can evaluate candidate capabilities effectively. | High | 1 | 8 | MUST |
-
----
-
-## Feature 3: Psychologist Evaluation
-
-| **ID** | **User Story** | **Business Value** | **Priority** | **Complexity** | **MoSCoW** |
-|--------|----------------|--------------------|--------------|----------------|------------|
-| **RL-009** | As a Psychologist, I want to add an evaluation comment after the test so that candidates receive qualitative feedback. | Critical | 1 | 5 | MUST |
-| **RL-010** | As an Admin, I want a report generated that includes the psychologist's comment so that evaluation records are automatically documented. | Medium | 2 | 5 | SHOULD |
-
----
-
-## Feature 4: Report Generation & Performance Analysis
-
-| **ID** | **User Story** | **Business Value** | **Priority** | **Complexity** | **MoSCoW** |
-|--------|----------------|--------------------|--------------|----------------|------------|
-| **RL-011** | As a Candidate, I want a detailed PDF report generated after the test so that I can review my performance comprehensively. | Medium | 2 | 4 | SHOULD |
-| **RL-012** | As a Psychologist, I want to access candidate reports for analysis so that I can monitor overall performance trends. | High | 1 | 5 | MUST |
-| **RL-013** | As an Admin, I want to export reports for further integration with HR systems so that data-driven decisions can be supported. | Medium | 2 | 5 | SHOULD |
+| **Feature**               | **ID** | **User Story**                                                                 | **Business Value** | **Priority** | **Complexity (SP)** | **MoSCoW** |  
+|---------------------------|--------|--------------------------------------------------------------------------------|--------------------|--------------|---------------------|------------|  
+| **User Authentication**    | 1.1    | As a **Candidate**, I want to register with email/password to access tests.    | High               | 1            | 3                   | MUST       |  
+|                           | 1.2    | As a **Candidate**, I want to log in via Google/GitHub for faster access.      | High               | 2            | 5                   | MUST       |  
+|                           | 1.3    | As an **Admin**, I want to reset user passwords to resolve account issues.      | Medium             | 3            | 3                   | MUST       |  
+| **Profile Management**     | 1.4    | As a **Candidate**, I want to edit my profile (name, phone, resume).           | Medium             | 4            | 5                   | SHOULD     |  
+| **Test Creation**          | 2.1    | As an **Admin**, I want to create logical reasoning questions (D-70/D-2000).   | High               | 1            | 8                   | MUST       |  
+|                           | 2.2    | As an **Admin**, I want to tag questions by difficulty (Easy/Medium/Hard).     | High               | 2            | 3                   | MUST       |  
+|                           | 2.3    | As an **Admin**, I want to auto-save question drafts to avoid losing progress. | Medium             | 3            | 3                   | SHOULD     |  
+|                           | 2.4    | As an **Admin**, I want to import questions from CSV/Excel to save time.       | Low                | 4            | 8                   | COULD      |  
+| **Candidate Testing**      | 3.1    | As a **Candidate**, I want to take timed tests to simulate real exams.         | High               | 1            | 5                   | MUST       |  
+|                           | 3.2    | As a **Candidate**, I want to flag questions for review during the test.       | High               | 2            | 3                   | MUST       |  
+|                           | 3.3    | As a **Candidate**, I want to see a progress bar to track test completion.    | Medium             | 3            | 2                   | SHOULD     |  
+| **Scoring & Analytics**    | 4.1    | As a **System**, I want to calculate test scores instantly after submission.  | High               | 1            | 5                   | MUST       |  
+|                           | 4.2    | As a **Psychologist**, I want to filter candidates by score range (e.g., 70-100). | High          | 2            | 5                   | MUST       |  
+|                           | 4.3    | As a **Psychologist**, I want to export candidate reports in PDF for sharing. | Medium             | 3            | 8                   | SHOULD     |  
+| **Security & Anti-Cheat**  | 5.1    | As a **System**, I want to detect tab/window switching during tests.          | High               | 1            | 8                   | MUST       |  
+|                           | 5.2    | As a **System**, I want to block copy-paste actions during tests.             | High               | 2            | 5                   | MUST       |  
+| **AI/ML Integration**      | 6.1    | As a **System**, I want to classify question difficulty using K-means.        | High               | 1            | 13                  | MUST       |  
+|                           | 6.2    | As a **System**, I want to auto-generate test reports using AI.               | Medium             | 2            | 8                   | SHOULD     |  
+| **Deployment & Monitoring**| 7.1    | As a **DevOps**, I want to deploy the platform using Docker.                  | High               | 1            | 13                  | MUST       |  
+|                           | 7.2    | As a **DevOps**, I want to monitor server uptime with Grafana dashboards.      | Medium             | 2            | 8                   | SHOULD     |  
 
 ---
 
-## Feature 5: Anti-Fraud & Surveillance
+## 🚀 **Example Sprint Breakdown**  
+### Sprint 1: Core Authentication & Test Creation  
+- **User Stories**: 1.1 (3 SP) | 1.2 (5 SP) | 2.1 (8 SP) | 2.2 (3 SP)  
+- **Total SP**: 19  
 
-| **ID** | **User Story** | **Business Value** | **Priority** | **Complexity** | **MoSCoW** |
-|--------|----------------|--------------------|--------------|----------------|------------|
-| **RL-014** | As a Super Admin, I want cheating to be automatically detected during tests so that fraudulent behavior is mitigated. | Critical | 1 | 8 | MUST |
-| **RL-015** | As a Candidate, I want to receive a notification if fraud is detected so that I am aware of any irregularities. | Medium | 2 | 4 | SHOULD |
-| **RL-016** | As an Admin, I want to monitor suspicious activity logs to investigate potential fraud incidents further. | High | 1 | 6 | MUST |
+### Sprint 2: Testing & Security  
+- **User Stories**: 3.1 (5 SP) | 3.2 (3 SP) | 5.1 (8 SP) | 5.2 (5 SP)  
+- **Total SP**: 21  
+
+### Sprint 3: AI/ML & Analytics  
+- **User Stories**: 6.1 (13 SP) | 4.1 (5 SP) | 4.2 (5 SP)  
+- **Total SP**: 23  
 
 ---
 
-## Feature 6: Authentication & Profile Management
+## ✅ **Definition of Done (DoD)**  
+1. Code reviewed, tested, and merged into the `main` branch.  
+2. Passes 90%+ unit/integration test coverage.  
+3. Documentation updated in the project Wiki/README.  
+4. No critical bugs open in the sprint backlog.  
 
-| **ID** | **User Story** | **Business Value** | **Priority** | **Complexity** | **MoSCoW** |
-|--------|----------------|--------------------|--------------|----------------|------------|
-| **A-001** | As a user, I want to create an account using multiple signup methods so that I can easily join the platform. | High | 1 | 6 | MUST |
-| **A-002** | As a user, I want to log in securely using JWT-based authentication and MSAL integration so that my credentials are protected. | High | 1 | 6 | MUST |
-| **A-003** | As a user, I want to recover my password in case I forget it so that I can regain access to my account. | Medium | 2 | 4 | SHOULD |
-| **A-004** | As a user, I want to update my personal information for better personalization so that my profile remains current. | Medium | 2 | 3 | SHOULD |
-| **A-005** | As a user, I want to log out securely to ensure my session is properly terminated. | High | 1 | 3 | MUST |
+---
 
+## 🛠️ **Technologies**  
+- **Frontend**: React.js  
+- **Backend**: Node.js + Express  
+- **Database**: MongoDB  
+- **AI/ML**: Python + Scikit-learn  
+- **DevOps**: Docker, Prometheus, Grafana  
 
+---
+
+**Developers**: Mohamed Amine Jabou, Mohamed Taleb Mouelhi  
