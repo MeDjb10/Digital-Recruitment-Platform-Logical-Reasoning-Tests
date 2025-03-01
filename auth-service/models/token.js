@@ -1,4 +1,3 @@
-Reasoning - Tests / auth - service / models / token.js;
 const mongoose = require("mongoose");
 
 const tokenSchema = new mongoose.Schema(
