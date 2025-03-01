@@ -57,5 +57,5 @@
 ## Feature: AI-Powered Assistance
 | ID      | User Story | Business Value | Priority | Complexity | MoSCoW |
 |---------|-----------|---------------|----------|------------|--------|
-| AI-001  | As a **Syteme**, I want to classify candidates based on test results and performance. | High | 1 | 7 | MUST |
-| AI-002  | As a **Syteme**, I want to Create performance reports and generate comments for recruiters.| High | 2 | 6 | SHOULD |
+| AI-001  | As a **Systeme**, I want to classify candidates based on test results and performance. | High | 1 | 7 | MUST |
+| AI-002  | As a **Systeme**, I want to Create performance reports and generate comments for recruiters.| High | 2 | 6 | SHOULD |
