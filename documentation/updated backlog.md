@@ -53,3 +53,9 @@
 | AP-003  | As a **Candidate**, I want to recover my password if I forget it so that I can regain access. | Medium | 2 | 4 | SHOULD |
 | AP-004  | As a **Candidate**, I want to update my personal information so that my profile remains current. | Medium | 2 | 3 | SHOULD |
 | AP-005  | As a **Candidate**, I want to log out securely so that my session is properly closed. | High | 1 | 3 | MUST |
+
+## Feature: AI-Powered Assistance
+| ID      | User Story | Business Value | Priority | Complexity | MoSCoW |
+|---------|-----------|---------------|----------|------------|--------|
+| AI-001  | As a **Syteme**, I want to classify candidates based on test results and performance. | High | 1 | 7 | MUST |
+| AI-002  | As a **Syteme**, I want to Create performance reports and generate comments for recruiters.| High | 2 | 6 | SHOULD |
