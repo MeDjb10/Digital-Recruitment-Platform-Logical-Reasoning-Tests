@@ -2,27 +2,25 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const logger = require("../config/logger");
 
+// Update the protect middleware to handle access tokens specifically
+
 /**
- * Middleware to protect routes by verifying JWT
+ * Middleware to protect routes by verifying JWT access token
  */
 exports.protect = async (req, res, next) => {
   try {
     let token;
-
-    // Get token from headers
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
+    
+    // Get token from Authorization header
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
     }
 
     // Check if token exists
     if (!token) {
       return res.status(401).json({
-        status: "fail",
-        message:
-          "You are not logged in. Please log in to access this resource.",
+        status: 'fail',
+        message: 'You are not logged in. Please log in to access this resource.'
       });
     }
 
@@ -31,23 +29,23 @@ exports.protect = async (req, res, next) => {
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
-      if (err.name === "JsonWebTokenError") {
+      if (err.name === 'JsonWebTokenError') {
         return res.status(401).json({
-          status: "fail",
-          message: "Invalid token. Please log in again.",
+          status: 'fail',
+          message: 'Invalid token. Please log in again.'
         });
       }
-
-      if (err.name === "TokenExpiredError") {
+      
+      if (err.name === 'TokenExpiredError') {
         return res.status(401).json({
-          status: "fail",
-          message: "Your token has expired. Please log in again.",
+          status: 'fail',
+          message: 'Your token has expired. Please use refresh token to get a new access token.'
         });
       }
-
+      
       return res.status(401).json({
-        status: "fail",
-        message: "Authentication failed. Please log in again.",
+        status: 'fail',
+        message: 'Authentication failed. Please log in again.'
       });
     }
 
@@ -55,8 +53,8 @@ exports.protect = async (req, res, next) => {
     const user = await User.findById(decoded.id);
     if (!user) {
       return res.status(401).json({
-        status: "fail",
-        message: "The user belonging to this token no longer exists.",
+        status: 'fail',
+        message: 'The user belonging to this token no longer exists.'
       });
     }
 
@@ -64,10 +62,10 @@ exports.protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    logger.error("Auth middleware error:", error);
+    logger.error('Auth middleware error:', error);
     res.status(500).json({
-      status: "error",
-      message: "Authentication failed",
+      status: 'error',
+      message: 'Authentication failed'
     });
   }
 };

@@ -9,7 +9,9 @@ router.post("/login", authController.login);
 router.post("/forgot-password", authController.forgotPassword);
 router.patch("/reset-password/:token", authController.resetPassword);
 router.get("/verify-email/:token", authController.verifyEmail);
-
+// Add this with the public routes:
+router.post("/refresh-token", authController.refreshToken);
+router.post("/logout", authMiddleware.protect, authController.logout);
 // Protected routes
 router.get("/me", authMiddleware.protect, authController.getCurrentUser);
 

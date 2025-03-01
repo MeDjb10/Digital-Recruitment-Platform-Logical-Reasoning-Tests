@@ -115,6 +115,9 @@ exports.register = async (req, res) => {
   }
 };
 
+// Update the login function to include refresh tokens
+// Replace the current login function with this updated version:
+
 /**
  * Login user
  * @route POST /api/auth/login
@@ -146,8 +149,19 @@ exports.login = async (req, res) => {
     user.lastLogin = Date.now();
     await user.save({ validateBeforeSave: false });
 
-    // Generate token
-    const token = jwtUtils.generateToken(user);
+    // Generate access token with short expiry
+    const accessToken = jwtUtils.generateAccessToken(user);
+    
+    // Generate refresh token
+    const refreshToken = jwtUtils.generateRefreshToken();
+    
+    // Store refresh token in database
+    await Token.create({
+      userId: user._id,
+      token: refreshToken,
+      type: "refresh",
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    });
 
     // Send response
     res.status(200).json({
@@ -162,7 +176,8 @@ exports.login = async (req, res) => {
           role: user.role,
           emailVerified: user.emailVerified,
         },
-        token,
+        accessToken,
+        refreshToken
       },
     });
   } catch (error) {
@@ -429,6 +444,102 @@ exports.getCurrentUser = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "Failed to get user information",
+      error: error.message,
+    });
+  }
+};
+
+// Add these functions at the end of your controller file
+
+/**
+ * Refresh the access token using a refresh token
+ * @route POST /api/auth/refresh-token
+ */
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Refresh token is required",
+      });
+    }
+
+    // Find the refresh token in the database
+    const tokenDoc = await Token.findOne({
+      token: refreshToken,
+      type: "refresh",
+      expires: { $gt: Date.now() },
+    });
+
+    if (!tokenDoc) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Invalid or expired refresh token",
+      });
+    }
+
+    // Find the user
+    const user = await User.findById(tokenDoc.userId);
+
+    if (!user) {
+      return res.status(401).json({
+        status: "fail",
+        message: "User not found",
+      });
+    }
+
+    // Generate new access token
+    const accessToken = jwtUtils.generateAccessToken(user);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        accessToken,
+      },
+    });
+  } catch (error) {
+    logger.error("Refresh token error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to refresh token",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Logout user by invalidating the refresh token
+ * @route POST /api/auth/logout
+ */
+exports.logout = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Refresh token is required",
+      });
+    }
+
+    // Delete the refresh token from the database
+    await Token.findOneAndDelete({
+      token: refreshToken,
+      userId: req.user.id,
+      type: "refresh",
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    logger.error("Logout error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to logout",
       error: error.message,
     });
   }

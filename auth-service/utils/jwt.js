@@ -33,3 +33,32 @@ exports.verifyToken = (token) => {
     return null;
   }
 };
+
+// Add these functions for refresh token support
+
+/**
+ * Generate refresh token
+ * @param {String} userId - User ID
+ * @returns {String} Refresh token
+ */
+exports.generateRefreshToken = () => {
+  return crypto.randomBytes(40).toString('hex');
+};
+
+/**
+ * Generate access token with shorter expiry
+ * @param {Object} user - User object with id
+ * @returns {String} JWT access token
+ */
+exports.generateAccessToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: '15m' // Short expiry for access token
+    }
+  );
+};
