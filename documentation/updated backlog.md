@@ -17,6 +17,7 @@
 | TM-003  | As a **Candidate**, I want to take a timed test so that my performance is measured objectively. | Critical | 1 | 7 | MUST |
 | TM-004  | As a **Candidate**, I want my test progress to be saved automatically so that I don’t lose my answers. | Medium | 2 | 4 | SHOULD |
 | TM-005  | As a **Psychologist**, I want to pause or stop a candidate’s test so that I can manage special cases. | Medium | 2 | 5 | SHOULD |
+| TM-005  | As an **Admin**, I want to add, delete and modify tests. | High | 1 | 5 | MUST |
 
 ## Feature: Score Calculation & Results
 | ID      | User Story | Business Value | Priority | Complexity | MoSCoW |
