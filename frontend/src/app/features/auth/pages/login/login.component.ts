@@ -60,6 +60,8 @@ export class LoginComponent implements OnInit {
       this.isLoading = true;
 
       const { email, password } = this.loginForm.value;
+      console.log('Login form values', this.loginForm.value);
+      
       this.authService.login(email, password).subscribe({
         next: (response) => {
           this.isLoading = false;

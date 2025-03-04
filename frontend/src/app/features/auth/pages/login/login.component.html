@@ -1,58 +1,71 @@
 <div class="auth-form">
-  <h1 class="text-2xl font-bold mb-2">Welcome back</h1>
-  <p class="text-gray-600 mb-8">Sign in to your account to continue</p>
-
+  <h1 class="text-2xl font-bold m">Welcome back</h1>
+  <p class="text-gray-600 ">Sign in to your account to continue</p>
+  <hr class="my-4 border border-gray-300">
   <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-    <!-- Email Field -->
-    <mat-form-field appearance="outline" class="w-full mb-4">
-      <mat-label>Email</mat-label>
-      <input matInput type="email" formControlName="email" placeholder="your.email@example.com">
-      <mat-icon matPrefix class="mr-2 text-gray-500">email</mat-icon>
-      <mat-error *ngIf="loginForm.controls['email'].hasError('required')">
-        Email is required
-      </mat-error>
-      <mat-error *ngIf="loginForm.controls['email'].hasError('email')">
-        Please enter a valid email address
-      </mat-error>
-    </mat-form-field>
 
-    <!-- Password Field -->
-    <mat-form-field appearance="outline" class="w-full mb-4">
-      <mat-label>Password</mat-label>
-      <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password">
-      <mat-icon matPrefix class="mr-2 text-gray-500">lock</mat-icon>
-      <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
-        <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-      </button>
-      <mat-error *ngIf="loginForm.controls['password'].hasError('required')">
-        Password is required
-      </mat-error>
-      <mat-error *ngIf="loginForm.controls['password'].hasError('minlength')">
-        Password must be at least 8 characters
-      </mat-error>
-    </mat-form-field>
+    <div class="space-y-3">
+      <!-- Email Field -->
+      <div class="flex flex-col">
+        <label for="email" class="text-gray-700 font-medium mb-1">Email</label>
+        <div class="relative"   [ngClass]="{'animate-shake': loginForm.controls['email'].invalid && loginForm.controls['email'].touched}">
+          <span class="absolute inset-y-0 left-2 flex items-center text-gray-500">
+            <i class="fa-regular fa-envelope"></i>
+          </span>
+          <input type="email" formControlName="email" id="email"
+            class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 pl-8 rounded-lg ease-in-out transition-colors duration-150 w-full"
+            placeholder="your.email@example.com">
+        </div>
+        <p *ngIf="loginForm.controls['email'].hasError('required')" class="text-red-500 text-sm mt-2"><i
+            class="fa-solid fa-triangle-exclamation"></i> Email is required</p>
+        <p *ngIf="loginForm.controls['email'].hasError('email')" class="text-yellow-500 text-sm mt-2"><i
+            class="fa-solid fa-circle-exclamation"></i> Please enter a valid email address</p>
+      </div>
 
-    <!-- Remember Me & Forgot Password -->
-    <div class="flex justify-between items-center mb-6">
-      <mat-checkbox color="primary" formControlName="rememberMe">
-        Remember me
-      </mat-checkbox>
-      <a routerLink="/auth/forgot-password" class="text-primary-main hover:underline">
-        Forgot password?
-      </a>
+
+      <div class="flex flex-col">
+        <label for="password" class="text-gray-700 font-medium">Password</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-2 flex items-center text-gray-500">
+            <i class="fa-solid fa-lock"></i>
+          </span>
+          <input [type]="hidePassword ? 'password' : 'text'" formControlName="password" id="password"
+            class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 pl-8 rounded-lg ease-in-out transition-colors duration-150 w-full">
+          <button type="button" (click)="hidePassword = !hidePassword"
+            class="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700">
+            <i *ngIf="hidePassword" class="fa-regular fa-eye"></i>
+            <i *ngIf="!hidePassword" class="fa-regular fa-eye-slash"></i>
+          </button>
+        </div>
+        <p *ngIf="loginForm.controls['password'].hasError('required')" class="text-red-500 text-sm mt-2"><i
+            class="fa-solid fa-triangle-exclamation"></i> Password is required</p>
+        <p *ngIf="loginForm.controls['password'].hasError('minlength')" class="text-yellow-500 text-sm mt-2"><i
+            class="fa-solid fa-circle-exclamation"></i> Password must be at least 8 characters</p>
+      </div>
+      <!-- Remember Me & Forgot Password -->
+      <div class="flex justify-between items-center mb-3">
+        <mat-checkbox color="primary" formControlName="rememberMe">
+          Remember me
+        </mat-checkbox>
+        <a routerLink="/auth/forgot-password" class="text-red-500 font-medium text-primary-main hover:underline">
+          Forgot password?
+        </a>
+      </div>
+
     </div>
-
     <!-- Submit Button -->
-    <button mat-flat-button color="primary" type="submit" class="w-full"
-            [disabled]="loginForm.invalid || isLoading">
+    <button type="submit"
+      class="w-full border-2 transition-all ease-in-out duration-150 p-2 rounded-3xl mt-1 cursor-pointer"
+      [class.border-blue-700]="!loginForm.invalid" [class.text-blue-900]="!loginForm.invalid"
+      [class.hover:bg-blue-700]="!loginForm.invalid" [class.hover:text-white]="!loginForm.invalid"
+      [class.hover:shadow-lg]="!loginForm.invalid" [class.border-gray-300]="loginForm.invalid"
+      [class.text-gray-400]="loginForm.invalid" [disabled]="loginForm.invalid || isLoading">
       <span *ngIf="!isLoading">Sign In</span>
       <mat-spinner diameter="24" *ngIf="isLoading" class="mx-auto"></mat-spinner>
     </button>
 
-    <!-- Divider -->
- 
     <!-- Sign Up Link -->
-    <div class="mt-8 text-center">
+    <div class="mt-4 text-center">
       <span class="text-gray-600">Don't have an account?</span>
       <a routerLink="/auth/signup" class="text-primary-main hover:underline ml-1">Create account</a>
     </div>
