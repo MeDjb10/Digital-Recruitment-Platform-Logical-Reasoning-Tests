@@ -1,0 +1,78 @@
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(-30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 1s ease-in-out;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.8s ease-out;
+}
+
+.animate-slideInRight-delayed {
+  animation: slideInRight 1s ease-out;
+  animation-delay: 0.2s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float 8s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.animate-float-slow {
+  animation: float 10s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.animate-fadeIn-delayed {
+  animation: fadeIn 1s ease-in-out;
+  animation-delay: 0.5s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+/* Text shadow for better contrast */
+.text-shadow-sm {
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Adjust Material inputs */
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  height: 18px !important;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper {
+  background-color: rgba(248, 250, 252, 0.8) !important;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper:hover {
+  background-color: rgba(248, 250, 252, 1) !important;
+}
+
+::ng-deep .mat-mdc-form-field-focus-overlay {
+  background-color: rgba(236, 240, 243, 0.8) !important;
+}
