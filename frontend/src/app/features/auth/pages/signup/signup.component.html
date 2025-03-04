@@ -1,0 +1,91 @@
+<div class="auth-form">
+  <h1 class="text-2xl font-bold mb-2">Create an account</h1>
+  <p class="text-gray-600 mb-8">Join our platform to start hiring the best talent</p>
+
+  <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+    <!-- Name Fields (2 columns) -->
+    <div class="flex flex-col md:flex-row gap-4 mb-4">
+      <div class="flex flex-col w-full">
+        <label for="firstName" class="text-gray-700 font-medium mb-1">First name</label>
+        <input type="text" formControlName="firstName" id="firstName"
+          class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 rounded-lg ease-in-out transition-colors duration-150 w-full">
+        <p *ngIf="signupForm.controls['firstName'].hasError('required')" class="text-red-500 text-sm mt-2">
+          <i class="fa-solid fa-triangle-exclamation"></i> First name is required
+        </p>
+      </div>
+
+      <div class="flex flex-col w-full">
+        <label for="lastName" class="text-gray-700 font-medium mb-1">Last name</label>
+        <input type="text" formControlName="lastName" id="lastName"
+          class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 rounded-lg ease-in-out transition-colors duration-150 w-full">
+        <p *ngIf="signupForm.controls['lastName'].hasError('required')" class="text-red-500 text-sm mt-2">
+          <i class="fa-solid fa-triangle-exclamation"></i> Last name is required
+        </p>
+      </div>
+    </div>
+
+    <!-- Email Field -->
+    <div class="flex flex-col mb-4">
+      <label for="email" class="text-gray-700 font-medium mb-1">Email</label>
+      <div class="relative">
+        <span class="absolute inset-y-0 left-2 flex items-center text-gray-500">
+          <i class="fa-regular fa-envelope"></i>
+        </span>
+        <input type="email" formControlName="email" id="email"
+          class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 pl-8 rounded-lg ease-in-out transition-colors duration-150 w-full"
+          placeholder="your.email@example.com">
+      </div>
+      <p *ngIf="signupForm.controls['email'].hasError('required')" class="text-red-500 text-sm mt-2">
+        <i class="fa-solid fa-triangle-exclamation"></i> Email is required
+      </p>
+      <p *ngIf="signupForm.controls['email'].hasError('email')" class="text-yellow-500 text-sm mt-2">
+        <i class="fa-solid fa-circle-exclamation"></i> Please enter a valid email address
+      </p>
+    </div>
+
+    <!-- Password Field -->
+    <div class="flex flex-col mb-4">
+      <label for="password" class="text-gray-700 font-medium">Password</label>
+      <div class="relative">
+        <span class="absolute inset-y-0 left-2 flex items-center text-gray-500">
+          <i class="fa-solid fa-lock"></i>
+        </span>
+        <input [type]="hidePassword ? 'password' : 'text'" formControlName="password" id="password"
+          class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 pl-8 rounded-lg ease-in-out transition-colors duration-150 w-full">
+        <button type="button" (click)="hidePassword = !hidePassword"
+          class="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700">
+          <i *ngIf="hidePassword" class="fa-regular fa-eye"></i>
+          <i *ngIf="!hidePassword" class="fa-regular fa-eye-slash"></i>
+        </button>
+      </div>
+      <p *ngIf="signupForm.controls['password'].hasError('required')" class="text-red-500 text-sm mt-2">
+        <i class="fa-solid fa-triangle-exclamation"></i> Password is required
+      </p>
+      <p *ngIf="signupForm.controls['password'].hasError('minlength')" class="text-yellow-500 text-sm mt-2">
+        <i class="fa-solid fa-circle-exclamation"></i> Password must be at least 8 characters
+      </p>
+    </div>
+
+    <!-- Terms & Conditions -->
+    <div class="mb-6 flex items-center">
+      <input type="checkbox" formControlName="acceptTerms" id="acceptTerms" class="mr-2">
+      <label for="acceptTerms" class="text-gray-700">I agree to the <a href="#" class="text-primary-main hover:underline">Terms of Service</a> and <a href="#" class="text-primary-main hover:underline">Privacy Policy</a></label>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit"
+      class="w-full border-2 transition-all ease-in-out duration-150 p-2 rounded-3xl mt-1 cursor-pointer"
+      [class.border-blue-700]="!signupForm.invalid" [class.text-blue-900]="!signupForm.invalid"
+      [class.hover:bg-blue-700]="!signupForm.invalid" [class.hover:text-white]="!signupForm.invalid"
+      [class.hover:shadow-lg]="!signupForm.invalid" [class.border-gray-300]="signupForm.invalid"
+      [class.text-gray-400]="signupForm.invalid" [disabled]="signupForm.invalid || isLoading">
+      <span *ngIf="!isLoading">Create Account</span>
+    </button>
+
+    <!-- Login Link -->
+    <div class="mt-8 text-center">
+      <span class="text-gray-600">Already have an account?</span>
+      <a routerLink="/auth/login" class="text-primary-main hover:underline ml-1">Sign in</a>
+    </div>
+  </form>
+</div>
