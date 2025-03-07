@@ -2,9 +2,252 @@
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 
 @import "tailwindcss";
+/* Add this at the top of the file */
+@import 'aos/dist/aos.css';
 /* Custom styles last */
 html, body { 
   height: 100%; 
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif; 
 }
+
+/* Add these animations if they're not already present */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(12deg); }
+  50% { transform: translateY(-10px) rotate(12deg); }
+}
+
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes width {
+  from { width: 0; }
+  to { width: 6rem; /* w-24 in Tailwind */ }
+}
+
+@keyframes height {
+  from { height: 0; }
+  to { height: 4rem; /* h-16 in Tailwind */ }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 8s ease-in-out infinite 1s;
+}
+
+/* Add these for the blur effects if needed */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Animation for gradient background */
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 15s ease infinite;
+}
+
+/* Slow zoom animation for background */
+@keyframes slow-zoom {
+  0%, 100% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.animate-slow-zoom {
+  animation: slow-zoom 40s ease-in-out infinite;
+}
+
+/* Enhanced width animation */
+@keyframes width {
+  from { width: 0; }
+  to { width: 8rem; }
+}
+
+.animate-width {
+  animation: width 1.5s ease-out;
+}
+
+/* Text gradient effect */
+.text-gradient {
+  background-image: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+
+/* Glow effects */
+.shadow-glow {
+  box-shadow: 0 0 10px rgba(255,255,255,0.7);
+}
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(255,255,255,0.7);
+}
+
+/* Glass effect */
+.glass-effect {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+}
+
+/* 3D perspective */
+.perspective-element {
+  perspective: 1000px;
+}
+
+/* 3D floating animation */
+@keyframes float-3d {
+  0%, 100% {
+    transform: translateY(0) rotate(12deg) rotateY(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(12deg) rotateY(3deg);
+  }
+  50% {
+    transform: translateY(0) rotate(12deg) rotateY(0deg);
+  }
+  75% {
+    transform: translateY(5px) rotate(12deg) rotateY(-3deg);
+  }
+}
+
+.animate-float-3d {
+  animation: float-3d 12s ease-in-out infinite;
+}
+
+/* Slower ping animation variations */
+@keyframes ping-slow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 3s ease-in-out infinite;
+}
+
+@keyframes ping-slower {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slower {
+  animation: ping-slower 5s ease-in-out infinite;
+}
+
+/* Line animation */
+@keyframes line-grow {
+  from {
+    opacity: 0;
+    width: 0;
+  }
+  to {
+    opacity: 1;
+    width: 100%;
+  }
+}
+
+.animated-line {
+  animation: line-grow 2s ease-out forwards;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animation-delay-600 {
+  animation-delay: 600ms;
+}
+
+.animation-delay-900 {
+  animation-delay: 900ms;
+}
+
+/* Stars animation for particle effect */
+.stars-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0;
+  animation: star-fade 3s infinite ease-in-out;
+}
+
+@keyframes star-fade {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Position stars randomly (will be generated in TS) */
+.stars-container .star:nth-child(1) { top: 10%; left: 15%; animation-delay: 0.5s; }
+.stars-container .star:nth-child(2) { top: 20%; left: 25%; animation-delay: 1.0s; }
+.stars-container .star:nth-child(3) { top: 15%; left: 60%; animation-delay: 1.5s; }
+.stars-container .star:nth-child(4) { top: 30%; left: 75%; animation-delay: 2.0s; }
+.stars-container .star:nth-child(5) { top: 40%; left: 10%; animation-delay: 2.5s; }
+.stars-container .star:nth-child(6) { top: 50%; left: 30%; animation-delay: 0.7s; }
+.stars-container .star:nth-child(7) { top: 55%; left: 65%; animation-delay: 1.2s; }
+.stars-container .star:nth-child(8) { top: 65%; left: 85%; animation-delay: 1.7s; }
+.stars-container .star:nth-child(9) { top: 70%; left: 25%; animation-delay: 2.2s; }
+.stars-container .star:nth-child(10) { top: 80%; left: 50%; animation-delay: 0.3s; }
+.stars-container .star:nth-child(11) { top: 85%; left: 15%; animation-delay: 0.8s; }
+.stars-container .star:nth-child(12) { top: 90%; left: 75%; animation-delay: 1.3s; }
+.stars-container .star:nth-child(13) { top: 25%; left: 40%; animation-delay: 1.8s; }
+.stars-container .star:nth-child(14) { top: 35%; left: 88%; animation-delay: 2.3s; }
+.stars-container .star:nth-child(15) { top: 45%; left: 45%; animation-delay: 0.4s; }
+.stars-container .star:nth-child(16) { top: 60%; left: 5%; animation-delay: 0.9s; }
+.stars-container .star:nth-child(17) { top: 75%; left: 35%; animation-delay: 1.4s; }
+.stars-container .star:nth-child(18) { top: 5%; left: 80%; animation-delay: 1.9s; }
+.stars-container .star:nth-child(19) { top: 95%; left: 60%; animation-delay: 2.4s; }
+.stars-container .star:nth-child(20) { top: 15%; left: 45%; animation-delay: 0.6s; }
