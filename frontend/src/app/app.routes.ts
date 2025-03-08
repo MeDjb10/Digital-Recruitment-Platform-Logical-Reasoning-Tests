@@ -12,11 +12,7 @@ export const routes: Routes = [
   },
   {
     path: 'auth',
-    component: AuthLayoutComponent,
-    children: [
-      { path: '', redirectTo: 'login', pathMatch: 'full' },
-      { path: 'login', component: LoginComponent },
-      { path: 'signup', component: SignupComponent },
-    ],
+    loadChildren: () =>
+      import('./features/auth/auth.module').then((m) => m.AuthModule),
   },
 ];

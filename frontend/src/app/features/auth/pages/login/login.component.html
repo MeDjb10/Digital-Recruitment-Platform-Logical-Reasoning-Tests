@@ -47,7 +47,8 @@
         <mat-checkbox color="primary" formControlName="rememberMe">
           Remember me
         </mat-checkbox>
-        <a routerLink="/auth/forgot-password" class="text-red-500 font-medium text-primary-main hover:underline">
+        <a [routerLink]="['/auth/forgot-password']"
+        class="text-red-500 font-medium text-primary-main hover:underline">
           Forgot password?
         </a>
       </div>

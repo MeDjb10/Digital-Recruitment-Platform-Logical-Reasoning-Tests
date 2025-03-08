@@ -7,7 +7,7 @@ import { ForgotPasswordComponent } from "./features/auth/components/forgot-passw
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, ForgotPasswordComponent], // Add HttpClientModule
+  imports: [CommonModule,RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
