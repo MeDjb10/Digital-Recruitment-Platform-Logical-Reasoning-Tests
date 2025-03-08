@@ -112,6 +112,50 @@ router.get(
 
 /**
  * @swagger
+ * /api/users/role:
+ *   put:
+ *     summary: Assign role to user (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - role
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [candidate, admin, moderator, psychologist]
+ *     responses:
+ *       200:
+ *         description: Role successfully updated
+ *       400:
+ *         description: Invalid input data
+ *       403:
+ *         description: Forbidden - admin only
+ *       404:
+ *         description: User not found
+ */
+router.put(
+  "/role",
+  (req, res, next) => {
+    console.log("Role assignment route hit!");
+    console.log("Request body:", req.body);
+    next();
+  },
+  verifyToken(["admin"]),
+  validateRoleAssignment,
+  userController.assignRole
+);
+
+/**
+ * @swagger
  * /api/users/{userId}:
  *   get:
  *     summary: Get user by ID
@@ -187,43 +231,6 @@ router.put(
   userController.updateUser
 );
 
-/**
- * @swagger
- * /api/users/role:
- *   put:
- *     summary: Assign role to user (admin only)
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - userId
- *               - role
- *             properties:
- *               userId:
- *                 type: string
- *               role:
- *                 type: string
- *                 enum: [candidate, admin, moderator, psychologist]
- *     responses:
- *       200:
- *         description: Role successfully updated
- *       400:
- *         description: Invalid input data
- *       403:
- *         description: Forbidden - admin only
- *       404:
- *         description: User not found
- */
-router.put(
-  "/role",
-  verifyToken(["admin"]),
-  validateRoleAssignment,
-  userController.assignRole
-);
+
 
 module.exports = router;

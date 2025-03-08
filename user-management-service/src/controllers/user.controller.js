@@ -1,6 +1,7 @@
 const User = require("../models/user.model");
 const { asyncHandler } = require("../utils/error-handler.util");
 const { ErrorResponse } = require("../utils/error-handler.util");
+const mongoose = require("mongoose");
 
 /**
  * @desc    Get all users with pagination and filtering
@@ -135,13 +136,9 @@ exports.updateUser = asyncHandler(async (req, res) => {
 exports.assignRole = asyncHandler(async (req, res) => {
   const { userId, role } = req.body;
 
-  // This check is redundant with validation, but good as a safeguard
-  const validRoles = ["candidate", "admin", "moderator", "psychologist"];
-  if (!validRoles.includes(role)) {
-    throw new ErrorResponse("Invalid role specified", 400);
-  }
+  // The validateRoleAssignment middleware should already check if userId is a valid ObjectId
+  // and if role is valid, so we can skip those checks here
 
-  // Find user by ID and update role
   const updatedUser = await User.findByIdAndUpdate(
     userId,
     { role },
