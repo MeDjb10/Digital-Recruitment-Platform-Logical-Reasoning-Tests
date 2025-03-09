@@ -1,12 +1,19 @@
 /* Import Material theme first */
-@import '@angular/material/prebuilt-themes/indigo-pink.css';
 
 @import "tailwindcss";
+/* Custom styles last */
 /* Custom styles last */
 html, body { 
   height: 100%; 
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif; 
+  font-family: var(--font-family, 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif); 
+  color-scheme: light;
+  color: #1f2937;
+}
+
+/* Improve transitions for smoother UI */
+*, *::before, *::after {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes fadeIn {
@@ -16,4 +23,38 @@ html, body {
 
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-in-out;
+}
+
+/* PrimeNG Customizations */
+:root {
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Button improvements */
+button:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+/* Improved scrollbar for modern UI */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
