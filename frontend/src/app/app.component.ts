@@ -5,7 +5,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import AOS from 'aos';
 
-import { ForgotPasswordComponent } from "./features/auth/components/forgot-password/forgot-password.component"; // Add this import
+
 
 
 @Component({

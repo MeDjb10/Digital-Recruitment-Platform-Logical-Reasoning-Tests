@@ -10,6 +10,8 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subject, interval, takeUntil } from 'rxjs';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { AuthService } from '../../../../core/auth/services/auth.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-forgot-password',
@@ -67,9 +69,17 @@ export class ForgotPasswordComponent implements OnDestroy {
   passwordStrengthText = 'Password strength';
   loadingMessage: string = '';
 
+  // Store email and reset token from API response
+  private userEmail: string = '';
+  private resetToken: string = '';
+
   private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private snackBar: MatSnackBar
+  ) {
     this.emailFormGroup = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
     });
@@ -104,34 +114,44 @@ export class ForgotPasswordComponent implements OnDestroy {
   }
 
   sendVerificationCode() {
-    this.loadingMessage = 'Sending verification code...';
     if (this.emailFormGroup.invalid) {
       this.emailSubmitted = true;
       return;
     }
 
     this.isProcessing = true;
-    // Simulate API call
-    setTimeout(() => {
-      this.isProcessing = false;
-      this.stepper.next();
-      this.startCooldownTimer();
+    this.loadingMessage = 'Sending verification code...';
 
-      // TODO: Implement actual API call to send verification code
-      /*
-        this.authService.sendPasswordResetCode(this.emailFormGroup.value.email).subscribe({
-          next: () => {
-            this.isProcessing = false;
-            this.stepper.next();
-            this.startCooldownTimer();
-          },
-          error: (error) => {
-            this.isProcessing = false;
-            // Handle error here
-          }
+    const email = this.emailFormGroup.get('email')?.value;
+    this.userEmail = email;
+
+    this.authService.requestPasswordReset(email).subscribe({
+      next: (response) => {
+        this.isProcessing = false;
+        // Store the reset token from response
+        this.resetToken = response.resetToken;
+
+        // Move to next step
+        this.stepper.next();
+        this.startCooldownTimer();
+
+        this.snackBar.open('Verification code sent to your email', 'Close', {
+          duration: 5000,
+          panelClass: ['success-snackbar'],
         });
-      */
-    }, 1500);
+      },
+      error: (error) => {
+        this.isProcessing = false;
+        this.snackBar.open(
+          error.message || 'Failed to send verification code',
+          'Close',
+          {
+            duration: 5000,
+            panelClass: ['error-snackbar'],
+          }
+        );
+      },
+    });
   }
 
   verifyCode() {
@@ -141,28 +161,37 @@ export class ForgotPasswordComponent implements OnDestroy {
     }
 
     this.isProcessing = true;
-    // Simulate API call
-    setTimeout(() => {
-      this.isProcessing = false;
-      this.stepper.next();
+    const otp = this.codeFormGroup.get('code')?.value;
 
-      // TODO: Implement actual API call to verify code
-      /*
-        this.authService.verifyPasswordResetCode(
-          this.emailFormGroup.value.email,
-          this.codeFormGroup.value.code
-        ).subscribe({
-          next: () => {
-            this.isProcessing = false;
-            this.stepper.next();
-          },
-          error: (error) => {
-            this.isProcessing = false;
-            // Handle error here
-          }
-        });
-      */
-    }, 1500);
+    this.authService
+      .verifyResetOTP(this.userEmail, otp, this.resetToken)
+      .subscribe({
+        next: (response) => {
+          this.isProcessing = false;
+
+          // Store the reset token (it might be updated)
+          this.resetToken = response.resetToken;
+
+          // Move to next step
+          this.stepper.next();
+
+          this.snackBar.open('Code verified successfully', 'Close', {
+            duration: 3000,
+            panelClass: ['success-snackbar'],
+          });
+        },
+        error: (error) => {
+          this.isProcessing = false;
+          this.snackBar.open(
+            error.message || 'Invalid verification code',
+            'Close',
+            {
+              duration: 5000,
+              panelClass: ['error-snackbar'],
+            }
+          );
+        },
+      });
   }
 
   resetPassword() {
@@ -172,42 +201,71 @@ export class ForgotPasswordComponent implements OnDestroy {
     }
 
     this.isProcessing = true;
-    // Simulate API call
-    setTimeout(() => {
-      this.isProcessing = false;
-      this.stepper.next();
+    const newPassword = this.passwordFormGroup.get('password')?.value;
 
-      // TODO: Implement actual API call to reset password
-      /*
-        this.authService.resetPassword(
-          this.emailFormGroup.value.email,
-          this.codeFormGroup.value.code,
-          this.passwordFormGroup.value.password
-        ).subscribe({
-          next: () => {
-            this.isProcessing = false;
-            this.stepper.next();
-          },
-          error: (error) => {
-            this.isProcessing = false;
-            // Handle error here
-          }
-        });
-      */
-    }, 1500);
+    this.authService
+      .resetPassword(this.userEmail, this.resetToken, newPassword)
+      .subscribe({
+        next: () => {
+          this.isProcessing = false;
+
+          // Move to success step
+          this.stepper.next();
+
+          this.snackBar.open('Password reset successful', 'Close', {
+            duration: 3000,
+            panelClass: ['success-snackbar'],
+          });
+        },
+        error: (error) => {
+          this.isProcessing = false;
+          this.snackBar.open(
+            error.message || 'Failed to reset password',
+            'Close',
+            {
+              duration: 5000,
+              panelClass: ['error-snackbar'],
+            }
+          );
+        },
+      });
   }
 
   resendCode() {
     if (this.cooldownTimeLeft > 0) return;
 
     this.isProcessing = true;
-    // Simulate API call
-    setTimeout(() => {
-      this.isProcessing = false;
-      this.startCooldownTimer();
 
-      // TODO: Implement actual API call to resend verification code
-    }, 1000);
+    this.authService.requestPasswordReset(this.userEmail).subscribe({
+      next: (response) => {
+        this.isProcessing = false;
+
+        // Update the reset token
+        this.resetToken = response.resetToken;
+
+        // Start cooldown timer
+        this.startCooldownTimer();
+
+        this.snackBar.open(
+          'New verification code sent to your email',
+          'Close',
+          {
+            duration: 3000,
+          }
+        );
+      },
+      error: (error) => {
+        this.isProcessing = false;
+        this.snackBar.open(
+          error.message || 'Failed to resend verification code',
+          'Close',
+          {
+            duration: 5000,
+            panelClass: ['error-snackbar'],
+          }
+        );
+      },
+    });
   }
 
   startCooldownTimer(seconds = 60) {
