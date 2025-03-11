@@ -1,0 +1,279 @@
+<div class="stats-container animate-in">
+  <!-- Dashboard Header with Actions -->
+  <div class="dashboard-header">
+    <div class="flex flex-col">
+      <h1 class="dashboard-title">Analytics Overview</h1>
+      <p class="dashboard-subtitle">Monitor key recruitment metrics and activities</p>
+    </div>
+    
+    <div class="header-actions">
+      <!-- Time Period Filter -->
+      <div class="relative">
+        <p-dropdown [options]="timePeriods" 
+                   [(ngModel)]="selectedTimePeriod" 
+                   optionLabel="label"
+                   styleClass="time-filter-dropdown"
+                   (onChange)="onTimePeriodChange()"></p-dropdown>
+      </div>
+      
+      <!-- Export Options -->
+      <button pButton 
+              icon="pi pi-download" 
+              label="Export" 
+              class="p-button-outlined export-btn"></button>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="kpi-grid">
+    <!-- Total Candidates Card -->
+    <div class="kpi-card">
+      <div class="card-content">
+        <div class="metric-header">
+          <h3 class="metric-title">Candidates</h3>
+          <div class="status-badge" [ngClass]="{'positive': kpis.candidates.trend > 0}">
+            <i class="pi" [ngClass]="kpis.candidates.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'"></i>
+            {{ Math.abs(kpis.candidates.trend) }}%
+          </div>
+        </div>
+        
+        <div class="metric-value-container">
+          <h2 class="metric-value">{{ kpis.candidates.value | number }}</h2>
+          <div class="metric-icon candidates-icon">
+            <i class="pi pi-users"></i>
+          </div>
+        </div>
+        
+        <p class="metric-description">
+          {{ kpis.candidates.trend > 0 ? 'Increase' : 'Decrease' }} from previous period
+        </p>
+      </div>
+      <div class="card-footer">
+        <div class="metric-sparkline">
+          <!-- Small chart placeholder - will be replaced by actual chart -->
+          <div class="sparkline-chart candidates-sparkline" #candidatesSparkline></div>
+        </div>
+        <a class="view-details">
+          View details <i class="pi pi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Test Completions Card -->
+    <div class="kpi-card">
+      <div class="card-content">
+        <div class="metric-header">
+          <h3 class="metric-title">Test Completions</h3>
+          <div class="status-badge" [ngClass]="{'positive': kpis.completions.trend > 0}">
+            <i class="pi" [ngClass]="kpis.completions.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'"></i>
+            {{ Math.abs(kpis.completions.trend) }}%
+          </div>
+        </div>
+        
+        <div class="metric-value-container">
+          <h2 class="metric-value">{{ kpis.completions.value | number }}</h2>
+          <div class="metric-icon completions-icon">
+            <i class="pi pi-check-circle"></i>
+          </div>
+        </div>
+        
+        <p class="metric-description">
+          {{ kpis.completions.trend > 0 ? 'Growth' : 'Decline' }} from previous period
+        </p>
+      </div>
+      <div class="card-footer">
+        <div class="metric-sparkline">
+          <div class="sparkline-chart completions-sparkline" #completionsSparkline></div>
+        </div>
+        <a class="view-details">
+          View details <i class="pi pi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Average Score Card -->
+    <div class="kpi-card">
+      <div class="card-content">
+        <div class="metric-header">
+          <h3 class="metric-title">Average Score</h3>
+          <div class="status-badge" [ngClass]="{'positive': kpis.avgScore.trend > 0}">
+            <i class="pi" [ngClass]="kpis.avgScore.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'"></i>
+            {{ Math.abs(kpis.avgScore.trend) }}%
+          </div>
+        </div>
+        
+        <div class="metric-value-container">
+          <h2 class="metric-value">{{ kpis.avgScore.value }}%</h2>
+          <div class="metric-icon score-icon">
+            <i class="pi pi-chart-line"></i>
+          </div>
+        </div>
+        
+        <p class="metric-description">
+          {{ kpis.avgScore.trend > 0 ? 'Improved' : 'Decreased' }} from previous period
+        </p>
+      </div>
+      <div class="card-footer">
+        <div class="metric-sparkline">
+          <div class="sparkline-chart score-sparkline" #scoreSparkline></div>
+        </div>
+        <a class="view-details">
+          View details <i class="pi pi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Conversion Rate Card -->
+    <div class="kpi-card">
+      <div class="card-content">
+        <div class="metric-header">
+          <h3 class="metric-title">Conversion Rate</h3>
+          <div class="status-badge" [ngClass]="{'positive': kpis.conversion.trend > 0}">
+            <i class="pi" [ngClass]="kpis.conversion.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'"></i>
+            {{ Math.abs(kpis.conversion.trend) }}%
+          </div>
+        </div>
+        
+        <div class="metric-value-container">
+          <h2 class="metric-value">{{ kpis.conversion.value }}%</h2>
+          <div class="metric-icon conversion-icon">
+            <i class="pi pi-percentage"></i>
+          </div>
+        </div>
+        
+        <p class="metric-description">
+          {{ kpis.conversion.trend > 0 ? 'Improved' : 'Decreased' }} from previous period
+        </p>
+      </div>
+      <div class="card-footer">
+        <div class="metric-sparkline">
+          <div class="sparkline-chart conversion-sparkline" #conversionSparkline></div>
+        </div>
+        <a class="view-details">
+          View details <i class="pi pi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Charts Section with Tabs -->
+  <div class="charts-section">
+    <p-tabView styleClass="analytics-tabs">
+      <!-- Performance Tab -->
+      <p-tabPanel header="Performance Analysis">
+        <div class="performance-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Candidate Performance by Test Type</h3>
+            <div class="chart-legend">
+              <div class="legend-item">
+                <span class="legend-color avg-color"></span>
+                <span>Average Score</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color passing-color"></span>
+                <span>Passing Rate</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <div #performanceChart class="main-chart"></div>
+          </div>
+        </div>
+      </p-tabPanel>
+      
+      <!-- Test Distributions Tab -->
+      <p-tabPanel header="Test Distributions">
+        <div class="distributions-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Test Completion Distribution</h3>
+          </div>
+          <div class="chart-grid">
+            <div class="chart-card">
+              <h4 class="subchart-title">By Category</h4>
+              <div #categoryChart class="subchart"></div>
+            </div>
+            <div class="chart-card">
+              <h4 class="subchart-title">By Completion Status</h4>
+              <div #statusChart class="subchart"></div>
+            </div>
+          </div>
+        </div>
+      </p-tabPanel>
+      
+      <!-- Trends Tab -->
+      <p-tabPanel header="Trends & Forecasts">
+        <div class="trends-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Performance Trends</h3>
+            <div class="chart-actions">
+              <p-selectButton [options]="trendOptions" [(ngModel)]="selectedTrendView" optionLabel="label" (onChange)="onTrendViewChange()"></p-selectButton>
+            </div>
+          </div>
+          <div class="chart-container">
+            <div #trendsChart class="main-chart"></div>
+          </div>
+        </div>
+      </p-tabPanel>
+    </p-tabView>
+  </div>
+
+  <!-- Recent Activity Section -->
+  <div class="recent-activity">
+    <div class="section-header">
+      <h3 class="section-title">Recent Activity</h3>
+      <p-dropdown [options]="activityFilters" [(ngModel)]="selectedActivityFilter" optionLabel="label" styleClass="activity-filter"></p-dropdown>
+    </div>
+    
+    <div class="activity-table-container">
+      <p-table [value]="recentActivities" styleClass="activity-table p-datatable-sm" [paginator]="true" [rows]="5" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Candidate</th>
+            <th>Action</th>
+            <th>Test Type</th>
+            <th>Score</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-activity>
+          <tr>
+            <td>
+              <div class="flex items-center">
+                <div class="avatar" [style.background-color]="activity.avatarBg">
+                  {{ activity.candidate.substring(0, 2).toUpperCase() }}
+                </div>
+                <span class="ml-2">{{ activity.candidate }}</span>
+              </div>
+            </td>
+            <td>{{ activity.action }}</td>
+            <td>{{ activity.testType }}</td>
+            <td>
+              <div *ngIf="activity.score !== null" class="score-display">
+                <div class="score-bar">
+                  <div class="score-fill" [style.width.%]="activity.score"></div>
+                </div>
+                <span class="score-value">{{ activity.score }}%</span>
+              </div>
+              <span *ngIf="activity.score === null">-</span>
+            </td>
+            <td>{{ activity.date | date:'medium' }}</td>
+            <td>
+              <p-tag [value]="activity.status" ></p-tag>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center p-4">
+              <div class="empty-state">
+                <i class="pi pi-calendar-times empty-icon"></i>
+                <p>No recent activities found</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>
