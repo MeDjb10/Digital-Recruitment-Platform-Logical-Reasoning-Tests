@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AuthLayoutComponent } from './features/auth/components/auth-layout/auth-layout.component';
 import { LoginComponent } from './features/auth/pages/login/login.component';
 import { SignupComponent } from './features/auth/pages/signup/signup.component';
+
 import { HomeComponent } from './features/homepage/components/home/home.component';
 import { DashboardComponent } from './features/dashboard/pages/dashboard/dashboard.component';
 import { GeneralStatsComponent } from './features/dashboard/components/general-stats/general-stats.component';
@@ -10,20 +11,25 @@ import { StatsRLComponent } from './features/dashboard/components/stats-rl/stats
 import { UsersListRLComponent } from './features/dashboard/components/users-list-rl/users-list-rl.component';
 import { TestsListRLComponent } from './features/dashboard/components/tests-list-rl/tests-list-rl.component';
 
+
 export const routes: Routes = [
-  { path: '', redirectTo: 'auth', pathMatch: 'full' },
+  {
+    path: '',
+    redirectTo: 'home',
+    pathMatch: 'full',
+  },
   {
     path: 'home',
-    component: HomeComponent,
+    loadChildren: () =>
+      import('./features/homepage/homepage.module').then(
+        (m) => m.HomepageModule
+      ),
   },
   {
     path: 'auth',
-    component: AuthLayoutComponent,
-    children: [
-      { path: '', redirectTo: 'login', pathMatch: 'full' },
-      { path: 'login', component: LoginComponent },
-      { path: 'signup', component: SignupComponent },
-    ],
+    loadChildren: () =>
+      import('./features/auth/auth.module').then((m) => m.AuthModule),
+
   },
   {
     path: 'dashboard', 

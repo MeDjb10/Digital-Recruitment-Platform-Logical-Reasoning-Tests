@@ -20,6 +20,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 
 @NgModule({
   imports: [
@@ -38,7 +39,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatCheckboxModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
+    AuthLayoutComponent,
+    SignupComponent,
+    LoginComponent,
+    ForgotPasswordComponent,
   ],
-  
 })
 export class AuthModule {}

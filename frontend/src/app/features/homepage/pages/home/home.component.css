@@ -1,0 +1,15 @@
+/* Add any home-specific styles here */
+
+/* Custom animation for dividers */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.8);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+  }
+}
+
+.divider-glow hr {
+  animation: pulse-glow 3s infinite;
+}
