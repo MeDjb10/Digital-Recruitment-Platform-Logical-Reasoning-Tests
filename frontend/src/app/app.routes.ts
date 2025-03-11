@@ -26,20 +26,11 @@ export const routes: Routes = [
     ],
   },
   {
-    path: 'dashboard',
-    component: DashboardComponent,
-    children: [
-      { path: 'info', component: GeneralStatsComponent },
-      { path: 'users', component: UsersListComponent },
-      {
-        path: 'RaisonnementLogique', children: [
-          { path: 'Statistique', component: StatsRLComponent },
-          { path: 'Users', component: UsersListRLComponent },
-          { path: 'Tests', component: TestsListRLComponent },
-          { path: '',redirectTo:'Staistique',pathMatch:'full' },
-        ]
-      },
-      { path: '',redirectTo:'info',pathMatch:'full' },
-    ]
-  }
+    path: 'dashboard', 
+    loadChildren: () =>
+      import('./features/dashboard/dashboard.module').then(
+        (m) => m.DashboardModule
+      ),
+    title: 'Dashboard - Digital Recruitment Platform',
+  },
 ];
