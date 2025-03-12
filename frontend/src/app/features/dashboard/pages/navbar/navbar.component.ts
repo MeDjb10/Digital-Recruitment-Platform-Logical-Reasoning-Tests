@@ -15,6 +15,8 @@ import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { TooltipModule } from 'primeng/tooltip';
 import { MenuModule } from 'primeng/menu';
+// Import AuthService
+import { AuthService, User } from '../../../../core/auth/services/auth.service';
 
 interface Notification {
   id: number;
@@ -50,6 +52,7 @@ export class NavbarComponent implements OnInit {
   isBrowser: boolean;
 
   // User info
+  currentUser: User | null = null;
   userFullName = 'Admin User';
   userEmail = 'admin@example.com';
   userRole = 'Administrator';
@@ -96,6 +99,7 @@ export class NavbarComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private authService: AuthService, // Inject AuthService
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -112,6 +116,17 @@ export class NavbarComponent implements OnInit {
     // Set initial page title
     this.updatePageTitle(this.router.url);
 
+    // Get current user information
+    this.authService.currentUser$.subscribe((user) => {
+      this.currentUser = user;
+
+      if (user) {
+        this.userFullName = `${user.firstName} ${user.lastName}`;
+        this.userEmail = user.email;
+        this.userRole = this.formatRole(user.role);
+      }
+    });
+
     // Simulate keyboard shortcut for search - only in browser environment
     if (this.isBrowser) {
       window.addEventListener('keydown', (event) => {
@@ -123,6 +138,12 @@ export class NavbarComponent implements OnInit {
         }
       });
     }
+  }
+
+  // Format role for display (capitalize first letter)
+  formatRole(role: string): string {
+    if (!role) return 'User';
+    return role.charAt(0).toUpperCase() + role.slice(1);
   }
 
   // Handle clicks outside dropdowns
@@ -188,5 +209,11 @@ export class NavbarComponent implements OnInit {
     this.notifications = this.notifications.map((notification) =>
       notification.id === id ? { ...notification, unread: false } : notification
     );
+  }
+
+  // Logout function that calls the AuthService
+  logout(): void {
+    this.authService.logout();
+    // The AuthService.logout already handles the navigation to login page
   }
 }

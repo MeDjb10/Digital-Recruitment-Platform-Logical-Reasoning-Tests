@@ -1,87 +1,162 @@
 <div class="auth-form w-full">
   <h1 class="text-2xl sm:text-3xl font-bold mb-1">Welcome back</h1>
-  <p class="text-gray-600 text-sm sm:text-base mb-4 sm:mb-6">Sign in to your account to continue</p>
-  
+  <p class="text-gray-600 text-sm sm:text-base mb-4 sm:mb-6">
+    Sign in to your account to continue
+  </p>
+
   <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
     <div class="space-y-4">
       <!-- Email Field -->
       <div class="flex flex-col">
-        <label for="email" class="text-gray-700 font-medium mb-1 text-sm sm:text-base">Email</label>
-        <div class="relative" [ngClass]="{'animate-shake': loginForm.controls['email'].invalid && loginForm.controls['email'].touched}">
-          <span class="absolute inset-y-0 left-2 flex items-center text-gray-500">
+        <label
+          for="email"
+          class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
+          >Email</label
+        >
+        <div
+          class="relative input-icon-container"
+          [ngClass]="{
+            'animate-shake':
+              loginForm.controls['email'].invalid &&
+              loginForm.controls['email'].touched
+          }"
+        >
+          <div class="input-icon">
             <i class="fa-regular fa-envelope"></i>
-          </span>
-          <input type="email" formControlName="email" id="email"
-            class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 pl-8 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
-            placeholder="your.email@example.com">
+          </div>
+          <input
+            type="email"
+            formControlName="email"
+            id="email"
+            class="input-with-icon border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 pl-10 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
+            placeholder="your.email@example.com"
+          />
         </div>
         <div class="error-container min-h-[20px]">
-          <p *ngIf="loginForm.controls['email'].hasError('required') && loginForm.controls['email'].touched" class="text-red-500 text-xs sm:text-sm mt-1">
+          <p
+            *ngIf="
+              loginForm.controls['email'].hasError('required') &&
+              loginForm.controls['email'].touched
+            "
+            class="text-red-500 text-xs sm:text-sm mt-1"
+          >
             <i class="fa-solid fa-triangle-exclamation"></i> Email is required
           </p>
-          <p *ngIf="loginForm.controls['email'].hasError('email') && loginForm.controls['email'].touched" class="text-yellow-500 text-xs sm:text-sm mt-1">
-            <i class="fa-solid fa-circle-exclamation"></i> Please enter a valid email address
+          <p
+            *ngIf="
+              loginForm.controls['email'].hasError('email') &&
+              loginForm.controls['email'].touched
+            "
+            class="text-yellow-500 text-xs sm:text-sm mt-1"
+          >
+            <i class="fa-solid fa-circle-exclamation"></i> Please enter a valid
+            email address
           </p>
         </div>
       </div>
 
       <!-- Password Field -->
       <div class="flex flex-col">
-        <label for="password" class="text-gray-700 font-medium mb-1 text-sm sm:text-base">Password</label>
-        <div class="relative">
-          <span class="absolute inset-y-0 left-2 flex items-center text-gray-500">
+        <label
+          for="password"
+          class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
+          >Password</label
+        >
+        <div class="relative input-icon-container">
+          <div
+            class="input-icon"
+          >
             <i class="fa-solid fa-lock"></i>
-          </span>
-          <input [type]="hidePassword ? 'password' : 'text'" formControlName="password" id="password"
-            class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 pl-8 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full">
-          <button type="button" (click)="hidePassword = !hidePassword"
+          </div>
+          <input
+            [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password"
+            id="password"
+            class="input-with-icon border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 pl-10 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
+          />
+          <button
+            type="button"
+            (click)="hidePassword = !hidePassword"
             class="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700"
-            aria-label="Toggle password visibility">
+            aria-label="Toggle password visibility"
+          >
             <i *ngIf="hidePassword" class="fa-regular fa-eye"></i>
             <i *ngIf="!hidePassword" class="fa-regular fa-eye-slash"></i>
           </button>
         </div>
         <div class="error-container min-h-[20px]">
-          <p *ngIf="loginForm.controls['password'].hasError('required') && loginForm.controls['password'].touched" class="text-red-500 text-xs sm:text-sm mt-1">
-            <i class="fa-solid fa-triangle-exclamation"></i> Password is required
+          <p
+            *ngIf="
+              loginForm.controls['password'].hasError('required') &&
+              loginForm.controls['password'].touched
+            "
+            class="text-red-500 text-xs sm:text-sm mt-1"
+          >
+            <i class="fa-solid fa-triangle-exclamation"></i> Password is
+            required
           </p>
-          <p *ngIf="loginForm.controls['password'].hasError('minlength') && loginForm.controls['password'].touched" class="text-yellow-500 text-xs sm:text-sm mt-1">
-            <i class="fa-solid fa-circle-exclamation"></i> Password must be at least 8 characters
+          <p
+            *ngIf="
+              loginForm.controls['password'].hasError('minlength') &&
+              loginForm.controls['password'].touched
+            "
+            class="text-yellow-500 text-xs sm:text-sm mt-1"
+          >
+            <i class="fa-solid fa-circle-exclamation"></i> Password must be at
+            least 8 characters
           </p>
         </div>
       </div>
 
       <!-- Remember Me & Forgot Password -->
       <div class="flex flex-wrap justify-between items-center gap-y-2">
-        <mat-checkbox color="primary" formControlName="rememberMe" class="text-sm sm:text-base">
+        <mat-checkbox
+          color="primary"
+          formControlName="rememberMe"
+          class="text-sm sm:text-base"
+        >
           Remember me
         </mat-checkbox>
-        <a [routerLink]="['/auth/forgot-password']"
-          class="text-red-500 text-sm sm:text-base font-medium hover:underline">
+        <a
+          [routerLink]="['/auth/forgot-password']"
+          class="text-red-500 text-sm sm:text-base font-medium hover:underline"
+        >
           Forgot password?
         </a>
       </div>
     </div>
 
     <!-- Submit Button -->
-    <button type="submit"
+    <button
+      type="submit"
       class="w-full border-2 transition-all ease-in-out duration-150 p-2 sm:p-3 rounded-3xl mt-6 text-sm sm:text-base cursor-pointer"
-      [class.border-blue-700]="!loginForm.invalid" 
+      [class.border-blue-700]="!loginForm.invalid"
       [class.text-blue-900]="!loginForm.invalid"
-      [class.hover:bg-blue-700]="!loginForm.invalid" 
+      [class.hover:bg-blue-700]="!loginForm.invalid"
       [class.hover:text-white]="!loginForm.invalid"
-      [class.hover:shadow-lg]="!loginForm.invalid" 
+      [class.hover:shadow-lg]="!loginForm.invalid"
       [class.border-gray-300]="loginForm.invalid"
-      [class.text-gray-400]="loginForm.invalid" 
-      [disabled]="loginForm.invalid || isLoading">
+      [class.text-gray-400]="loginForm.invalid"
+      [disabled]="loginForm.invalid || isLoading"
+    >
       <span *ngIf="!isLoading">Sign In</span>
-      <mat-spinner diameter="24" *ngIf="isLoading" class="mx-auto"></mat-spinner>
+      <mat-spinner
+        diameter="24"
+        *ngIf="isLoading"
+        class="mx-auto"
+      ></mat-spinner>
     </button>
 
     <!-- Sign Up Link -->
     <div class="mt-6 text-center">
-      <span class="text-gray-600 text-sm sm:text-base">Don't have an account?</span>
-      <a routerLink="/auth/signup" class="text-primary-main hover:underline ml-1 text-sm sm:text-base">Create account</a>
+      <span class="text-gray-600 text-sm sm:text-base"
+        >Don't have an account?</span
+      >
+      <a
+        routerLink="/auth/signup"
+        class="text-primary-main hover:underline ml-1 text-sm sm:text-base"
+        >Create account</a
+      >
     </div>
   </form>
 </div>

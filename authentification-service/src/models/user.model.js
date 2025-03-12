@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
@@ -48,6 +47,17 @@ const userSchema = new Schema({
   isEmailVerified: {
     type: Boolean,
     default: false,
+  },
+  // New fields for account activation
+  isActive: {
+    type: Boolean,
+    default: false, // Account is inactive until email is verified
+  },
+  activationToken: {
+    type: String,
+  },
+  activationExpires: {
+    type: Date,
   },
   createdAt: {
     type: Date,

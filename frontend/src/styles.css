@@ -251,3 +251,58 @@ button:focus-visible {
   animation-delay: 900ms;
 }
 
+/* Verification digit styles */
+.verification-digit::-webkit-outer-spin-button,
+.verification-digit::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.verification-digit {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.shake-animation {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-ping-slow {
+  animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* ===== Custom Snackbar Styling ===== */
+.success-snackbar {
+  --mdc-snackbar-container-color: #43a047 !important;
+  --mdc-snackbar-supporting-text-color: white !important;
+  --mat-mdc-snack-bar-button-color: white !important;
+}
+
+.error-snackbar {
+  --mdc-snackbar-container-color: #d32f2f !important; 
+  --mdc-snackbar-supporting-text-color: white !important;
+  --mat-mdc-snack-bar-button-color: white !important;
+}
+
+.info-snackbar {
+  --mdc-snackbar-container-color: #1976d2 !important;
+  --mdc-snackbar-supporting-text-color: white !important;
+  --mat-mdc-snack-bar-button-color: white !important;
+}
+
+.warning-snackbar {
+  --mdc-snackbar-container-color: #ff9800 !important;
+  --mdc-snackbar-supporting-text-color: white !important;
+  --mat-mdc-snack-bar-button-color: white !important;
+}
+/* Style the action button in snackbars */
+.mat-mdc-simple-snack-bar .mdc-button {
+  color: white !important;
+  font-weight: bold !important;
+}

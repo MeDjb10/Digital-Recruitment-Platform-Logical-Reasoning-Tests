@@ -54,3 +54,30 @@ input[type="checkbox"] {
     padding-bottom: 1rem;
   }
 }
+
+.input-icon-container {
+  position: relative;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 48px; /* Fixed width for icon area */
+  color: #6b7280; /* text-gray-500 */
+  pointer-events: none;
+}
+
+.input-with-icon {
+  width: 100%;
+  padding-left: 48px !important; /* Force left padding */
+}
+
+.input-with-icon-right {
+  padding-right: 48px !important; /* For right icon like password toggle */
+}
