@@ -8,7 +8,7 @@
       </div>
       <div *ngIf="!collapsed" class="flex flex-col">
         <h1 class="brand-title">
-          <span class="text-primary">Recruit</span>Pro
+          <span class="text-primary">Cofat</span>
         </h1>
         <span class="brand-subtitle">Enterprise Portal</span>
       </div>
@@ -67,8 +67,8 @@
             
             <div *ngIf="!collapsed" class="flex-1 flex justify-between items-center">
               <span class="menu-text">{{ test.name }}</span>
-              <i class="chevron-icon pi pi-chevron-down"
-                 [ngClass]="{'rotate-180': test.expanded}"></i>
+              <i class="chevron-icon pi pi-chevron-right transition-transform duration-300"
+               [ngClass]="{'rotate-90': test.expanded}"></i>
             </div>
             
             <span *ngIf="collapsed" pTooltip="{{test.name}}" tooltipPosition="right" [tooltipOptions]="{ showDelay: 300, hideDelay: 50 }"></span>

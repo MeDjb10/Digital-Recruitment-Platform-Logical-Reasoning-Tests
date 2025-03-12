@@ -42,9 +42,10 @@ export class SidebarComponent {
     expanded: false,
     icon: 'pi-chart-line',  // Changed from pi-brain which doesn't exist
     subsections: [
+      { name: 'Liste des Tests', route: 'Tests' },
       { name: 'Statistiques', route: 'Statistique' },
       { name: 'Utilisateurs', route: 'Users' },
-      { name: 'Tests', route: 'Tests' },
+      
     ]
   },
   {

@@ -10,6 +10,8 @@ import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+
 interface User {
   firstName: string;
   lastName: string;
@@ -20,14 +22,12 @@ interface User {
 @Component({
   selector: 'app-users-list',
   standalone: true,
-  imports: [DropdownModule,CommonModule, DialogModule, TableModule, TagModule, InputTextModule, FormsModule, TooltipModule, ButtonModule, ToastModule],
+  imports: [DropdownModule,CommonModule, DialogModule, TableModule, TagModule, InputTextModule, FormsModule, TooltipModule, ButtonModule, ToastModule, ReactiveFormsModule],
   templateUrl: './users-list.component.html',
   styleUrl: './users-list.component.css',
   providers: [MessageService]
 })
 export class UsersListComponent implements OnInit {
-  constructor(private messageService: MessageService) {}
-
   users: User[] = [
     { firstName: 'John', lastName: 'Doe', role: 'candidate', email: 'john.doe@example.com' },
     { firstName: 'Jane', lastName: 'Smith', role: 'admin', email: 'jane.smith@example.com' },
@@ -44,6 +44,24 @@ export class UsersListComponent implements OnInit {
   displayDialog2: any;
   displayDialog: any;
   selectedRole: any;
+  selectedRoleFilter: string = 'Tous';
+  deleteCountdown: number = 10;
+  deleteCountdownInterval: any;
+  showEditDialog: boolean = false;
+  filteredUsers: User[] = [];
+  selectedUser: any = null;
+  showRoleDialog: boolean = false;
+  showDeleteDialog: boolean = false;
+  editForm: FormGroup;
+
+  constructor(private messageService: MessageService, private fb: FormBuilder) {
+    this.editForm = this.fb.group({
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.minLength(6)]]
+    });
+  }
 
   ngOnInit() {
     this.filteredUsers = this.users;
@@ -63,11 +81,6 @@ export class UsersListComponent implements OnInit {
     }
   }
 
-  filteredUsers: any[] = [];
-  selectedUser: any = null;
-  showRoleDialog: boolean = false;
-  showDeleteDialog: boolean = false;
-
   onSearchChange(event: any) {
     const searchText = event.target.value.toLowerCase();
     this.filteredUsers = this.users.filter(user =>
@@ -85,6 +98,18 @@ export class UsersListComponent implements OnInit {
   onDeleteClick(user: User) {
     this.selectedUser = user;
     this.showDeleteDialog = true;
+    this.deleteCountdown = 10;
+    this.startDeleteCountdown();
+  }
+
+  startDeleteCountdown() {
+    this.deleteCountdownInterval = setInterval(() => {
+      if (this.deleteCountdown > 0) {
+        this.deleteCountdown--;
+      } else {
+        clearInterval(this.deleteCountdownInterval);
+      }
+    }, 1000);
   }
 
   confirmRoleChange() {
@@ -116,6 +141,62 @@ export class UsersListComponent implements OnInit {
 
   cancelDelete() {
     this.showDeleteDialog = false;
+    clearInterval(this.deleteCountdownInterval);
+    this.deleteCountdown = 10;
   }
 
+  onEditInfo(user: User) {
+    this.selectedUser = user;
+    this.editForm.patchValue({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      password: ''
+    });
+    this.showEditDialog = true;
+  }
+
+  confirmEdit() {
+    if (this.editForm.valid) {
+      this.loading = true;
+      // Simulate API call
+      setTimeout(() => {
+        const updatedUser = { ...this.selectedUser, ...this.editForm.value };
+        this.users = this.users.map(u => 
+          u === this.selectedUser ? updatedUser : u
+        );
+        this.filteredUsers = this.filteredUsers.map(u => 
+          u === this.selectedUser ? updatedUser : u
+        );
+        this.showEditDialog = false;
+        this.loading = false;
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: 'Informations mises à jour avec succès'
+        });
+      }, 1000);
+    } else {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez vérifier les champs du formulaire'
+      });
+    }
+  }
+
+  cancelEdit() {
+    this.showEditDialog = false;
+    this.editForm.reset();
+  }
+
+  filterByRole(event: any) {
+    if (this.selectedRoleFilter === 'Tous') {
+      this.filteredUsers = this.users;
+    } else {
+      this.filteredUsers = this.users.filter(user => 
+        user.role.toLowerCase() === this.selectedRoleFilter.toLowerCase()
+      );
+    }
+  }
 }
