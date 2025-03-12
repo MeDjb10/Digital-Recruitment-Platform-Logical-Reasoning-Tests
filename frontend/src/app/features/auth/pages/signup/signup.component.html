@@ -67,15 +67,15 @@
         class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
         >Email</label
       >
-      <div class="relative">
-        <!-- <span class="absolute inset-y-0 left-2 flex items-center text-gray-500">
+      <div class="relative input-icon-container">
+        <div class="input-icon">
           <i class="fa-regular fa-envelope"></i>
-        </span> -->
+        </div>
         <input
           type="email"
           formControlName="email"
           id="email"
-          class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
+          class="input-with-icon border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
           placeholder="your.email@example.com"
         />
       </div>
@@ -109,15 +109,15 @@
         class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
         >Password</label
       >
-      <div class="relative">
-        <!-- <span class="absolute inset-y-0 left-2 flex items-center text-gray-500">
+      <div class="relative input-icon-container">
+        <div class="input-icon">
           <i class="fa-solid fa-lock"></i>
-        </span> -->
+        </div>
         <input
           [type]="hidePassword ? 'password' : 'text'"
           formControlName="password"
           id="password"
-          class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 pl-8 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
+          class="input-with-icon border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
         />
         <button
           type="button"
@@ -186,15 +186,17 @@
         class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
         >Confirm Password</label
       >
-      <div class="relative">
-        <!-- <span class="absolute inset-y-0 left-2 flex items-center text-gray-500">
-          <i class="fa-solid fa-lock"></i>
-        </span> -->
+      <div class="relative input-icon-container">
+        <div
+          class="input-icon"
+        >
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
         <input
           [type]="hideConfirmPassword ? 'password' : 'text'"
           formControlName="confirmPassword"
           id="confirmPassword"
-          class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 pl-8 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
+          class="input-with-icon border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 pl-10 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
         />
         <button
           type="button"
