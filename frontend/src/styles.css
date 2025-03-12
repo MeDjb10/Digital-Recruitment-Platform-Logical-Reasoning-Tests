@@ -251,6 +251,30 @@ button:focus-visible {
   animation-delay: 900ms;
 }
 
+/* Verification digit styles */
+.verification-digit::-webkit-outer-spin-button,
+.verification-digit::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.verification-digit {
+  -moz-appearance: textfield;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.shake-animation {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-ping-slow {
+  animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
 
 /* ===== Custom Snackbar Styling ===== */
 .success-snackbar {
