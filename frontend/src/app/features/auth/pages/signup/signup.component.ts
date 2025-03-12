@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   FormGroup,
+  FormsModule,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
@@ -19,6 +20,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DialogModule } from 'primeng/dialog';
+import { finalize, Subject } from 'rxjs';
 
 @Component({
   selector: 'app-signup',
@@ -35,6 +37,7 @@ import { DialogModule } from 'primeng/dialog';
     MatProgressSpinnerModule,
     MatDividerModule,
     DialogModule,
+    FormsModule,
   ],
   templateUrl: './signup.component.html',
   styleUrls: ['./signup.component.css'],
@@ -54,6 +57,16 @@ export class SignupComponent implements OnInit, OnDestroy {
   codeSubmitted = false;
   cooldownInterval: any;
 
+  // Email verification properties
+
+  verificationError: string | null = null;
+
+  // Store registration response data
+  registeredEmail: string = '';
+  activationToken: string = '';
+
+  private destroy$ = new Subject<void>();
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
@@ -62,23 +75,26 @@ export class SignupComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.signupForm = this.fb.group({
-      firstName: ['', [Validators.required, Validators.minLength(2)]],
-      lastName: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
-      password: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(8),
-          // Additional complex validation handled separately for better UX
+    this.signupForm = this.fb.group(
+      {
+        firstName: ['', [Validators.required, Validators.minLength(2)]],
+        lastName: ['', [Validators.required, Validators.minLength(2)]],
+        email: ['', [Validators.required, Validators.email]],
+        password: [
+          '',
+          [
+            Validators.required,
+            Validators.minLength(8),
+            // Additional complex validation handled separately for better UX
+          ],
         ],
-      ],
-      confirmPassword: ['', [Validators.required]],
-      acceptTerms: [false, [Validators.requiredTrue]],
-    }, {
-      validators: this.passwordMatchValidator
-    });
+        confirmPassword: ['', [Validators.required]],
+        acceptTerms: [false, [Validators.requiredTrue]],
+      },
+      {
+        validators: this.passwordMatchValidator,
+      }
+    );
 
     // Check password strength on input
     this.signupForm.get('password')?.valueChanges.subscribe((password) => {
@@ -102,11 +118,21 @@ export class SignupComponent implements OnInit, OnDestroy {
 
     this.authService
       .register({ firstName, lastName, email, password })
+      .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: () => {
+        next: (response) => {
+          this.registeredEmail = response.email;
+          this.activationToken = response.activationToken;
+
           this.isLoading = false;
           this.showVerificationDialog = true;
           this.startCooldown();
+
+          this.snackBar.open(
+            'Registration initiated! Please check your email for verification code.',
+            'Close',
+            { duration: 5000, panelClass: ['success-snackbar'] }
+          );
         },
         error: (error) => {
           this.isLoading = false;
@@ -185,8 +211,11 @@ export class SignupComponent implements OnInit, OnDestroy {
       return null;
     }
 
-    return password && confirmPassword && password.value !== confirmPassword.value ? 
-      { 'mismatch': true } : null;
+    return password &&
+      confirmPassword &&
+      password.value !== confirmPassword.value
+      ? { mismatch: true }
+      : null;
   }
 
   // Helper for form validation display
@@ -213,12 +242,14 @@ export class SignupComponent implements OnInit, OnDestroy {
     event.preventDefault();
     const pastedText = event.clipboardData?.getData('text') || '';
     const digits = pastedText.replace(/\D/g, '').split('').slice(0, 6);
-    
+
     this.verificationCode = [...digits, ...new Array(6)].slice(0, 6);
-    
+
     // Update input fields
     digits.forEach((digit, index) => {
-      const input = document.getElementById(`digit-${index}`) as HTMLInputElement;
+      const input = document.getElementById(
+        `digit-${index}`
+      ) as HTMLInputElement;
       if (input) input.value = digit;
     });
   }
@@ -234,36 +265,91 @@ export class SignupComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  resendCode() {
-    if (this.cooldownTimeLeft > 0) return;
-    
+  resendCode(): void {
+    if (this.cooldownTimeLeft > 0 || this.isProcessing) return;
+
     this.isProcessing = true;
-    setTimeout(() => {
-      this.isProcessing = false;
-      this.startCooldown();
-      this.snackBar.open('New verification code sent!', 'Close', {
-        duration: 3000,
-        panelClass: ['success-snackbar']
+    this.verificationError = null;
+
+    this.authService
+      .resendVerificationCode(this.registeredEmail, this.activationToken)
+      .pipe(finalize(() => (this.isProcessing = false)))
+      .subscribe({
+        next: (response) => {
+          // Update activation token if it changed
+          this.activationToken = response.activationToken;
+
+          this.startCooldown();
+          this.snackBar.open(
+            'New verification code sent to your email',
+            'Close',
+            { duration: 3000, panelClass: ['success-snackbar'] }
+          );
+        },
+        error: (error) => {
+          this.verificationError = error.message || 'Failed to resend code';
+
+          this.snackBar.open(
+            this.verificationError || 'An error occurred',
+            'Close',
+            {
+              duration: 5000,
+              panelClass: ['error-snackbar'],
+            }
+          );
+        },
       });
-    }, 1000);
   }
 
-  verifyCode() {
+  // Update your verifyCode method
+  verifyCode(): void {
+    const fullCode = this.verificationCode.join('');
+
+    if (fullCode.length !== 6) {
+      this.verificationError = 'Please enter the 6-digit code';
+      return;
+    }
+
     this.isProcessing = true;
     this.codeSubmitted = true;
-    
-    const fullCode = this.verificationCode.join('');
-    // Simulate API verification
-    setTimeout(() => {
-      this.isProcessing = false;
-      this.showVerificationDialog = false;
-      this.router.navigate(['/dashboard']);
-    }, 1500);
+    this.verificationError = null;
+
+    this.authService
+      .verifyEmail(this.registeredEmail, fullCode, this.activationToken)
+      .pipe(finalize(() => (this.isProcessing = false)))
+      .subscribe({
+        next: (response) => {
+          this.showVerificationDialog = false;
+
+          this.snackBar.open(
+            'Email verified! You are now logged in.',
+            'Close',
+            { duration: 3000, panelClass: ['success-snackbar'] }
+          );
+
+          // Navigate to dashboard after successful verification
+          this.router.navigate(['/dashboard']);
+        },
+        error: (error) => {
+          this.verificationError = error.message || 'Verification failed';
+
+          this.snackBar.open(
+            this.verificationError || 'An error occurred',
+            'Close',
+            {
+              duration: 5000,
+              panelClass: ['error-snackbar'],
+            }
+          );
+        },
+      });
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     if (this.cooldownInterval) {
       clearInterval(this.cooldownInterval);
     }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

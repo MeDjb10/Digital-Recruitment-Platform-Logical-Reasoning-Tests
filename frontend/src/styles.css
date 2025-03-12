@@ -259,6 +259,7 @@ button:focus-visible {
 }
 
 .verification-digit {
+  appearance: textfield;
   -moz-appearance: textfield;
 }
 
