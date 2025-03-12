@@ -12,54 +12,312 @@ const {
   generateResetToken,
 } = require("../utils/otp.util");
 
+// Modified register function with email verification
 exports.register = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
-    if (existingUser)
+    if (existingUser) {
+      // If user exists but isn't verified, allow re-sending verification code
+      if (existingUser && !existingUser.isEmailVerified) {
+        return await sendVerificationOTP(existingUser, res);
+      }
       return res.status(400).json({ message: "Email already registered" });
+    }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Generate OTP for verification
+    const otp = generateOTP();
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10); // 10 minutes expiry
+    
+    // Generate activation token
+    const activationToken = generateResetToken(); // Reusing the token generation function
+    
+    // Create new user (initially inactive)
     const newUser = new User({
       firstName,
       lastName,
       email,
       password: hashedPassword,
-      role: "candidate", // Initially candidate; later profile completion can upgrade role
+      role: "candidate",
+      isActive: false,
+      isEmailVerified: false,
+      otp: {
+        code: otp,
+        expiresAt: expiresAt
+      },
+      activationToken: activationToken,
+      activationExpires: expiresAt
     });
 
     await newUser.save();
 
-    // Send welcome email
+    // Send verification email with OTP
     await sendEmail(
       email,
-      "Welcome to RecruitFlow",
-      `<p>Welcome ${firstName}, your account has been created successfully!</p>`
+      "Verify Your Email - RecruitFlow",
+      `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h2 style="color: #3b82f6;">Welcome to RecruitFlow!</h2>
+        <p>Hi ${firstName},</p>
+        <p>Thank you for signing up. To complete your registration, please verify your email address using this verification code:</p>
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0;">
+          <h1 style="font-size: 24px; letter-spacing: 5px; margin: 0; color: #333;">${otp}</h1>
+        </div>
+        <p>This code will expire in 10 minutes.</p>
+        <p>If you didn't sign up for a RecruitFlow account, you can safely ignore this email.</p>
+        <p>Thanks,<br>The RecruitFlow Team</p>
+      </div>`
     );
 
-    res.status(201).json({ message: "User registered successfully" });
+    // Return success response with activation token for the next step
+    res.status(201).json({ 
+      message: "Registration initiated successfully. Please verify your email.",
+      email: email,
+      activationToken: activationToken
+    });
   } catch (error) {
+    console.error("Registration error:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-// In auth.controller.js, modify the login function
+// Helper function to resend verification OTP for existing unverified users
+const sendVerificationOTP = async (user, res) => {
+  try {
+    // Generate new OTP and expiry
+    const otp = generateOTP();
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10); // 10 minutes expiry
+    
+    // Update user's OTP
+    user.otp = {
+      code: otp,
+      expiresAt: expiresAt
+    };
+    
+    // Generate new activation token
+    const activationToken = generateResetToken();
+    user.activationToken = activationToken;
+    user.activationExpires = expiresAt;
+    
+    await user.save();
+    
+    // Send verification email
+    await sendEmail(
+      user.email,
+      "Verify Your Email - RecruitFlow",
+      `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h2 style="color: #3b82f6;">Complete Your Registration</h2>
+        <p>Hi ${user.firstName},</p>
+        <p>We noticed you previously tried to register. To complete your registration, please verify your email address using this verification code:</p>
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0;">
+          <h1 style="font-size: 24px; letter-spacing: 5px; margin: 0; color: #333;">${otp}</h1>
+        </div>
+        <p>This code will expire in 10 minutes.</p>
+        <p>If you didn't sign up for a RecruitFlow account, you can safely ignore this email.</p>
+        <p>Thanks,<br>The RecruitFlow Team</p>
+      </div>`
+    );
+    
+    return res.status(200).json({
+      message: "Please verify your email to complete registration.",
+      email: user.email,
+      activationToken: activationToken
+    });
+  } catch (error) {
+    console.error("Error sending verification OTP:", error);
+    throw error;
+  }
+};
+
+// Verify email OTP after registration
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { email, otp, activationToken } = req.body;
+    
+    // Find user with matching email, OTP, and activation token
+    const user = await User.findOne({
+      email,
+      activationToken,
+      'otp.code': otp,
+      activationExpires: { $gt: Date.now() }
+    });
+    
+    if (!user) {
+      return res.status(400).json({ 
+        message: "Invalid verification code or expired token"
+      });
+    }
+    
+    // Check if OTP has expired
+    if (isOTPExpired(user.otp.expiresAt)) {
+      return res.status(400).json({ message: "Verification code has expired" });
+    }
+    
+    // Activate account
+    user.isActive = true;
+    user.isEmailVerified = true;
+    user.otp = undefined;
+    user.activationToken = undefined;
+    user.activationExpires = undefined;
+    
+    await user.save();
+    
+    // Generate tokens for automatic login after verification
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    
+    // Send welcome email
+    await sendEmail(
+      email,
+      "Welcome to RecruitFlow",
+      `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h2 style="color: #3b82f6;">Welcome to RecruitFlow!</h2>
+        <p>Hi ${user.firstName},</p>
+        <p>Thank you for verifying your email. Your account has been successfully activated!</p>
+        <p>You can now log in and start using all the features of RecruitFlow.</p>
+        <p>Thanks,<br>The RecruitFlow Team</p>
+      </div>`
+    );
+    
+    // Return tokens for automatic login
+    res.status(200).json({
+      message: "Email verified and account activated successfully",
+      accessToken,
+      refreshToken
+    });
+  } catch (error) {
+    console.error("Error in email verification:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Resend verification OTP
+exports.resendVerificationOTP = async (req, res) => {
+  try {
+    const { email, activationToken } = req.body;
+    
+    // Find user by email and activation token
+    const user = await User.findOne({ 
+      email, 
+      activationToken,
+      isEmailVerified: false
+    });
+    
+    if (!user) {
+      return res.status(400).json({ 
+        message: "Invalid email or activation token"
+      });
+    }
+    
+    // Generate new OTP and update expiry
+    const otp = generateOTP();
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10); // 10 minutes expiry
+    
+    user.otp = {
+      code: otp,
+      expiresAt: expiresAt
+    };
+    user.activationExpires = expiresAt;
+    
+    await user.save();
+    
+    // Send verification email with OTP
+    await sendEmail(
+      email,
+      "Verify Your Email - RecruitFlow",
+      `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h2 style="color: #3b82f6;">Complete Your Registration</h2>
+        <p>Hi ${user.firstName},</p>
+        <p>Here is your new verification code:</p>
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0;">
+          <h1 style="font-size: 24px; letter-spacing: 5px; margin: 0; color: #333;">${otp}</h1>
+        </div>
+        <p>This code will expire in 10 minutes.</p>
+        <p>If you didn't sign up for a RecruitFlow account, you can safely ignore this email.</p>
+        <p>Thanks,<br>The RecruitFlow Team</p>
+      </div>`
+    );
+    
+    res.status(200).json({
+      message: "New verification code sent to your email",
+      email: email,
+      activationToken: activationToken
+    });
+  } catch (error) {
+    console.error("Error in resending verification code:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Modify login function to check email verification status
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid)
+    if (!isValid) {
       return res.status(401).json({ message: "Invalid credentials" });
+    }
+    
+    // Check if email is verified
+    if (!user.isEmailVerified || !user.isActive) {
+      // Generate new verification materials
+      const otp = generateOTP();
+      const expiresAt = new Date();
+      expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+      
+      const activationToken = generateResetToken();
+      
+      user.otp = {
+        code: otp,
+        expiresAt: expiresAt
+      };
+      user.activationToken = activationToken;
+      user.activationExpires = expiresAt;
+      
+      await user.save();
+      
+      // Send verification email
+      await sendEmail(
+        email,
+        "Verify Your Email - RecruitFlow",
+        `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <h2 style="color: #3b82f6;">Email Verification Required</h2>
+          <p>Hi ${user.firstName},</p>
+          <p>Your account requires email verification. Please use this verification code to activate your account:</p>
+          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0;">
+            <h1 style="font-size: 24px; letter-spacing: 5px; margin: 0; color: #333;">${otp}</h1>
+          </div>
+          <p>This code will expire in 10 minutes.</p>
+          <p>Thanks,<br>The RecruitFlow Team</p>
+        </div>`
+      );
+      
+      return res.status(403).json({
+        message: "Please verify your email before logging in",
+        requiresVerification: true,
+        email: email,
+        activationToken: activationToken
+      });
+    }
 
-    // Generate tokens
+    // Generate tokens for authenticated user
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
+    // Log token generation for debugging
     console.log("Generated access token:", accessToken.substring(0, 20) + "...");
     console.log("User data used for token:", { id: user._id, role: user.role });
 
