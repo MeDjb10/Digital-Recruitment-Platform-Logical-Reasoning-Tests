@@ -4,14 +4,8 @@ import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { User } from '../../../core/models/user.model';
 
-export interface User {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-}
 
 export interface AuthResponse {
   message?: string;
@@ -70,7 +64,7 @@ export class AuthService {
 
         // Create user object from token payload
         const user: User = {
-          _id: payload.id,
+          id: payload.id,
           firstName: payload.firstName || '',
           lastName: payload.lastName || '',
           email: payload.email || '',
@@ -99,6 +93,10 @@ export class AuthService {
           return throwError(() => new Error(errorMessage));
         })
       );
+  }
+
+  getUserRole(): string {
+    return this.currentUserSubject.value?.role || 'candidate';
   }
 
   // Verify email with OTP after registration
@@ -169,6 +167,20 @@ export class AuthService {
 
           // Parse the token for user info
           this.loadUserFromTokens();
+
+          // Route the user based on their role (moved from AuthGuard)
+          const userRole = this.getCurrentUser()?.role;
+
+          if (userRole === 'candidate') {
+            this.router.navigate(['/home']);
+          } else if (
+            ['admin', 'moderator', 'psychologist'].includes(userRole || '')
+          ) {
+            this.router.navigate(['/dashboard']);
+          } else {
+            // Default fallback
+            this.router.navigate(['/home']);
+          }
         }),
         catchError((error) => {
           const errorMessage = error.error?.message || 'Login failed';
@@ -338,5 +350,36 @@ export class AuthService {
     this.tokenExpiryTimer = setTimeout(() => {
       this.logout();
     }, expiryDuration);
+  }
+
+  // Add this method to your AuthService class
+  refreshTokenRequest(): Observable<AuthResponse> {
+    const refreshToken = this.getRefreshToken();
+
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token available'));
+    }
+
+    return this.http
+      .post<AuthResponse>(`${this.apiUrl}/refresh-token`, {
+        refreshToken,
+      })
+      .pipe(
+        tap((response) => {
+          // Store the new tokens
+          this.storeTokens(
+            response.accessToken,
+            response.refreshToken || refreshToken, // Use new refresh token if provided, otherwise keep the old one
+            localStorage.getItem('access_token') !== null // Keep in localStorage if it was there before
+          );
+
+          // Parse the new token for user info
+          this.loadUserFromTokens();
+        }),
+        catchError((error) => {
+          const errorMessage = error.error?.message || 'Token refresh failed';
+          return throwError(() => new Error(errorMessage));
+        })
+      );
   }
 }

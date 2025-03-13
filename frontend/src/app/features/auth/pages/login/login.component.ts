@@ -41,7 +41,7 @@ export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   hidePassword = true;
   isLoading = false;
-  returnUrl: string = '/dashboard';
+
   loginError: string | null = null;
 
   constructor(
@@ -59,9 +59,7 @@ export class LoginComponent implements OnInit {
       rememberMe: [false],
     });
 
-    // Get return url from route parameters or default to '/dashboard'
-    this.returnUrl =
-      this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+   
 
     // Show message if there was an auth error
     const authError = this.route.snapshot.queryParams['authError'];
@@ -76,9 +74,7 @@ export class LoginComponent implements OnInit {
     }
 
     // Check if user is already logged in
-    if (this.authService.isLoggedIn()) {
-      this.router.navigate([this.returnUrl]);
-    }
+   
   }
 
   onSubmit() {
@@ -93,7 +89,7 @@ export class LoginComponent implements OnInit {
           this.isLoading = false;
 
           // Navigate to return URL or dashboard
-          this.router.navigate([this.returnUrl]);
+     
         },
         error: (error) => {
           this.isLoading = false;
