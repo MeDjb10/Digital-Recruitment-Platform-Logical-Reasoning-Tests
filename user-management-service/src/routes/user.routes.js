@@ -7,40 +7,56 @@ const {
   validateUserId,
   validateUserUpdate,
   validateRoleAssignment,
+  validateUserStatus,
 } = require("../utils/validation.util");
+const verifyServiceToken = require("../middleware/service-auth.middleware");
+
+// Add this route
+router.get('/health', (req, res) => {
+  res.json({ message: 'User service is responding properly' });
+});
+
+
 
 /**
  * @swagger
- * components:
- *   schemas:
- *     User:
- *       type: object
- *       properties:
- *         _id:
+ * /api/users/role/{userId}:
+ *   get:
+ *     summary: Get a user's role by ID (service-to-service endpoint)
+ *     description: Used by Auth Service to get role information
+ *     security:
+ *       - serviceAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
  *           type: string
- *           description: The auto-generated ID
- *         firstName:
- *           type: string
- *           description: User's first name
- *         lastName:
- *           type: string
- *           description: User's last name
- *         email:
- *           type: string
- *           description: User's email address
- *         role:
- *           type: string
- *           enum: [candidate, admin, moderator, psychologist]
- *         dateOfBirth:
- *           type: string
- *           format: date
- *         gender:
- *           type: string
- *           enum: [Male, Female, Other]
- *         createdAt:
- *           type: string
- *           format: date-time
+ *     responses:
+ *       200:
+ *         description: Returns user role
  */
+router.get(
+  "/role/:userId",
+  verifyServiceToken,
+  userController.getUserRole
+);
+
+
+/**
+ * @swagger
+ * /api/users/profile:
+ *   get:
+ *     summary: Get current user's profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile details
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/profile", verifyToken(), userController.getMyProfile);
 
 /**
  * @swagger
@@ -73,31 +89,15 @@ const {
  *         schema:
  *           type: string
  *         description: Search by name or email
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, inactive, suspended]
+ *         description: Filter by user status (admin only)
  *     responses:
  *       200:
  *         description: List of users
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 users:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/User'
- *                 pagination:
- *                   type: object
- *                   properties:
- *                     total:
- *                       type: integer
- *                     page:
- *                       type: integer
- *                     pages:
- *                       type: integer
- *                     limit:
- *                       type: integer
  *       401:
  *         description: Unauthorized
  *       403:
@@ -114,7 +114,7 @@ router.get(
  * @swagger
  * /api/users/role:
  *   put:
- *     summary: Assign role to user (admin only)
+ *     summary: Assign role to user (admin can assign any role, moderator can only assign psychologist)
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -138,18 +138,13 @@ router.get(
  *       400:
  *         description: Invalid input data
  *       403:
- *         description: Forbidden - admin only
+ *         description: Forbidden - insufficient permissions
  *       404:
  *         description: User not found
  */
 router.put(
   "/role",
-  (req, res, next) => {
-    console.log("Role assignment route hit!");
-    console.log("Request body:", req.body);
-    next();
-  },
-  verifyToken(["admin"]),
+  verifyToken(["admin", "moderator"]),
   validateRoleAssignment,
   userController.assignRole
 );
@@ -170,10 +165,6 @@ router.put(
  *     responses:
  *       200:
  *         description: User details
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
  *       404:
  *         description: User not found
  */
@@ -216,8 +207,6 @@ router.get(
  *     responses:
  *       200:
  *         description: Updated user profile
- *       400:
- *         description: Validation error
  *       403:
  *         description: Unauthorized - can only update own profile unless admin
  *       404:
@@ -231,6 +220,122 @@ router.put(
   userController.updateUser
 );
 
+/**
+ * @swagger
+ * /api/users/{userId}:
+ *   delete:
+ *     summary: Delete a user
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *       403:
+ *         description: Forbidden - admin only
+ *       404:
+ *         description: User not found
+ */
+router.delete(
+  "/:userId",
+  verifyToken(["admin"]),
+  validateUserId,
+  userController.deleteUser
+);
+
+/**
+ * @swagger
+ * /api/users/{userId}/status:
+ *   patch:
+ *     summary: Update user status (active/inactive/suspended)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive, suspended]
+ *     responses:
+ *       200:
+ *         description: User status updated successfully
+ *       400:
+ *         description: Invalid status value
+ *       403:
+ *         description: Forbidden - admin only
+ *       404:
+ *         description: User not found
+ */
+router.patch(
+  "/:userId/status",
+  verifyToken(["admin"]),
+  validateUserId,
+  validateUserStatus,
+  userController.updateUserStatus
+);
+
+
+/**
+ * @swagger
+ * /api/users/create:
+ *   post:
+ *     summary: Create a new user profile (internal service endpoint)
+ *     description: This endpoint is for internal service-to-service communication only
+ *     security:
+ *       - serviceAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - authId
+ *               - email
+ *             properties:
+ *               authId:
+ *                 type: string
+ *                 description: ID from the auth service
+ *               email:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [candidate, admin, moderator, psychologist]
+ *                 default: candidate
+ *     responses:
+ *       201:
+ *         description: User profile created successfully
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Unauthorized - invalid service token
+ */
+router.post(
+  "/create",
+  verifyServiceToken,
+  userController.createUser
+);
 
 
 module.exports = router;

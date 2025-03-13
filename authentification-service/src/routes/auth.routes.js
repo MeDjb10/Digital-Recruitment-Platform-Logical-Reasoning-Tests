@@ -47,5 +47,8 @@ router.post("/reset-password", authController.resetPassword);
 router.post("/request-login-otp", authController.requestLoginOTP);
 router.post("/verify-login-otp", authController.verifyLoginOTP);
 
+router.get("/test", (req, res) => {
+  res.json({ message: "Auth service is responding properly" });
+});
 
 module.exports = router;

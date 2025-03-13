@@ -1,114 +1,155 @@
-const { body, param, query, validationResult } = require("express-validator");
+const { ErrorResponse } = require("./error-handler.util");
+const mongoose = require("mongoose");
 
-/**
- * Helper function to validate request and return errors
- */
-const validateRequest = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
+// Validate user filters for getUsers route
+exports.validateUserFilters = (req, res, next) => {
+  const { role, status } = req.query;
+
+  // Validate role if provided
+  if (
+    role &&
+    !["candidate", "admin", "moderator", "psychologist"].includes(role)
+  ) {
     return res.status(400).json({
       success: false,
-      errors: errors.array().map((error) => ({
-        field: error.param,
-        message: error.msg,
-      })),
+      message: "Invalid role specified",
     });
   }
+
+  // Validate status if provided
+  if (status && !["active", "inactive", "suspended"].includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid status specified",
+    });
+  }
+
   next();
 };
 
-/**
- * Validation rules for user filters
- */
-const validateUserFilters = [
-  query("role")
-    .optional()
-    .isIn(["candidate", "admin", "moderator", "psychologist"])
-    .withMessage("Invalid role specified"),
-  query("page")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("Page must be a positive integer"),
-  query("limit")
-    .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage("Limit must be between 1 and 100"),
-  validateRequest,
-];
+// Validate userId parameter
+exports.validateUserId = (req, res, next) => {
+  const userId = req.params.userId;
 
-/**
- * Validation rules for user ID parameter
- */
-const validateUserId = [
-  param("userId").isMongoId().withMessage("Invalid user ID format"),
-  validateRequest,
-];
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid user ID format",
+    });
+  }
 
-/**
- * Validation rules for user profile updates
- */
-const validateUserUpdate = [
-  body("firstName")
-    .optional()
-    .isString()
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage("First name must be between 2 and 50 characters"),
-  body("lastName")
-    .optional()
-    .isString()
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage("Last name must be between 2 and 50 characters"),
-  body("dateOfBirth")
-    .optional()
-    .isISO8601()
-    .withMessage("Invalid date format. Use ISO format (YYYY-MM-DD)"),
-  body("gender")
-    .optional()
-    .isIn(["Male", "Female", "Other"])
-    .withMessage("Gender must be Male, Female, or Other"),
-  body("currentPosition")
-    .optional()
-    .isString()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage("Current position cannot exceed 100 characters"),
-  body("desiredPosition")
-    .optional()
-    .isString()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage("Desired position cannot exceed 100 characters"),
-  body("educationLevel")
-    .optional()
-    .isString()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage("Education level cannot exceed 100 characters"),
-  body("status")
-    .optional()
-    .isIn(["active", "inactive", "suspended"])
-    .withMessage("Status must be active, inactive, or suspended"),
-  validateRequest,
-];
+  next();
+};
 
-/**
- * Validation rules for role assignment
- */
-const validateRoleAssignment = [
-  body("userId").isMongoId().withMessage("Invalid user ID format"),
-  body("role")
-    .isIn(["candidate", "admin", "moderator", "psychologist"])
-    .withMessage(
-      "Invalid role. Must be candidate, admin, moderator, or psychologist"
-    ),
-  validateRequest,
-];
+// Validate user update data
+exports.validateUserUpdate = (req, res, next) => {
+  const {
+    firstName,
+    lastName,
+    dateOfBirth,
+    gender,
+    currentPosition,
+    desiredPosition,
+    educationLevel,
+    status,
+  } = req.body;
+  const errors = [];
 
-module.exports = {
-  validateUserFilters,
-  validateUserId,
-  validateUserUpdate,
-  validateRoleAssignment,
+  // Check if firstName is valid if provided
+  if (
+    firstName !== undefined &&
+    (typeof firstName !== "string" || firstName.trim().length < 2)
+  ) {
+    errors.push("First name must be at least 2 characters");
+  }
+
+  // Check if lastName is valid if provided
+  if (
+    lastName !== undefined &&
+    (typeof lastName !== "string" || lastName.trim().length < 2)
+  ) {
+    errors.push("Last name must be at least 2 characters");
+  }
+
+  // Check if dateOfBirth is a valid date if provided
+  if (dateOfBirth !== undefined) {
+    const isValidDate = !isNaN(Date.parse(dateOfBirth));
+    if (!isValidDate) {
+      errors.push("Invalid date of birth format");
+    }
+  }
+
+  // Check if gender is valid if provided
+  if (gender !== undefined && !["Male", "Female", "Other"].includes(gender)) {
+    errors.push("Gender must be one of: Male, Female, Other");
+  }
+
+  // Check if status is valid if provided (admin only)
+  if (status !== undefined) {
+    if (req.userRole !== "admin") {
+      errors.push("Only admins can update status");
+    } else if (!["active", "inactive", "suspended"].includes(status)) {
+      errors.push("Status must be one of: active, inactive, suspended");
+    }
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation error",
+      errors,
+    });
+  }
+
+  next();
+};
+
+// Validate role assignment
+exports.validateRoleAssignment = (req, res, next) => {
+  const { userId, role } = req.body;
+  const errors = [];
+
+  // Check if userId is valid
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    errors.push("Valid user ID is required");
+  }
+
+  // Check if role is valid
+  if (
+    !role ||
+    !["candidate", "admin", "moderator", "psychologist"].includes(role)
+  ) {
+    errors.push(
+      "Role must be one of: candidate, admin, moderator, psychologist"
+    );
+  }
+
+  // Check permissions based on requester's role
+  if (req.userRole === "moderator" && role !== "psychologist") {
+    errors.push("Moderators can only assign the psychologist role");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation error",
+      errors,
+    });
+  }
+
+  next();
+};
+
+// Validate user status update
+exports.validateUserStatus = (req, res, next) => {
+  const { status } = req.body;
+
+  if (!status || !["active", "inactive", "suspended"].includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: "Status must be one of: active, inactive, suspended",
+    });
+  }
+
+  next();
 };

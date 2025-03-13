@@ -1,75 +1,94 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
 const cors = require("cors");
-const helmet = require("helmet");
+const morgan = require("morgan");
+const swaggerJsDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
-const swaggerDocs = require("./config/swagger.config");
 const userRoutes = require("./routes/user.routes");
-const { errorHandler } = require("./utils/error-handler.util");
-const { apiLimiter } = require("./middleware/rate-limit.middleware");
+const dotenv = require("dotenv");
 
 // Load environment variables
 dotenv.config();
 
-// Initialize Express app
 const app = express();
 
-// Set security HTTP headers
-app.use(helmet());
-
-// Enable CORS
-app.use(cors());
-
-// Rate limiting
-app.use("/api/", apiLimiter);
-
-// Body parser
-app.use(express.json({ limit: "10kb" }));
+// Middleware
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// API Documentation
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+// CORS configuration
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-// MongoDB Connection - only connect if not in test environment
-// or if the connection hasn't been established already
-if (process.env.NODE_ENV !== "test" && mongoose.connection.readyState === 0) {
-  mongoose
-    .connect(process.env.MONGODB_URI)
-    .then(() => console.log("Connected to MongoDB (User Management Service)"))
-    .catch((err) => console.error("MongoDB connection error:", err));
+// Logging
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
 }
 
-// Main Routes
+// Swagger configuration
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: "3.0.0",
+    info: {
+      title: "User Management API",
+      version: "1.0.0",
+      description: "API for user management and role-based access control",
+    },
+    servers: [
+      {
+        url: process.env.API_URL || "http://localhost:3001/api",
+        description: "Development server",
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+  },
+  apis: ["./src/routes/*.js"],
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Routes
 app.use("/api/users", userRoutes);
 
-// Basic health check endpoint
+// Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({
-    success: true,
-    message: "User Management Service is running",
+    service: "User Management Service",
+    status: "UP",
     timestamp: new Date(),
   });
 });
 
-// Handle 404 errors
-app.use("*", (req, res) => {
+// 404 handler
+app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: `Cannot find ${req.originalUrl} on this server`,
+    message: `Route ${req.originalUrl} not found`,
   });
 });
 
 // Global error handler
-app.use(errorHandler);
-
-// Only start the server if not in test environment
-if (process.env.NODE_ENV !== "test") {
-  const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => {
-    console.log(`User Management Service running on port ${PORT}`);
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: "Something went wrong!",
+    error: process.env.NODE_ENV === "development" ? err.message : undefined,
   });
-}
+});
 
-// For testing purposes
 module.exports = app;

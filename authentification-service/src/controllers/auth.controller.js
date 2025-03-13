@@ -12,6 +12,12 @@ const {
   generateResetToken,
 } = require("../utils/otp.util");
 
+const axios = require("axios");
+const USER_SERVICE_URL =
+  process.env.USER_SERVICE_URL || "http://localhost:3001/api/users";
+const SERVICE_TOKEN = process.env.SERVICE_TOKEN || "your-secret-service-token";
+
+
 // Modified register function with email verification
 exports.register = async (req, res) => {
   try {
@@ -139,39 +145,70 @@ const sendVerificationOTP = async (user, res) => {
 exports.verifyEmail = async (req, res) => {
   try {
     const { email, otp, activationToken } = req.body;
-    
+
     // Find user with matching email, OTP, and activation token
     const user = await User.findOne({
       email,
       activationToken,
-      'otp.code': otp,
-      activationExpires: { $gt: Date.now() }
+      "otp.code": otp,
+      activationExpires: { $gt: Date.now() },
     });
-    
+
     if (!user) {
-      return res.status(400).json({ 
-        message: "Invalid verification code or expired token"
+      return res.status(400).json({
+        message: "Invalid verification code or expired token",
       });
     }
-    
+
     // Check if OTP has expired
     if (isOTPExpired(user.otp.expiresAt)) {
       return res.status(400).json({ message: "Verification code has expired" });
     }
-    
+
     // Activate account
     user.isActive = true;
     user.isEmailVerified = true;
     user.otp = undefined;
     user.activationToken = undefined;
     user.activationExpires = undefined;
-    
+
     await user.save();
-    
-    // Generate tokens for automatic login after verification
+
+    // Generate tokens for authenticated user
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-    
+
+    // IMPORTANT: Create the user in the User Management Service
+    try {
+      await axios.post(
+        `${USER_SERVICE_URL}/create`,
+        {
+          authId: user._id.toString(),
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${SERVICE_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log(
+        `User profile created in User Management Service for ${user.email}`
+      );
+    } catch (error) {
+      // Log the error but don't fail the registration
+      // We can implement a background retry mechanism later
+      console.error(
+        "Failed to create user profile in User Management Service:",
+        error.message
+      );
+    }
+
     // Send welcome email
     await sendEmail(
       email,
@@ -184,12 +221,12 @@ exports.verifyEmail = async (req, res) => {
         <p>Thanks,<br>The RecruitFlow Team</p>
       </div>`
     );
-    
+
     // Return tokens for automatic login
     res.status(200).json({
       message: "Email verified and account activated successfully",
       accessToken,
-      refreshToken
+      refreshToken,
     });
   } catch (error) {
     console.error("Error in email verification:", error);
@@ -261,7 +298,7 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -270,25 +307,25 @@ exports.login = async (req, res) => {
     if (!isValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    
+
     // Check if email is verified
     if (!user.isEmailVerified || !user.isActive) {
       // Generate new verification materials
       const otp = generateOTP();
       const expiresAt = new Date();
       expiresAt.setMinutes(expiresAt.getMinutes() + 10);
-      
+
       const activationToken = generateResetToken();
-      
+
       user.otp = {
         code: otp,
-        expiresAt: expiresAt
+        expiresAt: expiresAt,
       };
       user.activationToken = activationToken;
       user.activationExpires = expiresAt;
-      
+
       await user.save();
-      
+
       // Send verification email
       await sendEmail(
         email,
@@ -304,24 +341,39 @@ exports.login = async (req, res) => {
           <p>Thanks,<br>The RecruitFlow Team</p>
         </div>`
       );
-      
+
       return res.status(403).json({
         message: "Please verify your email before logging in",
         requiresVerification: true,
         email: email,
-        activationToken: activationToken
+        activationToken: activationToken,
       });
     }
 
     // Generate tokens for authenticated user
-    const accessToken = generateAccessToken(user);
+    const accessToken = await generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
     // Log token generation for debugging
-    console.log("Generated access token:", accessToken.substring(0, 20) + "...");
-    console.log("User data used for token:", { id: user._id, role: user.role });
+    console.log(
+      "Generated access token:",
+      accessToken.substring(0, 20) + "..."
+    );
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
 
-    res.status(200).json({ accessToken, refreshToken });
+     res.status(200).json({
+       accessToken,
+       refreshToken,
+       user: {
+         id: user._id,
+         firstName: user.firstName,
+         lastName: user.lastName,
+         email: user.email,
+         // We don't include role from auth service anymore
+       },
+     });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: error.message });
@@ -525,7 +577,7 @@ exports.verifyLoginOTP = async (req, res) => {
     await user.save();
     
     // Generate tokens
-    const accessToken = generateAccessToken(user);
+    const accessToken = await generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
     
     res.status(200).json({ 
