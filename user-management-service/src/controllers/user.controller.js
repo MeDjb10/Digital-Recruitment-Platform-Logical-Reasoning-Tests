@@ -1,6 +1,5 @@
 const User = require("../models/user.model");
-const { asyncHandler } = require("../utils/error-handler.util");
-const { ErrorResponse } = require("../utils/error-handler.util");
+const { asyncHandler, ErrorResponse } = require("../utils/error-handler.util");
 const mongoose = require("mongoose");
 
 /**
@@ -26,6 +25,11 @@ exports.getUsers = asyncHandler(async (req, res) => {
       { lastName: { $regex: req.query.search, $options: "i" } },
       { email: { $regex: req.query.search, $options: "i" } },
     ];
+  }
+
+  // Status filter (admin only)
+  if (req.query.status && req.userRole === "admin") {
+    filter.status = req.query.status;
   }
 
   // Execute query with pagination
@@ -61,10 +65,9 @@ exports.getUserById = asyncHandler(async (req, res) => {
   }
 
   // Check if requester has permission to view this user
-  // Only allow admins/moderators to view other users or users to view themselves
+  // Only allow admins/moderators/psychologists to view other users or users to view themselves
   if (
-    req.userRole !== "admin" &&
-    req.userRole !== "moderator" &&
+    !["admin", "moderator", "psychologist"].includes(req.userRole) &&
     req.userId !== user._id.toString()
   ) {
     throw new ErrorResponse("Not authorized to access this user profile", 403);
@@ -73,6 +76,52 @@ exports.getUserById = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     user,
+  });
+});
+/**
+ * @desc    Create a user from auth service (internal endpoint)
+ * @route   POST /api/users/create
+ * @access  Private (Service-to-service only)
+ */
+exports.createUser = asyncHandler(async (req, res) => {
+  // Extract user data from request body
+  const { authId, email, firstName, lastName, role = "candidate" } = req.body;
+
+  // Validate required fields
+  if (!authId || !email) {
+    throw new ErrorResponse("Auth ID and email are required", 400);
+  }
+
+  // Check if user already exists with this authId
+  const existingUser = await User.findOne({ authId });
+  if (existingUser) {
+    // If user exists, return it without error (idempotent operation)
+    return res.status(200).json({
+      success: true,
+      message: "User profile already exists",
+      user: existingUser
+    });
+  }
+
+  // Create a new user profile
+  const user = await User.create({
+    _id: authId,
+    email,
+    firstName,
+    lastName,
+    role: role || "candidate",
+    status: "active",
+    // Add default values for other fields as needed
+    dateCreated: new Date(),
+  });
+
+  // Log the successful user creation
+  console.log(`User profile created for authId: ${authId}, email: ${email}`);
+
+  res.status(201).json({
+    success: true,
+    message: "User profile created successfully",
+    user
   });
 });
 
@@ -131,18 +180,104 @@ exports.updateUser = asyncHandler(async (req, res) => {
 /**
  * @desc    Assign role to user
  * @route   PUT /api/users/role
- * @access  Private (Admin only)
+ * @access  Private (Admin or Moderator with restrictions)
  */
 exports.assignRole = asyncHandler(async (req, res) => {
   const { userId, role } = req.body;
 
-  // The validateRoleAssignment middleware should already check if userId is a valid ObjectId
-  // and if role is valid, so we can skip those checks here
+  // Check if the user exists first
+  const userToUpdate = await User.findById(userId);
+  if (!userToUpdate) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
+  // Role-based permissions for role assignment
+  if (req.userRole === "admin") {
+    // Admin can assign any role
+  } else if (req.userRole === "moderator") {
+    // Moderator can only assign "psychologist" role
+    if (role !== "psychologist") {
+      throw new ErrorResponse(
+        "Moderators can only assign the psychologist role",
+        403
+      );
+    }
+  } else {
+    throw new ErrorResponse("Not authorized to assign roles", 403);
+  }
 
   const updatedUser = await User.findByIdAndUpdate(
     userId,
     { role },
     { new: true, runValidators: true }
+  ).select("-password");
+
+  res.status(200).json({
+    success: true,
+    message: `User role updated to ${role} successfully`,
+    user: updatedUser,
+  });
+});
+
+/**
+ * @desc    Delete a user
+ * @route   DELETE /api/users/:userId
+ * @access  Private (Admin only)
+ */
+exports.deleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.userId);
+
+  if (!user) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
+  // Don't allow admins to delete themselves
+  if (req.userId === req.params.userId) {
+    throw new ErrorResponse("You cannot delete your own account", 400);
+  }
+
+  await User.deleteOne({ _id: req.params.userId });
+
+  res.status(200).json({
+    success: true,
+    message: "User deleted successfully",
+  });
+});
+
+/**
+ * @desc    Get user profile (self)
+ * @route   GET /api/users/profile
+ * @access  Private
+ */
+exports.getMyProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.userId).select("-password");
+
+  if (!user) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
+
+/**
+ * @desc    Update user status (activate/deactivate)
+ * @route   PATCH /api/users/:userId/status
+ * @access  Private (Admin only)
+ */
+exports.updateUserStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+
+  if (!["active", "inactive", "suspended"].includes(status)) {
+    throw new ErrorResponse("Invalid status value", 400);
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    req.params.userId,
+    { status },
+    { new: true }
   ).select("-password");
 
   if (!updatedUser) {
@@ -151,7 +286,29 @@ exports.assignRole = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    message: `User role updated to ${role} successfully`,
+    message: `User status updated to ${status} successfully`,
     user: updatedUser,
+  });
+});
+
+/**
+ * @desc    Get user role by ID (service-to-service endpoint)
+ * @route   GET /api/users/role/:userId
+ * @access  Private (Service-to-service only)
+ */
+exports.getUserRole = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.userId);
+  
+  if (!user) {
+    // For users that don't have profiles yet, return a default role
+    return res.status(200).json({
+      success: true,
+      role: "candidate" // Default role if user doesn't exist in User Management
+    });
+  }
+  
+  res.status(200).json({
+    success: true,
+    role: user.role
   });
 });

@@ -23,11 +23,7 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
-  role: {
-    type: String,
-    enum: ["candidate", "recruiter", "admin"],
-    default: "candidate",
-  },
+ 
   // OTP fields
   otp: {
     code: {

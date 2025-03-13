@@ -1,95 +1,49 @@
-/**
- * Standard error response format
- */
-class ErrorResponse {
-  constructor(message = "Server Error", statusCode = 500, errors = []) {
-    this.success = false;
+// Custom error class
+class ErrorResponse extends Error {
+  constructor(message, statusCode) {
+    super(message);
     this.statusCode = statusCode;
-    this.message = message;
-    this.errors = errors;
-
-    // Add stack trace in development mode
-    if (process.env.NODE_ENV === "development") {
-      this.stack = new Error().stack;
-    }
   }
 }
 
-/**
- * Global error handler middleware
- */
-const errorHandler = (err, req, res, next) => {
-  if (
-    process.env.NODE_ENV === "development" ||
-    process.env.NODE_ENV === "test"
-  ) {
-    console.error("Error:", err);
-  }
-
-  let error = { ...err };
-  error.message = err.message;
-
-  // Mongoose validation error
-  if (err.name === "ValidationError") {
-    const errors = Object.values(err.errors).map((val) => ({
-      field: val.path,
-      message: val.message,
-    }));
-
-    return res
-      .status(400)
-      .json(new ErrorResponse("Validation error", 400, errors));
-  }
-
-  // Mongoose duplicate key
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyValue)[0];
-    return res.status(400).json(
-      new ErrorResponse(`Duplicate field value: ${field}`, 400, [
-        {
-          field,
-          message: "This value already exists",
-        },
-      ])
-    );
-  }
-
-  // Mongoose bad ObjectId
-  if (err.name === "CastError") {
-    return res
-      .status(400)
-      .json(new ErrorResponse(`Invalid ${err.path}: ${err.value}`, 400));
-  }
-
-  // JWT errors
-  if (err.name === "JsonWebTokenError") {
-    return res
-      .status(401)
-      .json(new ErrorResponse("Invalid authentication token", 401));
-  }
-
-  if (err.name === "TokenExpiredError") {
-    return res
-      .status(401)
-      .json(new ErrorResponse("Token expired. Please log in again", 401));
-  }
-
-  // Default server error
-  res.status(error.statusCode || 500).json({
-    success: false,
-    message: error.message || "Server Error",
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-  });
-};
-
-/**
- * Async handler to avoid try-catch blocks
- */
+// Async handler wrapper
 const asyncHandler = (fn) => (req, res, next) =>
-  Promise.resolve(fn(req, res, next)).catch(next);
+  Promise.resolve(fn(req, res, next)).catch((err) => {
+    console.error("Error:", err);
 
-module.exports = {
-  ErrorResponse,
-  errorHandler,
-  asyncHandler,
-};
+    // Handle mongoose validation errors
+    if (err.name === "ValidationError") {
+      const messages = Object.values(err.errors).map((val) => val.message);
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: messages,
+      });
+    }
+
+    // Handle mongoose duplicate key errors
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate field value entered",
+        field: Object.keys(err.keyValue)[0],
+      });
+    }
+
+    // Handle custom ErrorResponse instances
+    if (err instanceof ErrorResponse) {
+      return res.status(err.statusCode).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    // Default error response
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  });
+
+module.exports = { ErrorResponse, asyncHandler };
