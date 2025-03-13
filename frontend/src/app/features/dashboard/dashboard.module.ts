@@ -19,6 +19,14 @@ import { TabViewModule } from 'primeng/tabview';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TagModule } from 'primeng/tag';
 
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+
+import { ToastModule } from 'primeng/toast';
+
+import { MessagesModule } from 'primeng/messages';
+import { MessageModule } from 'primeng/message';
+
 @NgModule({
   declarations: [
     // We don't redeclare components that are already standalone
@@ -47,6 +55,11 @@ import { TagModule } from 'primeng/tag';
     TabViewModule,
     SelectButtonModule,
     TagModule,
+    DialogModule,
+    InputTextModule,
+    MessagesModule,
+    ToastModule,
+    MessageModule,
   ],
 })
 export class DashboardModule {}

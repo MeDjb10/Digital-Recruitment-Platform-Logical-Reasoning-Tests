@@ -7,16 +7,17 @@ import {
   Input,
   Output,
   OnInit,
+  OnDestroy,
   PLATFORM_ID,
 } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
-import { filter } from 'rxjs';
+import { filter, Subscription } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { TooltipModule } from 'primeng/tooltip';
 import { MenuModule } from 'primeng/menu';
-// Import AuthService
-import { AuthService, User } from '../../../../core/auth/services/auth.service';
+import { AuthService } from '../../../../core/auth/services/auth.service';
+import { User } from '../../../../core/models/user.model';
 
 interface Notification {
   id: number;
@@ -41,7 +42,7 @@ interface Notification {
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css',
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
   @Input() sidebarCollapsed = false;
   @Output() toggleSidebarEvent = new EventEmitter<void>();
 
@@ -53,43 +54,17 @@ export class NavbarComponent implements OnInit {
 
   // User info
   currentUser: User | null = null;
-  userFullName = 'Admin User';
-  userEmail = 'admin@example.com';
-  userRole = 'Administrator';
+  userFullName = 'User';
+  userEmail = '';
+  userRole = 'User';
+  avatarUrl = '';
+
+  // Subscriptions
+  private userSub: Subscription | null = null;
+  private routeSub: Subscription | null = null;
 
   notifications: Notification[] = [
-    {
-      id: 1,
-      title: 'New candidate applied for position',
-      type: 'info',
-      icon: 'pi-user-plus',
-      time: new Date(),
-      unread: true,
-    },
-    {
-      id: 2,
-      title: 'Test results submitted by John Doe',
-      type: 'success',
-      icon: 'pi-check-circle',
-      time: new Date(Date.now() - 3600000),
-      unread: true,
-    },
-    {
-      id: 3,
-      title: 'License expires in 5 days',
-      type: 'warning',
-      icon: 'pi-exclamation-circle',
-      time: new Date(Date.now() - 86400000),
-      unread: true,
-    },
-    {
-      id: 4,
-      title: 'Weekly statistics report available',
-      type: 'info',
-      icon: 'pi-chart-bar',
-      time: new Date(Date.now() - 172800000),
-      unread: false,
-    },
+    // Your existing notifications...
   ];
 
   // Computed property for unread notifications count
@@ -99,7 +74,7 @@ export class NavbarComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private authService: AuthService, // Inject AuthService
+    private authService: AuthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -107,7 +82,7 @@ export class NavbarComponent implements OnInit {
 
   ngOnInit(): void {
     // Update page title based on current route
-    this.router.events
+    this.routeSub = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         this.updatePageTitle(event.urlAfterRedirects);
@@ -117,13 +92,23 @@ export class NavbarComponent implements OnInit {
     this.updatePageTitle(this.router.url);
 
     // Get current user information
-    this.authService.currentUser$.subscribe((user) => {
+    this.userSub = this.authService.currentUser$.subscribe((user) => {
       this.currentUser = user;
 
       if (user) {
         this.userFullName = `${user.firstName} ${user.lastName}`;
         this.userEmail = user.email;
         this.userRole = this.formatRole(user.role);
+        this.updateAvatarUrl(user);
+      } else {
+        // Reset user info if no user is logged in
+        this.userFullName = 'User';
+        this.userEmail = '';
+        this.userRole = 'User';
+        this.avatarUrl = '';
+
+        // Redirect to login if not authenticated
+        this.router.navigate(['/auth/login']);
       }
     });
 
@@ -140,10 +125,54 @@ export class NavbarComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    // Clean up subscriptions to prevent memory leaks
+    if (this.userSub) {
+      this.userSub.unsubscribe();
+    }
+
+    if (this.routeSub) {
+      this.routeSub.unsubscribe();
+    }
+
+    // Remove event listener to prevent memory leaks
+    if (this.isBrowser) {
+      window.removeEventListener('keydown', (event) => {});
+    }
+  }
+
+  // Update the avatar URL based on user info
+  updateAvatarUrl(user: User): void {
+    // Generate avatar URL based on user's name
+    this.avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      user.firstName + ' ' + user.lastName
+    )}&background=3b82f6&color=fff&bold=true`;
+  }
+
   // Format role for display (capitalize first letter)
   formatRole(role: string): string {
     if (!role) return 'User';
     return role.charAt(0).toUpperCase() + role.slice(1);
+  }
+
+  // Check if user has admin role
+  isAdmin(): boolean {
+    return this.currentUser?.role === 'admin';
+  }
+
+  // Check if user has moderator role
+  isModerator(): boolean {
+    return this.currentUser?.role === 'moderator';
+  }
+
+  // Check if user has psychologist role
+  isPsychologist(): boolean {
+    return this.currentUser?.role === 'psychologist';
+  }
+
+  // Check if user has any staff role
+  isStaff(): boolean {
+    return this.isAdmin() || this.isModerator() || this.isPsychologist();
   }
 
   // Handle clicks outside dropdowns
@@ -209,6 +238,18 @@ export class NavbarComponent implements OnInit {
     this.notifications = this.notifications.map((notification) =>
       notification.id === id ? { ...notification, unread: false } : notification
     );
+  }
+
+  // Navigate to profile page
+  goToProfile(): void {
+    this.router.navigate(['/dashboard/profile']);
+    this.showUserDropdown = false;
+  }
+
+  // Navigate to settings page
+  goToSettings(): void {
+    this.router.navigate(['/dashboard/settings']);
+    this.showUserDropdown = false;
   }
 
   // Logout function that calls the AuthService

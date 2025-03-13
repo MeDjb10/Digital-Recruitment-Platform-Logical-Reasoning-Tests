@@ -11,7 +11,17 @@ const PORT = process.env.PORT || 5000;
 
 // Enable CORS
 app.use(cors());
-
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || [
+      "http://localhost:4200",
+      "https://your-production-frontend.com",
+    ],
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+    optionsSuccessStatus: 204,
+  })
+);
 // Parse JSON bodies
 app.use(express.json());
 
