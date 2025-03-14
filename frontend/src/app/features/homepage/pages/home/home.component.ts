@@ -5,6 +5,7 @@ import { FooterComponent } from '../../components/footer/footer.component';
 import { HeroSectionComponent } from '../../components/hero-section/hero-section.component';
 import { ProcessusComponent } from '../../components/processus/processus.component';
 import { AosService } from '../../../../core/services/aos.service';
+import { HomepageNavbarComponent } from '../../components/navbar/navbar.component';
 
 @Component({
   selector: 'app-home',
@@ -15,6 +16,7 @@ import { AosService } from '../../../../core/services/aos.service';
     AboutUsComponent,
     ProcessusComponent,
     FooterComponent,
+    HomepageNavbarComponent
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',

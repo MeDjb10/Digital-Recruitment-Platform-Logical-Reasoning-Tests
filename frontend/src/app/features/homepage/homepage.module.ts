@@ -7,6 +7,7 @@ import { HeroSectionComponent } from './components/hero-section/hero-section.com
 import { AboutUsComponent } from './components/about-us/about-us.component';
 import { ProcessusComponent } from './components/processus/processus.component';
 import { FooterComponent } from './components/footer/footer.component';
+import { HomepageNavbarComponent } from './components/navbar/navbar.component';
 
 // Define routes for the home feature
 const routes: Routes = [
@@ -25,6 +26,7 @@ const routes: Routes = [
     AboutUsComponent,
     ProcessusComponent,
     FooterComponent,
+    HomepageNavbarComponent
   ],
 })
 export class HomepageModule {}
