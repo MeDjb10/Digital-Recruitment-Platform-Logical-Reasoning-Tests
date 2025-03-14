@@ -1,106 +1,30 @@
-<header class="relative text-white text-left overflow-hidden min-h-[85vh]">
-  <!-- Animated Background Gradient -->
+<header class="relative text-white text-left overflow-hidden h-screen">
+  <!-- Background gradient overlay -->
   <div
     class="absolute inset-0 bg-gradient-to-r from-blue-800/95 via-blue-700/85 to-blue-700/75 z-10"
   ></div>
 
-  <!-- Dynamic Particle Effect -->
-  <!-- <div class="absolute inset-0 z-5 opacity-20">
-    <div class="stars-container">
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-    </div>
-  </div> -->
-
-  <!-- Improved Connection Lines -->
+  <!-- Background animations/patterns -->
   <div class="absolute inset-0 z-0 opacity-20 overflow-hidden">
-    <div
-      class="grid grid-cols-[repeat(20,1fr)] grid-rows-[repeat(20,1fr)] h-full w-full"
-    >
-      <!-- Enhanced dots with subtle glow -->
-      <div
-        class="col-[3] row-[2] w-2 h-2 bg-white rounded-full shadow-glow"
-      ></div>
-      <div
-        class="col-[7] row-[4] w-2 h-2 bg-white rounded-full shadow-glow"
-      ></div>
-      <div
-        class="col-[12] row-[3] w-2 h-2 bg-white rounded-full shadow-glow"
-      ></div>
-      <div
-        class="col-[16] row-[6] w-2 h-2 bg-white rounded-full shadow-glow"
-      ></div>
-      <div
-        class="col-[5] row-[8] w-2 h-2 bg-white rounded-full shadow-glow"
-      ></div>
-      <div
-        class="col-[10] row-[9] w-2 h-2 bg-white rounded-full shadow-glow"
-      ></div>
-      <div
-        class="col-[18] row-[10] w-2 h-2 bg-white rounded-full shadow-glow"
-      ></div>
-      <div
-        class="col-[3] row-[12] w-2 h-2 bg-white rounded-full shadow-glow"
-      ></div>
-      <div
-        class="col-[14] row-[14] w-2 h-2 bg-white rounded-full shadow-glow"
-      ></div>
-      <div
-        class="col-[8] row-[16] w-2 h-2 bg-white rounded-full shadow-glow"
-      ></div>
-      <div
-        class="col-[19] row-[18] w-2 h-2 bg-white rounded-full shadow-glow"
-      ></div>
-
-      <!-- Animated connection lines -->
-      <!-- Connection lines with controlled width and position -->
-      <div
-        class="animated-line absolute top-[10%] left-[15%] w-[20%] h-[0.5px] bg-white transform rotate-45"
-      ></div>
-      <div
-        class="animated-line absolute top-[25%] left-[40%] w-[20%] h-[0.5px] bg-white transform -rotate-30 animation-delay-300"
-      ></div>
-      <div
-        class="animated-line absolute top-[50%] left-[25%] w-[25%] h-[0.5px] bg-white transform rotate-15 animation-delay-600"
-      ></div>
-      <div
-        class="animated-line absolute top-[70%] left-[60%] w-[20%] h-[0.5px] bg-white transform -rotate-20 animation-delay-900"
-      ></div>
-    </div>
+    <!-- Your existing animated background elements -->
   </div>
 
-  <!-- Enhanced background image with subtle zoom effect -->
+  <!-- Background image -->
   <img
     src="assets/business-women-working111.jpg"
     alt="Hero Image"
     class="absolute inset-0 w-full h-full object-cover opacity-80 animate-slow-zoom"
   />
 
-  <!-- Content with improved layout -->
+  <!-- Content container - adjusted to account for navbar -->
   <div
-    class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-20 py-20 md:py-28 lg:py-36 h-full flex items-center"
+    class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-20 h-full flex items-center pt-20"
   >
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center w-full">
-      <!-- Enhanced text content -->
-      <div class="max-w-4xl" data-aos="fade-right" data-aos-duration="1000">
+    <!-- Two-column layout with proper alignment -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full">
+      
+      <!-- LEFT SIDE: Text content -->
+      <div class="lg:col-span-8" data-aos="fade-right" data-aos-duration="1000">
         <!-- Decorative elements -->
         <div class="flex items-center mb-8">
           <div class="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
@@ -109,25 +33,19 @@
           ></div>
         </div>
 
-        <!-- More prominent headline -->
-        <p
-          class="text-2xl md:text-2xl lg:text-2xl xl:text-5xl font-bold leading-tight text-gradient"
-        >
+        <!-- Headline -->
+        <p class="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight text-gradient">
           Bienvenue sur notre plateforme de test psychotechnique
         </p>
 
-        <!-- Enhanced separator with animation -->
-        <div
-          class="my-8 flex items-center space-x-3"
-          data-aos="fade-right"
-          data-aos-delay="100"
-        >
+        <!-- Separator -->
+        <div class="my-8 flex items-center space-x-3" data-aos="fade-right" data-aos-delay="100">
           <div class="h-1 w-12 bg-red-500 rounded-full opacity-60"></div>
           <div class="h-1 w-24 bg-red-500 rounded-full"></div>
           <div class="h-1 w-8 bg-red-500 rounded-full opacity-60"></div>
         </div>
 
-        <!-- Paragraph with improved styling -->
+        <!-- Paragraphs -->
         <div class="space-y-6">
           <p
             class="text-lg md:text-xl lg:text-2xl opacity-95 border-l-4 border-red-500 pl-6 py-2 backdrop-blur-sm bg-white/5 rounded-r-lg"
@@ -149,11 +67,17 @@
             dynamique.
           </p>
         </div>
-
-        <!-- Enhanced CTA Button with better animation -->
-        <div class="mt-12" data-aos="fade-up" data-aos-delay="400">
+      </div>
+      
+      <!-- RIGHT SIDE: Attention-grabbing button column -->
+      <div class="lg:col-span-4 flex justify-center items-center" data-aos="fade-left" data-aos-delay="400">
+        <div class="spotlight-container">
+          <!-- Visual spotlight effect for the button -->
+          <div class="spotlight-effect"></div>
+          
+          <!-- Attention-grabbing CTA button -->
           <button
-            class="group px-10 py-5 rounded-full border-2 border-red-500 bg-transparent text-white font-bold text-xl hover:bg-red-500 hover:text-white transition-all duration-300 flex items-center gap-4 relative overflow-hidden hover:shadow-[0_0_40px_rgba(239,68,68,0.7)] transform hover:scale-105"
+            class="call-to-action-btn group px-10 py-5 rounded-full border-2 border-red-500 bg-transparent text-white font-bold text-xl hover:bg-red-500 hover:text-white transition-all duration-300 flex items-center gap-4 relative overflow-hidden hover:shadow-[0_0_40px_rgba(239,68,68,0.7)] transform hover:scale-105"
           >
             <!-- Button text -->
             <span
@@ -192,50 +116,10 @@
           </button>
         </div>
       </div>
-
-      <!-- Enhanced right side floating stats with 3D effect -->
-      <div class="hidden lg:flex justify-center items-center">
-        <div
-          class="relative perspective-element"
-          data-aos="zoom-in"
-          data-aos-delay="300"
-        >
-          <!-- Main circle with 3D rotation effect -->
-          <div
-            class="w-72 h-72 rounded-full border-4 border-white/40 glass-effect flex items-center justify-center transform rotate-12 animate-float-3d"
-          >
-            <!-- Inner content -->
-            <div class="text-center transform -rotate-12">
-              <h3 class="text-6xl font-bold mb-4 text-white text-glow">
-                95<span class="text-red-500">%</span>
-              </h3>
-              <p class="font-medium text-white/90 text-xl">
-                Taux de <br /><span class="text-2xl">Satisfaction</span>
-              </p>
-            </div>
-          </div>
-
-          <!-- Enhanced floating accent circles -->
-          <div
-            class="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-red-500/40 glass-effect animate-float-delayed"
-          ></div>
-          <div
-            class="absolute -bottom-8 -left-8 w-24 h-24 rounded-full bg-blue-300/30 glass-effect animate-float"
-          ></div>
-
-          <!-- Small decorative elements -->
-          <div
-            class="absolute top-1/4 -right-12 w-6 h-6 rounded-full bg-white/20 animate-ping-slow"
-          ></div>
-          <div
-            class="absolute bottom-1/3 -left-10 w-4 h-4 rounded-full bg-red-500/30 animate-ping-slower"
-          ></div>
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- Improved wave separator to eliminate the thin line issue -->
+  <!-- Wave separator -->
   <div class="absolute -bottom-1 left-0 right-0 z-10 overflow-hidden">
     <svg
       xmlns="http://www.w3.org/2000/svg"
