@@ -6,7 +6,6 @@ import { TestCompletionComponent } from './features/candidate/pages/test-complet
 import { InteractiveDominoTestComponent } from './features/candidate/pages/interactive-domino-test/interactive-domino-test.component';
 import { DominoTestComponent } from './features/candidate/pages/domino-test/domino-test.component';
 import { TestResultsComponent } from './features/candidate/pages/test-results/test-results.component';
-import { TestsListComponent } from './features/candidate/pages/tests-list/tests-list.component';
 
 export const routes: Routes = [
   {
@@ -39,19 +38,15 @@ export const routes: Routes = [
 
   // Test routes
   {
-    path: 'tests',
-    component: TestsListComponent,
-    // canActivate: [AuthGuard],
-  },
-  {
     path: 'tests/:id',
     component: DominoTestComponent,
-    // canActivate: [AuthGuard],
+    canActivate: [AuthGuard],
   },
+
   {
     path: 'tests/:id/results',
     component: TestResultsComponent,
-    // canActivate: [AuthGuard],
+    canActivate: [AuthGuard],
   },
 
   { path: 'test-completion', component: TestCompletionComponent },

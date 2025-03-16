@@ -1,11 +1,11 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:5000/api',
+  production: true,
+  apiUrl: '/api', // Base API URL for production
 
   // Feature flags
   features: {
     saveProgress: true,
-    showDebugInfo: true,
+    showDebugInfo: false,
     enableAnalytics: true,
   },
 

@@ -1,0 +1,295 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+
+@Component({
+  selector: 'app-test-completion',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  template: `
+    <div class="completion-container">
+      <div class="completion-card">
+        <div class="header">
+          <h1>Test Completed</h1>
+          <div class="checkmark-circle">
+            <div class="checkmark"></div>
+          </div>
+        </div>
+
+        <div class="content">
+          <h2>{{ testName }}</h2>
+
+          <div class="results-summary" *ngIf="showScore">
+            <div class="score-circle" [style.background]="getScoreColor()">
+              {{ score }}%
+            </div>
+            <div class="stats">
+              <div class="stat-item">
+                <span class="stat-label">Questions:</span>
+                <span class="stat-value">{{ totalQuestions }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Time Spent:</span>
+                <span class="stat-value">{{ formatTime(timeSpent) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="message">
+            <p>Thank you for completing the test!</p>
+            <p>Your answers have been submitted successfully.</p>
+            <p *ngIf="!showScore">
+              The test administrator will review your results.
+            </p>
+          </div>
+        </div>
+
+        <div class="footer">
+          <button class="btn btn-primary" (click)="navigateHome()">
+            Return to Dashboard
+          </button>
+          <button
+            class="btn btn-outline"
+            *ngIf="showScore"
+            (click)="viewDetailedResults()"
+          >
+            View Detailed Results
+          </button>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [
+    `
+      .completion-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f0f4f8;
+        padding: 20px;
+      }
+
+      .completion-card {
+        width: 100%;
+        max-width: 600px;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header {
+        background-color: #3b82f6;
+        color: white;
+        padding: 30px 20px;
+        text-align: center;
+        position: relative;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 600;
+      }
+
+      .checkmark-circle {
+        width: 60px;
+        height: 60px;
+        background-color: white;
+        border-radius: 50%;
+        margin: 20px auto 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .checkmark {
+        width: 30px;
+        height: 15px;
+        border-bottom: 4px solid #10b981;
+        border-right: 4px solid #10b981;
+        transform: rotate(45deg);
+        margin-top: -5px;
+      }
+
+      .content {
+        padding: 30px 20px;
+        text-align: center;
+      }
+
+      .content h2 {
+        margin: 0 0 20px;
+        font-size: 22px;
+        color: #1e293b;
+      }
+
+      .results-summary {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+
+      .score-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(to right, #10b981, #3b82f6);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 20px;
+      }
+
+      .stats {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+      }
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 5px;
+      }
+
+      .stat-value {
+        font-size: 18px;
+        font-weight: 600;
+        color: #334155;
+      }
+
+      .message {
+        margin-bottom: 20px;
+      }
+
+      .message p {
+        margin: 8px 0;
+        color: #334155;
+      }
+
+      .footer {
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        border-top: 1px solid #e2e8f0;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+      }
+
+      .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: #2563eb;
+      }
+
+      .btn-outline {
+        background-color: transparent;
+        border: 1px solid #3b82f6;
+        color: #3b82f6;
+      }
+
+      .btn-outline:hover {
+        background-color: #f0f7ff;
+      }
+
+      @media (max-width: 640px) {
+        .stats {
+          flex-direction: column;
+          gap: 15px;
+        }
+
+        .score-circle {
+          width: 100px;
+          height: 100px;
+          font-size: 30px;
+        }
+      }
+    `,
+  ],
+})
+export class TestCompletionComponent implements OnInit {
+  testId: string = '';
+  testName: string = 'Logical Reasoning Test';
+  score: number = 0;
+  totalQuestions: number = 0;
+  timeSpent: number = 0;
+  showScore: boolean = true;
+
+  constructor(private router: Router) {}
+
+  ngOnInit() {
+    // Get data passed through router state
+    const navigation = this.router.getCurrentNavigation();
+    if (navigation && navigation.extras.state) {
+      const state = navigation.extras.state as any;
+      this.testId = state.testId || this.testId;
+      this.testName = state.testName || this.testName;
+      this.score = state.score || 0;
+      this.totalQuestions = state.totalQuestions || 0;
+      this.timeSpent = state.timeSpent || 0;
+      this.showScore = typeof state.score === 'number';
+    }
+  }
+
+  getScoreColor(): string {
+    // Return a color based on score
+    if (this.score >= 80) {
+      return 'linear-gradient(to right, #10b981, #059669)'; // Green - excellent
+    } else if (this.score >= 60) {
+      return 'linear-gradient(to right, #3b82f6, #2563eb)'; // Blue - good
+    } else if (this.score >= 40) {
+      return 'linear-gradient(to right, #f59e0b, #d97706)'; // Orange - average
+    } else {
+      return 'linear-gradient(to right, #ef4444, #b91c1c)'; // Red - needs improvement
+    }
+  }
+
+  formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+
+    if (mins >= 60) {
+      const hours = Math.floor(mins / 60);
+      const remainingMins = mins % 60;
+      return `${hours}h ${remainingMins}m ${secs}s`;
+    }
+
+    return `${mins}m ${secs}s`;
+  }
+
+  navigateHome() {
+    this.router.navigate(['/dashboard']);
+  }
+
+  viewDetailedResults() {
+    this.router.navigate(['/tests', this.testId, 'results']);
+  }
+}
