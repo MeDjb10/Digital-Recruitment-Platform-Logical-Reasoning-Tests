@@ -19,210 +19,9 @@ interface DotPosition {
   selector: 'app-interactive-domino',
   standalone: true,
   imports: [CommonModule],
+  templateUrl: './interactive-domino.component.html',
+  styleUrls: ['./interactive-domino.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <svg
-      [attr.width]="width"
-      [attr.height]="height"
-      class="domino"
-      [class.selected]="isSelected"
-      [class.editable]="isEditable"
-    >
-      <!-- Base rectangle with shadow for 3D effect -->
-      <rect
-        *ngIf="!isEditable || isSelected"
-        [attr.x]="2"
-        [attr.y]="2"
-        [attr.width]="width - 4"
-        [attr.height]="height - 4"
-        [attr.rx]="8"
-        fill="#00000010"
-        class="domino-shadow"
-      />
-
-      <!-- Base rectangle -->
-      <rect
-        [attr.x]="0"
-        [attr.y]="0"
-        [attr.width]="width"
-        [attr.height]="height"
-        [attr.rx]="8"
-        [attr.fill]="getBgColor()"
-        stroke="#333"
-        [attr.stroke-width]="isSelected ? 2 : 1"
-        (click)="onDominoClick()"
-      />
-
-      <!-- Divider line -->
-      <line
-        [attr.x1]="0"
-        [attr.y1]="height / 2"
-        [attr.x2]="width"
-        [attr.y2]="height / 2"
-        stroke="#333"
-        stroke-width="1"
-      />
-
-      <!-- Top half dots -->
-      <ng-container *ngIf="!isEditable || (isEditable && topValue !== null)">
-        <circle
-          *ngFor="let dot of topDots"
-          [attr.cx]="dot.x"
-          [attr.cy]="dot.y"
-          [attr.r]="dotSize"
-          [attr.fill]="isSelected ? '#3b82f6' : '#333'"
-          [class.dot-appear]="isSelected && isEditable"
-        ></circle>
-      </ng-container>
-
-      <!-- Bottom half dots -->
-      <ng-container *ngIf="!isEditable || (isEditable && bottomValue !== null)">
-        <circle
-          *ngFor="let dot of bottomDots"
-          [attr.cx]="dot.x"
-          [attr.cy]="dot.y"
-          [attr.r]="dotSize"
-          [attr.fill]="isSelected ? '#3b82f6' : '#333'"
-          [class.dot-appear]="isSelected && isEditable"
-        ></circle>
-      </ng-container>
-
-      <!-- Make the entire top half clickable even when empty -->
-      <rect
-        *ngIf="isEditable && isSelected"
-        [attr.x]="0"
-        [attr.y]="0"
-        [attr.width]="width"
-        [attr.height]="height / 2"
-        fill="rgba(59, 130, 246, 0.1)"
-        (click)="cycleTopValue($event)"
-        class="top-half-click interactive-area"
-      />
-
-      <!-- Make the entire bottom half clickable even when empty -->
-      <rect
-        *ngIf="isEditable && isSelected"
-        [attr.x]="0"
-        [attr.y]="height / 2"
-        [attr.width]="width"
-        [attr.height]="height / 2"
-        fill="rgba(59, 130, 246, 0.1)"
-        (click)="cycleBottomValue($event)"
-        class="bottom-half-click interactive-area"
-      />
-
-      <!-- Visual hint indicator when empty - top -->
-      <circle
-        *ngIf="isEditable && isSelected && topValue === null"
-        [attr.cx]="width / 2"
-        [attr.cy]="height / 4"
-        r="12"
-        fill="rgba(59, 130, 246, 0.2)"
-        stroke="#3b82f6"
-        stroke-width="1"
-        stroke-dasharray="3,3"
-        pointer-events="none"
-      />
-
-      <!-- Visual hint indicator when empty - bottom -->
-      <circle
-        *ngIf="isEditable && isSelected && bottomValue === null"
-        [attr.cx]="width / 2"
-        [attr.cy]="(height * 3) / 4"
-        r="12"
-        fill="rgba(59, 130, 246, 0.2)"
-        stroke="#3b82f6"
-        stroke-width="1"
-        stroke-dasharray="3,3"
-        pointer-events="none"
-      />
-
-      <!-- Hint for editable dominos that aren't selected -->
-      <g
-        *ngIf="
-          isEditable &&
-          !isSelected &&
-          (topValue === null || bottomValue === null)
-        "
-      >
-        <rect
-          [attr.x]="width / 2 - 15"
-          [attr.y]="height / 2 - 15"
-          [attr.width]="30"
-          [attr.height]="30"
-          fill="transparent"
-          stroke="#3b82f6"
-          stroke-width="1"
-          stroke-dasharray="3,3"
-          opacity="0.5"
-          rx="15"
-          class="click-hint"
-        />
-      </g>
-    </svg>
-  `,
-  styles: [
-    `
-      .domino {
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .domino.selected {
-        filter: drop-shadow(0px 0px 5px rgba(59, 130, 246, 0.5));
-      }
-
-      .domino.editable:hover:not(.selected) {
-        filter: drop-shadow(0px 0px 3px rgba(59, 130, 246, 0.3));
-      }
-
-      .top-half-click:hover,
-      .bottom-half-click:hover {
-        fill: rgba(59, 130, 246, 0.2);
-        cursor: pointer;
-      }
-
-      .interactive-area {
-        pointer-events: all;
-        cursor: pointer;
-      }
-
-      .dot-appear {
-        animation: appearDot 0.3s forwards;
-      }
-
-      @keyframes appearDot {
-        from {
-          opacity: 0;
-          r: 2;
-        }
-        50% {
-          opacity: 0.8;
-          r: 7;
-        }
-        to {
-          opacity: 1;
-          r: 5;
-        }
-      }
-
-      .click-hint {
-        animation: pulse 2s infinite ease-in-out;
-      }
-
-      @keyframes pulse {
-        0% {
-          opacity: 0.3;
-        }
-        50% {
-          opacity: 0.7;
-        }
-        100% {
-          opacity: 0.3;
-        }
-      }
-    `,
-  ],
 })
 export class InteractiveDominoComponent implements OnInit, OnChanges {
   @Input() width: number = 60;
@@ -233,6 +32,7 @@ export class InteractiveDominoComponent implements OnInit, OnChanges {
   @Input() id: number = 0;
   @Input() isVertical: boolean = false;
   @Input() color: string = '';
+  @Input() questionId?: number; // Add this input property
   @Output() valueChanged = new EventEmitter<{
     id: number;
     topValue: number | null;
@@ -254,14 +54,57 @@ export class InteractiveDominoComponent implements OnInit, OnChanges {
   topDots: DotPosition[] = [];
   bottomDots: DotPosition[] = [];
 
+  // Add debug flag to help track issues
+  private debug = false;
+
   ngOnInit() {
     this.topValue = this.initialTopValue;
     this.bottomValue = this.initialBottomValue;
     this.updateDotPositions();
   }
 
+  // Enhance ngOnChanges to be more careful about state changes
   ngOnChanges(changes: SimpleChanges) {
-    // Only recalculate dots if necessary
+    if (changes['questionId'] && !changes['questionId'].firstChange) {
+      this.isSelected = false;
+      this.topValue = this.initialTopValue;
+      this.bottomValue = this.initialBottomValue;
+      this.updateDotPositions();
+    }
+
+    if (
+      this.debug &&
+      (changes['initialTopValue'] || changes['initialBottomValue'])
+    ) {
+      console.log(
+        `Domino ${this.id} input changed:`,
+        changes['initialTopValue']?.currentValue,
+        changes['initialBottomValue']?.currentValue
+      );
+    }
+
+    // Only update from inputs if we're not editable or this is the first initialization
+    if (
+      (changes['initialTopValue'] && !this.isEditable) ||
+      (changes['initialTopValue'] && !changes['initialTopValue'].previousValue)
+    ) {
+      this.topValue =
+        changes['initialTopValue'].currentValue === undefined
+          ? null
+          : changes['initialTopValue'].currentValue;
+    }
+
+    if (
+      (changes['initialBottomValue'] && !this.isEditable) ||
+      (changes['initialBottomValue'] &&
+        !changes['initialBottomValue'].previousValue)
+    ) {
+      this.bottomValue =
+        changes['initialBottomValue'].currentValue === undefined
+          ? null
+          : changes['initialBottomValue'].currentValue;
+    }
+
     if (
       changes['initialTopValue'] ||
       changes['initialBottomValue'] ||
@@ -378,7 +221,8 @@ export class InteractiveDominoComponent implements OnInit, OnChanges {
         dots.push({ x: centerX + margin, y: centerY + margin });
         break;
       default:
-      // Return empty array for null or invalid values
+        // Return empty array for null or invalid values
+        break;
     }
 
     return dots;
@@ -416,13 +260,63 @@ export class InteractiveDominoComponent implements OnInit, OnChanges {
     return this.color || '#ffffff'; // White for filled dominos or custom color
   }
 
-  // Clear values method (to be called when changing questions)
+  getDotColor(): string {
+    if (this.isEditable && this.isSelected) {
+      return '#3b82f6'; // Blue for selected dominos
+    }
+    return '#333'; // Default black for normal dominos
+  }
+
+  // Enhance clearValues to be more thorough
   clearValues() {
     if (this.isEditable) {
       this.topValue = null;
       this.bottomValue = null;
       this.isSelected = false;
       this.updateDotPositions();
+
+      // Notify listeners of the change
+      this.valueChanged.emit({
+        id: this.id,
+        topValue: null,
+        bottomValue: null,
+      });
+
+      if (this.debug) {
+        console.log(`Cleared values for domino ${this.id}`);
+      }
     }
+  }
+
+  // Improve the forceUpdate method to be more robust
+  forceUpdate(topValue: number | null, bottomValue: number | null): void {
+    if (this.debug) {
+      console.log(
+        `Forcing update of domino ${this.id} to:`,
+        topValue,
+        bottomValue
+      );
+    }
+
+    // Ensure we're using real null values, not undefined
+    this.topValue = topValue === undefined ? null : topValue;
+    this.bottomValue = bottomValue === undefined ? null : bottomValue;
+
+    // Update dot positions for visualization
+    this.updateDotPositions();
+
+    // If this is an editable domino, also notify any listeners of the change
+    if (this.isEditable) {
+      this.valueChanged.emit({
+        id: this.id,
+        topValue: this.topValue,
+        bottomValue: this.bottomValue,
+      });
+    }
+  }
+
+  resetVisualState(): void {
+    this.isSelected = false;
+    this.updateDotPositions();
   }
 }

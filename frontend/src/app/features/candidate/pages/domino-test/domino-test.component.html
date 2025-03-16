@@ -1,0 +1,241 @@
+<div class="test-container">
+  <!-- Header with timer -->
+  <header class="test-header">
+    <div class="test-info">
+      <h1>{{ testName }}</h1>
+      <span class="question-counter"
+        >Question {{ currentQuestionIndex + 1 }} of {{ questions.length }}</span
+      >
+    </div>
+
+    <div
+      class="timer"
+      [ngClass]="{ 'timer-warning': timeLeft <= warningThreshold }"
+    >
+      <i class="pi pi-clock"></i>
+      <span>{{ formatTime(timeLeft) }}</span>
+    </div>
+  </header>
+
+  <!-- Main test area with grid and navigation -->
+  <main class="test-body">
+    <aside class="question-nav">
+      <div class="question-nav-header">
+        <h3>Questions</h3>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-color current"></div>
+            <span>Current</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color answered"></div>
+            <span>Answered</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color flagged"></div>
+            <span>Flagged</span>
+          </div>
+        </div>
+      </div>
+      <div class="question-list">
+        <div
+          *ngFor="let question of questions; let i = index"
+          class="question-nav-row"
+          [ngClass]="{
+            current: i === currentQuestionIndex
+          }"
+        >
+          <button
+            class="question-nav-item"
+            [ngClass]="{
+              visited: question.visited,
+              answered: question.answered,
+              flagged: question.flaggedForReview
+            }"
+            (click)="goToQuestion(i)"
+          >
+            <span class="question-number">{{ i + 1 }}</span>
+            <span class="question-label">Question {{ i + 1 }}</span>
+            <div class="question-status">
+              <span
+                *ngIf="question.answered"
+                class="status-icon answered-icon"
+                title="Answered"
+                >✓</span
+              >
+              <span
+                *ngIf="question.flaggedForReview"
+                class="status-icon flag-icon"
+                title="Flagged for review"
+              >
+                <i class="pi pi-flag"></i>
+              </span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="question-area" [class.rhombus-pattern]="isRhombusPattern()">
+      <div class="question-instructions">
+        <div class="instruction-header">
+          <h2>Question {{ currentQuestionIndex + 1 }}</h2>
+          <button
+            class="flag-button"
+            [class.flagged]="currentQuestion?.flaggedForReview"
+            (click)="toggleFlag()"
+            title="{{
+              currentQuestion?.flaggedForReview
+                ? 'Unflag question'
+                : 'Flag for review'
+            }}"
+          >
+            <i
+              class="pi"
+              [ngClass]="
+                currentQuestion?.flaggedForReview ? 'pi-flag-fill' : 'pi-flag'
+              "
+            ></i>
+            {{
+              currentQuestion?.flaggedForReview ? "Flagged" : "Flag for Review"
+            }}
+          </button>
+        </div>
+        <p class="instruction-text">
+          Find the missing values for the empty domino that best completes the
+          pattern.
+        </p>
+      </div>
+      <div class="help-tooltip" *ngIf="hasEditableDominos && showTooltip">
+        <div class="tooltip-content">
+          <button class="close-tooltip" (click)="dismissTooltip()">×</button>
+          <h4>How to interact:</h4>
+          <ul>
+            <li>Click on an empty domino to select it</li>
+            <li>Click on the top or bottom half to add dots</li>
+            <li>Continue clicking to cycle through values 1-6</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Domino grid -->
+      <div
+        class="domino-grid-container"
+        [class.rhombus-container]="isRhombusPattern()"
+        [class.row-pattern]="isRowPattern()"
+        [class.grid-pattern]="!isRhombusPattern() && !isRowPattern()"
+        [style.min-height.px]="gridContainerHeight"
+        #gridContainer
+      >
+        <!-- Help tooltip now in the domino-test component -->
+
+        <app-interactive-domino-grid
+          *ngIf="currentQuestion"
+          [dominos]="currentQuestion.dominos"
+          [gridSize]="currentQuestion.gridLayout"
+          [zoomControlsEnabled]="false"
+          [showConnections]="false"
+          [showDebug]="false"
+          (dominoChanged)="onDominoChanged($event)"
+          (dominoSelected)="onDominoSelected($event)"
+          (dominoRotated)="onDominoRotated($event)"
+          (zoomLevelChanged)="onZoomLevelChanged($event)"
+          (hasEditableDominosChanged)="onHasEditableDominosChanged($event)"
+        >
+        </app-interactive-domino-grid>
+
+        <!-- Zoom controls moved to domino-test component -->
+        <div
+          class="zoom-controls-container"
+          [class.zoom-active]="isZoomActive"
+          (mouseenter)="activateZoomControls()"
+          (mouseleave)="deactivateZoomControls()"
+        >
+          <div class="zoom-controls">
+            <button class="zoom-btn" (click)="zoomIn()" title="Zoom In">
+              <i class="pi pi-plus"></i>
+            </button>
+            <span class="zoom-level-indicator"
+              >{{ (zoomLevel * 100).toFixed(0) }}%</span
+            >
+            <button class="zoom-btn" (click)="zoomReset()" title="Reset Zoom">
+              <i class="pi pi-refresh"></i>
+            </button>
+            <button class="zoom-btn" (click)="zoomOut()" title="Zoom Out">
+              <i class="pi pi-minus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question controls -->
+      <div class="question-controls">
+        <button
+          class="btn btn-secondary"
+          (click)="previousQuestion()"
+          [disabled]="currentQuestionIndex === 0"
+        >
+          <i class="pi pi-arrow-left"></i>
+          Previous
+        </button>
+
+        <button
+          class="btn btn-outline"
+          (click)="toggleFlag()"
+          [class.btn-flagged]="currentQuestion?.flaggedForReview"
+        >
+          <i
+            class="pi"
+            [ngClass]="
+              currentQuestion?.flaggedForReview ? 'pi-flag-fill' : 'pi-flag'
+            "
+          ></i>
+          {{ currentQuestion?.flaggedForReview ? "Unflag" : "Flag for Review" }}
+        </button>
+
+        <button
+          class="btn btn-primary"
+          (click)="nextQuestion()"
+          [disabled]="currentQuestionIndex === questions.length - 1"
+        >
+          Next
+          <i class="pi pi-arrow-right"></i>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer with progress and submit -->
+  <footer class="test-footer">
+    <div class="test-progress">
+      <div class="progress-stats">
+        <span>{{ answeredCount }} / {{ questions.length }} answered</span>
+        <span *ngIf="flaggedCount > 0" class="flagged-count">
+          <i class="pi pi-flag"></i> {{ flaggedCount }} flagged
+        </span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="progressPercentage"></div>
+      </div>
+    </div>
+
+    <div class="footer-actions">
+      <button class="btn btn-finish" (click)="finishTest()">
+        <i class="pi pi-check-circle"></i>
+        {{
+          answeredCount === questions.length ? "Submit Test" : "Review & Submit"
+        }}
+      </button>
+
+      <!-- Reset button now properly connected to service -->
+      <button
+        class="btn btn-reset"
+        (click)="clearSavedData()"
+        title="Clear saved progress (testing only)"
+      >
+        <i class="pi pi-trash"></i>
+        Reset
+      </button>
+    </div>
+  </footer>
+</div>

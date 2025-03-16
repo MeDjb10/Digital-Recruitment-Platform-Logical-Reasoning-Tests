@@ -1,0 +1,137 @@
+<svg
+  [attr.width]="width"
+  [attr.height]="height"
+  class="domino"
+  [class.selected]="isSelected"
+  [class.editable]="isEditable"
+>
+  <!-- Base rectangle with shadow for 3D effect -->
+  <rect
+    *ngIf="!isEditable || isSelected"
+    [attr.x]="2"
+    [attr.y]="2"
+    [attr.width]="width - 4"
+    [attr.height]="height - 4"
+    [attr.rx]="8"
+    fill="#00000010"
+    class="domino-shadow"
+  />
+
+  <!-- Base rectangle -->
+  <rect
+    [attr.x]="0"
+    [attr.y]="0"
+    [attr.width]="width"
+    [attr.height]="height"
+    [attr.rx]="8"
+    [attr.fill]="getBgColor()"
+    stroke="#333"
+    [attr.stroke-width]="isSelected ? 2 : 1"
+    (click)="onDominoClick()"
+  />
+
+  <!-- Divider line -->
+  <line
+    [attr.x1]="0"
+    [attr.y1]="height / 2"
+    [attr.x2]="width"
+    [attr.y2]="height / 2"
+    stroke="#333"
+    stroke-width="1"
+  />
+
+  <!-- Top half dots -->
+  <ng-container *ngIf="!isEditable || (isEditable && topValue !== null)">
+    <circle
+      *ngFor="let dot of topDots"
+      [attr.cx]="dot.x"
+      [attr.cy]="dot.y"
+      [attr.r]="dotSize"
+      [attr.fill]="isSelected ? '#3b82f6' : '#333'"
+      [class.dot-appear]="isSelected && isEditable"
+    ></circle>
+  </ng-container>
+
+  <!-- Bottom half dots -->
+  <ng-container *ngIf="!isEditable || (isEditable && bottomValue !== null)">
+    <circle
+      *ngFor="let dot of bottomDots"
+      [attr.cx]="dot.x"
+      [attr.cy]="dot.y"
+      [attr.r]="dotSize"
+      [attr.fill]="isSelected ? '#3b82f6' : '#333'"
+      [class.dot-appear]="isSelected && isEditable"
+    ></circle>
+  </ng-container>
+
+  <!-- Make the entire top half clickable even when empty -->
+  <rect
+    *ngIf="isEditable && isSelected"
+    [attr.x]="0"
+    [attr.y]="0"
+    [attr.width]="width"
+    [attr.height]="height / 2"
+    fill="rgba(59, 130, 246, 0.1)"
+    (click)="cycleTopValue($event)"
+    class="top-half-click interactive-area"
+  />
+
+  <!-- Make the entire bottom half clickable even when empty -->
+  <rect
+    *ngIf="isEditable && isSelected"
+    [attr.x]="0"
+    [attr.y]="height / 2"
+    [attr.width]="width"
+    [attr.height]="height / 2"
+    fill="rgba(59, 130, 246, 0.1)"
+    (click)="cycleBottomValue($event)"
+    class="bottom-half-click interactive-area"
+  />
+
+  <!-- Visual hint indicator when empty - top -->
+  <circle
+    *ngIf="isEditable && isSelected && topValue === null"
+    [attr.cx]="width / 2"
+    [attr.cy]="height / 4"
+    r="12"
+    fill="rgba(59, 130, 246, 0.2)"
+    stroke="#3b82f6"
+    stroke-width="1"
+    stroke-dasharray="3,3"
+    pointer-events="none"
+  />
+
+  <!-- Visual hint indicator when empty - bottom -->
+  <circle
+    *ngIf="isEditable && isSelected && bottomValue === null"
+    [attr.cx]="width / 2"
+    [attr.cy]="(height * 3) / 4"
+    r="12"
+    fill="rgba(59, 130, 246, 0.2)"
+    stroke="#3b82f6"
+    stroke-width="1"
+    stroke-dasharray="3,3"
+    pointer-events="none"
+  />
+
+  <!-- Hint for editable dominos that aren't selected -->
+  <g
+    *ngIf="
+      isEditable && !isSelected && (topValue === null || bottomValue === null)
+    "
+  >
+    <rect
+      [attr.x]="width / 2 - 15"
+      [attr.y]="height / 2 - 15"
+      [attr.width]="30"
+      [attr.height]="30"
+      fill="transparent"
+      stroke="#3b82f6"
+      stroke-width="1"
+      stroke-dasharray="3,3"
+      opacity="0.5"
+      rx="15"
+      class="click-hint"
+    />
+  </g>
+</svg>

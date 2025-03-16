@@ -7,6 +7,7 @@ import { InteractiveDominoTestComponent } from './features/candidate/pages/inter
 import { DominoTestComponent } from './features/candidate/pages/domino-test/domino-test.component';
 import { TestResultsComponent } from './features/candidate/pages/test-results/test-results.component';
 import { TestsListComponent } from './features/candidate/pages/tests-list/tests-list.component';
+import { TestAnalyticsComponent } from './features/admin/pages/test-analytics/test-analytics.component';
 
 export const routes: Routes = [
   {
@@ -63,6 +64,11 @@ export const routes: Routes = [
 
   // Legacy routes - keep for backward compatibility
   { path: 'test-complete', component: TestCompleteComponent },
+
+  {
+    path: 'admin/analytics/:id',
+    component: TestAnalyticsComponent,
+  },
 
   {
     path: '**',

@@ -1,9 +1,39 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { MockDataService } from './mock-data.service';
+
+interface TestQuestion {
+  id: number;
+  dominos: TestDomino[];
+  gridLayout: { rows: number; cols: number };
+  instruction?: string;
+}
+
+// Enhanced TestDomino interface to include new properties
+interface TestDomino {
+  id: number;
+  row: number;
+  col: number;
+  topValue: number | null;
+  bottomValue: number | null;
+  isEditable: boolean;
+  isVertical?: boolean;
+  color?: string;
+  // Add these properties to fix the TypeScript errors
+  uniqueId?: string;
+  questionId?: number;
+}
+
+interface TestData {
+  id: string;
+  name: string;
+  description: string;
+  duration: number;
+  questions: TestQuestion[];
+}
 
 @Injectable({
   providedIn: 'root',
@@ -21,10 +51,67 @@ export class DominoTestService {
   // Get test data
   getTest(testId: string): Observable<any> {
     if (this.useMockData) {
-      return this.mockDataService.getTest(testId);
+      return this.mockDataService.getTest(testId).pipe(
+        map((test: TestData) => {
+          if (test && test.questions) {
+            // Process test questions to ensure isolation
+            test.questions = test.questions.map(
+              (question: TestQuestion, qIndex: number) => {
+                const questionId = question.id;
+
+                // Process dominos for this question
+                if (question.dominos) {
+                  question.dominos = question.dominos.map(
+                    (domino: TestDomino, dIndex: number) => {
+                      // Create a new domino with a unique reference
+                      const newDomino = { ...domino };
+
+                      // Add extra information to help with debugging and isolation
+                      newDomino.uniqueId = `q${questionId}_d${domino.id}`;
+                      newDomino.questionId = questionId;
+
+                      // Reset editable dominos
+                      if (newDomino.isEditable) {
+                        newDomino.topValue = null;
+                        newDomino.bottomValue = null;
+                      }
+
+                      return newDomino;
+                    }
+                  );
+                }
+
+                return question;
+              }
+            );
+          }
+          return test;
+        })
+      );
     }
 
     return this.http.get<any>(`${this.apiUrl}/${testId}`).pipe(
+      map((test) => {
+        if (test && test.questions) {
+          // Apply the same transformation for API data
+          test.questions = test.questions.map((question: any) => {
+            if (question.dominos) {
+              question.dominos = question.dominos.map((domino: any) => {
+                if (domino.isEditable) {
+                  return {
+                    ...domino,
+                    topValue: null,
+                    bottomValue: null,
+                  };
+                }
+                return domino;
+              });
+            }
+            return question;
+          });
+        }
+        return test;
+      }),
       catchError((error) => {
         console.error('Error fetching test:', error);
         return of(null);
@@ -156,5 +243,30 @@ export class DominoTestService {
         return of([]);
       })
     );
+  }
+
+  // Clear all saved test progress from localStorage
+  clearAllProgress(): void {
+    // Find all keys related to test progress
+    const keysToRemove: string[] = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(this.STORAGE_KEY)) {
+        keysToRemove.push(key);
+      }
+    }
+
+    // Remove each key
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+    console.log(`Cleared ${keysToRemove.length} saved test progress items`);
+  }
+
+  // Clear progress for a specific test
+  clearTestProgress(testId: string): void {
+    const storageKey = `${this.STORAGE_KEY}_${testId}`;
+    localStorage.removeItem(storageKey);
+    console.log(`Cleared saved progress for test: ${testId}`);
   }
 }

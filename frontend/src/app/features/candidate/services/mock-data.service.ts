@@ -43,7 +43,7 @@ export class MockDataService {
     name: 'Logical Reasoning Test (D-70)',
     description: 'A comprehensive logical reasoning test with domino patterns',
     duration: 25,
-    totalQuestions: 8, // Simplified for demo, real test has 44 questions
+    totalQuestions: 9, // Added one more question
     questions: [
       // Question 1: Simple sequential pattern (top values increase by 1, bottom values increase by 1)
       {
@@ -461,6 +461,93 @@ export class MockDataService {
           topValue: 6,
           bottomValue: 3,
           dominoId: 4,
+        },
+      },
+
+      // Question 9: Expanded Rhombus pattern with vertical dominos in specific columns
+      {
+        id: 9,
+        instruction:
+          'Analyze the large rhombus pattern and find the missing domino values.',
+        dominos: [
+          {
+            id: 1,
+            row: 0,
+            col: 1,
+            topValue: 2,
+            bottomValue: 4,
+            isEditable: false,
+            isVertical: false,
+          },
+          {
+            id: 2,
+            row: 0,
+            col: 2,
+            topValue: 3,
+            bottomValue: 1,
+            isEditable: false,
+          },
+          {
+            id: 3,
+            row: 1,
+            col: 0,
+            topValue: 5,
+            bottomValue: 2,
+            isEditable: false,
+            isVertical: true,
+          },
+          {
+            id: 4,
+            row: 1,
+            col: 3,
+            topValue: 1,
+            bottomValue: 5,
+            isEditable: false,
+            isVertical: true,
+          },
+          {
+            id: 5,
+            row: 2,
+            col: 0,
+            topValue: 6,
+            bottomValue: 3,
+            isEditable: false,
+            isVertical: true,
+          },
+          {
+            id: 6,
+            row: 2,
+            col: 3,
+            topValue: 4,
+            bottomValue: 6,
+            isEditable: false,
+            isVertical: true,
+          },
+          {
+            id: 7,
+            row: 3,
+            col: 1,
+            topValue: 6,
+            bottomValue: 2,
+            isEditable: false,
+           
+          },
+          {
+            id: 8,
+            row: 3,
+            col: 2,
+            topValue: null,
+            bottomValue: null,
+            isEditable: true,
+          },
+        ],
+        gridLayout: { rows: 4, cols: 4 },
+        pattern:
+          'Large rhombus pattern with vertical dominos in columns 1 and 4',
+        correctAnswer: {
+          topValue: 5,
+          bottomValue: 4,
+          dominoId: 8,
         },
       },
     ],

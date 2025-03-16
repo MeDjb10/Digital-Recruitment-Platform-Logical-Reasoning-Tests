@@ -22,6 +22,8 @@ export interface DominoPosition {
   isEditable: boolean;
   isVertical?: boolean; // New property for domino orientation
   color?: string; // Optional styling for specific dominos
+  questionId?: number;
+  uniqueId?: string;
 }
 
 export interface DominoChange {
@@ -35,293 +37,9 @@ export interface DominoChange {
   selector: 'app-interactive-domino-grid',
   standalone: true,
   imports: [CommonModule, InteractiveDominoComponent],
+  templateUrl: './interactive-domino-grid.component.html',
+  styleUrls: ['./interactive-domino-grid.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="grid-container" [style.width.px]="totalWidth">
-      <!-- Debug info -->
-      <div class="debug-info" *ngIf="showDebug">
-        <div>Grid size: {{ width }}x{{ height }}</div>
-        <div>Cell size: {{ cellWidth }}x{{ cellHeight }}</div>
-        <div>Dominos: {{ dominos.length }}</div>
-        <div>Pattern: {{ patternType }}</div>
-        <div>
-          <button (click)="resetEditableDominos()">
-            Reset Editable Dominos
-          </button>
-        </div>
-      </div>
-
-      <!-- Grid -->
-      <div
-        class="grid"
-        [style.width.px]="totalWidth"
-        [style.height.px]="totalHeight"
-        [style.padding.px]="gridPadding"
-      >
-        <!-- Grid lines for debugging -->
-        <div *ngIf="showGridLines" class="grid-lines">
-          <div
-            *ngFor="let line of horizontalLines"
-            class="grid-line horizontal"
-            [style.top.px]="line"
-          ></div>
-          <div
-            *ngFor="let line of verticalLines"
-            class="grid-line vertical"
-            [style.left.px]="line"
-          ></div>
-        </div>
-
-        <!-- Dominos with enhanced animations and positioning -->
-        <div
-          class="dominos-container"
-          [style.transform]="'scale(' + zoomLevel + ')'"
-          [style.transform-origin]="'center'"
-        >
-          <ng-container
-            *ngFor="let domino of dominos; trackBy: trackByDominoId"
-          >
-            <div
-              class="domino-wrapper"
-              [style.left.px]="calculateX(domino)"
-              [style.top.px]="calculateY(domino)"
-              [style.transform]="domino.isVertical ? 'rotate(90deg)' : ''"
-              [class.editable-domino]="domino.isEditable"
-            >
-              <app-interactive-domino
-                #dominoComponent
-                [id]="domino.id"
-                [width]="dominoWidth"
-                [height]="dominoHeight"
-                [initialTopValue]="domino.topValue"
-                [initialBottomValue]="domino.bottomValue"
-                [isEditable]="domino.isEditable"
-                [isVertical]="domino.isVertical ?? false"
-                [color]="domino.color || ''"
-                (valueChanged)="onDominoChange($event)"
-                (dominoSelected)="onDominoSelected($event)"
-                (rotationChanged)="onDominoRotate($event)"
-              >
-              </app-interactive-domino>
-            </div>
-          </ng-container>
-        </div>
-
-        <!-- Optional pattern lines to connect dominos -->
-        <svg
-          *ngIf="showConnections"
-          class="connections-layer"
-          [attr.width]="totalWidth"
-          [attr.height]="totalHeight"
-        >
-          <g class="connection-lines">
-            <!-- Lines could be added here -->
-          </g>
-        </svg>
-      </div>
-    </div>
-  `,
-  styles: [
-    `
-      .grid-container {
-        margin: 0 auto;
-        position: relative;
-        transition: all 0.3s ease;
-        min-height: 400px; /* Increased minimum height for better visibility */
-      }
-
-      .grid {
-        position: relative;
-        border: 1px solid #ddd;
-        background-color: #f8f9fa;
-        box-sizing: content-box;
-        margin: 0 auto;
-        border-radius: 8px;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-        overflow: hidden;
-        min-height: 320px; /* Ensure grid has minimum height */
-      }
-
-      .dominos-container {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        transition: transform 0.3s ease;
-      }
-
-      .domino-wrapper {
-        position: absolute;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        z-index: 2;
-      }
-
-      .editable-domino {
-        animation: pulse-shadow 2s infinite;
-        z-index: 3;
-      }
-
-      @keyframes pulse-shadow {
-        0%,
-        100% {
-          filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.4));
-        }
-        50% {
-          filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.7));
-        }
-      }
-
-      .zoom-controls-container {
-        position: absolute;
-        bottom: 25px;
-        right: 25px; /* Increased distance from edge */
-        z-index: 20;
-        padding: 5px;
-        transition: all 0.3s ease;
-        border-radius: 20px;
-        opacity: 0.5;
-        margin: 10px; /* Added margin for more spacing */
-      }
-
-      .zoom-controls-container.zoom-active,
-      .zoom-controls-container:hover {
-        opacity: 1;
-        background-color: rgba(255, 255, 255, 0.9);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      }
-
-      .zoom-controls {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        background-color: white;
-        border-radius: 20px;
-        padding: 5px 10px;
-      }
-
-      .zoom-level-indicator {
-        font-size: 12px;
-        font-weight: 600;
-        color: #64748b;
-        min-width: 40px;
-        text-align: center;
-      }
-
-      .zoom-btn {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        border: 1px solid #e2e8f0;
-        background-color: white;
-        color: #64748b;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .zoom-btn:hover {
-        background-color: #f1f5f9;
-        color: #334155;
-        transform: scale(1.1);
-      }
-
-      .help-tooltip {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 30;
-        max-width: 280px;
-      }
-
-      .tooltip-content {
-        background-color: white;
-        border-radius: 8px;
-        padding: 10px 15px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e2e8f0;
-        position: relative;
-      }
-
-      .tooltip-content h4 {
-        margin: 0 0 8px 0;
-        color: #334155;
-        font-size: 14px;
-      }
-
-      .tooltip-content ul {
-        margin: 0;
-        padding-left: 20px;
-        font-size: 13px;
-        color: #64748b;
-      }
-
-      .tooltip-content li {
-        margin-bottom: 4px;
-      }
-
-      .close-tooltip {
-        position: absolute;
-        top: 5px;
-        right: 5px;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        border: none;
-        background-color: #f1f5f9;
-        color: #64748b;
-        font-size: 16px;
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-      }
-
-      .grid-lines .grid-line {
-        position: absolute;
-        background-color: rgba(0, 0, 0, 0.05);
-      }
-
-      .grid-lines .horizontal {
-        width: 100%;
-        height: 1px;
-      }
-
-      .grid-lines .vertical {
-        width: 1px;
-        height: 100%;
-      }
-
-      .connections-layer {
-        position: absolute;
-        top: 0;
-        left: 0;
-        pointer-events: none;
-        z-index: 1;
-      }
-
-      .debug-info {
-        margin-bottom: 10px;
-        padding: 8px;
-        background-color: #f0f0f0;
-        border: 1px dashed #ccc;
-        font-size: 12px;
-        font-family: monospace;
-        border-radius: 4px;
-      }
-
-      button {
-        margin-top: 5px;
-        padding: 3px 8px;
-        font-size: 12px;
-        cursor: pointer;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-      }
-    `,
-  ],
 })
 export class InteractiveDominoGridComponent implements OnInit, OnChanges {
   @Input() dominos: DominoPosition[] = [];
@@ -369,7 +87,7 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
   verticalLines: number[] = [];
 
   // Pattern type
-  patternType: 'row' | 'grid' | 'rhombus' | 'custom' = 'grid';
+  patternType: 'row' | 'grid' | 'rhombus' | 'custom' | 'rhombus-large' = 'grid';
 
   // Zoom functionality
   zoomLevel: number = 1;
@@ -383,6 +101,9 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
 
   // Add property to track zoom controls interaction state
   isZoomActive: boolean = false;
+
+  // Add debug flag to help track issues
+  private debug = false;
 
   ngOnInit(): void {
     try {
@@ -423,6 +144,23 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['dominos']) {
+      if (this.debug) {
+        console.log(
+          'Dominos input changed:',
+          JSON.stringify(changes['dominos'].currentValue)
+        );
+      }
+
+      // Create deep copies of dominos to prevent state sharing
+      if (changes['dominos'].currentValue) {
+        const newDominos = JSON.parse(
+          JSON.stringify(changes['dominos'].currentValue)
+        );
+        this.dominos = newDominos;
+      }
+    }
+
     if (changes['dominos'] || changes['gridSize']) {
       this.detectPatternType();
       this.calculateDimensions(); // Calculate dimensions based on pattern
@@ -436,10 +174,6 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
         // Update grid size if needed
         this.gridSize.cols = Math.max(maxCol, this.gridSize.cols);
         this.gridSize.rows = Math.max(maxRow, this.gridSize.rows);
-
-        // Set width and height based on grid size
-        this.width = this.gridSize.cols * this.cellWidth;
-        this.height = this.gridSize.rows * this.cellHeight;
       }
 
       // Check if we have editable dominos for tooltip
@@ -447,6 +181,18 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
       this.hasEditableDominosChanged.emit(this.hasEditableDominos);
 
       this.generateGridLines();
+
+      // Always update components with current values
+      setTimeout(() => {
+        if (this.dominoComponents) {
+          this.dominoComponents.forEach((component) => {
+            const domino = this.dominos.find((d) => d.id === component.id);
+            if (domino) {
+              component.forceUpdate(domino.topValue, domino.bottomValue);
+            }
+          });
+        }
+      }, 10);
     }
   }
 
@@ -461,10 +207,11 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
       return;
     }
 
-    // Check if dominos form a rhombic pattern (diamond shape)
+    // Get all unique rows and columns
     const uniqueRows = [...new Set(this.dominos.map((d) => d.row))];
     const uniqueCols = [...new Set(this.dominos.map((d) => d.col))];
 
+    // Check if dominos form a classic rhombic pattern (diamond shape)
     if (
       uniqueRows.length === 3 &&
       uniqueCols.length === 3 &&
@@ -472,6 +219,18 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
       !this.dominos.find((d) => d.row === 1 && d.col === 1)
     ) {
       this.patternType = 'rhombus';
+      return;
+    }
+
+    // Check for larger rhombic pattern with 8 dominos
+    if (
+      uniqueRows.length === 4 &&
+      uniqueCols.length === 4 &&
+      this.dominos.length === 8 &&
+      !this.dominos.find((d) => d.row === 1 && d.col === 1) &&
+      !this.dominos.find((d) => d.row === 2 && d.col === 2)
+    ) {
+      this.patternType = 'rhombus-large';
       return;
     }
 
@@ -502,8 +261,8 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
   }
 
   // Track function to improve ngFor performance
-  trackByDominoId(index: number, domino: DominoPosition): number {
-    return domino.id;
+  trackByDominoId(index: number, domino: DominoPosition): string {
+    return domino.uniqueId || `${domino.questionId || ''}_${domino.id}`;
   }
 
   generateGridLines() {
@@ -528,18 +287,40 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
 
     switch (this.patternType) {
       case 'rhombus':
-        // For rhombic pattern, adjust the center domino positions
-        if (domino.row === 1) {
-          return (
-            basePadding +
-            domino.col * this.cellWidth +
-            (domino.col === 0 ? -20 : 20) // Increased offset for better spacing
-          );
+        // For rhombus, center the middle column and offset based on row
+        if (domino.col === 0) {
+          // Left item - increase spacing from center
+          return basePadding + this.width / 2 - this.cellWidth - 30;
+        } else if (domino.col === 2) {
+          // Right item - increase spacing from center
+          return basePadding + this.width / 2 + 30;
+        } else {
+          // Center column
+          return basePadding + this.width / 2 - this.cellWidth / 2;
         }
-        return basePadding + domino.col * this.cellWidth;
+
+      case 'rhombus-large':
+        // For larger rhombus pattern with 8 dominos
+        const centerX = this.width / 2;
+        const spacing = this.cellWidth * 1.3; // Wider spacing between dominos
+
+        if (domino.col === 0) {
+          // Leftmost
+          return basePadding + centerX - spacing * 1.5;
+        } else if (domino.col === 1) {
+          // Left middle
+          return basePadding + centerX - spacing * 0.75;
+        } else if (domino.col === 2) {
+          // Right middle
+          return basePadding + centerX + spacing * 0.1;
+        } else if (domino.col === 3) {
+          // Rightmost
+          return basePadding + centerX + spacing * 0.85;
+        }
+        return basePadding + domino.col * this.cellWidth; // Fallback
 
       case 'row':
-        // For row pattern, add more spacing
+        // For row pattern, spread out horizontally with more space
         return basePadding + domino.col * (this.cellWidth + 20); // Increased spacing between dominos
 
       default:
@@ -555,15 +336,36 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
 
     switch (this.patternType) {
       case 'rhombus':
-        // For rhombic pattern, position the top and bottom dominos with more space
-        if (domino.row === 0 || domino.row === 2) {
-          return (
-            basePadding +
-            domino.row * this.cellHeight -
-            (domino.row === 0 ? 40 : -40) // Increased the offset to push further out
-          );
+        // For rhombus, top and bottom rows are centered horizontally
+        if (domino.row === 0) {
+          // Top item - increase vertical spacing
+          return basePadding;
+        } else if (domino.row === 2) {
+          // Bottom item - increase vertical spacing
+          return basePadding + this.cellHeight * 2 + 20;
+        } else {
+          // Middle row items - position in middle with better spacing
+          return basePadding + this.cellHeight + 10;
         }
-        return basePadding + domino.row * this.cellHeight;
+
+      case 'rhombus-large':
+        // For larger rhombus pattern with 8 dominos
+        const spacing = this.cellHeight * 0.9;
+
+        if (domino.row === 0) {
+          // Top item
+          return basePadding;
+        } else if (domino.row === 1) {
+          // Upper middle
+          return basePadding + spacing;
+        } else if (domino.row === 2) {
+          // Lower middle
+          return basePadding + spacing * 2;
+        } else if (domino.row === 3) {
+          // Bottom
+          return basePadding + spacing * 3;
+        }
+        return basePadding + domino.row * this.cellHeight; // Fallback
 
       default:
         // Add more vertical spacing between rows in grid patterns
@@ -574,26 +376,93 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
   resetEditableDominos(): void {
     let changes = false;
 
-    // First reset the data model
-    this.dominos.forEach((domino) => {
-      if (domino.isEditable) {
-        domino.topValue = null;
-        domino.bottomValue = null;
-        changes = true;
-      }
-    });
+    try {
+      console.log('Resetting editable dominos');
 
-    // Then reset the components if available
-    if (this.dominoComponents) {
-      this.dominoComponents.forEach((component) => {
-        if (component['isEditable']) {
-          component.clearValues();
+      // First reset the data model
+      this.dominos.forEach((domino) => {
+        if (domino.isEditable) {
+          domino.topValue = null;
+          domino.bottomValue = null;
+          changes = true;
         }
       });
-    }
 
-    if (changes) {
-      this.gridReset.emit();
+      // Then reset the components if available
+      if (this.dominoComponents) {
+        this.dominoComponents.forEach((component) => {
+          const domino = this.dominos.find((d) => d.id === component.id);
+          if (domino && domino.isEditable) {
+            component.clearValues();
+          }
+        });
+      }
+
+      // Check for editable dominos
+      this.hasEditableDominos = this.dominos.some((d) => d.isEditable);
+      this.hasEditableDominosChanged.emit(this.hasEditableDominos);
+
+      if (changes) {
+        this.gridReset.emit();
+      }
+    } catch (err) {
+      console.error('Error resetting editable dominos:', err);
+    }
+  }
+
+  // Enhanced method to completely reinitialize the grid with new dominos
+  reinitializeGrid(newDominos: DominoPosition[]): void {
+    try {
+      if (this.debug) {
+        console.log(
+          'Reinitializing grid with dominos:',
+          JSON.parse(JSON.stringify(newDominos))
+        );
+      }
+
+      // Break the reference by creating deep copies
+      this.dominos = JSON.parse(JSON.stringify(newDominos));
+
+      // Make sure editable dominos have their proper state
+      this.dominos.forEach((domino) => {
+        if (domino.isEditable && domino.topValue === undefined) {
+          domino.topValue = null;
+        }
+        if (domino.isEditable && domino.bottomValue === undefined) {
+          domino.bottomValue = null;
+        }
+      });
+
+      // Recalculate everything
+      this.detectPatternType();
+      this.calculateDimensions();
+      this.calculateOptimalGridSize();
+      this.generateGridLines();
+
+      // Check for editable dominos
+      this.hasEditableDominos = this.dominos.some((d) => d.isEditable);
+      this.hasEditableDominosChanged.emit(this.hasEditableDominos);
+
+      // Force reset of domino components if they exist
+      setTimeout(() => {
+        if (this.dominoComponents) {
+          this.dominoComponents.forEach((component) => {
+            const domino = this.dominos.find((d) => d.id === component.id);
+            if (domino) {
+              if (this.debug) {
+                console.log(
+                  `Setting domino ${component.id} to:`,
+                  domino.topValue,
+                  domino.bottomValue
+                );
+              }
+              component.forceUpdate(domino.topValue, domino.bottomValue);
+            }
+          });
+        }
+      }, 0);
+    } catch (err) {
+      console.error('Error reinitializing grid:', err);
     }
   }
 
@@ -663,9 +532,11 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
   onDominoChange(change: DominoChange): void {
     // Find and update the domino in our local array
     const domino = this.dominos.find((d) => d.id === change.id);
+
     if (domino) {
       domino.topValue = change.topValue;
       domino.bottomValue = change.bottomValue;
+
       if (change.isVertical !== undefined) {
         domino.isVertical = change.isVertical;
       }
@@ -678,6 +549,7 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
   onDominoRotate(event: { id: number; isVertical: boolean }): void {
     // Find and update the domino orientation in our local array
     const domino = this.dominos.find((d) => d.id === event.id);
+
     if (domino) {
       domino.isVertical = event.isVertical;
     }
@@ -718,6 +590,15 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
         this.dominoWidth = 70;
         this.dominoHeight = 140;
         break;
+
+      case 'rhombus-large':
+        // For larger rhombus pattern
+        this.cellWidth = 120;
+        this.cellHeight = 200;
+        this.dominoWidth = 70;
+        this.dominoHeight = 140;
+        break;
+
       case 'row':
         // For row patterns, add more horizontal spacing
         this.cellWidth = 110;
@@ -725,6 +606,7 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
         this.dominoWidth = 70;
         this.dominoHeight = 140;
         break;
+
       default:
         // For standard grid patterns
         this.cellWidth = 100;
@@ -739,8 +621,19 @@ export class InteractiveDominoGridComponent implements OnInit, OnChanges {
 
     // For rhombus patterns, add extra height/width to accommodate the pattern
     if (this.patternType === 'rhombus') {
-      this.height += 80; // Add extra height for top/bottom dominos
-      this.width += 40; // Add extra width if needed
+      this.height += 120; // Increase height to add more space
+      this.width += 60; // Add extra width to space out the sides
+    } else if (this.patternType === 'rhombus-large') {
+      this.height += 160; // Increase height even more for larger rhombus
+      this.width += 100; // Add extra width for larger rhombus
+    }
+  }
+
+  resetAllDominosVisualState(): void {
+    if (this.dominoComponents) {
+      this.dominoComponents.forEach((component) => {
+        component.resetVisualState();
+      });
     }
   }
 }

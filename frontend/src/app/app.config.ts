@@ -16,7 +16,6 @@ import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
-import { SVGErrorHandler } from './features/candidate/utils/error-handler';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -37,6 +36,6 @@ export const appConfig: ApplicationConfig = {
         },
       },
     }),
-    { provide: ErrorHandler, useClass: SVGErrorHandler },
+  
   ],
 };

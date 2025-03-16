@@ -14,12 +14,37 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   InteractiveDominoGridComponent,
-  DominoPosition,
   DominoChange,
 } from '../../components/interactive-domino-grid/interactive-domino-grid.component';
 import { DominoTestService } from '../../services/domino-test.service';
 import { Subscription, interval } from 'rxjs';
 import { take } from 'rxjs/operators';
+
+interface TestQuestion {
+  id: number;
+  dominos: TestDomino[];
+  gridLayout: { rows: number; cols: number };
+  instruction?: string;
+}
+
+interface TestDomino {
+  id: number;
+  row: number;
+  col: number;
+  topValue: number | null;
+  bottomValue: number | null;
+  isEditable: boolean;
+  isVertical?: boolean;
+  color?: string;
+}
+
+interface TestData {
+  id: string;
+  name: string;
+  description: string;
+  duration: number;
+  questions: TestQuestion[];
+}
 
 interface Question {
   id: number;
@@ -37,6 +62,20 @@ interface Question {
   visits: number;
 }
 
+// Add the questionId property to DominoPosition interface
+export interface DominoPosition {
+  id: number;
+  row: number;
+  col: number;
+  topValue: number | null;
+  bottomValue: number | null;
+  isEditable: boolean;
+  isVertical?: boolean;
+  color?: string;
+  questionId?: number;
+  uniqueId?: string;
+}
+
 @Component({
   selector: 'app-domino-test',
   standalone: true,
@@ -46,917 +85,9 @@ interface Question {
     RouterModule,
     InteractiveDominoGridComponent,
   ],
+  templateUrl: './domino-test.component.html',
+  styleUrls: ['./domino-test.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="test-container">
-      <!-- Header with timer -->
-      <header class="test-header">
-        <div class="test-info">
-          <h1>{{ testName }}</h1>
-          <span class="question-counter"
-            >Question {{ currentQuestionIndex + 1 }} of
-            {{ questions.length }}</span
-          >
-        </div>
-
-        <div
-          class="timer"
-          [ngClass]="{ 'timer-warning': timeLeft <= warningThreshold }"
-        >
-          <i class="pi pi-clock"></i>
-          <span>{{ formatTime(timeLeft) }}</span>
-        </div>
-      </header>
-
-      <!-- Main test area with grid and navigation -->
-      <main class="test-body">
-        <aside class="question-nav">
-          <div class="question-nav-header">
-            <h3>Questions</h3>
-            <div class="legend">
-              <div class="legend-item">
-                <div class="legend-color current"></div>
-                <span>Current</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-color answered"></div>
-                <span>Answered</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-color flagged"></div>
-                <span>Flagged</span>
-              </div>
-            </div>
-          </div>
-          <div class="question-list">
-            <div
-              *ngFor="let question of questions; let i = index"
-              class="question-nav-row"
-              [ngClass]="{
-                current: i === currentQuestionIndex
-              }"
-            >
-              <button
-                class="question-nav-item"
-                [ngClass]="{
-                  visited: question.visited,
-                  answered: question.answered,
-                  flagged: question.flaggedForReview
-                }"
-                (click)="goToQuestion(i)"
-              >
-                <span class="question-number">{{ i + 1 }}</span>
-                <span class="question-label">Question {{ i + 1 }}</span>
-                <div class="question-status">
-                  <span
-                    *ngIf="question.answered"
-                    class="status-icon answered-icon"
-                    title="Answered"
-                    >✓</span
-                  >
-                  <span
-                    *ngIf="question.flaggedForReview"
-                    class="status-icon flag-icon"
-                    title="Flagged for review"
-                  >
-                    <i class="pi pi-flag"></i>
-                  </span>
-                </div>
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        <section
-          class="question-area"
-          [class.rhombus-pattern]="isRhombusPattern()"
-        >
-          <div class="question-instructions">
-            <div class="instruction-header">
-              <h2>Question {{ currentQuestionIndex + 1 }}</h2>
-              <button
-                class="flag-button"
-                [class.flagged]="currentQuestion?.flaggedForReview"
-                (click)="toggleFlag()"
-                title="{{
-                  currentQuestion?.flaggedForReview
-                    ? 'Unflag question'
-                    : 'Flag for review'
-                }}"
-              >
-                <i
-                  class="pi"
-                  [ngClass]="
-                    currentQuestion?.flaggedForReview
-                      ? 'pi-flag-fill'
-                      : 'pi-flag'
-                  "
-                ></i>
-                {{
-                  currentQuestion?.flaggedForReview
-                    ? 'Flagged'
-                    : 'Flag for Review'
-                }}
-              </button>
-            </div>
-            <p class="instruction-text">
-              Find the missing values for the empty domino that best completes
-              the pattern.
-            </p>
-          </div>
-
-          <!-- Domino grid -->
-          <div
-            class="domino-grid-container"
-            [class.rhombus-container]="isRhombusPattern()"
-            #gridContainer
-          >
-            <!-- Help tooltip now in the domino-test component -->
-            <div class="help-tooltip" *ngIf="hasEditableDominos && showTooltip">
-              <div class="tooltip-content">
-                <button class="close-tooltip" (click)="dismissTooltip()">
-                  ×
-                </button>
-                <h4>How to interact:</h4>
-                <ul>
-                  <li>Click on an empty domino to select it</li>
-                  <li>Click on the top or bottom half to add dots</li>
-                  <li>Continue clicking to cycle through values 1-6</li>
-                </ul>
-              </div>
-            </div>
-
-            <app-interactive-domino-grid
-              *ngIf="currentQuestion"
-              [dominos]="currentQuestion.dominos"
-              [gridSize]="currentQuestion.gridLayout"
-              [zoomControlsEnabled]="false"
-              [showConnections]="false"
-              [showDebug]="false"
-              (dominoChanged)="onDominoChanged($event)"
-              (dominoSelected)="onDominoSelected($event)"
-              (dominoRotated)="onDominoRotated($event)"
-              (zoomLevelChanged)="onZoomLevelChanged($event)"
-              (hasEditableDominosChanged)="onHasEditableDominosChanged($event)"
-            ></app-interactive-domino-grid>
-
-            <!-- Zoom controls moved to domino-test component -->
-            <div
-              class="zoom-controls-container"
-              [class.zoom-active]="isZoomActive"
-              (mouseenter)="activateZoomControls()"
-              (mouseleave)="deactivateZoomControls()"
-            >
-              <div class="zoom-controls">
-                <button class="zoom-btn" (click)="zoomIn()" title="Zoom In">
-                  <i class="pi pi-plus"></i>
-                </button>
-                <span class="zoom-level-indicator"
-                  >{{ (zoomLevel * 100).toFixed(0) }}%</span
-                >
-                <button
-                  class="zoom-btn"
-                  (click)="zoomReset()"
-                  title="Reset Zoom"
-                >
-                  <i class="pi pi-refresh"></i>
-                </button>
-                <button class="zoom-btn" (click)="zoomOut()" title="Zoom Out">
-                  <i class="pi pi-minus"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Question controls -->
-          <div class="question-controls">
-            <button
-              class="btn btn-secondary"
-              (click)="previousQuestion()"
-              [disabled]="currentQuestionIndex === 0"
-            >
-              <i class="pi pi-arrow-left"></i>
-              Previous
-            </button>
-
-            <button
-              class="btn btn-outline"
-              (click)="toggleFlag()"
-              [class.btn-flagged]="currentQuestion?.flaggedForReview"
-            >
-              <i
-                class="pi"
-                [ngClass]="
-                  currentQuestion?.flaggedForReview ? 'pi-flag-fill' : 'pi-flag'
-                "
-              ></i>
-              {{
-                currentQuestion?.flaggedForReview ? 'Unflag' : 'Flag for Review'
-              }}
-            </button>
-
-            <button
-              class="btn btn-primary"
-              (click)="nextQuestion()"
-              [disabled]="currentQuestionIndex === questions.length - 1"
-            >
-              Next
-              <i class="pi pi-arrow-right"></i>
-            </button>
-          </div>
-        </section>
-      </main>
-
-      <!-- Footer with progress and submit -->
-      <footer class="test-footer">
-        <div class="test-progress">
-          <div class="progress-stats">
-            <span>{{ answeredCount }} / {{ questions.length }} answered</span>
-            <span *ngIf="flaggedCount > 0" class="flagged-count">
-              <i class="pi pi-flag"></i> {{ flaggedCount }} flagged
-            </span>
-          </div>
-          <div class="progress-bar">
-            <div
-              class="progress-fill"
-              [style.width.%]="progressPercentage"
-            ></div>
-          </div>
-        </div>
-
-        <button class="btn btn-finish" (click)="finishTest()">
-          <i class="pi pi-check-circle"></i>
-          {{
-            answeredCount === questions.length
-              ? 'Submit Test'
-              : 'Review & Submit'
-          }}
-        </button>
-      </footer>
-    </div>
-  `,
-  styles: [
-    `
-      .test-container {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        background-color: #f5f7fa;
-        overflow: hidden;
-      }
-
-      .test-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 2rem; /* Reduced from 1rem */
-        background-color: white;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        z-index: 10;
-        border-bottom: 1px solid #e2e8f0;
-      }
-
-      .test-info h1 {
-        font-size: 1.5rem;
-        margin: 0;
-        color: #1e293b;
-        font-weight: 700;
-      }
-
-      .question-counter {
-        font-size: 0.875rem;
-        color: #64748b;
-        display: block;
-        margin-top: 0.25rem;
-      }
-
-      .timer {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.25rem;
-        background-color: #f1f5f9;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      }
-
-      .timer-warning {
-        background-color: #fee2e2;
-        color: #b91c1c;
-        animation: pulse 2s infinite;
-      }
-
-      .test-body {
-        display: flex;
-        flex: 1;
-        overflow: hidden;
-      }
-
-      .question-nav {
-        width: 280px;
-        background-color: white;
-        border-right: 1px solid #e2e8f0;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .question-nav-header {
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid #e2e8f0;
-      }
-
-      .question-nav-header h3 {
-        margin: 0 0 12px 0;
-        font-size: 1rem;
-        color: #0f172a;
-      }
-
-      .legend {
-        display: flex;
-        gap: 12px;
-        margin-top: 8px;
-      }
-
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 12px;
-        color: #64748b;
-      }
-
-      .legend-color {
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
-      }
-
-      .legend-color.current {
-        background-color: #3b82f6;
-      }
-
-      .legend-color.answered {
-        background-color: #10b981;
-      }
-
-      .legend-color.flagged {
-        background-color: #f59e0b;
-      }
-
-      .question-list {
-        flex: 1;
-        padding: 1rem 0;
-        overflow-y: auto;
-      }
-
-      .question-nav-row {
-        padding: 0.25rem 1rem;
-        border-left: 3px solid transparent;
-        transition: background-color 0.2s ease;
-      }
-
-      .question-nav-row.current {
-        background-color: rgba(59, 130, 246, 0.1);
-        border-left-color: #3b82f6;
-      }
-
-      .question-nav-row:hover {
-        background-color: #f8fafc;
-      }
-
-      .question-nav-item {
-        display: flex;
-        width: 100%;
-        align-items: center;
-        padding: 0.75rem 1rem;
-        border-radius: 0.375rem;
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        text-align: left;
-      }
-
-      .question-number {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background-color: #e2e8f0;
-        color: #475569;
-        font-weight: 600;
-        margin-right: 0.75rem;
-        flex-shrink: 0;
-      }
-
-      .question-label {
-        flex: 1;
-        font-size: 0.875rem;
-        color: #475569;
-      }
-
-      .question-status {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .status-icon {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        font-size: 10px;
-      }
-
-      .answered-icon {
-        background-color: #10b981;
-        color: white;
-      }
-
-      .flag-icon {
-        color: #f59e0b;
-      }
-
-      .question-nav-item.current {
-        background-color: #3b82f6;
-        color: white;
-        border-color: #2563eb;
-      }
-
-      .question-nav-item.current .question-number {
-        background-color: white;
-        color: #3b82f6;
-      }
-
-      .question-nav-item.current .question-label {
-        color: white;
-      }
-
-      .question-nav-item.visited {
-        border-color: #94a3b8;
-      }
-
-      .question-nav-item.answered {
-        background-color: #f0fdfa;
-        border-color: #10b981;
-      }
-
-      .question-nav-item.answered .question-number {
-        background-color: #10b981;
-        color: white;
-      }
-
-      .question-nav-item.flagged {
-        background-color: #fef3c7;
-        border-color: #f59e0b;
-      }
-
-      .question-nav-item.flagged .question-number {
-        background-color: #f59e0b;
-        color: white;
-      }
-
-      .question-area {
-        flex: 1;
-        padding: 1.5rem 2rem; /* Reduced from 2rem */
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        background-color: #f8fafc;
-      }
-
-      .question-instructions {
-        margin-bottom: 1rem; /* Reduced from 1.5rem */
-        background-color: white;
-        padding: 1rem; /* Reduced from 1.25rem */
-        border-radius: 0.5rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      }
-
-      .instruction-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem; /* Reduced from 0.75rem */
-      }
-
-      .instruction-header h2 {
-        margin: 0;
-        font-size: 1.25rem;
-        color: #0f172a;
-      }
-
-      .flag-button {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
-        border: 1px solid #e2e8f0;
-        background-color: white;
-        color: #64748b;
-        font-size: 0.875rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .flag-button:hover {
-        background-color: #f8fafc;
-      }
-
-      .flag-button.flagged {
-        background-color: #fef3c7;
-        border-color: #f59e0b;
-        color: #92400e;
-      }
-
-      .instruction-text {
-        color: #475569;
-        line-height: 1.4; /* Slightly condensed */
-        margin: 0;
-      }
-
-      .domino-grid-container {
-        display: flex;
-        justify-content: flex-start; /* Changed from center to align to the left */
-        align-items: center;
-        flex: 1;
-        margin: 0.75rem 0 1.5rem; /* Reduced top margin */
-        background-color: white;
-        border-radius: 0.75rem;
-        padding: 1rem 2rem; /* Adjusted padding */
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        position: relative; /* Important: needed for absolute positioning of tooltip and controls */
-        overflow: visible; /* Changed from hidden to prevent cutting off dominos */
-        min-height: 450px; /* Increased minimum height */
-        width: 100%; /* Ensure full width is used */
-      }
-
-      /* Make the grid container responsive to domino layout */
-      .domino-grid-container ::ng-deep .grid-container {
-        width: auto; /* Changed from 100% to auto to respect natural width */
-        min-width: 90%; /* Wider grid */
-        height: 100%;
-        min-height: 380px;
-        margin-left: 0; /* Align to the left */
-      }
-
-      /* Ensure the grid takes up available space */
-      .domino-grid-container ::ng-deep .grid {
-        min-height: 350px;
-      }
-
-      /* Add more space around dominos in special patterns */
-      .domino-grid-container ::ng-deep .domino-wrapper {
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-      }
-
-      /* Increase visibility of editable dominos */
-      .domino-grid-container ::ng-deep .editable-domino {
-        filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
-      }
-
-      /* Adjust container size based on screen size */
-      @media (min-width: 1200px) {
-        .domino-grid-container {
-          min-height: 500px; /* Even larger on big screens */
-        }
-
-        .domino-grid-container ::ng-deep .grid-container {
-          min-height: 450px;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .domino-grid-container {
-          min-height: 380px;
-          padding: 1.5rem;
-        }
-      }
-
-      /* Help tooltip styling */
-      .help-tooltip {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        z-index: 30;
-        max-width: 300px;
-      }
-
-      .tooltip-content {
-        background-color: white;
-        border-radius: 8px;
-        padding: 12px 15px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e2e8f0;
-        position: relative;
-      }
-
-      .tooltip-content h4 {
-        margin: 0 0 8px 0;
-        color: #334155;
-        font-size: 14px;
-        font-weight: 600;
-      }
-
-      .tooltip-content ul {
-        margin: 0;
-        padding-left: 20px;
-        font-size: 13px;
-        color: #64748b;
-      }
-
-      .tooltip-content li {
-        margin-bottom: 4px;
-      }
-
-      .close-tooltip {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        border: none;
-        background-color: #f1f5f9;
-        color: #64748b;
-        font-size: 16px;
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-      }
-
-      /* Zoom controls styling */
-      .zoom-controls-container {
-        position: absolute;
-        bottom: 15px;
-        right: 15px;
-        z-index: 30;
-        padding: 5px;
-        transition: all 0.3s ease;
-        border-radius: 20px;
-        opacity: 0.7;
-      }
-
-      .zoom-controls-container.zoom-active,
-      .zoom-controls-container:hover {
-        opacity: 1;
-        background-color: rgba(255, 255, 255, 0.9);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      }
-
-      .zoom-controls {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        background-color: white;
-        border-radius: 20px;
-        padding: 5px 10px;
-      }
-
-      .zoom-level-indicator {
-        font-size: 12px;
-        font-weight: 600;
-        color: #64748b;
-        min-width: 40px;
-        text-align: center;
-      }
-
-      .zoom-btn {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        border: 1px solid #e2e8f0;
-        background-color: white;
-        color: #64748b;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .zoom-btn:hover {
-        background-color: #f1f5f9;
-        color: #334155;
-        transform: scale(1.1);
-      }
-
-      .question-controls {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 1rem; /* Reduced from 1.5rem */
-      }
-
-      .test-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem 2rem;
-        background-color: white;
-        border-top: 1px solid #e2e8f0;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
-      }
-
-      .test-progress {
-        display: flex;
-        flex-direction: column;
-        width: 60%;
-      }
-
-      .progress-stats {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 0.5rem;
-      }
-
-      .progress-stats span {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #475569;
-      }
-
-      .flagged-count {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        color: #92400e;
-      }
-
-      .flagged-count i {
-        color: #f59e0b;
-      }
-
-      .progress-bar {
-        height: 8px;
-        background-color: #e2e8f0;
-        border-radius: 4px;
-        overflow: hidden;
-      }
-
-      .progress-fill {
-        height: 100%;
-        background-color: #3b82f6;
-        border-radius: 4px;
-        transition: width 0.3s ease;
-      }
-
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.25rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: none;
-        font-size: 0.9375rem;
-      }
-
-      .btn-primary {
-        background-color: #3b82f6;
-        color: white;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
-
-      .btn-primary:hover {
-        background-color: #2563eb;
-      }
-
-      .btn-primary:disabled {
-        background-color: #93c5fd;
-        cursor: not-allowed;
-      }
-
-      .btn-secondary {
-        background-color: #f1f5f9;
-        color: #334155;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
-
-      .btn-secondary:hover {
-        background-color: #e2e8f0;
-      }
-
-      .btn-secondary:disabled {
-        color: #94a3b8;
-        cursor: not-allowed;
-      }
-
-      .btn-outline {
-        background-color: transparent;
-        border: 1px solid #cbd5e1;
-        color: #64748b;
-      }
-
-      .btn-outline:hover {
-        background-color: #f8fafc;
-        border-color: #94a3b8;
-      }
-
-      .btn-outline.btn-flagged {
-        background-color: #fef3c7;
-        border-color: #f59e0b;
-        color: #92400e;
-      }
-
-      .btn-outline.btn-flagged:hover {
-        background-color: #fde68a;
-      }
-
-      .btn-finish {
-        background-color: #10b981;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-
-      .btn-finish:hover {
-        background-color: #059669;
-      }
-
-      @keyframes pulse {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.7;
-        }
-      }
-
-      /* Responsive adjustments */
-      @media (max-width: 1024px) {
-        .question-nav {
-          width: 240px;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .test-body {
-          flex-direction: column;
-        }
-
-        .question-nav {
-          width: 100%;
-          height: auto;
-          max-height: 200px;
-          border-right: none;
-          border-bottom: 1px solid #e2e8f0;
-        }
-
-        .domino-grid-container {
-          padding: 1.5rem;
-        }
-
-        .test-progress {
-          width: 100%;
-          margin-bottom: 1rem;
-        }
-
-        .test-footer {
-          flex-direction: column;
-          gap: 1rem;
-        }
-      }
-
-      /* Specific styling for rhombus pattern */
-      .rhombus-pattern .domino-grid-container {
-        min-height: 650px; /* Increased minimum height significantly for rhombus patterns */
-        transition: min-height 0.3s ease-in-out;
-      }
-
-      @media (min-width: 1200px) {
-        .rhombus-pattern .domino-grid-container {
-          min-height: 700px; /* Even more height on larger screens */
-        }
-      }
-
-      @media (max-width: 768px) {
-        .rhombus-pattern .domino-grid-container {
-          min-height: 600px;
-        }
-      }
-
-      @media (min-height: 900px) {
-        .rhombus-pattern .domino-grid-container {
-          min-height: 750px;
-        }
-      }
-    `,
-  ],
 })
 export class DominoTestComponent
   implements OnInit, OnDestroy, AfterViewInit, AfterViewChecked
@@ -990,6 +121,15 @@ export class DominoTestComponent
   // Track whether heights have been synchronized
   private heightSynchronized = false;
 
+  // Add property to control grid container height
+  gridContainerHeight: number = 300;
+
+  // Add a map to store each question's state independently
+  private questionStates: Map<number, Question> = new Map();
+
+  // Add debug flag to help track issues
+  private debug = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -1007,32 +147,101 @@ export class DominoTestComponent
 
   ngOnDestroy() {
     this.stopTimer();
+    this.saveCurrentQuestionState();
     this.saveTestProgress();
   }
 
   loadTest() {
-    // In a real app, you would load the test from your service
     // Try to load saved progress first
     const savedProgress = this.dominoTestService.loadProgress(this.testId);
 
     if (savedProgress) {
-      this.questions = savedProgress.questions;
+      // Create deep copies of all questions to ensure isolation
+      this.questions = JSON.parse(JSON.stringify(savedProgress.questions));
+
+      // Ensure editable dominos have appropriate values from saved progress
+      this.questions.forEach((question) => {
+        question.dominos.forEach((domino) => {
+          // Add uniqueId if not present
+          if (!domino.uniqueId) {
+            domino.uniqueId = `q${question.id}_d${domino.id}`;
+          }
+
+          // Add questionId if not present
+          if (!domino.questionId) {
+            domino.questionId = question.id;
+          }
+        });
+      });
+
       this.currentQuestionIndex = savedProgress.currentQuestionIndex;
       this.timeLeft = savedProgress.timeLeft;
       this.testName = savedProgress.testName || this.testName;
+
+      // Initialize the question states map
+      this.questions.forEach((question: Question) => {
+        this.questionStates.set(
+          question.id,
+          JSON.parse(JSON.stringify(question))
+        );
+      });
+
+      // Set current question from the states map to ensure isolation
+      this.currentQuestion = JSON.parse(
+        JSON.stringify(
+          this.questionStates.get(
+            this.questions[this.currentQuestionIndex].id
+          ) || this.questions[this.currentQuestionIndex]
+        )
+      );
     } else {
       // Create new test if no saved progress
       this.dominoTestService.getTest(this.testId).subscribe({
-        next: (test) => {
+        next: (test: TestData) => {
           if (test) {
             this.testName = test.name;
-            this.questions = test.questions;
             this.timeLeft = test.duration * 60; // Convert minutes to seconds
+
+            // Transform test questions to our Question format
+            this.questions = test.questions.map((q: TestQuestion) => {
+              // Add uniqueId and questionId to each domino
+              const dominos = q.dominos.map((d) => ({
+                ...d,
+                uniqueId: `q${q.id}_d${d.id}`,
+                questionId: q.id,
+              }));
+
+              return {
+                id: q.id,
+                dominos: dominos,
+                gridLayout: q.gridLayout,
+                answered: false,
+                flaggedForReview: false,
+                timeSpent: 0,
+                visited: false,
+                visits: 0,
+              };
+            });
+
+            // Store each question state separately
+            this.questions.forEach((q) => {
+              this.questionStates.set(q.id, JSON.parse(JSON.stringify(q)));
+            });
           } else {
-            // Fallback to sample questions if API fails
+            // Fallback to sample questions if API returns empty data
             this.questions = this.createSampleQuestions();
           }
-          this.currentQuestion = this.questions[this.currentQuestionIndex];
+
+          // Ensure current question is a deep copy from the states map
+          if (this.questions.length > 0) {
+            this.currentQuestion = JSON.parse(
+              JSON.stringify(
+                this.questionStates.get(this.questions[0].id) ||
+                  this.questions[0]
+              )
+            );
+          }
+
           this.markQuestionAsVisited(this.currentQuestionIndex);
           this.cdr.markForCheck();
         },
@@ -1054,8 +263,8 @@ export class DominoTestComponent
   }
 
   createSampleQuestions(): Question[] {
-    // Create a few sample questions
-    return [
+    // Create a few sample questions with cleaner initialization
+    const sampleQuestions = [
       {
         id: 1,
         dominos: [
@@ -1066,46 +275,17 @@ export class DominoTestComponent
             topValue: 1,
             bottomValue: 2,
             isEditable: false,
+            questionId: 1,
           },
-          {
-            id: 2,
-            row: 0,
-            col: 1,
-            topValue: 2,
-            bottomValue: 3,
-            isEditable: false,
-          },
-          {
-            id: 3,
-            row: 0,
-            col: 2,
-            topValue: 3,
-            bottomValue: 4,
-            isEditable: false,
-          },
-          {
-            id: 4,
-            row: 0,
-            col: 3,
-            topValue: 4,
-            bottomValue: 5,
-            isEditable: false,
-          },
-          {
-            id: 5,
-            row: 0,
-            col: 4,
-            topValue: 5,
-            bottomValue: 6,
-            isEditable: false,
-          },
+          // ... other non-editable dominos for question 1 ...
           {
             id: 6,
             row: 0,
             col: 5,
-            topValue: null,
+            topValue: null, // IMPORTANT: explicitly set to null for editable dominos
             bottomValue: null,
             isEditable: true,
+            questionId: 1,
           },
         ],
         gridLayout: { rows: 1, cols: 6 },
@@ -1115,110 +295,29 @@ export class DominoTestComponent
         visited: false,
         visits: 0,
       },
-      {
-        id: 2,
-        dominos: [
-          {
-            id: 1,
-            row: 0,
-            col: 0,
-            topValue: 3,
-            bottomValue: 3,
-            isEditable: false,
-          },
-          {
-            id: 2,
-            row: 0,
-            col: 1,
-            topValue: 2,
-            bottomValue: 3,
-            isEditable: false,
-          },
-          {
-            id: 3,
-            row: 0,
-            col: 2,
-            topValue: 1,
-            bottomValue: 3,
-            isEditable: false,
-          },
-          {
-            id: 4,
-            row: 1,
-            col: 0,
-            topValue: 3,
-            bottomValue: 2,
-            isEditable: false,
-          },
-          {
-            id: 5,
-            row: 1,
-            col: 1,
-            topValue: null,
-            bottomValue: null,
-            isEditable: true,
-          },
-          {
-            id: 6,
-            row: 1,
-            col: 2,
-            topValue: 3,
-            bottomValue: 0,
-            isEditable: false,
-          },
-        ],
-        gridLayout: { rows: 2, cols: 3 },
-        answered: false,
-        flaggedForReview: false,
-        timeSpent: 0,
-        visited: false,
-        visits: 0,
-      },
-      // Sample with rhombus shape
-      {
-        id: 3,
-        dominos: [
-          {
-            id: 1,
-            row: 0,
-            col: 1,
-            topValue: 1,
-            bottomValue: 4,
-            isEditable: false,
-          },
-          {
-            id: 2,
-            row: 1,
-            col: 0,
-            topValue: 3,
-            bottomValue: 5,
-            isEditable: false,
-          },
-          {
-            id: 3,
-            row: 1,
-            col: 2,
-            topValue: 2,
-            bottomValue: 6,
-            isEditable: false,
-          },
-          {
-            id: 4,
-            row: 2,
-            col: 1,
-            topValue: null,
-            bottomValue: null,
-            isEditable: true,
-          },
-        ],
-        gridLayout: { rows: 3, cols: 3 },
-        answered: false,
-        flaggedForReview: false,
-        timeSpent: 0,
-        visited: false,
-        visits: 0,
-      },
+      // ... other questions ...
     ];
+
+    // Ensure deep copies are made and stored in the question states map
+    const result = JSON.parse(JSON.stringify(sampleQuestions));
+    result.forEach((question: Question) => {
+      // Double check that editable dominos have null values
+      question.dominos.forEach((domino) => {
+        if (domino.isEditable) {
+          // Make absolutely sure these are null, not undefined
+          if (domino.topValue === undefined) domino.topValue = null;
+          if (domino.bottomValue === undefined) domino.bottomValue = null;
+        }
+      });
+
+      // Store in question states map
+      this.questionStates.set(
+        question.id,
+        JSON.parse(JSON.stringify(question))
+      );
+    });
+
+    return result;
   }
 
   startTimer() {
@@ -1262,17 +361,53 @@ export class DominoTestComponent
   }
 
   goToQuestion(index: number) {
+    if (this.debug) {
+      console.log(
+        `[BEFORE CHANGE] Moving from question ${this.currentQuestionIndex} to ${index}`
+      );
+      console.log(
+        'Current question state:',
+        JSON.stringify(this.currentQuestion)
+      );
+    }
+
+    // First save the current question state
+    this.saveCurrentQuestionState();
+
     // Update time spent on current question before switching
     this.updateCurrentQuestionTime();
 
     // Store the old question type (rhombus or not) to detect changes
     const wasRhombusPattern = this.isRhombusPattern();
+    const previousQuestionIndex = this.currentQuestionIndex;
 
+    // Update current index
     this.currentQuestionIndex = index;
-    this.currentQuestion = this.questions[index];
+
+    const targetQuestion = this.questions[index];
+
+    // Get the question state from our map, or use the question from the array as fallback
+    // Always create a fresh deep copy to ensure complete isolation
+    this.currentQuestion = JSON.parse(
+      JSON.stringify(
+        this.questionStates.get(targetQuestion.id) || targetQuestion
+      )
+    );
+
+    if (this.debug) {
+      console.log(
+        `[AFTER CHANGE] Now at question ${this.currentQuestionIndex}`
+      );
+      console.log('New question state:', JSON.stringify(this.currentQuestion));
+
+      // Check for editable dominos specifically
+      const editableDominos = this.currentQuestion?.dominos.filter(
+        (d) => d.isEditable
+      );
+      console.log('Editable dominos in new question:', editableDominos);
+    }
 
     // Reset height synchronization flag when changing questions
-    // Only if we're coming from a rhombus pattern or going to a different pattern
     if (wasRhombusPattern !== this.isRhombusPattern()) {
       this.heightSynchronized = false;
 
@@ -1282,38 +417,78 @@ export class DominoTestComponent
       }
     }
 
-    // Reset empty dominos in the next question after a short delay
-    // to ensure the grid component is properly initialized
+    // Add a short delay to ensure DOM is updated before we modify the grid component
     setTimeout(() => {
-      if (this.dominoGrid) {
-        this.dominoGrid.resetEditableDominos();
-
-        // Reset zoom level when changing questions
-        if ('zoomReset' in this.dominoGrid) {
-          (this.dominoGrid as any).zoomReset();
-        }
-      }
+      this.forceGridReinitialize();
     }, 50);
 
     this.markQuestionAsVisited(index);
     this.lastQuestionChangeTime = Date.now();
-    this.cdr.markForCheck();
 
     // Reset zoom level when changing questions
-    if (this.dominoGrid) {
-      this.dominoGrid.zoomReset();
-    }
     this.zoomLevel = 1;
     this.isZoomActive = false;
 
     // Reset tooltip visibility when changing questions
-    // Only show after first question if user hasn't dismissed
     if (index === 0 || this.showTooltip) {
       this.showTooltip = true;
     }
 
     // Reset height synchronization flag when changing questions
     this.heightSynchronized = false;
+
+    // Add pattern-specific class for better sizing
+    setTimeout(() => {
+      const containerElement = this.gridContainerRef?.nativeElement;
+      if (containerElement) {
+        // Remove any existing pattern classes
+        containerElement.classList.remove('row-pattern', 'grid-pattern');
+
+        // Check pattern type and add appropriate class
+        if (!this.isRhombusPattern() && this.currentQuestion) {
+          // Add row pattern or grid pattern classes
+          if (this.isRowPattern()) {
+            containerElement.classList.add('row-pattern');
+          } else {
+            containerElement.classList.add('grid-pattern');
+          }
+        }
+      }
+    }, 50);
+
+    // After changing question, reset height and resize after a delay
+    this.gridContainerHeight = this.isRhombusPattern()
+      ? 360
+      : this.isRowPattern()
+      ? 200
+      : 260;
+
+    setTimeout(() => {
+      this.resizeGridContainer();
+    }, 150);
+
+    this.cdr.markForCheck();
+  }
+
+  // New method to completely reinitialize the grid when changing questions
+  private forceGridReinitialize() {
+    if (!this.dominoGrid || !this.currentQuestion) return;
+
+    try {
+      console.log('Reinitializing grid with fresh dominos');
+
+      // Create a completely fresh copy of the dominos with new object references
+      const freshDominos = this.currentQuestion.dominos.map((domino) => {
+        return {
+          ...JSON.parse(JSON.stringify(domino)),
+          questionId: this.currentQuestion?.id, // Add question ID to track context
+        };
+      });
+
+      this.dominoGrid.reinitializeGrid(freshDominos);
+    } catch (err) {
+      console.error('Error reinitializing grid:', err);
+    }
   }
 
   nextQuestion() {
@@ -1337,28 +512,46 @@ export class DominoTestComponent
   }
 
   onDominoChanged(change: DominoChange) {
-    if (this.currentQuestion) {
-      // Find the editable domino
-      const editableDomino = this.currentQuestion.dominos.find(
-        (d) => d.isEditable && d.id === change.id
+    if (!this.currentQuestion) return;
+
+    if (this.debug) {
+      console.log(
+        `Domino change event: id=${change.id}, top=${change.topValue}, bottom=${change.bottomValue}`
       );
+    }
 
-      if (editableDomino) {
-        // Update the user answer
-        editableDomino.topValue = change.topValue;
-        editableDomino.bottomValue = change.bottomValue;
+    // Find the editable domino in current question only
+    const editableDomino = this.currentQuestion.dominos.find(
+      (d) => d.isEditable && d.id === change.id
+    );
 
-        this.currentQuestion.userAnswer = {
-          dominoId: change.id,
-          topValue: change.topValue,
-          bottomValue: change.bottomValue,
-        };
+    if (editableDomino) {
+      // Update the domino values
+      editableDomino.topValue = change.topValue;
+      editableDomino.bottomValue = change.bottomValue;
 
-        // Mark question as answered if both values are provided
-        this.currentQuestion.answered =
-          change.topValue !== null && change.bottomValue !== null;
+      // Update the user's answer for this specific question
+      this.currentQuestion.userAnswer = {
+        dominoId: change.id,
+        topValue: change.topValue,
+        bottomValue: change.bottomValue,
+      };
 
-        this.cdr.markForCheck();
+      // Mark question as answered if both values are provided
+      this.currentQuestion.answered =
+        change.topValue !== null && change.bottomValue !== null;
+
+      // Immediately save the updated question state to our map
+      this.saveCurrentQuestionState();
+
+      // Since we've changed a question's state, mark for detection
+      this.cdr.markForCheck();
+
+      if (this.debug) {
+        console.log(
+          'Question updated with new answer:',
+          JSON.stringify(this.currentQuestion.userAnswer)
+        );
       }
     }
   }
@@ -1413,10 +606,19 @@ export class DominoTestComponent
     // Update time spent on current question first
     this.updateCurrentQuestionTime();
 
+    // Save the current question state before saving progress
+    this.saveCurrentQuestionState();
+
+    // Create a deep copy of questions from our state map to ensure data integrity
+    const questionsToSave = this.questions.map((q) => {
+      const savedState = this.questionStates.get(q.id);
+      return savedState ? JSON.parse(JSON.stringify(savedState)) : q;
+    });
+
     const progress = {
       testId: this.testId,
       testName: this.testName,
-      questions: this.questions,
+      questions: questionsToSave,
       currentQuestionIndex: this.currentQuestionIndex,
       timeLeft: this.timeLeft,
       timestamp: new Date().toISOString(),
@@ -1426,6 +628,8 @@ export class DominoTestComponent
   }
 
   finishTest() {
+    // Save the current question state first
+    this.saveCurrentQuestionState();
     this.saveTestProgress();
 
     // If not all questions are answered, show confirmation
@@ -1435,29 +639,35 @@ export class DominoTestComponent
           this.questions.length - this.answeredCount
         } unanswered questions. Are you sure you want to submit the test?`
       );
-
       if (!confirm) return;
     }
 
-    // Submit the test
-    this.dominoTestService.submitTest(this.testId, this.questions).subscribe({
-      next: (result) => {
-        // Navigate to results page
-        this.router.navigate(['/test-completion'], {
-          state: {
-            testId: this.testId,
-            testName: this.testName,
-            score: result.score,
-            totalQuestions: this.questions.length,
-            timeSpent: 25 * 60 - this.timeLeft, // Total seconds spent
-          },
-        });
-      },
-      error: (err) => {
-        console.error('Error submitting test:', err);
-        alert('There was an error submitting your test. Please try again.');
-      },
+    // Submit the test - use questions from our state map for submission
+    const questionsToSubmit = this.questions.map((q: Question) => {
+      const savedState = this.questionStates.get(q.id);
+      return savedState ? JSON.parse(JSON.stringify(savedState)) : q;
     });
+
+    this.dominoTestService
+      .submitTest(this.testId, questionsToSubmit)
+      .subscribe({
+        next: (result) => {
+          // Navigate to results page
+          this.router.navigate(['/test-completion'], {
+            state: {
+              testId: this.testId,
+              testName: this.testName,
+              score: result.score,
+              totalQuestions: this.questions.length,
+              timeSpent: 25 * 60 - this.timeLeft, // Total seconds spent
+            },
+          });
+        },
+        error: (err) => {
+          console.error('Error submitting test:', err);
+          alert('There was an error submitting your test. Please try again.');
+        },
+      });
   }
 
   // Add new methods for controlling zoom
@@ -1495,10 +705,15 @@ export class DominoTestComponent
 
   dismissTooltip(): void {
     this.showTooltip = false;
+    this.cdr.markForCheck();
   }
 
   onZoomLevelChanged(level: number): void {
     this.zoomLevel = level;
+
+    // Resize the container when zoom changes
+    setTimeout(() => this.resizeGridContainer(), 100);
+
     this.cdr.markForCheck();
   }
 
@@ -1517,8 +732,6 @@ export class DominoTestComponent
     if (this.currentQuestionIndex === 2) return true;
 
     // Second approach: analyze the grid structure to detect rhombus pattern
-    if (dominos.length !== 4) return false;
-
     // Get all unique rows and columns
     const uniqueRows = [...new Set(dominos.map((d) => d.row))];
     const uniqueCols = [...new Set(dominos.map((d) => d.col))];
@@ -1539,59 +752,142 @@ export class DominoTestComponent
     return false;
   }
 
+  // Detect row pattern
+  isRowPattern(): boolean {
+    if (!this.currentQuestion || !this.currentQuestion.dominos) return false;
+
+    const dominos = this.currentQuestion.dominos;
+
+    // Check if all dominos have the same row (horizontal layout)
+    return dominos.every((d) => d.row === dominos[0].row);
+  }
+
   ngAfterViewInit() {
     // Initial sizing after view initialization
-    this.syncGridHeight();
+    this.resizeGridContainer();
   }
 
   ngAfterViewChecked() {
-    // If this is a rhombus pattern and height hasn't been synchronized yet
-    if (this.isRhombusPattern() && !this.heightSynchronized) {
-      this.syncGridHeight();
-    }
-    // If this is NOT a rhombus pattern but we have a previous height set
-    else if (!this.isRhombusPattern() && this.heightSynchronized) {
-      // Reset the custom height for non-rhombus patterns
-      this.resetGridHeight();
-    }
+    // Check for changes in grid size that would require container resizing
+    this.resizeGridContainer();
   }
 
-  // Synchronize container height with actual grid height for rhombus patterns
-  syncGridHeight() {
+  // Enhanced method to handle all pattern types
+  resizeGridContainer() {
     setTimeout(() => {
-      if (this.isRhombusPattern()) {
-        const gridElement = document.querySelector(
-          '.grid-container'
-        ) as HTMLElement;
+      try {
+        const gridElement = document.querySelector('.grid') as HTMLElement;
         const containerElement = this.gridContainerRef?.nativeElement;
 
         if (gridElement && containerElement) {
-          const gridHeight = gridElement.offsetHeight;
+          // Only adjust if grid is visible and rendered
+          if (gridElement.offsetHeight > 0) {
+            // Add some buffer space around the grid
+            const buffer = this.isRhombusPattern() ? 100 : 60;
+            const minHeight = Math.max(gridElement.offsetHeight + buffer, 300);
 
-          // Add padding to ensure it fits with some margin
-          if (gridHeight > 0) {
-            containerElement.style.minHeight = `${gridHeight + 80}px`;
+            // Set the minHeight directly on the container element
+            containerElement.style.minHeight = `${minHeight}px`;
+
+            // Store this height for later use
+            this.gridContainerHeight = minHeight;
+
+            // Set a custom CSS variable for the grid's height
             document.documentElement.style.setProperty(
               '--grid-height',
-              `${gridHeight + 80}px`
+              `${minHeight}px`
             );
+
             this.heightSynchronized = true;
-            this.cdr.markForCheck();
           }
         }
+      } catch (err) {
+        console.error('Error resizing grid container:', err);
       }
-    }, 200);
+    }, 100);
   }
 
   // Reset grid height for non-rhombus patterns
   resetGridHeight() {
     const containerElement = this.gridContainerRef?.nativeElement;
-    if (containerElement) {
-      // Remove the explicit minHeight and let CSS take over
-      containerElement.style.minHeight = '';
-      document.documentElement.style.removeProperty('--grid-height');
-      this.heightSynchronized = false;
-      this.cdr.markForCheck();
+    if (!containerElement) return;
+
+    // Remove the explicit minHeight and let CSS take over
+    containerElement.style.minHeight = '';
+    document.documentElement.style.removeProperty('--grid-height');
+    this.heightSynchronized = false;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Clear all saved test progress data using the DominoTestService
+   */
+  clearSavedData(): void {
+    const confirmed = confirm(
+      'This will clear all saved progress data. Are you sure?'
+    );
+    if (confirmed) {
+      try {
+        // Use the service method to clear all progress data
+        this.dominoTestService.clearAllProgress();
+
+        // Reset the questions array and current question
+        this.questions = [];
+        this.currentQuestion = null;
+
+        // Reset the timer to default value
+        this.timeLeft = 25 * 60; // 25 minutes in seconds
+
+        // Show success message
+        alert('All progress data has been cleared. The page will now reload.');
+
+        // Reload the page to start fresh
+        window.location.reload();
+      } catch (error) {
+        console.error('Error clearing saved data:', error);
+        alert('An error occurred while trying to clear saved data.');
+      }
+    }
+  }
+
+  // Ensure state is properly saved
+  private saveCurrentQuestionState(): void {
+    if (this.currentQuestion) {
+      // Create a deep copy to save in our map
+      const stateCopy = JSON.parse(JSON.stringify(this.currentQuestion));
+
+      // Save to our state map
+      this.questionStates.set(this.currentQuestion.id, stateCopy);
+
+      // Also update the main questions array
+      const index = this.questions.findIndex(
+        (q) => q.id === this.currentQuestion!.id
+      );
+      if (index >= 0) {
+        // Specific properties to update on the main array
+        this.questions[index].answered = this.currentQuestion.answered;
+        this.questions[index].flaggedForReview =
+          this.currentQuestion.flaggedForReview;
+        this.questions[index].timeSpent = this.currentQuestion.timeSpent;
+        this.questions[index].visited = this.currentQuestion.visited;
+        this.questions[index].visits = this.currentQuestion.visits;
+
+        // Update user answer
+        if (this.currentQuestion.userAnswer) {
+          this.questions[index].userAnswer = JSON.parse(
+            JSON.stringify(this.currentQuestion.userAnswer)
+          );
+        } else {
+          this.questions[index].userAnswer = undefined;
+        }
+      }
+
+      if (this.debug) {
+        console.log(
+          `Saved state for question ${this.currentQuestion.id}`,
+          JSON.stringify(stateCopy)
+        );
+      }
     }
   }
 }

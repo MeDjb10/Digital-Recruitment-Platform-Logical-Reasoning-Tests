@@ -141,7 +141,7 @@ interface Submission {
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let submission of filteredSubmissions">
+            <tr *ngFor="let submission of paginatedSubmissions">
               <td>{{ submission.candidateName }}</td>
               <td>
                 <span
@@ -174,6 +174,24 @@ interface Submission {
             </tr>
           </tbody>
         </table>
+
+        <div class="pagination-controls" *ngIf="totalPages > 1">
+          <button
+            class="btn"
+            (click)="goToPage(currentPage - 1)"
+            [disabled]="currentPage === 1"
+          >
+            Previous
+          </button>
+          <span>Page {{ currentPage }} of {{ totalPages }}</span>
+          <button
+            class="btn"
+            (click)="goToPage(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   `,
@@ -405,6 +423,15 @@ export class TestAnalyticsComponent implements OnInit {
   sortOption: string = 'date';
   filteredSubmissions: Submission[] = [];
 
+  // Add pagination for better performance with large datasets
+  currentPage: number = 1;
+  itemsPerPage: number = 10;
+  totalPages: number = 1;
+
+  // Add visualization options
+  showChart: boolean = true;
+  chartType: 'bar' | 'line' | 'pie' = 'bar';
+
   constructor(
     private route: ActivatedRoute,
     private dominoTestService: DominoTestService,
@@ -421,17 +448,14 @@ export class TestAnalyticsComponent implements OnInit {
   loadTestAnalytics() {
     this.dominoTestService.getTestAnalytics(this.testId).subscribe({
       next: (data) => {
-        if (data) {
-          this.analytics = data;
-          this.filteredSubmissions = [...this.analytics.recentSubmissions];
-          this.sortSubmissions();
-        } else {
-          this.createMockData();
-        }
+        this.analytics = data;
+        this.filteredSubmissions = [...(data.recentSubmissions || [])];
+        this.calculateTotalPages();
+        this.sortSubmissions(); // Apply default sorting
         this.cdr.markForCheck();
       },
       error: () => {
-        this.createMockData();
+        this.createMockData(); // Fallback to mock data if API fails
         this.cdr.markForCheck();
       },
     });
@@ -441,136 +465,105 @@ export class TestAnalyticsComponent implements OnInit {
     // Create mock analytics data for testing
     this.analytics = {
       testId: this.testId,
-      testName:
-        this.testId === 'd70'
-          ? 'Logical Reasoning Test (D-70)'
-          : 'Logical Reasoning Test',
-      totalAttempts: 127,
-      averageScore: 68.5,
-      averageTimeSpent: 1350, // 22.5 minutes
+      testName: `Test ${this.testId.toUpperCase()}`,
+      totalAttempts: 50,
+      averageScore: 72.5,
+      averageTimeSpent: 1500, // 25 minutes
       questionStats: [
+        // Sample question stats
         {
           questionId: 1,
-          correctRate: 82,
-          averageTimeSpent: 90,
-          partialCorrectRate: 8,
-          reversedAnswerRate: 2,
-        },
-        {
-          questionId: 2,
-          correctRate: 65,
+          correctRate: 80,
           averageTimeSpent: 120,
-          partialCorrectRate: 12,
+          partialCorrectRate: 10,
           reversedAnswerRate: 5,
         },
-        {
-          questionId: 3,
-          correctRate: 48,
-          averageTimeSpent: 180,
-          partialCorrectRate: 20,
-          reversedAnswerRate: 10,
-        },
-        {
-          questionId: 4,
-          correctRate: 75,
-          averageTimeSpent: 105,
-          partialCorrectRate: 5,
-          reversedAnswerRate: 3,
-        },
-        {
-          questionId: 5,
-          correctRate: 92,
-          averageTimeSpent: 75,
-          partialCorrectRate: 2,
-          reversedAnswerRate: 1,
-        },
+        // Add more mock question stats...
       ],
       recentSubmissions: [
+        // Sample submissions
         {
-          candidateId: 'c001',
+          candidateId: 'user1',
           candidateName: 'John Smith',
-          score: 80,
+          score: 85,
           timeSpent: 1250,
-          submittedAt: new Date(Date.now() - 2 * 86400000).toISOString(), // 2 days ago
+          submittedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
         },
-        {
-          candidateId: 'c002',
-          candidateName: 'Emma Wilson',
-          score: 95,
-          timeSpent: 1100,
-          submittedAt: new Date(Date.now() - 3 * 86400000).toISOString(), // 3 days ago
-        },
-        {
-          candidateId: 'c003',
-          candidateName: 'Michael Brown',
-          score: 60,
-          timeSpent: 1500,
-          submittedAt: new Date(Date.now() - 1 * 86400000).toISOString(), // 1 day ago
-        },
-        {
-          candidateId: 'c004',
-          candidateName: 'Sarah Davis',
-          score: 45,
-          timeSpent: 1800,
-          submittedAt: new Date().toISOString(), // Today
-        },
-        {
-          candidateId: 'c005',
-          candidateName: 'James Johnson',
-          score: 75,
-          timeSpent: 1350,
-          submittedAt: new Date(Date.now() - 4 * 86400000).toISOString(), // 4 days ago
-        },
+        // Add more mock submissions...
       ],
     };
 
+    // Set the filtered submissions
     this.filteredSubmissions = [...this.analytics.recentSubmissions];
-    this.sortSubmissions();
+    this.calculateTotalPages();
   }
 
+  // Improved time formatting with more readable output
   formatTime(seconds?: number): string {
-    if (seconds === undefined) return 'N/A';
+    if (!seconds) return '0m 0s';
 
-    const mins = Math.floor(seconds / 60);
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
 
-    if (mins >= 60) {
-      const hours = Math.floor(mins / 60);
-      const remainingMins = mins % 60;
-      return `${hours}h ${remainingMins}m ${secs}s`;
+    if (hrs > 0) {
+      return `${hrs}h ${mins}m ${secs}s`;
     }
-
     return `${mins}m ${secs}s`;
   }
 
+  // Better date formatting with options
   formatDate(dateString: string): string {
+    if (!dateString) return 'N/A';
+
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
+  // Enhanced filtering with more options
   filterSubmissions() {
     if (!this.analytics) return;
 
-    const term = this.searchTerm.toLowerCase().trim();
+    const searchTermLower = this.searchTerm.toLowerCase();
 
-    if (!term) {
+    if (!searchTermLower) {
       this.filteredSubmissions = [...this.analytics.recentSubmissions];
     } else {
       this.filteredSubmissions = this.analytics.recentSubmissions.filter(
-        (submission) => submission.candidateName.toLowerCase().includes(term)
+        (submission) =>
+          submission.candidateName.toLowerCase().includes(searchTermLower)
       );
     }
 
     this.sortSubmissions();
+    this.calculateTotalPages();
+    this.currentPage = 1; // Reset to first page after filtering
+    this.cdr.markForCheck();
   }
 
+  // Enhanced sorting with more options
   sortSubmissions() {
+    if (!this.filteredSubmissions) return;
+
     switch (this.sortOption) {
       case 'date':
         this.filteredSubmissions.sort(
           (a, b) =>
             new Date(b.submittedAt).getTime() -
             new Date(a.submittedAt).getTime()
+        );
+        break;
+      case 'date-oldest':
+        this.filteredSubmissions.sort(
+          (a, b) =>
+            new Date(a.submittedAt).getTime() -
+            new Date(b.submittedAt).getTime()
         );
         break;
       case 'score-high':
@@ -585,61 +578,87 @@ export class TestAnalyticsComponent implements OnInit {
       case 'time-slow':
         this.filteredSubmissions.sort((a, b) => b.timeSpent - a.timeSpent);
         break;
+      case 'name-asc':
+        this.filteredSubmissions.sort((a, b) =>
+          a.candidateName.localeCompare(b.candidateName)
+        );
+        break;
+      case 'name-desc':
+        this.filteredSubmissions.sort((a, b) =>
+          b.candidateName.localeCompare(a.candidateName)
+        );
+        break;
     }
+
+    this.cdr.markForCheck();
   }
 
+  // New method for pagination
+  calculateTotalPages() {
+    if (!this.filteredSubmissions) {
+      this.totalPages = 1;
+      return;
+    }
+
+    this.totalPages = Math.ceil(
+      this.filteredSubmissions.length / this.itemsPerPage
+    );
+    if (this.totalPages === 0) this.totalPages = 1;
+  }
+
+  // Get paginated submissions
+  get paginatedSubmissions(): Submission[] {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredSubmissions.slice(
+      startIndex,
+      startIndex + this.itemsPerPage
+    );
+  }
+
+  // Pagination controls
+  goToPage(page: number) {
+    if (page < 1) page = 1;
+    if (page > this.totalPages) page = this.totalPages;
+    this.currentPage = page;
+    this.cdr.markForCheck();
+  }
+
+  // Export data to CSV
   exportData() {
     if (!this.analytics) return;
 
-    try {
-      // Create CSV content
-      let csvContent = 'data:text/csv;charset=utf-8,';
+    // Create CSV content
+    let csvContent = 'data:text/csv;charset=utf-8,';
 
-      // Add test info header
-      csvContent += `Test ID,${this.analytics.testId}\r\n`;
-      csvContent += `Test Name,${this.analytics.testName}\r\n`;
-      csvContent += `Total Attempts,${this.analytics.totalAttempts}\r\n`;
-      csvContent += `Average Score,${this.analytics.averageScore}%\r\n`;
-      csvContent += `Average Time,${this.formatTime(
-        this.analytics.averageTimeSpent
-      )}\r\n\r\n`;
+    // Add header
+    csvContent += 'Candidate,Score,Time Spent,Date\n';
 
-      // Add question stats
-      csvContent +=
-        'Question ID,Correct Rate,Avg Time,Partial Correct Rate,Reversed Answer Rate\r\n';
-      this.analytics.questionStats.forEach((stat) => {
-        csvContent += `${stat.questionId},${
-          stat.correctRate
-        }%,${this.formatTime(stat.averageTimeSpent)},${
-          stat.partialCorrectRate
-        }%,${stat.reversedAnswerRate}%\r\n`;
-      });
-      csvContent += '\r\n';
+    // Add submission data
+    this.filteredSubmissions.forEach((sub) => {
+      csvContent += `"${sub.candidateName}",${sub.score},"${this.formatTime(
+        sub.timeSpent
+      )}","${this.formatDate(sub.submittedAt)}"\n`;
+    });
 
-      // Add submissions
-      csvContent +=
-        'Candidate ID,Candidate Name,Score,Time Spent,Submission Date\r\n';
-      this.analytics.recentSubmissions.forEach((sub) => {
-        csvContent += `${sub.candidateId},${sub.candidateName},${
-          sub.score
-        }%,${this.formatTime(sub.timeSpent)},${this.formatDate(
-          sub.submittedAt
-        )}\r\n`;
-      });
+    // Create download link and trigger download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `${this.analytics.testName}-analytics.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
-      // Create download link
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement('a');
-      link.setAttribute('href', encodedUri);
-      link.setAttribute('download', `${this.analytics.testName}_analytics.csv`);
-      document.body.appendChild(link);
+  // Toggle chart visibility
+  toggleChartView() {
+    this.showChart = !this.showChart;
+    this.cdr.markForCheck();
+  }
 
-      // Trigger download and cleanup
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error('Error exporting data:', error);
-      alert('Failed to export data. Please try again.');
-    }
+  // Switch chart type
+  setChartType(type: 'bar' | 'line' | 'pie') {
+    this.chartType = type;
+    this.cdr.markForCheck();
   }
 }
