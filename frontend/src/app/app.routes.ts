@@ -28,7 +28,6 @@ export const routes: Routes = [
       import('./features/homepage/homepage.module').then(
         (m) => m.HomepageModule
       ),
-
   },
   {
     path: 'auth',
@@ -48,34 +47,11 @@ export const routes: Routes = [
   // Test routes-------------------------------
   {
     path: 'tests',
-    component: TestsListComponent,
-    // canActivate: [AuthGuard],
+    loadChildren: () =>
+      import('./features/candidate/DominoTest/domino-test.module').then(
+        (m) => m.DominoTestModule
+      ),
   },
-  {
-    path: 'tests/:id',
-    component: DominoTestModernComponent,
-    // canActivate: [AuthGuard],
-  },
-  // Add a direct route to test the D70 test with enhanced UI
-  {
-    path: 'd70-enhanced',
-    component: DominoTestModernComponent,
-    data: { testId: 'd70' },
-  },
-
-  { 
-    path: 'd70-modern', 
-    component: DominoTestModernComponent
-  },
-  
-
-  { path: 'test-completion', component: TestCompletionComponent },
-
-  
-  // Legacy routes - keep for backward compatibility
-  { path: 'test-complete', component: TestCompleteComponent },
-
-
 
   {
     path: 'admin/layout-builder',

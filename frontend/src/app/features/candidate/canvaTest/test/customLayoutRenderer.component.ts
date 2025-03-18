@@ -9,11 +9,8 @@ import {
   QueryList,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { InteractiveDominoComponent } from '../../components/interactive-domino/interactive-domino.component';
-import {
-  DominoPosition,
-  DominoChange,
-} from '../../components/interactive-domino-grid/interactive-domino-grid.component';
+import { InteractiveDominoComponent } from '../../DominoTest/components/interactive-domino/interactive-domino.component';
+import { DominoPosition, DominoChange } from '../../DominoTest/models/domino.model';
 
 @Component({
   selector: 'app-custom-layout-renderer',

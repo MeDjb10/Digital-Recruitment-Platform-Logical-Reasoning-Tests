@@ -356,7 +356,10 @@ export class SimpleDominoGridComponent implements OnChanges, AfterViewInit {
   // Set initial zoom level based on grid complexity
   setInitialZoom(): void {
     if (this.gridLayout) {
-      if (this.gridLayout.rows === 1 && this.gridLayout.cols <= 6) {
+      if (this.gridLayout.rows === 1) {
+        // Zoom in for single cell grids (150% zoom)
+        this.zoomLevel = 1.5;
+      } else if (this.gridLayout.rows === 1 && this.gridLayout.cols <= 6) {
         // Zoom in for single row with up to 6 columns (120% zoom)
         this.zoomLevel = 1.2;
       } else if (this.gridLayout.rows > 2) {

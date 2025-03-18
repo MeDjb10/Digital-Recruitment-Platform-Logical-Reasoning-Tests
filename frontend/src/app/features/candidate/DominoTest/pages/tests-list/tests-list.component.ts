@@ -24,11 +24,7 @@ import { DominoTestService } from '../../services/domino-test.service';
         <div class="spinner"></div>
         <p>Loading available tests...</p>
       </div>
-      <button 
-  class="enhanced-ui-button" 
-  [routerLink]="['/tests', 'd70', 'enhanced']">
-  Try Enhanced Version
-</button>
+     
       <div class="tests-list" *ngIf="!loading">
         <div class="test-card" *ngFor="let test of availableTests">
           <div class="test-info">
