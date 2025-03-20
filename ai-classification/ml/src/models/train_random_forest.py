@@ -26,15 +26,15 @@ class RandomForestTrainer:
             'Très Fort': 4
         }
         
-        # Try to load custom mapping if it exists
-        custom_mapping = self._load_category_mapping()
-        if (custom_mapping):
-            self.category_mapping = custom_mapping
-        
-        # Define features to use
+        # Update features list for new data format
         self.features = [
-            'time_passed', 'skips', 'answered_questions',
-            'correct_answers', 'accuracy', 'speed'
+            'time_passed', 
+            'answered_questions',
+            'correct_answers',
+            'skips',
+            'spatial',
+            'numeric',
+            'arithmetic'
         ]
 
     def _load_category_mapping(self):
@@ -56,16 +56,78 @@ class RandomForestTrainer:
     def prepare_data(self):
         """Load and prepare the data for training"""
         try:
-            df = pd.read_csv(self.data_path)
+            # Read CSV with new column names
+            df = pd.read_csv(self.data_path, names=[
+                'Time Passed (min)',
+                'Answered Questions',
+                'Correct Answers',
+                'Skips',
+                'Spatial',
+                'Numeric',
+                'Arithmetic',
+                'Performance'
+            ])
+            
             logging.info(f"Loaded {len(df)} records from {self.data_path}")
 
+            # Analyze class distribution
+            class_distribution = df['Performance'].value_counts()
+            logging.info("\nClass distribution:")
+            for category, count in class_distribution.items():
+                logging.info(f"{category}: {count} samples")
+
+            # Check for classes with too few samples
+            min_samples = 2
+            small_classes = class_distribution[class_distribution < min_samples]
+            if not small_classes.empty:
+                logging.warning("\nRemoving classes with insufficient samples:")
+                for category, count in small_classes.items():
+                    logging.warning(f"{category}: {count} samples")
+                df = df[~df['Performance'].isin(small_classes.index)]
+
+            # Rename columns to match feature names
+            df = df.rename(columns={
+                'Time Passed (min)': 'time_passed',
+                'Answered Questions': 'answered_questions',
+                'Correct Answers': 'correct_answers',
+                'Skips': 'skips',
+                'Spatial': 'spatial',
+                'Numeric': 'numeric',
+                'Arithmetic': 'arithmetic',
+                'Performance': 'category'
+            })
+
+            # Create feature matrix X and target vector y
             X = df[self.features]
             y = df['category']
 
-            return train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+            # Verify remaining data
+            logging.info(f"\nFinal dataset size: {len(df)} samples")
+            remaining_distribution = df['category'].value_counts()
+            logging.info("\nFinal class distribution:")
+            for category, count in remaining_distribution.items():
+                logging.info(f"{category}: {count} samples")
+
+            # Save feature names and metadata
+            metadata = {
+                'features': self.features,
+                'category_mapping': self.category_mapping,
+                'class_distribution': remaining_distribution.to_dict()
+            }
+            
+            with open(self.output_dir / 'model_metadata.json', 'w') as f:
+                json.dump(metadata, f, indent=2)
+
+            # Use stratified split only if we have enough samples
+            if len(df) >= 10 and all(remaining_distribution >= 2):
+                return train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+            else:
+                logging.warning("Using non-stratified split due to small sample size")
+                return train_test_split(X, y, test_size=0.2, random_state=42)
+            
         except Exception as e:
             logging.error(f"Error preparing data: {e}")
-            return None
+            raise
 
     def train_model(self, X_train, y_train):
         """Train the model using GridSearchCV for hyperparameter tuning"""
@@ -163,8 +225,8 @@ class RandomForestTrainer:
             json.dump(metadata, f, indent=2)
 
 def main():
-    # Setup paths
-    data_path = "../data/processed/processed_data.csv"
+    # Update paths for new data file
+    data_path = "../data/d-70_test_dataset_corrected.csv"
     output_dir = "../models"
     
     # Create output directory if it doesn't exist

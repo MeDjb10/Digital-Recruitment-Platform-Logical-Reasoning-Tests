@@ -10,6 +10,15 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class PerformancePredictor:
     def __init__(self, model_dir: str):
         self.model_dir = Path(model_dir)
+        self.features = [
+            'time_passed', 
+            'answered_questions',
+            'correct_answers',
+            'skips',
+            'spatial',
+            'numeric',
+            'arithmetic'
+        ]
         self.load_resources()
 
     def load_resources(self):
@@ -22,49 +31,65 @@ class PerformancePredictor:
             # Load metadata
             with open(self.model_dir / 'model_metadata.json', 'r', encoding='utf-8') as f:
                 self.metadata = json.load(f)
-                self.features = self.metadata['features']
                 self.category_mapping = self.metadata['category_mapping']
             logging.info("Metadata loaded successfully")
-
-            # Load scaler
-            scaler_path = self.model_dir.parent / 'data/processed/standard_scaler.joblib'
-            self.scaler = joblib.load(scaler_path)
-            logging.info("Scaler loaded successfully")
 
         except Exception as e:
             logging.error(f"Error loading resources: {e}")
             raise
 
     def predict(self, features: dict) -> dict:
-        """Make a prediction with confidence scores and interpretation"""
+        """Make a prediction based on test performance metrics"""
         try:
-            # Create DataFrame with base features only
-            input_features = {k: features[k] for k in self.features}
-            input_df = pd.DataFrame([input_features])
+            # Calculate derived metrics
+            features['accuracy'] = (
+                (features['correct_answers'] / features['answered_questions']) * 100 
+                if features['answered_questions'] > 0 else 0
+            )
+            features['speed'] = (
+                features['answered_questions'] / features['time_passed'] 
+                if features['time_passed'] > 0 else 0
+            )
+
+            # Create DataFrame with required features
+            input_df = pd.DataFrame([{k: features[k] for k in self.features}])
             
-            # Scale features
-            scaled_features = self.scaler.transform(input_df)
+            # Make prediction
+            prediction = self.model.predict(input_df)[0]
+            probabilities = self.model.predict_proba(input_df)[0]
             
-            # Get prediction and probabilities
-            prediction_idx = int(self.model.predict(scaled_features)[0])  # Convert to int
-            probabilities = self.model.predict_proba(scaled_features)[0]
+            # Debug logging
+            logging.info(f"Raw prediction: {prediction}")
+            logging.info(f"Category mapping: {self.category_mapping}")
             
-            # Get ordered categories
-            categories = sorted(self.category_mapping.keys(), 
-                             key=lambda x: self.category_mapping[x])
+            # Map numerical prediction to category (handling both string and integer predictions)
+            if isinstance(prediction, (int, np.integer)):
+                # If prediction is numeric, look up the category
+                predicted_category = next(
+                    (k for k, v in self.category_mapping.items() if v == int(prediction)),
+                    'Unknown'
+                )
+            else:
+                # If prediction is already a string, use it directly
+                predicted_category = prediction
+                
+            logging.info(f"Mapped category: {predicted_category}")
             
-            # Get predicted category using the index
-            predicted_category = categories[prediction_idx]
+            # Analyze thinking style
+            thinking_style = self._analyze_thinking_style(features)
             
-            # Create result dictionary
+            # Generate comprehensive result
             result = {
                 'predicted_category': predicted_category,
-                'confidence_scores': dict(zip(categories, map(float, probabilities))),
-                'interpretation': self._generate_interpretation(
-                    features, 
-                    predicted_category,
-                    float(probabilities[prediction_idx])
-                )
+                'confidence': float(max(probabilities)),
+                'metrics': {
+                    'accuracy': features['accuracy'],
+                    'speed': features['speed'],
+                    'completion_rate': (features['answered_questions'] / 
+                                     (features['answered_questions'] + features['skips'])) * 100
+                },
+                'thinking_style': thinking_style,
+                'interpretation': self._generate_interpretation(features, predicted_category)
             }
             
             return result
@@ -73,80 +98,108 @@ class PerformancePredictor:
             logging.error(f"Error making prediction: {e}")
             raise
 
-    def _generate_interpretation(self, features: dict, category: str, confidence: float) -> dict:
-        """Generate human-readable interpretation of the results"""
-        strength_indicators = []
-        improvement_areas = []
-        
-        # Analyze accuracy
-        if features['accuracy'] >= 75:
-            strength_indicators.append("High accuracy in answers")
-        elif features['accuracy'] <= 30:
-            improvement_areas.append("Focus on answer accuracy")
+    def _analyze_thinking_style(self, features: dict) -> dict:
+        """Analyze the candidate's thinking style based on question type performance"""
+        total_correct = features['spatial'] + features['numeric'] + features['arithmetic']
+        if total_correct == 0:
+            return {'dominant': 'Unknown', 'distribution': {}}
 
-        # Analyze skip rate
-        skip_rate = features['skips'] / (features['skips'] + features['answered_questions'])
-        if skip_rate > 0.5:
-            improvement_areas.append("High number of skipped questions")
-        elif skip_rate < 0.2:
-            strength_indicators.append("Good question completion rate")
-
-        # Analyze speed
-        if features['speed'] > 1.0:
-            strength_indicators.append("Quick response time")
-        elif features['speed'] < 0.3:
-            improvement_areas.append("Work on time management")
-
-        return {
-            'summary': f"Performance indicates {category} level with {confidence:.1%} confidence",
-            'strengths': strength_indicators,
-            'improvements': improvement_areas
+        distribution = {
+            'spatial': (features['spatial'] / total_correct) * 100,
+            'numeric': (features['numeric'] / total_correct) * 100,
+            'arithmetic': (features['arithmetic'] / total_correct) * 100
         }
 
+        dominant_style = max(distribution.items(), key=lambda x: x[1])[0]
+
+        return {
+            'dominant': dominant_style.title(),
+            'distribution': distribution,
+            'recommendation': self._get_career_recommendation(dominant_style)
+        }
+
+    def _generate_interpretation(self, features: dict, category: str) -> dict:
+        """Generate detailed performance interpretation"""
+        # Calculate key metrics
+        accuracy = features['accuracy']
+        speed = features['speed']
+        skip_rate = (features['skips'] / (features['skips'] + features['answered_questions'])) * 100
+
+        # Generate insights
+        insights = []
+        if accuracy >= 70:
+            insights.append("Shows high precision in problem-solving")
+        elif accuracy <= 40:
+            insights.append("Needs improvement in accuracy")
+
+        if speed >= 1.0:
+            insights.append("Demonstrates quick decision-making")
+        elif speed <= 0.3:
+            insights.append("Could improve on time management")
+
+        if skip_rate >= 40:
+            insights.append("Shows selective question approach")
+        elif skip_rate <= 10:
+            insights.append("Attempts most questions systematically")
+
+        return {
+            'performance_level': category,
+            'insights': insights,
+            'key_metrics': {
+                'accuracy': f"{accuracy:.1f}%",
+                'speed': f"{speed:.2f} questions/minute",
+                'skip_rate': f"{skip_rate:.1f}%"
+            }
+        }
+
+    def _get_career_recommendation(self, dominant_style: str) -> str:
+        """Provide career recommendations based on thinking style"""
+        recommendations = {
+            'spatial': "Strong in visual and spatial reasoning - Well-suited for architecture, engineering, or design roles",
+            'numeric': "Excel in numerical analysis - Consider data analysis, financial planning, or research positions",
+            'arithmetic': "Strong computational skills - Well-suited for accounting, programming, or mathematical roles"
+        }
+        return recommendations.get(dominant_style.lower(), "Consider diverse roles that match your balanced skill set")
+
 def main():
-    # Example usage with more realistic values
-    model_dir = "../models"
-    predictor = PerformancePredictor(model_dir)
-    
-    # Example test performance with normalized values
-    test_features = {
-        'time_passed': 45.0,  # Average time in seconds
-        'skips': 3,          # Number of skipped questions
-        'answered_questions': 20,  # Total questions answered
-        'correct_answers': 15,    # Number of correct answers
-        'accuracy': 75.0,        # Accuracy percentage
-        'speed': 0.44           # Questions per second
-    }
-    
     try:
+        predictor = PerformancePredictor("../models")
+        
+        # Example test data
+        test_features = {
+            'time_passed': 15,
+            'answered_questions': 44,
+            'correct_answers': 30,
+            'skips':0,
+            'spatial':10,
+            'numeric': 10,
+            'arithmetic': 10
+        }
+        
         result = predictor.predict(test_features)
         
-        # Print results
-        print("\n=== Test Performance Analysis ===")
-        print("\nInput Metrics:")
-        for k, v in test_features.items():
-            print(f"{k.replace('_', ' ').title()}: {v}")
+        # Display results
+        print("\n=== Performance Analysis ===")
+        print(f"\nPredicted Level: {result['predicted_category']}")
+        print(f"Confidence: {result['confidence']:.1%}")
         
-        print("\nPrediction Results:")
-        print(f"Performance Level: {result['predicted_category']}")
+        print("\nPerformance Metrics:")
+        print(f"Accuracy: {result['metrics']['accuracy']:.1f}%")
+        print(f"Speed: {result['metrics']['speed']:.2f} questions/minute")
+        print(f"Completion Rate: {result['metrics']['completion_rate']:.1f}%")
         
-        print("\nConfidence Scores:")
-        for category, score in sorted(result['confidence_scores'].items(), 
-                                    key=lambda x: x[1], reverse=True):
-            print(f"{category:12}: {score:.1%}")
+        print("\nThinking Style Analysis:")
+        print(f"Dominant Style: {result['thinking_style']['dominant']}")
+        print("\nStyle Distribution:")
+        for style, percentage in result['thinking_style']['distribution'].items():
+            print(f"{style.title()}: {percentage:.1f}%")
         
-        print("\nAnalysis:")
-        print(f"Summary: {result['interpretation']['summary']}")
+        print("\nCareer Recommendation:")
+        print(result['thinking_style']['recommendation'])
         
-        if result['interpretation']['strengths']:
-            print("\nStrengths:")
-            for strength in result['interpretation']['strengths']:
-                print(f"✓ {strength}")
-                
-        if result['interpretation']['improvements']:
-            print("\nAreas for Improvement:")
-            for improvement in result['interpretation']['improvements']:
-                print(f"• {improvement}")
+        print("\nKey Insights:")
+        for insight in result['interpretation']['insights']:
+            print(f"- {insight}")
 
     except Exception as e:
         logging.error(f"Prediction failed: {str(e)}")
