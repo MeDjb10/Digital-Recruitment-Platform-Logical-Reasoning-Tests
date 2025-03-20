@@ -1,184 +1,956 @@
 <div class="layout-builder-container">
-  <div class="toolbar">
-    <div class="tool-section">
-      <h3>Domino Layout Builder</h3>
-      <div class="tool-group">
-        <button class="tool-btn" (click)="clearCanvas()">Clear Canvas</button>
-        <label>
-          <input type="checkbox" [(ngModel)]="snapToGrid" /> Snap to Grid
-        </label>
-        <label>
-          <input type="checkbox" [(ngModel)]="showGrid" /> Show Grid
-        </label>
+  <!-- Header with title and primary actions -->
+  <!-- Header with title and primary actions -->
+  <div class="builder-header">
+    <div class="header-title">
+      <div class="title-with-icon">
+        <i class="fa-solid fa-puzzle-piece header-icon"></i>
+        <h2>
+          {{
+            mode === "create"
+              ? "Create Domino Question"
+              : "Edit Domino Question"
+          }}
+        </h2>
       </div>
+      <span class="test-name" *ngIf="testId">Test ID: {{ testId }}</span>
     </div>
-    <div class="tool-section">
-      <input type="text" [(ngModel)]="layoutName" placeholder="Layout Name" />
-      <input
-        type="text"
-        [(ngModel)]="layoutDescription"
-        placeholder="Description"
-      />
-      <select [(ngModel)]="layoutType">
-        <option value="custom">Custom</option>
-        <option value="spiral">Spiral</option>
-        <option value="rhombus">Rhombus</option>
-        <option value="grid">Grid</option>
-      </select>
-      <button class="save-btn" (click)="saveLayout()">Save Layout</button>
-      <button class="export-btn" (click)="exportLayoutAsJson()">
-        Export JSON
+    <div class="header-actions">
+      <button class="action-btn cancel-btn" (click)="confirmCancel()">
+        <i class="pi pi-times"></i> Cancel
+      </button>
+      <button
+        class="action-btn save-btn"
+        (click)="saveQuestion()"
+        [disabled]="isSaving"
+      >
+        <i
+          class="pi"
+          [ngClass]="{ 'pi-spin pi-spinner': isSaving, 'pi-check': !isSaving }"
+        ></i>
+        <span *ngIf="!isSaving">{{
+          mode === "create" ? "Save Question" : "Update Question"
+        }}</span>
+        <span *ngIf="isSaving">Saving...</span>
       </button>
     </div>
   </div>
 
-  <div class="canvas-container">
-    <div
-      #canvas
-      class="canvas"
-      [style.width.px]="canvasWidth"
-      [style.height.px]="canvasHeight"
-      [class.show-grid]="showGrid"
-    >
-      <!-- Grid lines if showGrid is true -->
-      <div class="grid-lines" *ngIf="showGrid">
-        <div
-          *ngFor="
-            let x of [].constructor(canvasWidth / gridSize);
-            let i = index
-          "
-          class="grid-line vertical"
-          [style.left.px]="i * gridSize"
-          [style.height.px]="canvasHeight"
-        ></div>
-        <div
-          *ngFor="
-            let y of [].constructor(canvasHeight / gridSize);
-            let i = index
-          "
-          class="grid-line horizontal"
-          [style.top.px]="i * gridSize"
-          [style.width.px]="canvasWidth"
-        ></div>
+  <!-- Enhanced Question Details Form -->
+  <div class="question-form-container">
+    <div class="form-section-header">
+      <i class="pi pi-file-edit"></i>
+      <h3>Question Details</h3>
+    </div>
+
+    <div class="question-form">
+      <!-- Question Title and Difficulty row -->
+      <div class="form-row">
+        <!-- Question Title with character count -->
+        <div class="form-field title-field">
+          <label for="questionTitle">
+            <i class="pi pi-tag"></i> Question Title
+          </label>
+          <span class="p-input-icon-right w-full">
+            <i
+              class="pi pi-info-circle"
+              pTooltip="Give your question a clear title"
+              tooltipPosition="top"
+            ></i>
+            <input
+              id="questionTitle"
+              type="text"
+              pInputText
+              [(ngModel)]="questionTitle"
+              placeholder="e.g., Find the Missing Domino"
+              maxlength="100"
+              class="w-full"
+            />
+          </span>
+          <small *ngIf="questionTitle" class="char-count">
+            {{ questionTitle.length }}/100
+          </small>
+        </div>
+
+        <!-- Difficulty Rating with visual indicators -->
+        <div class="form-field difficulty-field">
+          <label for="questionDifficulty">
+            <i class="pi pi-chart-line"></i> Difficulty Level
+          </label>
+          <p-dropdown
+            id="questionDifficulty"
+            [(ngModel)]="questionDifficulty"
+            [options]="[
+              {
+                label: 'Easy',
+                value: 'easy',
+                icon: 'pi pi-circle-fill easy-indicator'
+              },
+              {
+                label: 'Medium',
+                value: 'medium',
+                icon: 'pi pi-circle-fill medium-indicator'
+              },
+              {
+                label: 'Hard',
+                value: 'hard',
+                icon: 'pi pi-circle-fill hard-indicator'
+              },
+              {
+                label: 'Expert',
+                value: 'expert',
+                icon: 'pi pi-circle-fill expert-indicator'
+              }
+            ]"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="false"
+            placeholder="Select Difficulty"
+            styleClass="w-full"
+            (onChange)="onDifficultyChange($event.value)"
+          >
+            <ng-template pTemplate="selectedItem">
+              <div class="difficulty-item" *ngIf="questionDifficulty">
+                <i
+                  class="pi pi-circle-fill"
+                  [ngClass]="questionDifficulty + '-indicator'"
+                ></i>
+                <span>{{ questionDifficulty | titlecase }}</span>
+              </div>
+            </ng-template>
+            <ng-template let-option pTemplate="item">
+              <div class="difficulty-item">
+                <i class="pi" [ngClass]="option.icon"></i>
+                <span>{{ option.label }}</span>
+              </div>
+            </ng-template>
+          </p-dropdown>
+        </div>
       </div>
 
-      <!-- Dominos -->
-      <div
-        *ngFor="let domino of dominos"
-        class="domino-wrapper"
-        [class.selected]="selectedDomino?.id === domino.id"
-        [style.transform]="getDominoTransform(domino)"
-        (mousedown)="startDragging($event, domino)"
-        (click)="selectDomino(domino)"
-      >
-        <app-interactive-domino
-          [id]="domino.id"
-          [width]="70 * getDominoScale(domino)"
-          [height]="140 * getDominoScale(domino)"
-          [initialTopValue]="domino.topValue"
-          [initialBottomValue]="domino.bottomValue"
-          [isEditable]="domino.isEditable"
+      <!-- Instructions Field with rich text capabilities -->
+      <div class="form-row">
+        <div class="form-field w-full">
+          <label for="questionInstruction">
+            <i class="pi pi-directions"></i> Instructions
+            <span class="required">*</span>
+          </label>
+          <span class="p-input-icon-right w-full">
+            <i
+              class="pi pi-info-circle"
+              pTooltip="Clear instructions help candidates understand what to do"
+              tooltipPosition="top"
+            ></i>
+            <textarea
+              id="questionInstruction"
+              pTextarea
+              [(ngModel)]="questionInstruction"
+              placeholder="e.g., Complete the pattern by filling in the missing domino"
+              [autoResize]="true"
+              rows="3"
+              class="w-full"
+            ></textarea>
+          </span>
+          <small *ngIf="!questionInstruction" class="validation-hint">
+            <i class="pi pi-exclamation-circle"></i> Required field
+          </small>
+        </div>
+      </div>
+
+      <!-- Pattern Description Field -->
+      <div class="form-row">
+        <div class="form-field w-full">
+          <div class="label-with-help">
+            <label for="questionPattern">
+              <i class="pi pi-chart-bar"></i> Pattern Description
+            </label>
+            <p-button
+              icon="pi pi-question-circle"
+              styleClass="p-button-rounded p-button-text p-button-sm help-button"
+              pTooltip="Used for analytics and scoring purposes, not shown to candidates"
+            ></p-button>
+          </div>
+          <span class="p-input-icon-right w-full">
+            <i
+              class="pi pi-info-circle"
+              pTooltip="Describe the logical pattern for scoring algorithm"
+              tooltipPosition="top"
+            ></i>
+            <input
+              id="questionPattern"
+              type="text"
+              pInputText
+              [(ngModel)]="questionPattern"
+              placeholder="e.g., Sequential increments by 1"
+              class="w-full"
+            />
+          </span>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <p-button
+          icon="pi pi-plus"
+          label="Advanced Options"
+          styleClass="p-button-outlined p-button-secondary"
+          (click)="toggleAdvancedOptions()"
+        ></p-button>
+      </div>
+
+      <!-- Advanced Options (initially hidden) -->
+      <div class="advanced-options" [class.visible]="showAdvancedOptions">
+        <h4><i class="pi pi-cog"></i> Advanced Settings</h4>
+
+        <div class="advanced-options-grid">
+          <div class="advanced-option-field">
+            <label class="option-label">Time Limit</label>
+            <div class="p-inputgroup w-full">
+              <input
+                pInputText
+                type="number"
+                min="15"
+                max="300"
+                [(ngModel)]="timeLimit"
+                class="w-full"
+              />
+              <span class="p-inputgroup-addon">seconds</span>
+            </div>
+          </div>
+
+          <div class="advanced-option-field">
+            <label class="option-label">Score Weight</label>
+            <p-slider
+              [(ngModel)]="scoreWeight"
+              [min]="1"
+              [max]="5"
+              [step]="1"
+              class="w-full"
+            ></p-slider>
+            <div class="weight-indicators">
+              <span>Low</span>
+              <span>High</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar-container">
+    <div class="form-section-header toolbar-header">
+      <i class="pi pi-pencil"></i>
+      <h3>Layout Editor</h3>
+    </div>
+    <!-- Layout editor toolbar -->
+    <div class="editor-toolbar">
+      <!-- Combined Layout Types and Custom Templates Section -->
+      <div class="toolbar-section layout-section">
+        <span class="section-title"
+          ><i class="pi pi-th-large"></i> Layout Options</span
         >
-        </app-interactive-domino>
-      </div>
 
-      <!-- Canvas instructions when empty -->
-      <div class="canvas-instructions" *ngIf="dominos.length === 0">
-        <p>Click anywhere on the canvas to add a domino</p>
-        <p>Drag dominos to position them</p>
+        <!-- Predefined Layout Types -->
+        <div class="layout-subsection">
+          <h5 class="subsection-title">Predefined Layouts</h5>
+          <div class="button-group">
+            <button
+              class="toolbar-btn"
+              [class.active]="layoutType === 'grid'"
+              (click)="setLayoutType('grid')"
+            >
+              <i class="pi pi-th-large"></i> Grid
+            </button>
+            <button
+              class="toolbar-btn"
+              [class.active]="layoutType === 'row'"
+              (click)="setLayoutType('row')"
+            >
+              <i class="pi pi-bars"></i> Row
+            </button>
+            <button
+              class="toolbar-btn"
+              [class.active]="layoutType === 'rhombus'"
+              (click)="setLayoutType('rhombus')"
+            >
+              <i class="pi pi-stop"></i> Rhombus
+            </button>
+            <button
+              class="toolbar-btn"
+              [class.active]="layoutType === 'rhombus-large'"
+              (click)="setLayoutType('rhombus-large')"
+            >
+              <i class="pi pi-stop-circle"></i> Large Rhombus
+            </button>
+            <button
+              class="toolbar-btn"
+              [class.active]="layoutType === 'spiral'"
+              (click)="setLayoutType('spiral')"
+            >
+              <i class="pi pi-spinner"></i> Spiral
+            </button>
+            <button
+              class="toolbar-btn"
+              [class.active]="layoutType === 'custom'"
+              (click)="setLayoutType('custom')"
+            >
+              <i class="pi pi-pencil"></i> Custom
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Templates -->
+        <div class="layout-subsection templates-subsection">
+          <h5 class="subsection-title">Saved Templates</h5>
+
+          <!-- When no templates exist -->
+          <div *ngIf="customTemplates.length === 0" class="no-templates">
+            <p>No custom templates saved</p>
+            <button
+              class="toolbar-btn save-template-btn"
+              (click)="openSaveTemplateDialog()"
+              [disabled]="dominos.length === 0"
+            >
+              <i class="pi pi-save"></i> Save Current Layout
+            </button>
+          </div>
+
+          <!-- When templates exist -->
+          <div *ngIf="customTemplates.length > 0" class="template-actions">
+            <div class="template-header">
+              <button
+                class="toolbar-btn save-template-btn"
+                (click)="openSaveTemplateDialog()"
+                [disabled]="dominos.length === 0"
+              >
+                <i class="pi pi-save"></i> Save Current Layout
+              </button>
+            </div>
+
+            <div class="templates-container">
+              <div
+                *ngFor="let template of customTemplates"
+                class="template-item"
+              >
+                <button
+                  class="toolbar-btn template-btn"
+                  [title]="template.name"
+                  (click)="applyTemplate(template.id)"
+                >
+                  <i class="pi pi-copy"></i> {{ template.name }}
+                </button>
+                <button
+                  class="template-delete-btn"
+                  title="Delete template"
+                  (click)="deleteTemplate(template.id)"
+                >
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="toolbar-divider"></div>
+      <!-- Combined Grid Settings & Options Section -->
+      <div class="toolbar-section grid-section">
+        <span class="section-title"
+          ><i class="pi pi-th-large"></i> Grid Controls</span
+        >
+
+        <div class="grid-settings-container">
+          <!-- Grid dimensions -->
+          <div class="grid-dimensions" [class.active]="isGridBasedLayout()">
+            <h5 class="subsection-title">Grid Size</h5>
+            <div class="dimensions-controls">
+              <div class="grid-control">
+                <label for="gridRows">Rows:</label>
+                <input
+                  type="number"
+                  id="gridRows"
+                  [(ngModel)]="gridRows"
+                  min="1"
+                  max="10"
+                  (change)="updateGridDimensions()"
+                  class="p-inputtext p-component"
+                />
+              </div>
+              <div class="grid-control">
+                <label for="gridCols">Columns:</label>
+                <input
+                  type="number"
+                  id="gridCols"
+                  [(ngModel)]="gridCols"
+                  min="1"
+                  max="10"
+                  (change)="updateGridDimensions()"
+                  class="p-inputtext p-component"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Grid display options -->
+          <div class="grid-display-options">
+            <h5 class="subsection-title">Display Options</h5>
+            <div class="grid-options">
+              <div class="option-item">
+                <p-checkbox
+                  [(ngModel)]="snapToGrid"
+                  [binary]="true"
+                  inputId="snapGrid"
+                ></p-checkbox>
+                <label for="snapGrid" class="p-checkbox-label"
+                  >Snap to Grid</label
+                >
+              </div>
+              <div class="option-item">
+                <p-checkbox
+                  [(ngModel)]="showGrid"
+                  [binary]="true"
+                  inputId="showGrid"
+                ></p-checkbox>
+                <label for="showGrid" class="p-checkbox-label">Show Grid</label>
+              </div>
+              <div class="option-item">
+                <label for="gridSize">Cell Size:</label>
+                <input
+                  type="number"
+                  id="gridSize"
+                  [(ngModel)]="gridSize"
+                  min="10"
+                  max="50"
+                  step="5"
+                  class="p-inputtext p-component"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Apply Grid Button - Now at the bottom of the combined section -->
+        <button
+          type="button"
+          class="grid-apply-btn"
+          (click)="applyGridToPositions()"
+          [disabled]="!isGridBasedLayout()"
+        >
+          <i class="pi pi-th-large"></i> Apply Grid to Dominos
+        </button>
+      </div>
+      <div class="toolbar-divider"></div>
+      <div class="toolbar-section action-section">
+        <span class="section-title">Actions</span>
+        <div class="action-buttons">
+          <button
+            class="toolbar-btn"
+            title="Add New Domino"
+            (click)="addDominoToCenter()"
+          >
+            <i class="pi pi-plus"></i> Add Domino
+          </button>
+          <button
+            class="toolbar-btn"
+            title="Clear Canvas"
+            (click)="clearCanvas()"
+          >
+            <i class="pi pi-trash"></i> Clear
+          </button>
+          <button
+            class="toolbar-btn"
+            *ngIf="layoutType !== 'custom'"
+            title="Auto-Generate Layout"
+            (click)="generateAutoLayout()"
+          >
+            <i class="pi pi-sync"></i> Auto-Generate
+          </button>
+          <button
+            class="toolbar-btn"
+            title="Preview Question"
+            (click)="generatePreview()"
+          >
+            <i class="pi pi-eye"></i> Preview
+          </button>
+          <label class="import-btn">
+            <i class="pi pi-upload"></i> Import JSON
+            <input
+              type="file"
+              accept=".json"
+              (change)="importLayoutFromJson($event)"
+              style="display: none"
+            />
+          </label>
+          <button
+            class="toolbar-btn"
+            title="Export Layout as JSON"
+            (click)="exportLayoutAsJson()"
+          >
+            <i class="pi pi-download"></i> Export JSON
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Properties panel for selected domino -->
-  <div class="properties-panel" [class.show]="showPropertyPanel">
-    <h3>Domino Properties</h3>
-    <div class="property-group" *ngIf="selectedDomino">
-      <div class="property">
-        <label>Position X:</label>
-        <input type="number" [(ngModel)]="selectedDomino.exactX" step="1" />
+  <div class="status-bar">
+    <div class="status-info">
+      <span *ngIf="dominos.length > 0">
+        <i class="pi pi-th-large"></i> {{ dominos.length }} domino{{
+          dominos.length !== 1 ? "s" : ""
+        }}
+      </span>
+      <span *ngIf="hasEditableDominosInMain()" class="editable-count">
+        <i class="pi pi-pencil"></i> 1 answer field
+      </span>
+      <span *ngIf="correctAnswer" class="answer-defined">
+        <i class="pi pi-check-circle"></i> Answer defined
+      </span>
+    </div>
+    <div class="canvas-dimensions">
+      <i class="pi pi-desktop"></i> {{ canvasWidth }}×{{ canvasHeight }}
+    </div>
+    <div class="status-actions">
+      <div *ngIf="hasUnsavedChanges" class="unsaved-indicator">
+        <i class="pi pi-save"></i> Unsaved changes
       </div>
-      <div class="property">
-        <label>Position Y:</label>
-        <input type="number" [(ngModel)]="selectedDomino.exactY" step="1" />
-      </div>
-      <div class="property">
-        <label>Angle:</label>
-        <input
-          type="range"
-          [(ngModel)]="selectedDomino.angle"
-          min="0"
-          max="360"
-          step="5"
-        />
-        <span>{{ selectedDomino.angle }}°</span>
-      </div>
-      <div class="property">
-        <label>Top Value:</label>
-        <input
-          type="number"
-          [(ngModel)]="selectedDomino.topValue"
-          min="0"
-          max="6"
-          step="1"
-          [disabled]="selectedDomino.isEditable"
-        />
-      </div>
-      <div class="property">
-        <label>Bottom Value:</label>
-        <input
-          type="number"
-          [(ngModel)]="selectedDomino.bottomValue"
-          min="0"
-          max="6"
-          step="1"
-          [disabled]="selectedDomino.isEditable"
-        />
-      </div>
-      <div class="property">
-        <label>Editable:</label>
-        <input
-          type="checkbox"
-          [ngModel]="selectedDomino.isEditable"
-          (ngModelChange)="
-            selectedDomino!.isEditable = $event; toggleEditable()
-          "
-        />
-      </div>
-      <div class="property">
-        <label>Scale:</label>
-        <select [(ngModel)]="selectedDomino.scale">
-          <option [ngValue]="0.5">Small (0.5x)</option>
-          <option [ngValue]="0.75">Medium Small (0.75x)</option>
-          <option [ngValue]="1.0" selected>Normal (1x)</option>
-          <option [ngValue]="1.25">Medium Large (1.25x)</option>
-          <option [ngValue]="1.5">Large (1.5x)</option>
-        </select>
-      </div>
-      <div class="property-actions">
-        <button class="delete-btn" (click)="deleteDomino()">
-          Delete Domino
-        </button>
-        <button (click)="selectedDomino = null; showPropertyPanel = false">
-          Close
-        </button>
+      <div *ngIf="!hasUnsavedChanges" class="saved-indicator">
+        <i class="pi pi-check"></i> All changes saved
       </div>
     </div>
   </div>
 
-  <!-- Saved layouts panel -->
-  <div class="saved-layouts-panel">
-    <h3>Saved Layouts</h3>
-    <div class="layouts-list">
+  <!-- Main editor area with canvas and properties panel -->
+  <div class="editor-layout">
+    <!-- Canvas where dominos are placed -->
+    <div class="canvas-container">
       <div
-        *ngFor="let layout of savedLayouts"
-        class="layout-item"
-        (click)="loadLayout(layout.id)"
+        #canvas
+        class="canvas"
+        [ngClass]="{ 'show-grid': showGrid }"
+        [style.width.px]="canvasWidth"
+        [style.height.px]="canvasHeight"
+        [style.background-size.px]="gridSize"
       >
-        <div class="layout-name">{{ layout.name }}</div>
-        <div class="layout-type">{{ layout.type }}</div>
-        <div class="layout-count">{{ layout.dominos.length }} dominos</div>
+        <!-- Grid lines if enabled -->
+        <div
+          class="grid-lines"
+          *ngIf="showGrid"
+          [style.background-size.px]="gridSize"
+        ></div>
+
+        <!-- Dominos display -->
+        <div
+          *ngFor="let domino of dominos"
+          class="domino-wrapper"
+          [class.selected]="selectedDomino?.id === domino.id"
+          [class.editable]="domino.isEditable"
+          [style.transform]="getDominoTransform(domino)"
+          (mousedown)="startDragging($event, domino)"
+        >
+          <!-- Interactive domino component -->
+          <app-interactive-domino
+            [id]="domino.id"
+            [initialTopValue]="domino.topValue"
+            [initialBottomValue]="domino.bottomValue"
+            [isEditable]="domino.isEditable"
+            [isVertical]="domino.isVertical || false"
+            [scale]="domino.scale || 1.0"
+            (valueChanged)="onDominoValueChanged($event)"
+            (dominoSelected)="onDominoSelected(domino)"
+          ></app-interactive-domino>
+
+          <!-- Selection indicator -->
+          <!-- Enhanced selection indicator with rotation and resize handles -->
+          <div
+            class="selection-indicator"
+            *ngIf="selectedDomino?.id === domino.id"
+          >
+            <div
+              class="rotation-handle"
+              title="Drag to rotate"
+              (mousedown)="startRotation($event)"
+            ></div>
+            <div
+              class="corner-handle top-left"
+              title="Drag to resize"
+              (mousedown)="startResizing($event, 'top-left')"
+            ></div>
+            <div
+              class="corner-handle top-right"
+              title="Drag to resize"
+              (mousedown)="startResizing($event, 'top-right')"
+            ></div>
+            <div
+              class="corner-handle bottom-left"
+              title="Drag to resize"
+              (mousedown)="startResizing($event, 'bottom-left')"
+            ></div>
+            <div
+              class="corner-handle bottom-right"
+              title="Drag to resize"
+              (mousedown)="startResizing($event, 'bottom-right')"
+            ></div>
+          </div>
+
+          <!-- Enhanced editable indicator -->
+          <div class="editable-indicator" *ngIf="domino.isEditable">
+            <i class="pi pi-pencil"></i>
+            <span>Answer</span>
+          </div>
+
+          <!-- Domino ID label for easier reference -->
+          <div class="domino-id-label">{{ domino.id }}</div>
+        </div>
+
+        <!-- Canvas center indicator -->
+        <div
+          class="canvas-center"
+          [style.left.px]="canvasWidth / 2"
+          [style.top.px]="canvasHeight / 2"
+        ></div>
+
+        <!-- Canvas instructions when empty -->
+        <div class="canvas-instructions" *ngIf="dominos.length === 0">
+          <p>Click anywhere on the canvas to add a domino</p>
+          <p>Or use one of the pre-defined layouts from the toolbar</p>
+        </div>
       </div>
+    </div>
+
+    <!-- Properties panel -->
+    <div class="properties-panel" [class.visible]="showPropertyPanel">
+      <div class="panel-header">
+        <h3>Domino Properties</h3>
+        <button class="close-btn" (click)="showPropertyPanel = false">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <!-- Grid dimensions section for grid layout -->
+      <!-- <div class="panel-content settings-section" *ngIf="layoutType === 'grid'">
+        <h4>Grid Dimensions</h4>
+        <div class="grid-controls">
+          <div class="grid-control">
+            <label for="gridRows">Rows:</label>
+            <input
+              type="number"
+              id="gridRows"
+              [(ngModel)]="gridRows"
+              min="1"
+              max="10"
+              (change)="updateGridDimensions()"
+            />
+          </div>
+          <div class="grid-control">
+            <label for="gridCols">Columns:</label>
+            <input
+              type="number"
+              id="gridCols"
+              [(ngModel)]="gridCols"
+              min="1"
+              max="10"
+              (change)="updateGridDimensions()"
+            />
+          </div>
+        </div>
+        <button
+          type="button"
+          class="apply-grid-button"
+          (click)="applyGridToPositions()"
+        >
+          Apply Grid to Dominos
+        </button>
+      </div> -->
+
+      <div class="panel-content" *ngIf="selectedDomino">
+        <div class="property-group">
+          <h4>Position</h4>
+          <div class="property-row">
+            <label for="dominoX">X:</label>
+            <input
+              type="number"
+              id="dominoX"
+              [(ngModel)]="selectedDomino.exactX"
+              (change)="updateSelectedDomino()"
+            />
+          </div>
+          <div class="property-row">
+            <label for="dominoY">Y:</label>
+            <input
+              type="number"
+              id="dominoY"
+              [(ngModel)]="selectedDomino.exactY"
+              (change)="updateSelectedDomino()"
+            />
+          </div>
+        </div>
+
+        <div class="property-group">
+          <h4>Rotation</h4>
+          <div class="property-row">
+            <label for="dominoAngle">Angle:</label>
+            <p-slider
+              [(ngModel)]="selectedDomino.angle"
+              [min]="0"
+              [max]="360"
+              [step]="5"
+              (onChange)="updateSelectedDomino()"
+            ></p-slider>
+            <span class="slider-value">{{ selectedDomino.angle }}°</span>
+          </div>
+        </div>
+
+        <div class="property-group">
+          <h4>Values</h4>
+          <div class="property-row">
+            <label for="dominoTop">Top:</label>
+            <select
+              *ngIf="!selectedDomino.isEditable"
+              id="dominoTop"
+              [(ngModel)]="selectedDomino.topValue"
+              (change)="updateSelectedDomino()"
+            >
+              <option *ngFor="let i of dominoValueOptions" [ngValue]="i">
+                {{ i }}
+              </option>
+            </select>
+            <span *ngIf="selectedDomino.isEditable" class="editable-text"
+              >Will be editable</span
+            >
+          </div>
+          <div class="property-row">
+            <label for="dominoBottom">Bottom:</label>
+            <select
+              *ngIf="!selectedDomino.isEditable"
+              id="dominoBottom"
+              [(ngModel)]="selectedDomino.bottomValue"
+              (change)="updateSelectedDomino()"
+            >
+              <option *ngFor="let i of dominoValueOptions" [ngValue]="i">
+                {{ i }}
+              </option>
+            </select>
+            <span *ngIf="selectedDomino.isEditable" class="editable-text"
+              >Will be editable</span
+            >
+          </div>
+        </div>
+
+        <div class="property-group">
+          <h4>Appearance</h4>
+          <div class="property-row">
+            <label for="dominoScale">Scale:</label>
+            <p-slider
+              [(ngModel)]="selectedDomino.scale"
+              [min]="0.5"
+              [max]="2.0"
+              [step]="0.1"
+              (onChange)="updateDominoScale($event)"
+            ></p-slider>
+            <span class="slider-value">{{
+              selectedDomino.scale | number : "1.1-1"
+            }}</span>
+          </div>
+          <div class="property-row">
+            <label for="dominoVertical">Orientation:</label>
+            <select
+              id="dominoVertical"
+              [(ngModel)]="selectedDomino.isVertical"
+              (change)="updateSelectedDomino()"
+            >
+              <option [ngValue]="false">Horizontal</option>
+              <option [ngValue]="true">Vertical</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Updated role selection with radio buttons -->
+        <div class="property-group">
+          <h4>Question Settings</h4>
+          <div class="domino-role-selection">
+            <div class="role-option">
+              <input
+                type="radio"
+                id="regularDomino"
+                name="dominoRole"
+                [checked]="!selectedDomino.isEditable"
+                (change)="setDominoRole(false)"
+              />
+              <label for="regularDomino">Fixed Domino (part of pattern)</label>
+            </div>
+            <div class="role-option">
+              <input
+                type="radio"
+                id="editableDomino"
+                name="dominoRole"
+                [checked]="selectedDomino.isEditable"
+                (change)="setDominoRole(true)"
+              />
+              <label for="editableDomino">Editable Domino (answer field)</label>
+            </div>
+          </div>
+
+          <div *ngIf="selectedDomino.isEditable" class="correct-answer-section">
+            <h4>Correct Answer</h4>
+            <div class="property-row">
+              <label for="correctTop">Top Value:</label>
+              <select
+                id="correctTop"
+                [(ngModel)]="correctAnswer!.topValue"
+                (ngModelChange)="updateCorrectAnswer()"
+              >
+                <option *ngFor="let i of dominoValueOptions" [ngValue]="i">
+                  {{ i }}
+                </option>
+              </select>
+            </div>
+            <div class="property-row">
+              <label for="correctBottom">Bottom Value:</label>
+              <select
+                id="correctBottom"
+                [(ngModel)]="correctAnswer!.bottomValue"
+                (ngModelChange)="updateCorrectAnswer()"
+              >
+                <option *ngFor="let i of dominoValueOptions" [ngValue]="i">
+                  {{ i }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="property-actions">
+          <button class="action-btn center-btn" (click)="centerDomino()">
+            <i class="pi pi-compass"></i> Center on Canvas
+          </button>
+          <button class="action-btn duplicate-btn" (click)="duplicateDomino()">
+            <i class="pi pi-copy"></i> Duplicate Domino
+          </button>
+          <button class="action-btn delete-btn" (click)="deleteDomino()">
+            <i class="pi pi-trash"></i> Delete Domino
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-content empty" *ngIf="!selectedDomino">
+        <div class="empty-state">
+          <i class="pi pi-info-circle"></i>
+          <p>Select a domino on the canvas to edit its properties</p>
+          <button class="action-btn" (click)="addDominoToCenter()">
+            <i class="pi pi-plus"></i> Add New Domino
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview overlay -->
+  <div class="preview-overlay" *ngIf="previewMode">
+    <div class="preview-header">
+      <h2>Question Preview</h2>
+      <p class="preview-instruction">{{ questionInstruction }}</p>
+    </div>
+
+    <div class="preview-canvas-container">
+      <div
+        class="preview-canvas"
+        [style.width.px]="canvasWidth"
+        [style.height.px]="canvasHeight"
+      >
+        <!-- Show grid lines if enabled -->
+        <div class="grid-lines" *ngIf="showGrid">
+          <!-- Vertical lines -->
+          <div
+            *ngFor="let col of [].constructor(gridCols); let i = index"
+            class="grid-line vertical"
+            [style.left.px]="(canvasWidth / gridCols) * i"
+          ></div>
+
+          <!-- Horizontal lines -->
+          <div
+            *ngFor="let row of [].constructor(gridRows); let i = index"
+            class="grid-line horizontal"
+            [style.top.px]="(canvasHeight / gridRows) * i"
+          ></div>
+        </div>
+
+        <!-- Render preview dominos -->
+        <div
+          *ngFor="let domino of previewDominos"
+          class="domino-preview"
+          [class.editable-domino]="domino.isEditable"
+          [style.transform]="getDominoTransform(domino)"
+        >
+          <app-interactive-domino
+            [id]="domino.id"
+            [initialTopValue]="domino.topValue"
+            [initialBottomValue]="domino.bottomValue"
+            [isEditable]="domino.isEditable"
+            [scale]="domino.scale || 1.0"
+            [isVertical]="domino.isVertical || false"
+            (valueChanged)="onDominoValueChanged($event)"
+          ></app-interactive-domino>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-footer">
+      <p class="preview-hint" *ngIf="hasEditableDominos()">
+        This is how the question will appear to candidates. The highlighted
+        domino needs to be filled in.
+      </p>
+      <button (click)="exitPreviewMode()" class="exit-preview-button">
+        <i class="pi pi-arrow-left"></i> Back to Editor
+      </button>
+    </div>
+  </div>
+
+  <!-- Validation warnings -->
+  <div class="validation-warnings" *ngIf="validationErrors.length > 0">
+    <h4>Please fix the following issues before saving:</h4>
+    <ul>
+      <li *ngFor="let error of validationErrors">{{ error }}</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Add at the end of the file before closing div.layout-builder-container -->
+
+<!-- Template Save Dialog -->
+<div class="modal-overlay" *ngIf="showSaveTemplateDialog">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Save Layout as Template</h3>
+      <button class="close-btn" (click)="showSaveTemplateDialog = false">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    <div class="modal-content">
+      <div class="form-field">
+        <label for="templateName">Template Name</label>
+        <input
+          type="text"
+          id="templateName"
+          [(ngModel)]="newTemplateName"
+          placeholder="Enter template name"
+          autofocus
+        />
+      </div>
+      <p class="template-info">
+        This will save your current domino layout as a reusable template. The
+        template will include domino positions, values, rotation, and scale.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button
+        class="action-btn cancel-btn"
+        (click)="showSaveTemplateDialog = false"
+      >
+        Cancel
+      </button>
+      <button class="action-btn save-btn" (click)="saveAsTemplate()">
+        <i class="pi pi-save"></i> Save Template
+      </button>
     </div>
   </div>
 </div>

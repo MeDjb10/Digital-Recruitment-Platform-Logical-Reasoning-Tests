@@ -7,6 +7,7 @@ import {
   ChangeDetectionStrategy,
   OnChanges,
   SimpleChanges,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -21,18 +22,25 @@ interface DotPosition {
   imports: [CommonModule],
   templateUrl: './interactive-domino.component.html',
   styleUrls: ['./interactive-domino.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  // Use Default change detection for better reliability
+  changeDetection: ChangeDetectionStrategy.Default,
 })
 export class InteractiveDominoComponent implements OnInit, OnChanges {
+  // Basic properties
+  // Basic properties
+  @Input() id: number = 0;
+  @Input() initialTopValue: number | null = null; // Change this back to initialTopValue
+  @Input() initialBottomValue: number | null = null; // Change this back to initialBottomValue
+  @Input() isEditable: boolean = false;
+  @Input() isVertical: boolean = false;
+  @Input() scale: number = 1.0;
+  @Input() readonly: boolean = false;
+
+  // Size properties with sensible defaults
   @Input() width: number = 60;
   @Input() height: number = 120;
-  @Input() initialTopValue: number | null = 1;
-  @Input() initialBottomValue: number | null = 2;
-  @Input() isEditable: boolean = false;
-  @Input() id: number = 0;
-  @Input() isVertical: boolean = false;
-  @Input() color: string = '';
-  @Input() questionId?: number; // Add this input property
+
+  // Events
   @Output() valueChanged = new EventEmitter<{
     id: number;
     topValue: number | null;
@@ -40,145 +48,188 @@ export class InteractiveDominoComponent implements OnInit, OnChanges {
   }>();
 
   @Output() dominoSelected = new EventEmitter<number>();
-  @Output() rotationChanged = new EventEmitter<{
-    id: number;
-    isVertical: boolean;
-  }>();
+
+  @Output() dominoClicked = new EventEmitter<number>();
 
   topValue: number | null = 1;
   bottomValue: number | null = 2;
-  isSelected: boolean = false;
-  dotSize: number = 5;
 
-  // Pre-calculated dot positions to reduce computations
+  isSelected: boolean = false;
+
+  // Dot rendering properties
+  dotSize: number = 8;
   topDots: DotPosition[] = [];
   bottomDots: DotPosition[] = [];
-  
 
-  // Add debug flag to help track issues
-  private debug = false;
+  topValueChanged: boolean = false;
+  bottomValueChanged: boolean = false;
+  constructor(private cdr: ChangeDetectorRef) {}
 
-  ngOnInit() {
+  getDotSize(value: number | null): number {
+    if (!value) return 8; // Default size for null values
+
+    // Reduce dot size for higher values
+    switch (value) {
+      case 1:
+      case 2:
+      case 3:
+        return 8; // Larger dots for 1-3 dots
+      case 4:
+        return 7; // Slightly smaller for 4 dots
+      case 5:
+        return 6; // Even smaller for 5 dots
+      case 6:
+        return 6; // Smallest for 6 dots
+      default:
+        return 8;
+    }
+  }
+  ngOnInit(): void {
+    // Initialize from initial values
     this.topValue = this.initialTopValue;
     this.bottomValue = this.initialBottomValue;
+    // Initialize the dot positions
     this.updateDotPositions();
+
+    // Debug logging
+    console.log(`Domino ${this.id} initialized:`, {
+      isEditable: this.isEditable,
+      isSelected: this.isSelected,
+      topValue: this.topValue,
+      bottomValue: this.bottomValue,
+    });
   }
 
-  // Enhance ngOnChanges to be more careful about state changes
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['questionId'] && !changes['questionId'].firstChange) {
-      this.isSelected = false;
-      this.topValue = this.initialTopValue;
-      this.bottomValue = this.initialBottomValue;
-      this.updateDotPositions();
-    }
-
-    if (
-      this.debug &&
-      (changes['initialTopValue'] || changes['initialBottomValue'])
-    ) {
-      console.log(
-        `Domino ${this.id} input changed:`,
-        changes['initialTopValue']?.currentValue,
-        changes['initialBottomValue']?.currentValue
-      );
-    }
-
-    // Only update from inputs if we're not editable or this is the first initialization
+  ngOnChanges(changes: SimpleChanges): void {
+    // Only update values from initialTopValue and initialBottomValue if we're not editable
+    // or if this is first initialization
     if (
       (changes['initialTopValue'] && !this.isEditable) ||
-      (changes['initialTopValue'] && !changes['initialTopValue'].previousValue)
+      (changes['initialTopValue'] && changes['initialTopValue'].firstChange)
     ) {
-      this.topValue =
-        changes['initialTopValue'].currentValue === undefined
-          ? null
-          : changes['initialTopValue'].currentValue;
+      this.topValue = changes['initialTopValue'].currentValue;
     }
 
     if (
       (changes['initialBottomValue'] && !this.isEditable) ||
       (changes['initialBottomValue'] &&
-        !changes['initialBottomValue'].previousValue)
+        changes['initialBottomValue'].firstChange)
     ) {
-      this.bottomValue =
-        changes['initialBottomValue'].currentValue === undefined
-          ? null
-          : changes['initialBottomValue'].currentValue;
+      this.bottomValue = changes['initialBottomValue'].currentValue;
     }
 
-    if (
-      changes['initialTopValue'] ||
-      changes['initialBottomValue'] ||
-      changes['width'] ||
-      changes['height']
-    ) {
-      this.updateDotPositions();
+    // Always update dot positions when inputs change
+    this.updateDotPositions();
+  }
+  // Update the onDominoClick method to ensure selection
+  // Update the onDominoClick method to toggle selection internally
+  onDominoClick(): void {
+    // If editable domino, toggle selection
+    if (this.isEditable && !this.readonly) {
+      // Toggle selection state internally
+      this.isSelected = !this.isSelected;
+
+      // Emit events only if becoming selected
+      if (this.isSelected) {
+        // Emit the click event with the domino ID
+        this.dominoClicked.emit(this.id);
+
+        // Also select this domino
+        this.dominoSelected.emit(this.id);
+      }
+
+      // Force change detection
+      this.cdr.detectChanges();
     }
   }
 
-  updateDotPositions() {
+  // Update the cycle methods to track which side was changed
+  cycleTopValue(event: Event): void {
+    event.stopPropagation();
+    if (this.readonly || !this.isEditable || !this.isSelected) return;
+
+    // Mark that top was changed, reset bottom flag
+    this.topValueChanged = true;
+    this.bottomValueChanged = false;
+
+    if (this.topValue === null || this.topValue >= 6) {
+      this.topValue = 1;
+    } else {
+      this.topValue++;
+    }
+
+    this.updateDotPositions();
+    this.emitValueChange();
+
+    // Reset flag after a delay
+    setTimeout(() => {
+      this.topValueChanged = false;
+      this.cdr.detectChanges();
+    }, 500); // Just slightly longer than animation duration
+  }
+
+  cycleBottomValue(event: Event): void {
+    event.stopPropagation();
+    if (this.readonly || !this.isEditable || !this.isSelected) return;
+
+    // Mark that bottom was changed, reset top flag
+    this.bottomValueChanged = true;
+    this.topValueChanged = false;
+
+    if (this.bottomValue === null || this.bottomValue >= 6) {
+      this.bottomValue = 1;
+    } else {
+      this.bottomValue++;
+    }
+
+    this.updateDotPositions();
+    this.emitValueChange();
+
+    // Reset flag after a delay
+    setTimeout(() => {
+      this.bottomValueChanged = false;
+      this.cdr.detectChanges();
+    }, 500); // Just slightly longer than animation duration
+  }
+  // Emit value changes up to parent
+  emitValueChange(): void {
+    console.log(
+      `Emitting value change for domino ${this.id}:`,
+      this.topValue,
+      this.bottomValue
+    );
+    this.valueChanged.emit({
+      id: this.id,
+      topValue: this.topValue,
+      bottomValue: this.bottomValue,
+    });
+
+    // Force change detection
+    this.cdr.detectChanges();
+  }
+
+  // Update the visualization of dots
+  updateDotPositions(): void {
+    const topValue = this.topValue || 0;
+    const bottomValue = this.bottomValue || 0;
+
     this.topDots = this.generateDotPositions(
-      this.topValue || 0,
+      topValue,
       this.width / 6,
       this.width / 2,
       this.height / 4
     );
+
     this.bottomDots = this.generateDotPositions(
-      this.bottomValue || 0,
+      bottomValue,
       this.width / 6,
       this.width / 2,
       (this.height * 3) / 4
     );
   }
 
-  onDominoClick() {
-    // Only toggle selection if editable
-    if (this.isEditable) {
-      this.isSelected = !this.isSelected;
-      if (this.isSelected) {
-        this.dominoSelected.emit(this.id);
-      }
-    }
-  }
-
-  cycleTopValue(event: Event) {
-    event.stopPropagation();
-    if (!this.isEditable || !this.isSelected) return;
-
-    // Start at 1 if null
-    if (this.topValue === null) {
-      this.topValue = 1;
-    } else {
-      this.topValue = this.topValue === 6 ? 1 : this.topValue + 1;
-    }
-
-    this.updateDotPositions();
-    this.emitChange();
-  }
-
-  cycleBottomValue(event: Event) {
-    event.stopPropagation();
-    if (!this.isEditable || !this.isSelected) return;
-
-    // Start at 1 if null
-    if (this.bottomValue === null) {
-      this.bottomValue = 1;
-    } else {
-      this.bottomValue = this.bottomValue === 6 ? 1 : this.bottomValue + 1;
-    }
-
-    this.updateDotPositions();
-    this.emitChange();
-  }
-
-  emitChange() {
-    this.valueChanged.emit({
-      id: this.id,
-      topValue: this.topValue,
-      bottomValue: this.bottomValue,
-    });
-  }
-
+  // Generate positions for dots based on value
+  // Generate positions for dots based on value - IMPROVED REALISTIC VERSION
   generateDotPositions(
     value: number,
     margin: number,
@@ -187,40 +238,79 @@ export class InteractiveDominoComponent implements OnInit, OnChanges {
   ): DotPosition[] {
     const dots: DotPosition[] = [];
 
+    // Get half height/width of the region
+    const halfHeight = this.height / 4; // Quarter of total height (half of one side)
+    const halfWidth = this.width / 2;
+
+    // Make margin larger for better spacing (30% of half width)
+    const spacingMargin = halfWidth * 0.5;
+
+    // Calculate key points for dots
+    const leftX = centerX - spacingMargin;
+    const rightX = centerX + spacingMargin;
+    const topY = centerY - spacingMargin;
+    const bottomY = centerY + spacingMargin;
+
+    // Keep dots away from divider by ensuring minimum distance
+    const dividerSafetyMargin = 10;
+    const minTopY = this.height / 2 - this.height / 4 + dividerSafetyMargin;
+    const maxBottomY = this.height / 2 + this.height / 4 - dividerSafetyMargin;
+
+    // Adjust Y positions if needed to keep away from divider
+    const adjustedTopY = topY < minTopY ? minTopY : topY;
+    const adjustedBottomY = bottomY > maxBottomY ? maxBottomY : bottomY;
+
     switch (value) {
       case 1:
+        // Single dot in middle
         dots.push({ x: centerX, y: centerY });
         break;
+
       case 2:
-        dots.push({ x: centerX - margin, y: centerY - margin });
-        dots.push({ x: centerX + margin, y: centerY + margin });
+        // Diagonal corners - typical domino pattern
+        dots.push({ x: leftX, y: topY });
+        dots.push({ x: rightX, y: bottomY });
         break;
+
       case 3:
-        dots.push({ x: centerX - margin, y: centerY - margin });
+        // Diagonal corners plus middle
+        dots.push({ x: leftX, y: topY });
         dots.push({ x: centerX, y: centerY });
-        dots.push({ x: centerX + margin, y: centerY + margin });
+        dots.push({ x: rightX, y: bottomY });
         break;
+
       case 4:
-        dots.push({ x: centerX - margin, y: centerY - margin });
-        dots.push({ x: centerX + margin, y: centerY - margin });
-        dots.push({ x: centerX - margin, y: centerY + margin });
-        dots.push({ x: centerX + margin, y: centerY + margin });
+        // Four corners in a square pattern
+        dots.push({ x: leftX, y: topY });
+        dots.push({ x: rightX, y: topY });
+        dots.push({ x: leftX, y: bottomY });
+        dots.push({ x: rightX, y: bottomY });
         break;
+
       case 5:
-        dots.push({ x: centerX - margin, y: centerY - margin });
-        dots.push({ x: centerX + margin, y: centerY - margin });
+        // Four corners plus center
+        dots.push({ x: leftX, y: topY });
+        dots.push({ x: rightX, y: topY });
         dots.push({ x: centerX, y: centerY });
-        dots.push({ x: centerX - margin, y: centerY + margin });
-        dots.push({ x: centerX + margin, y: centerY + margin });
+        dots.push({ x: leftX, y: bottomY });
+        dots.push({ x: rightX, y: bottomY });
         break;
+
       case 6:
-        dots.push({ x: centerX - margin, y: centerY - margin });
-        dots.push({ x: centerX + margin, y: centerY - margin });
-        dots.push({ x: centerX - margin, y: centerY });
-        dots.push({ x: centerX + margin, y: centerY });
-        dots.push({ x: centerX - margin, y: centerY + margin });
-        dots.push({ x: centerX + margin, y: centerY + margin });
+        // Domino 6 pattern - two columns of three dots
+        const verticalSpacing = halfHeight * 0.5;
+
+        // Left column, top to bottom
+        dots.push({ x: leftX, y: centerY - verticalSpacing });
+        dots.push({ x: leftX, y: centerY });
+        dots.push({ x: leftX, y: centerY + verticalSpacing });
+
+        // Right column, top to bottom
+        dots.push({ x: rightX, y: centerY - verticalSpacing });
+        dots.push({ x: rightX, y: centerY });
+        dots.push({ x: rightX, y: centerY + verticalSpacing });
         break;
+
       default:
         // Return empty array for null or invalid values
         break;
@@ -229,101 +319,43 @@ export class InteractiveDominoComponent implements OnInit, OnChanges {
     return dots;
   }
 
-  // Add this method to toggle domino orientation
-  toggleOrientation(event: Event) {
-    event.stopPropagation();
-    if (!this.isEditable) return;
-
-    this.isVertical = !this.isVertical;
-    // Swap width and height for the domino
-    const temp = this.width;
-    this.width = this.height;
-    this.height = temp;
-
-    // Recalculate dot positions after rotation
-    this.updateDotPositions();
-
-    // Emit rotation change
-    this.rotationChanged.emit({
-      id: this.id,
-      isVertical: this.isVertical,
-    });
-  }
-
-  // Add method to get background color based on state
-  getBgColor(): string {
-    if (this.isEditable) {
-      return this.isSelected ? '#a2cdf6' : '#c8e1fa'; // Using #a2cdf6 as requested, lighter shade when not selected
-    } else {
-      return 'white';
-    }
-  }
-
+  // Helper methods for styling
   getDotColor(): string {
-    if (this.isEditable) {
-      return this.isSelected ? '#2563eb' : '#1e40af'; // Darker blue that works well with #a2cdf6
-    } else {
-      return '#333'; // Regular dark color for non-editable dominos
+    // Non-editable dominoes have pure black dots
+    if (!this.isEditable) {
+      return '#000000';
     }
+
+    // For editable dominoes, use a much higher contrast color
+    // Dark navy blue with higher contrast against light blue background
+    return this.isSelected ? '#0f172a' : '#1e293b'; // Darker colors for better contrast
   }
 
+  // Also update the getBgColor method for better contrast
+  getBgColor(): string {
+    // For non-editable dominos, use an ivory color like real dominoes
+    if (!this.isEditable) {
+      return '#fffff0'; // Slight ivory tint
+    }
+
+    // Lighter backgrounds for editable dominoes for better contrast with dots
+    return this.isSelected ? '#dbeafe' : '#eff6ff'; // Lighter blues
+  }
   getStrokeWidth(): number {
-    if (this.isEditable) {
-      return this.isSelected ? 5 : 3; // 5px when selected, 3px when just editable
+    // Thicker border for more visibility
+    if (!this.isEditable) {
+      return 2; // Give non-editable dominoes a visible border
     }
-    return 1; // Regular 1px border for non-editable dominos
+
+    // Keep your current styling for editable dominoes
+    return this.isSelected ? 3 : 2;
   }
 
-  // Enhance clearValues to be more thorough
-  clearValues() {
-    if (this.isEditable) {
-      this.topValue = null;
-      this.bottomValue = null;
-      this.isSelected = false;
-      this.updateDotPositions();
-
-      // Notify listeners of the change
-      this.valueChanged.emit({
-        id: this.id,
-        topValue: null,
-        bottomValue: null,
-      });
-
-      if (this.debug) {
-        console.log(`Cleared values for domino ${this.id}`);
-      }
-    }
-  }
-
-  // Improve the forceUpdate method to be more robust
-  forceUpdate(topValue: number | null, bottomValue: number | null): void {
-    if (this.debug) {
-      console.log(
-        `Forcing update of domino ${this.id} to:`,
-        topValue,
-        bottomValue
-      );
-    }
-
-    // Ensure we're using real null values, not undefined
-    this.topValue = topValue === undefined ? null : topValue;
-    this.bottomValue = bottomValue === undefined ? null : bottomValue;
-
-    // Update dot positions for visualization
+  // Set specific values (for external control)
+  setValues(top: number | null, bottom: number | null): void {
+    this.topValue = top;
+    this.bottomValue = bottom;
     this.updateDotPositions();
-
-    // If this is an editable domino, also notify any listeners of the change
-    if (this.isEditable) {
-      this.valueChanged.emit({
-        id: this.id,
-        topValue: this.topValue,
-        bottomValue: this.bottomValue,
-      });
-    }
-  }
-
-  resetVisualState(): void {
-    this.isSelected = false;
-    this.updateDotPositions();
+    this.emitValueChange();
   }
 }

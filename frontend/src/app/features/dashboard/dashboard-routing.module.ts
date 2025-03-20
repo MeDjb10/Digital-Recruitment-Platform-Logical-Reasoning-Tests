@@ -5,7 +5,12 @@ import { GeneralStatsComponent } from './components/general-stats/general-stats.
 import { UsersListComponent } from './components/users-list/users-list.component';
 import { StatsRLComponent } from './components/stats-rl/stats-rl.component';
 import { UsersListRLComponent } from './components/users-list-rl/users-list-rl.component';
-import { TestsListRLComponent } from './components/tests-list-rl/tests-list-rl.component';
+
+import { CreateTestComponent } from './components/Raisonnement logic/create-test/create-test.component';
+import { EditQuestionComponent } from './components/Raisonnement logic/edit-question/edit-question.component';
+import { TestDetailsComponent } from './components/Raisonnement logic/test-details/test-details.component';
+import { TestsListRLComponent } from './components/Raisonnement logic/tests-list-rl/tests-list-rl.component';
+import { CreateQuestionComponent } from './components/Raisonnement logic/create-question/create-question.component';
 
 const routes: Routes = [
   {
@@ -25,22 +30,54 @@ const routes: Routes = [
       {
         path: 'RaisonnementLogique',
         children: [
-          {
-            path: 'Statistique',
-            component: StatsRLComponent,
-            title: 'Logical Reasoning Statistics',
-          },
-          {
-            path: 'Users',
-            component: UsersListRLComponent,
-            title: 'Logical Reasoning Users',
-          },
+          // Default route redirects to Tests
+          { path: '', redirectTo: 'Tests', pathMatch: 'full' },
+
+          // Tests routes
           {
             path: 'Tests',
             component: TestsListRLComponent,
             title: 'Logical Reasoning Tests',
           },
-          { path: '', redirectTo: 'Statistique', pathMatch: 'full' },
+          {
+            path: 'Tests/create',
+            component: CreateTestComponent,
+            title: 'Create New Test',
+          },
+          {
+            path: 'Tests/:testId',
+            children: [
+              {
+                path: '',
+                component: TestDetailsComponent,
+                title: 'Test Details',
+              },
+              {
+                path: 'questions/create',
+                component: CreateQuestionComponent,
+                title: 'Create Question',
+              },
+              {
+                path: 'questions/:questionId/edit',
+                component: EditQuestionComponent,
+                title: 'Edit Question',
+              },
+            ],
+          },
+
+          // Statistics route
+          {
+            path: 'Statistiques',
+            component: StatsRLComponent,
+            title: 'Test Statistics',
+          },
+
+          // Users route
+          {
+            path: 'Utilisateurs',
+            component: UsersListRLComponent,
+            title: 'Test Users',
+          },
         ],
       },
       { path: '', redirectTo: 'info', pathMatch: 'full' },

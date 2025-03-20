@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, BehaviorSubject } from 'rxjs';
+import { Observable, of, BehaviorSubject, forkJoin } from 'rxjs';
 import { catchError, tap, map, finalize } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { MockDataService } from './mock-data.service';
@@ -14,6 +14,7 @@ import {
   UserActionEvent,
   UserTestMetrics,
 } from '../models/domino.model';
+import { TestManagementService } from '../../../../core/services/test-management.service';
 
 /**
  * Service responsible for handling all domino test related operations
@@ -38,7 +39,8 @@ export class DominoTestService {
 
   constructor(
     private http: HttpClient,
-    private mockDataService: MockDataService
+    private mockDataService: MockDataService,
+    private testManagementService: TestManagementService // Add this
   ) {}
 
   // Get test data
@@ -46,7 +48,10 @@ export class DominoTestService {
     // Initialize test metrics when starting a new test
     this.initializeTestMetrics(testId);
 
-    if (this.useMockData) {
+    if (
+      this.useMockData &&
+      (testId === 'd70' || testId === 'd70-enhanced' || testId === 'd200')
+    ) {
       return this.mockDataService.getTest(testId).pipe(
         map((test: TestData) => {
           if (test && test.questions) {
@@ -87,21 +92,24 @@ export class DominoTestService {
     }
 
     // When connecting to real backend:
-    return this.http.get<any>(`${this.apiUrl}/${testId}`).pipe(
-      map((test) => {
+    return this.testManagementService.getTestForDominoTest(testId).pipe(
+      map((test: any) => {
         if (test && test.questions) {
-          // Apply the same transformation for API data
+          // Apply the same transformations
           test.questions = test.questions.map((question: any) => {
             if (question.dominos) {
               question.dominos = question.dominos.map((domino: any) => {
-                if (domino.isEditable) {
-                  return {
-                    ...domino,
-                    topValue: null,
-                    bottomValue: null,
-                  };
+                // Create unique IDs for each domino
+                const newDomino = { ...domino };
+                newDomino.uniqueId = `q${question.id}_d${domino.id}`;
+                newDomino.questionId = question.id;
+
+                // Reset editable dominos
+                if (newDomino.isEditable) {
+                  newDomino.topValue = null;
+                  newDomino.bottomValue = null;
                 }
-                return domino;
+                return newDomino;
               });
             }
             return question;
@@ -597,7 +605,30 @@ export class DominoTestService {
   // Get all available tests for candidate
   getAvailableTests(): Observable<any[]> {
     if (this.useMockData) {
-      return this.mockDataService.getAvailableTests();
+      // Get mock tests
+      const mockTests$ = this.mockDataService.getAvailableTests();
+
+      // Get custom tests
+      const customTests$ = this.testManagementService.getAllTests().pipe(
+        map((tests) =>
+          tests
+            .filter((t) => t.isActive)
+            .map((test) => ({
+              id: test.id,
+              name: test.name,
+              description: test.description,
+              duration: test.duration,
+              totalQuestions: test.totalQuestions,
+              type: 'domino',
+              difficulty: test.difficulty,
+            }))
+        )
+      );
+
+      // Combine both arrays
+      return forkJoin([mockTests$, customTests$]).pipe(
+        map(([mockTests, customTests]) => [...mockTests, ...customTests])
+      );
     }
 
     return this.http.get<any[]>(`${this.apiUrl}/available`).pipe(

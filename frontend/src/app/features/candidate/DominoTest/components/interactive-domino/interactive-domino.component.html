@@ -1,85 +1,140 @@
 <svg
-#dominoElement
+  #dominoElement
   [attr.width]="width"
   [attr.height]="height"
   class="domino"
   [class.selected]="isSelected"
   [class.editable]="isEditable"
-   [class.vertical]="isVertical"
-
+  [class.vertical]="isVertical"
 >
-  <!-- Base rectangle with shadow for 3D effect -->
+  <!-- Define drop shadow filter for 3D effect -->
+  <defs>
+    <filter id="dropShadow" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="2" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.5"/>
+      </feComponentTransfer>
+      <feMerge> 
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/> 
+      </feMerge>
+    </filter>
+    
+    <!-- 3D effect for dots -->
+    <filter id="dotInset">
+      <feOffset dx="-1" dy="-1" />
+      <feGaussianBlur stdDeviation="1" result="offset-blur"/>
+      <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse"/>
+      <feFlood flood-color="black" flood-opacity="0.4" result="color"/>
+      <feComposite operator="in" in="color" in2="inverse" result="shadow"/>
+      <feComposite operator="over" in="shadow" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+
+  <!-- Base rectangle with 3D effect -->
   <rect
-    *ngIf="!isEditable || isSelected"
+    [attr.x]="0"
+    [attr.y]="0"
+    [attr.width]="width"
+    [attr.height]="height"
+    [attr.rx]="8"
+    filter="url(#dropShadow)"
+    [attr.fill]="getBgColor()"
+    [attr.stroke]="isEditable ? '#2563eb' : '#000'"
+    [attr.stroke-width]="getStrokeWidth()"
+    (click)="onDominoClick()"
+  />
+
+  <!-- Top highlight for 3D bevel effect -->
+  <rect
     [attr.x]="2"
     [attr.y]="2"
     [attr.width]="width - 4"
     [attr.height]="height - 4"
-    [attr.rx]="8"
-    fill="#00000010"
-    class="domino-shadow"
-  />
-
-  <!-- Base rectangle -->
-  <rect
-    [attr.x]="0"
-  [attr.y]="0"
-  [attr.width]="width"
-  [attr.height]="height"
-  [attr.rx]="8"
-  [attr.fill]="getBgColor()"
-  [attr.stroke]="isEditable ? '#2563eb' : '#333'"
-  [attr.stroke-width]="getStrokeWidth()"
-  (click)="onDominoClick()"
-  />
-
-  <!-- Divider line -->
-  <line
-    [attr.x1]="0"
-    [attr.y1]="height / 2"
-    [attr.x2]="width"
-    [attr.y2]="height / 2"
-    stroke="#333"
+    [attr.rx]="6"
+    stroke="rgba(255,255,255,0.3)"
     stroke-width="1"
+    fill="none"
+  />
+
+  <!-- Divider line that doesn't go all the way across -->
+  <rect
+    [attr.x]="width * 0.1"
+    [attr.y]="(height / 2) - 1"
+    [attr.width]="width * 0.8"
+    [attr.height]="2"
+    fill="#000"
+  />
+  
+  <!-- Divider line highlight for 3D effect -->
+  <rect
+    [attr.x]="width * 0.1"
+    [attr.y]="(height / 2) - 2"
+    [attr.width]="width * 0.8"
+    [attr.height]="1"
+    fill="rgba(255,255,255,0.2)"
   />
 
   <!-- Top half dots -->
   <ng-container *ngIf="!isEditable || (isEditable && topValue !== null)">
-    <circle
-      *ngFor="let dot of topDots"
-      [attr.cx]="dot.x"
-      [attr.cy]="dot.y"
-      [attr.r]="dotSize"
-      [attr.fill]="getDotColor()"
-      [class.dot-appear]="isSelected && isEditable"
-    ></circle>
+    <g *ngFor="let dot of topDots">
+      <!-- Main dot with shadow -->
+      <circle
+        [attr.cx]="dot.x"
+        [attr.cy]="dot.y"
+        [attr.r]="getDotSize(topValue)"
+        [attr.fill]="getDotColor()"
+        filter="url(#dotInset)"
+        [class.dot-appear]="isSelected && isEditable && topValueChanged"
+      ></circle>
+      
+      <!-- Small highlight to make dots appear raised -->
+      <circle
+        [attr.cx]="dot.x - 1"
+        [attr.cy]="dot.y - 1"
+        [attr.r]="getDotSize(topValue) / 3"
+         [attr.fill]="isEditable ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.3)'"
+        [class.dot-appear]="isSelected && isEditable && topValueChanged"
+      ></circle>
+    </g>
   </ng-container>
 
   <!-- Bottom half dots -->
   <ng-container *ngIf="!isEditable || (isEditable && bottomValue !== null)">
-    <circle
-      *ngFor="let dot of bottomDots"
-      [attr.cx]="dot.x"
-      [attr.cy]="dot.y"
-      [attr.r]="dotSize"
-      [attr.fill]="getDotColor()"
-      [class.dot-appear]="isSelected && isEditable"
-    ></circle>
+    <g *ngFor="let dot of bottomDots">
+      <!-- Main dot with shadow -->
+      <circle
+        [attr.cx]="dot.x"
+        [attr.cy]="dot.y"
+        [attr.r]="getDotSize(bottomValue)"[attr.fill]="getDotColor()"
+        filter="url(#dotInset)"
+        [class.dot-appear]="isSelected && isEditable  && bottomValueChanged"
+      ></circle>
+      
+      <!-- Small highlight to make dots appear raised -->
+      <circle
+        [attr.cx]="dot.x - 1"
+        [attr.cy]="dot.y - 1"
+        [attr.r]="getDotSize(bottomValue) / 3"
+        [attr.fill]="isEditable ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.3)'"
+        [class.dot-appear]="isSelected && isEditable && bottomValueChanged"
+      ></circle>
+    </g>
   </ng-container>
 
-  <!-- Make the entire top half clickable even when empty -->
+  <!-- Clickable areas -->
   <rect
     *ngIf="isEditable && isSelected"
     [attr.x]="0"
     [attr.y]="0"
     [attr.width]="width"
     [attr.height]="height / 2"
-     fill="rgba(37, 99, 235, 0.1)"
+    fill="rgba(37, 99, 235, 0.1)"
     (click)="cycleTopValue($event)"
     class="top-half-click interactive-area"
   />
 
-  <!-- Make the entire bottom half clickable even when empty -->
   <rect
     *ngIf="isEditable && isSelected"
     [attr.x]="0"
@@ -91,7 +146,7 @@
     class="bottom-half-click interactive-area"
   />
 
-  <!-- Visual hint indicator when empty - top -->
+  <!-- Visual hint indicators remain unchanged -->
   <circle
     *ngIf="isEditable && isSelected && topValue === null"
     [attr.cx]="width / 2"
@@ -104,7 +159,6 @@
     pointer-events="none"
   />
 
-  <!-- Visual hint indicator when empty - bottom -->
   <circle
     *ngIf="isEditable && isSelected && bottomValue === null"
     [attr.cx]="width / 2"
@@ -117,11 +171,8 @@
     pointer-events="none"
   />
 
-  <!-- Hint for editable dominos that aren't selected -->
   <g
-    *ngIf="
-      isEditable && !isSelected && (topValue === null || bottomValue === null)
-    "
+    *ngIf="isEditable && !isSelected && (topValue === null || bottomValue === null)"
   >
     <rect
       [attr.x]="width / 2 - 15"

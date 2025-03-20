@@ -42,14 +42,15 @@ import { DominoPosition } from '../../DominoTest/models/domino.model';
       >
         <app-interactive-domino
           [id]="domino.id"
-          [width]="getDominoWidth(domino)"
-          [height]="getDominoHeight(domino)"
           [initialTopValue]="domino.topValue"
           [initialBottomValue]="domino.bottomValue"
           [isEditable]="domino.isEditable"
+          [scale]="domino.scale || 1.0"
+          [isVertical]="domino.isVertical || false"
+          
           (valueChanged)="onDominoValueChanged($event)"
-        >
-        </app-interactive-domino>
+         
+        ></app-interactive-domino>
       </div>
     </div>
   `,

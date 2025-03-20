@@ -464,8 +464,19 @@ export class DominoTestModernComponent
         this.isTestComplete = true;
         this.isSubmittingTest = false;
 
-        // Navigate to results page
-        this.router.navigate(['/tests', this.testId, 'results']);
+        // Navigate to results page or show completion message
+        if (
+          this.testId === 'd70' ||
+          this.testId === 'd70-enhanced' ||
+          this.testId === 'd200'
+        ) {
+          // For mock tests with results page
+          this.router.navigate(['/tests', this.testId, 'results']);
+        } else {
+          // For custom tests, show completion alert
+          alert(`Test completed! Your score: ${result.score || 'N/A'}`);
+          this.router.navigate(['/tests']);
+        }
       },
       error: (error) => {
         console.error('Error submitting test:', error);
@@ -552,6 +563,7 @@ export class DominoTestModernComponent
   }
 
   // Alternative approach using subscription
+  // Replace the resetTest method with this corrected version:
   resetTest(): void {
     // Show confirmation dialog
     if (confirm('This will reset all your progress. Are you sure?')) {
@@ -573,10 +585,11 @@ export class DominoTestModernComponent
       this.currentQuestionIndex = 0;
 
       // Load fresh test data with proper callback handling
-      this.dominoTestService.getTest('d70-enhanced').subscribe({
+      // Use the CURRENT test ID instead of hardcoded 'd70-enhanced'
+      this.dominoTestService.getTest(this.testId).subscribe({
         next: (testData) => {
           if (testData) {
-            this.testName = testData.name || 'Enhanced Domino Reasoning Test';
+            this.testName = testData.name || 'Logical Reasoning Test';
             this.testDuration = testData.duration || 30;
             this.timeLeft = this.testDuration * 60;
             this.updateFormattedTime();
