@@ -1,0 +1,466 @@
+<div class="container mx-auto py-8 px-4">
+  <p-toast position="top-right"></p-toast>
+
+  <!-- Header Section -->
+  <div class="text-center mb-8">
+    <span
+      class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold mb-2 animate-bounce"
+    >
+      <i class="pi pi-file-edit mr-1"></i>Application Process
+    </span>
+    <h1 class="text-3xl font-bold text-blue-800 mb-2">Application Form</h1>
+    <p class="text-gray-600">
+      Complete your profile to start the assessment test
+    </p>
+    <div class="relative mx-auto">
+      <div
+        class="h-1 w-24 bg-red-500 rounded-full mx-auto mt-4 shadow-sm"
+      ></div>
+      <div
+        class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-8 h-2 bg-red-400 rounded-full opacity-40 blur-sm"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Form Stepper -->
+  <div class="card flex justify-center">
+    <p-stepper [value]="1" class="w-full max-w-4xl">
+      <p-step-list>
+        <p-step [value]="1">Personal Info</p-step>
+        <p-step [value]="2">Professional Info</p-step>
+        <p-step [value]="3">Confirmation</p-step>
+      </p-step-list>
+
+      <p-step-panels>
+        <!-- Step 1: Personal Information -->
+        <p-step-panel [value]="1">
+          <ng-template #content let-activateCallback="activateCallback">
+            <p-card styleClass="shadow-lg">
+              <form [formGroup]="personalInfoForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <!-- First Name -->
+                  <div class="field">
+                    <label
+                      for="firstName"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      First Name <span class="text-red-500">*</span>
+                    </label>
+                    <div class="p-inputgroup w-full">
+                      <span class="p-inputgroup-addon">
+                        <i class="pi pi-user"></i>
+                      </span>
+                      <input
+                        pInputText
+                        id="firstName"
+                        formControlName="firstName"
+                        class="w-full"
+                      />
+                    </div>
+                    <small
+                      class="text-red-500"
+                      *ngIf="isFieldInvalid(personalInfoForm, 'firstName')"
+                    >
+                      First name is required
+                    </small>
+                  </div>
+
+                  <!-- Last Name -->
+                  <div class="field">
+                    <label
+                      for="lastName"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Last Name <span class="text-red-500">*</span>
+                    </label>
+                    <div class="p-inputgroup w-full">
+                      <span class="p-inputgroup-addon">
+                        <i class="pi pi-user"></i>
+                      </span>
+                      <input
+                        pInputText
+                        id="lastName"
+                        formControlName="lastName"
+                        class="w-full"
+                      />
+                    </div>
+                    <small
+                      class="text-red-500"
+                      *ngIf="isFieldInvalid(personalInfoForm, 'lastName')"
+                    >
+                      Last name is required
+                    </small>
+                  </div>
+
+                  <!-- Email -->
+                  <div class="field">
+                    <label
+                      for="email"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Email <span class="text-red-500">*</span>
+                    </label>
+                    <div class="p-inputgroup w-full">
+                      <span class="p-inputgroup-addon">
+                        <i class="pi pi-envelope"></i>
+                      </span>
+                      <input
+                        pInputText
+                        id="email"
+                        formControlName="email"
+                        class="w-full"
+                      />
+                    </div>
+                    <small
+                      class="text-red-500"
+                      *ngIf="isFieldInvalid(personalInfoForm, 'email')"
+                    >
+                      Valid email is required
+                    </small>
+                  </div>
+
+                  <!-- Gender -->
+                  <div class="field">
+                    <label
+                      for="gender"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Gender <span class="text-red-500">*</span>
+                    </label>
+                    <p-dropdown
+                      id="gender"
+                      formControlName="gender"
+                      [options]="genderOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select Gender"
+                      [showClear]="true"
+                      styleClass="w-full"
+                    ></p-dropdown>
+                    <small
+                      class="text-red-500"
+                      *ngIf="isFieldInvalid(personalInfoForm, 'gender')"
+                    >
+                      Gender is required
+                    </small>
+                  </div>
+
+                  <!-- Date of Birth -->
+                  <div class="field col-span-2">
+                    <label
+                      for="dateOfBirth"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Date of Birth <span class="text-red-500">*</span>
+                    </label>
+                    <p-calendar
+                      id="dateOfBirth"
+                      formControlName="dateOfBirth"
+                      [showIcon]="true"
+                      [maxDate]="maxDate"
+                      dateFormat="dd/mm/yy"
+                      styleClass="w-full"
+                      [showButtonBar]="true"
+                      placeholder="Select Date"
+                    ></p-calendar>
+                    <small
+                      class="text-red-500"
+                      *ngIf="isFieldInvalid(personalInfoForm, 'dateOfBirth')"
+                    >
+                      Date of birth is required
+                    </small>
+                  </div>
+                </div>
+              </form>
+              <div
+                class="bg-blue-50 p-4 rounded-lg mt-4 flex items-start border-l-4 border-blue-500 shadow-sm"
+              >
+                <i class="pi pi-info-circle text-blue-500 mr-3 text-xl"></i>
+                <div>
+                  <h4 class="text-blue-700 font-medium mb-1 text-sm">
+                    Why we ask for this information
+                  </h4>
+                  <p class="text-sm text-gray-600">
+                    Your personal information helps us tailor the assessment to
+                    your profile and provide a personalized experience.
+                  </p>
+                </div>
+              </div>
+              <!-- Navigation -->
+              <div class="flex pt-4 justify-end">
+                <p-button
+                  label="Next"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  [disabled]="personalInfoForm.invalid"
+                  (onClick)="activateCallback(2)"
+                  styleClass="p-button-raised"
+                ></p-button>
+              </div>
+            </p-card>
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Step 2: Job Information -->
+        <p-step-panel [value]="2">
+          <ng-template #content let-activateCallback="activateCallback">
+            <p-card styleClass="shadow-lg">
+              <form [formGroup]="jobInfoForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <!-- Current Position -->
+                  <div class="field">
+                    <label
+                      for="currentPosition"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Current Position <span class="text-red-500">*</span>
+                    </label>
+                    <div class="p-inputgroup w-full">
+                      <span class="p-inputgroup-addon">
+                        <i class="pi pi-briefcase"></i>
+                      </span>
+                      <input
+                        pInputText
+                        id="currentPosition"
+                        formControlName="currentPosition"
+                        class="w-full"
+                      />
+                    </div>
+                    <small
+                      class="text-red-500"
+                      *ngIf="isFieldInvalid(jobInfoForm, 'currentPosition')"
+                    >
+                      Current position is required
+                    </small>
+                  </div>
+
+                  <!-- Desired Position -->
+                  <div class="field">
+                    <label
+                      for="desiredPosition"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Desired Position <span class="text-red-500">*</span>
+                    </label>
+                    <div class="p-inputgroup w-full">
+                      <span class="p-inputgroup-addon">
+                        <i class="pi pi-star"></i>
+                      </span>
+                      <input
+                        pInputText
+                        id="desiredPosition"
+                        formControlName="desiredPosition"
+                        class="w-full"
+                      />
+                    </div>
+                    <small
+                      class="text-red-500"
+                      *ngIf="isFieldInvalid(jobInfoForm, 'desiredPosition')"
+                    >
+                      Desired position is required
+                    </small>
+                  </div>
+
+                  <!-- Education Level -->
+                  <div class="field">
+                    <label
+                      for="educationLevel"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Education Level <span class="text-red-500">*</span>
+                    </label>
+                    <p-dropdown
+                      id="educationLevel"
+                      formControlName="educationLevel"
+                      [options]="educationOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select Education Level"
+                      [showClear]="true"
+                      styleClass="w-full"
+                    ></p-dropdown>
+                    <small
+                      class="text-red-500"
+                      *ngIf="isFieldInvalid(jobInfoForm, 'educationLevel')"
+                    >
+                      Education level is required
+                    </small>
+                  </div>
+
+                  <!-- Availability -->
+                  <div class="field">
+                    <label
+                      for="availability"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Test Availability <span class="text-red-500">*</span>
+                    </label>
+                    <p-dropdown
+                      id="availability"
+                      formControlName="availability"
+                      [options]="availabilityOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select Availability"
+                      styleClass="w-full"
+                    ></p-dropdown>
+                    <small
+                      class="text-red-500"
+                      *ngIf="isFieldInvalid(jobInfoForm, 'availability')"
+                    >
+                      Availability is required
+                    </small>
+                  </div>
+                </div>
+              </form>
+
+              <!-- Navigation -->
+              <div class="flex pt-4 justify-between">
+                <p-button
+                  label="Back"
+                  icon="pi pi-arrow-left"
+                  (onClick)="activateCallback(1)"
+                  styleClass="p-button-outlined"
+                ></p-button>
+
+                <p-button
+                  label="Next"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  [disabled]="jobInfoForm.invalid"
+                  (onClick)="activateCallback(3)"
+                  styleClass="p-button-raised"
+                ></p-button>
+              </div>
+            </p-card>
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Step 3: Confirmation -->
+        <p-step-panel [value]="3">
+          <ng-template #content let-activateCallback="activateCallback">
+            <p-card styleClass="shadow-lg">
+              <div class="mb-2">
+                <h2 class="text-2xl font-bold text-blue-800 mb-4 text-center">
+                  Application Summary
+                </h2>
+                <p class="text-gray-600 mb-6 text-center">
+                  Please review your information before submitting the
+                  application
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <!-- Personal Information Summary -->
+                  <div class="border rounded-lg p-4 bg-blue-50">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-700">
+                      <i class="pi pi-user mr-2"></i>Personal Information
+                    </h3>
+                    <p-divider></p-divider>
+
+                    <div class="grid grid-cols-1 gap-2">
+                      <div class="flex justify-between">
+                        <span class="font-medium">Name:</span>
+                        <span
+                          >{{ personalInfoForm.get("firstName")?.value }}
+                          {{ personalInfoForm.get("lastName")?.value }}</span
+                        >
+                      </div>
+
+                      <div class="flex justify-between">
+                        <span class="font-medium">Email:</span>
+                        <span>{{ personalInfoForm.get("email")?.value }}</span>
+                      </div>
+
+                      <div class="flex justify-between">
+                        <span class="font-medium">Gender:</span>
+                        <span>{{ genderLabel }}</span>
+                      </div>
+
+                      <div class="flex justify-between">
+                        <span class="font-medium">Date of Birth:</span>
+                        <span>{{
+                          personalInfoForm.get("dateOfBirth")?.value
+                            | date : "dd/MM/yyyy"
+                        }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Professional Information Summary -->
+                  <div class="border rounded-lg p-4 bg-blue-50">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-700">
+                      <i class="pi pi-briefcase mr-2"></i>Professional
+                      Information
+                    </h3>
+                    <p-divider></p-divider>
+
+                    <div class="grid grid-cols-1 gap-2">
+                      <div class="flex justify-between">
+                        <span class="font-medium">Current Position:</span>
+                        <span>{{
+                          jobInfoForm.get("currentPosition")?.value
+                        }}</span>
+                      </div>
+
+                      <div class="flex justify-between">
+                        <span class="font-medium">Desired Position:</span>
+                        <span>{{
+                          jobInfoForm.get("desiredPosition")?.value
+                        }}</span>
+                      </div>
+
+                      <div class="flex justify-between">
+                        <span class="font-medium">Education:</span>
+                        <span>{{ educationLabel }}</span>
+                      </div>
+
+                      <div class="flex justify-between">
+                        <span class="font-medium">Availability:</span>
+                        <span>{{ availabilityLabel }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Terms and Privacy -->
+                <div class="text-center mt-1">
+                  <p class="text-sm text-gray-500">
+                    By clicking "Submit Application", you agree to our
+                    <a href="#" class="text-blue-600 hover:underline"
+                      >Terms of Service</a
+                    >
+                    and
+                    <a href="#" class="text-blue-600 hover:underline"
+                      >Privacy Policy</a
+                    >
+                  </p>
+                </div>
+              </div>
+
+              <!-- Navigation -->
+              <div class="flex pt-4 justify-between">
+                <p-button
+                  label="Back"
+                  icon="pi pi-arrow-left"
+                  (onClick)="activateCallback(2)"
+                  styleClass="p-button-outlined"
+                ></p-button>
+
+                <p-button
+                  label="Submit Application"
+                  icon="pi pi-check"
+                  iconPos="right"
+                  [disabled]="submitting"
+                  [loading]="submitting"
+                  (onClick)="onSubmit()"
+                  class="submit-pulse"
+                  styleClass="p-button-success"
+                ></p-button>
+              </div>
+            </p-card>
+          </ng-template>
+        </p-step-panel>
+      </p-step-panels>
+    </p-stepper>
+  </div>
+</div>

@@ -13,6 +13,8 @@ import { TestsListComponent } from './features/candidate/DominoTest/pages/tests-
 import { TestCompleteComponent } from './features/candidate/DominoTest/pages/test-complete/test-complete.component';
 import { TestCompletionComponent } from './features/candidate/DominoTest/pages/test-completion/test-completion.component';
 import { DominoTestModernComponent } from './features/candidate/DominoTest/pages/domino-test-modern/domino-test-modern.component';
+import { ApplicationFormComponent } from './features/candidate/testForm/application-form/application-form.component';
+import { TestSelectComponent } from './features/candidate/testForm/test-select/test-select.component';
 
 export const routes: Routes = [
   {
@@ -34,6 +36,18 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/auth/auth.module').then((m) => m.AuthModule),
   },
+  {
+    path: 'apply',
+    component: ApplicationFormComponent,
+    canActivate: [AuthGuard],
+    title: 'Application Form - Digital Recruitment Platform',
+  },
+
+  {
+    path:'select',
+    component:TestSelectComponent
+  },
+
   {
     path: 'dashboard',
     canActivate: [DashboardGuard],
