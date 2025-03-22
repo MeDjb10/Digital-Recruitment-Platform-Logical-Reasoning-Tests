@@ -617,78 +617,84 @@
       </div>
     </div>
 
-    <!-- Properties panel -->
-    <div class="properties-panel" [class.visible]="showPropertyPanel">
-      <div class="panel-header">
-        <h3>Domino Properties</h3>
-        <button class="close-btn" (click)="showPropertyPanel = false">
-          <i class="pi pi-times"></i>
-        </button>
-      </div>
+    
+   <!-- Properties panel -->
+<div class="properties-panel" [class.visible]="showPropertyPanel">
+  <div class="panel-header">
+    <h3>Domino Properties</h3>
+    <button class="close-btn" (click)="showPropertyPanel = false">
+      <i class="pi pi-times"></i>
+    </button>
+  </div>
 
-      <!-- Grid dimensions section for grid layout -->
-      <!-- <div class="panel-content settings-section" *ngIf="layoutType === 'grid'">
-        <h4>Grid Dimensions</h4>
-        <div class="grid-controls">
-          <div class="grid-control">
-            <label for="gridRows">Rows:</label>
-            <input
-              type="number"
-              id="gridRows"
-              [(ngModel)]="gridRows"
-              min="1"
-              max="10"
-              (change)="updateGridDimensions()"
-            />
-          </div>
-          <div class="grid-control">
-            <label for="gridCols">Columns:</label>
-            <input
-              type="number"
-              id="gridCols"
-              [(ngModel)]="gridCols"
-              min="1"
-              max="10"
-              (change)="updateGridDimensions()"
-            />
-          </div>
-        </div>
-        <button
-          type="button"
-          class="apply-grid-button"
-          (click)="applyGridToPositions()"
-        >
-          Apply Grid to Dominos
-        </button>
-      </div> -->
+  <div class="panel-content" *ngIf="selectedDomino">
+    <!-- Tabbed navigation for properties -->
+    <div class="properties-tabs">
+      <button 
+        class="tab-button" 
+        [class.active]="activePropertyTab === 'position'" 
+        (click)="activePropertyTab = 'position'">
+        <i class="pi pi-arrows-alt"></i> Position
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activePropertyTab === 'appearance'" 
+        (click)="activePropertyTab = 'appearance'">
+        <i class="pi pi-palette"></i> Appearance
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activePropertyTab === 'values'" 
+        (click)="activePropertyTab = 'values'">
+        <i class="pi pi-list"></i> Values
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activePropertyTab === 'settings'" 
+        (click)="activePropertyTab = 'settings'">
+        <i class="pi pi-cog"></i> Settings
+      </button>
+    </div>
 
-      <div class="panel-content" *ngIf="selectedDomino">
-        <div class="property-group">
-          <h4>Position</h4>
+    <!-- Position Tab -->
+    <div class="property-tab-content" *ngIf="activePropertyTab === 'position'">
+      <div class="property-group">
+        <h4>Position & Rotation</h4>
+        
+        <div class="property-grid">
           <div class="property-row">
             <label for="dominoX">X:</label>
-            <input
-              type="number"
-              id="dominoX"
-              [(ngModel)]="selectedDomino.exactX"
-              (change)="updateSelectedDomino()"
-            />
+            <div class="property-input-group">
+              <input
+                type="number"
+                id="dominoX"
+                [(ngModel)]="selectedDomino.exactX"
+                (change)="updateSelectedDomino()"
+              />
+              <button class="increment-btn" (click)="adjustPosition('x', -1)">-</button>
+              <button class="increment-btn" (click)="adjustPosition('x', 1)">+</button>
+            </div>
           </div>
+          
           <div class="property-row">
             <label for="dominoY">Y:</label>
-            <input
-              type="number"
-              id="dominoY"
-              [(ngModel)]="selectedDomino.exactY"
-              (change)="updateSelectedDomino()"
-            />
+            <div class="property-input-group">
+              <input
+                type="number"
+                id="dominoY"
+                [(ngModel)]="selectedDomino.exactY"
+                (change)="updateSelectedDomino()"
+              />
+              <button class="increment-btn" (click)="adjustPosition('y', -1)">-</button>
+              <button class="increment-btn" (click)="adjustPosition('y', 1)">+</button>
+            </div>
           </div>
         </div>
-
-        <div class="property-group">
-          <h4>Rotation</h4>
-          <div class="property-row">
-            <label for="dominoAngle">Angle:</label>
+        
+        <div class="property-row rotation-row">
+          <label for="dominoAngle">Angle: <span class="slider-value">{{ selectedDomino.angle }}°</span></label>
+           
+          <div class="slider-with-presets">
             <p-slider
               [(ngModel)]="selectedDomino.angle"
               [min]="0"
@@ -696,50 +702,32 @@
               [step]="5"
               (onChange)="updateSelectedDomino()"
             ></p-slider>
-            <span class="slider-value">{{ selectedDomino.angle }}°</span>
+           
+            
+            <div class="angle-presets">
+              <button class="preset-btn" (click)="setAngle(0)">0°</button>
+              <button class="preset-btn" (click)="setAngle(45)">45°</button>
+              <button class="preset-btn" (click)="setAngle(90)">90°</button>
+              <button class="preset-btn" (click)="setAngle(135)">135°</button>
+              
+            </div>
           </div>
         </div>
-
-        <div class="property-group">
-          <h4>Values</h4>
-          <div class="property-row">
-            <label for="dominoTop">Top:</label>
-            <select
-              *ngIf="!selectedDomino.isEditable"
-              id="dominoTop"
-              [(ngModel)]="selectedDomino.topValue"
-              (change)="updateSelectedDomino()"
-            >
-              <option *ngFor="let i of dominoValueOptions" [ngValue]="i">
-                {{ i }}
-              </option>
-            </select>
-            <span *ngIf="selectedDomino.isEditable" class="editable-text"
-              >Will be editable</span
-            >
-          </div>
-          <div class="property-row">
-            <label for="dominoBottom">Bottom:</label>
-            <select
-              *ngIf="!selectedDomino.isEditable"
-              id="dominoBottom"
-              [(ngModel)]="selectedDomino.bottomValue"
-              (change)="updateSelectedDomino()"
-            >
-              <option *ngFor="let i of dominoValueOptions" [ngValue]="i">
-                {{ i }}
-              </option>
-            </select>
-            <span *ngIf="selectedDomino.isEditable" class="editable-text"
-              >Will be editable</span
-            >
-          </div>
-        </div>
-
-        <div class="property-group">
-          <h4>Appearance</h4>
-          <div class="property-row">
-            <label for="dominoScale">Scale:</label>
+        
+        <button class="action-btn center-btn" (click)="centerDomino()">
+          <i class="pi pi-compass"></i> Center on Canvas
+        </button>
+      </div>
+    </div>
+    
+    <!-- Appearance Tab -->
+    <div class="property-tab-content" *ngIf="activePropertyTab === 'appearance'">
+      <div class="property-group">
+        <h4>Size & Orientation</h4>
+        
+        <div class="property-row">
+          <label for="dominoScale">Scale:<span class="slider-value">{{ selectedDomino.scale | number:'1.1-1' }}</span></label>
+          <div class="slider-with-actions">
             <p-slider
               [(ngModel)]="selectedDomino.scale"
               [min]="0.5"
@@ -747,101 +735,172 @@
               [step]="0.1"
               (onChange)="updateDominoScale($event)"
             ></p-slider>
-            <span class="slider-value">{{
-              selectedDomino.scale | number : "1.1-1"
-            }}</span>
-          </div>
-          <div class="property-row">
-            <label for="dominoVertical">Orientation:</label>
-            <select
-              id="dominoVertical"
-              [(ngModel)]="selectedDomino.isVertical"
-              (change)="updateSelectedDomino()"
-            >
-              <option [ngValue]="false">Horizontal</option>
-              <option [ngValue]="true">Vertical</option>
-            </select>
+            
+            <div class="scale-actions">
+              <button class="scale-btn" (click)="setScale(0.8)">S</button>
+              <button class="scale-btn" (click)="setScale(1.0)">M</button>
+              <button class="scale-btn" (click)="setScale(1.5)">L</button>
+            </div>
           </div>
         </div>
-
-        <!-- Updated role selection with radio buttons -->
-        <div class="property-group">
-          <h4>Question Settings</h4>
-          <div class="domino-role-selection">
-            <div class="role-option">
+        
+        <div class="property-row orientation-row">
+          <label>Orientation:</label>
+          <div class="orientation-toggle">
+            <button 
+              class="orientation-btn" 
+              [class.active]="!selectedDomino.isVertical"
+              (click)="setOrientation(false)">
+              <i class="pi pi-minus"></i> Horizontal
+            </button>
+            <button 
+              class="orientation-btn" 
+              [class.active]="selectedDomino.isVertical"
+              (click)="setOrientation(true)">
+              <i class="pi pi-bars"></i> Vertical
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Values Tab -->
+    <div class="property-tab-content" *ngIf="activePropertyTab === 'values'">
+      <div class="property-group">
+        <h4>Domino Values</h4>
+        
+        <div *ngIf="!selectedDomino.isEditable" class="domino-values">
+          <div class="value-half">
+            <label for="dominoTop">Top Half:</label>
+            <div class="value-selector">
+              <button 
+                *ngFor="let val of dominoValueOptions" 
+                class="value-btn" 
+                [class.active]="selectedDomino.topValue === val"
+                (click)="setDominoValue('top', val)">
+                {{ val }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="value-half">
+            <label for="dominoBottom">Bottom Half:</label>
+            <div class="value-selector">
+              <button 
+                *ngFor="let val of dominoValueOptions" 
+                class="value-btn" 
+                [class.active]="selectedDomino.bottomValue === val"
+                (click)="setDominoValue('bottom', val)">
+                {{ val }}
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div *ngIf="selectedDomino.isEditable" class="editable-message">
+          <i class="pi pi-info-circle"></i>
+          This domino is set as an answer field. Values will be editable by test takers.
+        </div>
+      </div>
+      
+      <div *ngIf="selectedDomino.isEditable" class="property-group">
+        <h4>Correct Answer</h4>
+        <div class="correct-answer-grid">
+          <div class="value-half">
+            <label for="correctTop">Top Value:</label>
+            <div class="value-selector">
+              <button 
+                *ngFor="let val of dominoValueOptions" 
+                class="value-btn" 
+                [class.active]="correctAnswer!.topValue === val"
+                (click)="setCorrectAnswer('top', val)">
+                {{ val }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="value-half">
+            <label for="correctBottom">Bottom Value:</label>
+            <div class="value-selector">
+              <button 
+                *ngFor="let val of dominoValueOptions" 
+                class="value-btn" 
+                [class.active]="correctAnswer!.bottomValue === val"
+                (click)="setCorrectAnswer('bottom', val)">
+                {{ val }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Settings Tab -->
+    <div class="property-tab-content" *ngIf="activePropertyTab === 'settings'">
+      <div class="property-group">
+        <h4>Domino Role</h4>
+        <div class="role-options">
+          <div class="role-card" 
+              [class.selected]="!selectedDomino.isEditable"
+              (click)="setDominoRole(false)">
+            <div class="role-icon"><i class="pi pi-th-large"></i></div>
+            <div class="role-details">
+              <h5>Fixed Domino</h5>
+              <p>Part of the pattern</p>
+            </div>
+            <div class="role-radio">
               <input
                 type="radio"
                 id="regularDomino"
                 name="dominoRole"
                 [checked]="!selectedDomino.isEditable"
-                (change)="setDominoRole(false)"
               />
-              <label for="regularDomino">Fixed Domino (part of pattern)</label>
+              <span class="checkmark"></span>
             </div>
-            <div class="role-option">
+          </div>
+          
+          <div class="role-card"
+              [class.selected]="selectedDomino.isEditable"
+              (click)="setDominoRole(true)">
+            <div class="role-icon answer-icon"><i class="pi pi-pencil"></i></div>
+            <div class="role-details">
+              <h5>Answer Field</h5>
+              <p>Editable by test taker</p>
+            </div>
+            <div class="role-radio">
               <input
                 type="radio"
                 id="editableDomino"
                 name="dominoRole"
                 [checked]="selectedDomino.isEditable"
-                (change)="setDominoRole(true)"
               />
-              <label for="editableDomino">Editable Domino (answer field)</label>
+              <span class="checkmark"></span>
             </div>
           </div>
-
-          <div *ngIf="selectedDomino.isEditable" class="correct-answer-section">
-            <h4>Correct Answer</h4>
-            <div class="property-row">
-              <label for="correctTop">Top Value:</label>
-              <select
-                id="correctTop"
-                [(ngModel)]="correctAnswer!.topValue"
-                (ngModelChange)="updateCorrectAnswer()"
-              >
-                <option *ngFor="let i of dominoValueOptions" [ngValue]="i">
-                  {{ i }}
-                </option>
-              </select>
-            </div>
-            <div class="property-row">
-              <label for="correctBottom">Bottom Value:</label>
-              <select
-                id="correctBottom"
-                [(ngModel)]="correctAnswer!.bottomValue"
-                (ngModelChange)="updateCorrectAnswer()"
-              >
-                <option *ngFor="let i of dominoValueOptions" [ngValue]="i">
-                  {{ i }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="property-actions">
-          <button class="action-btn center-btn" (click)="centerDomino()">
-            <i class="pi pi-compass"></i> Center on Canvas
-          </button>
-          <button class="action-btn duplicate-btn" (click)="duplicateDomino()">
-            <i class="pi pi-copy"></i> Duplicate Domino
-          </button>
-          <button class="action-btn delete-btn" (click)="deleteDomino()">
-            <i class="pi pi-trash"></i> Delete Domino
-          </button>
         </div>
       </div>
-
-      <div class="panel-content empty" *ngIf="!selectedDomino">
-        <div class="empty-state">
-          <i class="pi pi-info-circle"></i>
-          <p>Select a domino on the canvas to edit its properties</p>
-          <button class="action-btn" (click)="addDominoToCenter()">
-            <i class="pi pi-plus"></i> Add New Domino
-          </button>
-        </div>
+      
+      <div class="property-actions">
+        <button class="action-btn duplicate-btn" (click)="duplicateDomino()">
+          <i class="pi pi-copy"></i> Duplicate Domino
+        </button>
+        <button class="action-btn delete-btn" (click)="deleteDomino()">
+          <i class="pi pi-trash"></i> Delete Domino
+        </button>
       </div>
     </div>
+  </div>
+
+  <div class="panel-content empty" *ngIf="!selectedDomino">
+    <div class="empty-state">
+      <i class="pi pi-info-circle"></i>
+      <p>Select a domino on the canvas to edit its properties</p>
+      <button class="action-btn" (click)="addDominoToCenter()">
+        <i class="pi pi-plus"></i> Add New Domino
+      </button>
+    </div>
+  </div>
+</div>
   </div>
 
   <!-- Preview overlay -->

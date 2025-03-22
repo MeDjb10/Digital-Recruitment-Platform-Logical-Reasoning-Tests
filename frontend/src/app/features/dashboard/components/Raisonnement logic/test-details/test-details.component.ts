@@ -1,13 +1,23 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit } from "@angular/core";
-import { RouterModule, ActivatedRoute } from "@angular/router";
-import { TestManagementService } from "../../../../../core/services/test-management.service";
-
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { TestManagementService } from '../../../../../core/services/test-management.service';
+import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-test-details',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ButtonModule,
+    ConfirmDialogModule,
+    ToastModule,
+  ],
+  providers: [ConfirmationService, MessageService],
   template: `
     <div class="test-details-container" *ngIf="test">
       <div class="test-header">
@@ -33,6 +43,10 @@ import { TestManagementService } from "../../../../../core/services/test-managem
             label="Edit Test"
             icon="pi pi-pencil"
             class="p-button-outlined"
+            [routerLink]="[
+              '/dashboard/RaisonnementLogique/Tests/edit',
+              test.id
+            ]"
           ></button>
           <button
             pButton
@@ -45,6 +59,7 @@ import { TestManagementService } from "../../../../../core/services/test-managem
             label="Delete"
             icon="pi pi-trash"
             class="p-button-outlined p-button-danger"
+            (click)="confirmDeleteTest()"
           ></button>
         </div>
       </div>
@@ -84,8 +99,9 @@ import { TestManagementService } from "../../../../../core/services/test-managem
             <div class="card-actions">
               <button
                 pButton
-                pRipple
                 icon="pi pi-pencil"
+                label="Edit"
+                class="p-button-sm p-button-outlined"
                 [routerLink]="[
                   '/dashboard/RaisonnementLogique/Tests',
                   test.id,
@@ -93,14 +109,13 @@ import { TestManagementService } from "../../../../../core/services/test-managem
                   question.id,
                   'edit'
                 ]"
-                class="p-button-rounded p-button-text"
               ></button>
               <button
                 pButton
-                pRipple
                 icon="pi pi-trash"
+                label="Delete"
+                class="p-button-sm p-button-outlined p-button-danger"
                 (click)="confirmDeleteQuestion(question.id)"
-                class="p-button-rounded p-button-text p-button-danger"
               ></button>
             </div>
           </div>
@@ -122,6 +137,18 @@ import { TestManagementService } from "../../../../../core/services/test-managem
         </div>
       </div>
     </div>
+
+    <div class="loading-container" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Loading test details...</p>
+    </div>
+
+    <!-- PrimeNG Components -->
+    <p-toast></p-toast>
+    <p-confirmDialog
+      header="Confirm Deletion"
+      icon="pi pi-exclamation-triangle"
+    ></p-confirmDialog>
   `,
   styles: [
     `
@@ -229,6 +256,13 @@ import { TestManagementService } from "../../../../../core/services/test-managem
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         padding: 1.25rem;
         position: relative;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+      }
+
+      .question-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
       }
 
       .question-header {
@@ -267,7 +301,7 @@ import { TestManagementService } from "../../../../../core/services/test-managem
       .card-actions {
         display: flex;
         justify-content: flex-end;
-        gap: 0.25rem;
+        gap: 0.5rem;
         margin-top: 1rem;
       }
 
@@ -283,6 +317,30 @@ import { TestManagementService } from "../../../../../core/services/test-managem
         color: #64748b;
         font-size: 1rem;
       }
+
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 70vh;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 3px solid #e2e8f0;
+        border-top-color: #3b82f6;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
     `,
   ],
 })
@@ -293,7 +351,10 @@ export class TestDetailsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private testManagementService: TestManagementService
+    private router: Router,
+    private testManagementService: TestManagementService,
+    private confirmationService: ConfirmationService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit() {
@@ -315,6 +376,11 @@ export class TestDetailsComponent implements OnInit {
       (error) => {
         console.error('Error loading test:', error);
         this.loading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load test details. Please try again.',
+        });
       }
     );
   }
@@ -328,24 +394,72 @@ export class TestDetailsComponent implements OnInit {
       (error) => {
         console.error('Error loading questions:', error);
         this.loading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load questions. Please try again.',
+        });
       }
     );
   }
 
   confirmDeleteQuestion(questionId: string) {
-    if (confirm('Are you sure you want to delete this question?')) {
-      this.deleteQuestion(questionId);
-    }
+    this.confirmationService.confirm({
+      message:
+        'Are you sure you want to delete this question? This action cannot be undone.',
+      accept: () => {
+        this.deleteQuestion(questionId);
+      },
+    });
+  }
+
+  confirmDeleteTest() {
+    this.confirmationService.confirm({
+      message: `Are you sure you want to delete the test "${this.test.name}"? This will permanently remove all associated questions.`,
+      accept: () => {
+        this.deleteTest(this.test.id);
+      },
+    });
   }
 
   deleteQuestion(questionId: string) {
     this.testManagementService.deleteQuestion(questionId).subscribe(
       () => {
         this.questions = this.questions.filter((q) => q.id !== questionId);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Question deleted successfully',
+        });
       },
       (error) => {
         console.error('Error deleting question:', error);
-        alert('Failed to delete question. Please try again.');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to delete question. Please try again.',
+        });
+      }
+    );
+  }
+
+  deleteTest(testId: string) {
+    this.testManagementService.deleteTest(testId).subscribe(
+      () => {
+        this.router.navigate(['/dashboard/RaisonnementLogique/Tests']);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Test deleted successfully',
+        });
+      },
+      (error) => {
+        console.error('Error deleting test:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to delete test. Please try again.',
+        });
       }
     );
   }

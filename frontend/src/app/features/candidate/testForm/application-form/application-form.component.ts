@@ -55,8 +55,8 @@ export class ApplicationFormComponent implements OnInit {
 
   // Dropdown options
   genderOptions = [
-    { label: 'Male', value: 'male' },
-    { label: 'Female', value: 'female' },
+    { label: 'Male', value: 'Male' },
+    { label: 'Female', value: 'Female' },
  
   ];
 
@@ -178,6 +178,7 @@ export class ApplicationFormComponent implements OnInit {
     }
 
     this.submitting = true;
+    
 
     // Combine form data
     const formData = {
@@ -188,6 +189,10 @@ export class ApplicationFormComponent implements OnInit {
         ? this.personalInfoForm.value.dateOfBirth.toISOString()
         : undefined,
     };
+
+    delete formData.availability;
+    console.log(formData);
+    
 
     this.userService.updateUser(this.currentUser.id, formData).subscribe({
       next: (response) => {

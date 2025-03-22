@@ -1766,4 +1766,64 @@ export class DominoLayoutBuilderComponent
   private initTemplates(): void {
     this.loadTemplatesFromStorage();
   }
+
+  // Add these properties to your component class
+  activePropertyTab: 'position' | 'appearance' | 'values' | 'settings' =
+    'position';
+
+  // Add these methods to your component class
+  setAngle(angle: number): void {
+    if (!this.selectedDomino) return;
+    this.selectedDomino.angle = angle;
+    this.updateSelectedDomino();
+  }
+
+  setScale(scale: number): void {
+    if (!this.selectedDomino) return;
+    this.selectedDomino.scale = scale;
+    this.updateSelectedDomino();
+  }
+
+  setOrientation(isVertical: boolean): void {
+    if (!this.selectedDomino) return;
+    this.selectedDomino.isVertical = isVertical;
+    this.updateSelectedDomino();
+  }
+
+  adjustPosition(axis: 'x' | 'y', amount: number): void {
+    if (!this.selectedDomino) return;
+
+    if (axis === 'x') {
+      // Use nullish coalescing to provide a default value of 0
+      this.selectedDomino.exactX = (this.selectedDomino.exactX ?? 0) + amount;
+    } else {
+      this.selectedDomino.exactY = (this.selectedDomino.exactY ?? 0) + amount;
+    }
+
+    this.updateSelectedDomino();
+  }
+
+  setDominoValue(position: 'top' | 'bottom', value: number): void {
+    if (!this.selectedDomino) return;
+
+    if (position === 'top') {
+      this.selectedDomino.topValue = value;
+    } else {
+      this.selectedDomino.bottomValue = value;
+    }
+
+    this.updateSelectedDomino();
+  }
+
+  setCorrectAnswer(position: 'top' | 'bottom', value: number): void {
+    if (!this.correctAnswer) return;
+
+    if (position === 'top') {
+      this.correctAnswer.topValue = value;
+    } else {
+      this.correctAnswer.bottomValue = value;
+    }
+
+    this.updateCorrectAnswer();
+  }
 }

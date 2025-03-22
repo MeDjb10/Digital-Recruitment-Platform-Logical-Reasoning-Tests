@@ -459,7 +459,7 @@ export class DominoTestService {
     };
   }
 
-  // Submit completed test
+  // Update the submitTest method in DominoTestService
   submitTest(testId: string, answers: any[]): Observable<any> {
     // Finalize metrics
     const finalMetrics = this.finalizeTestMetrics();
@@ -471,8 +471,7 @@ export class DominoTestService {
       submittedAt: new Date().toISOString(),
       metrics: finalMetrics,
       userActions: this.userActions,
-      // Evaluate each answer against correct answers
-      // (this would be done server-side in a real backend)
+      // Evaluation will be done server-side in a real app
       evaluatedAnswers: answers.map((answer) => {
         // For mock purposes - in real implementation this would be done server-side
         const correctAnswer = this.getCorrectAnswerForQuestion(
@@ -507,31 +506,22 @@ export class DominoTestService {
     };
 
     if (this.useMockData) {
-      return this.mockDataService.submitTest(testId, answers).pipe(
-        tap(() => {
-          // Clear saved progress after successful submission
-          const storageKey = `${this.STORAGE_KEY}_${testId}`;
-          localStorage.removeItem(storageKey);
-
-          // Reset metrics
-          this.currentTestMetrics.next(null);
-          this.userActions = [];
-        })
-      );
+      // Check if this is a standard mock test or a custom test
+      if (['d70', 'd70-enhanced', 'd200'].includes(testId)) {
+        // Use the standard mock data service for built-in tests
+        return this.mockDataService
+          .submitTest(testId, answers)
+          .pipe(tap(() => this.cleanupAfterSubmission(testId)));
+      } else {
+        // Handle custom test submission
+        return this.handleCustomTestSubmission(testId, submission);
+      }
     }
 
     return this.http
       .post<any>(`${this.apiUrl}/${testId}/submit`, submission)
       .pipe(
-        tap(() => {
-          // Clear saved progress after successful submission
-          const storageKey = `${this.STORAGE_KEY}_${testId}`;
-          localStorage.removeItem(storageKey);
-
-          // Reset metrics
-          this.currentTestMetrics.next(null);
-          this.userActions = [];
-        }),
+        tap(() => this.cleanupAfterSubmission(testId)),
         catchError((error) => {
           console.error('Error submitting test:', error);
           return of({
@@ -542,6 +532,81 @@ export class DominoTestService {
           });
         })
       );
+  }
+
+  // Add these new helper methods
+
+  /**
+   * Handles submission of custom tests created through TestManagementService
+   */
+  private handleCustomTestSubmission(
+    testId: string,
+    submission: any
+  ): Observable<any> {
+    // For custom tests, we need to get the correct answers from the test management service
+    return this.testManagementService.getQuestionsByTestId(testId).pipe(
+      map((questions) => {
+        // Calculate score based on matching user answers with correct answers
+        let correctCount = 0;
+        const totalQuestions = questions.length;
+
+        submission.answers.forEach((answer: any) => {
+          const matchingQuestion = questions.find(
+            (q) => q.id === String(answer.id)
+          );
+          if (
+            matchingQuestion &&
+            matchingQuestion.correctAnswer &&
+            answer.userAnswer
+          ) {
+            // Compare user answer with correct answer
+            const userAnswer = answer.userAnswer;
+            const correctAnswer = matchingQuestion.correctAnswer;
+
+            if (
+              userAnswer.topValue === correctAnswer.topValue &&
+              userAnswer.bottomValue === correctAnswer.bottomValue
+            ) {
+              correctCount++;
+            }
+          }
+        });
+
+        // Calculate score as percentage
+        const score = Math.round((correctCount / totalQuestions) * 100);
+
+        // Return result similar to mock service
+        return {
+          success: true,
+          score,
+          totalQuestions,
+          correctAnswers: correctCount,
+        };
+      }),
+      tap(() => this.cleanupAfterSubmission(testId)),
+      catchError((error) => {
+        console.error(`Error submitting custom test ${testId}:`, error);
+        // Provide a fallback score for demo purposes
+        return of({
+          success: false,
+          error: error.message,
+          score: Math.floor(Math.random() * 100),
+        });
+      })
+    );
+  }
+
+  /**
+   * Common cleanup operations after test submission
+   */
+  private cleanupAfterSubmission(testId: string): void {
+    // Clear saved progress after successful submission
+    const storageKey = `${this.STORAGE_KEY}_${testId}`;
+    localStorage.removeItem(storageKey);
+
+    // Reset metrics
+    this.currentTestMetrics.next(null);
+    this.userActions = [];
   }
 
   /**

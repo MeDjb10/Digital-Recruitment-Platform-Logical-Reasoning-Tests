@@ -433,7 +433,7 @@ export class DominoTestModernComponent
     }
   }
 
-  // Test completion
+  // Update the finishTest method
   finishTest(autoSubmit: boolean = false): void {
     // Prevent double submission
     if (this.isSubmittingTest) return;
@@ -443,7 +443,9 @@ export class DominoTestModernComponent
     if (!autoSubmit && unansweredCount > 0) {
       if (
         !confirm(
-          `You have ${unansweredCount} unanswered questions. Are you sure you want to finish the test?`
+          `You have ${unansweredCount} unanswered ${
+            unansweredCount === 1 ? 'question' : 'questions'
+          }. Are you sure you want to finish the test?`
         )
       ) {
         return;
@@ -465,16 +467,22 @@ export class DominoTestModernComponent
         this.isSubmittingTest = false;
 
         // Navigate to results page or show completion message
-        if (
-          this.testId === 'd70' ||
-          this.testId === 'd70-enhanced' ||
-          this.testId === 'd200'
-        ) {
+        if (['d70', 'd70-enhanced', 'd200'].includes(this.testId)) {
           // For mock tests with results page
           this.router.navigate(['/tests', this.testId, 'results']);
         } else {
-          // For custom tests, show completion alert
-          alert(`Test completed! Your score: ${result.score || 'N/A'}`);
+          // For custom tests, show result and navigate to tests list
+          const score = result.score !== undefined ? result.score : 'N/A';
+          const correct =
+            result.correctAnswers !== undefined ? result.correctAnswers : 'N/A';
+          const total =
+            result.totalQuestions !== undefined
+              ? result.totalQuestions
+              : this.questions.length;
+
+          alert(
+            `Test completed successfully!\n\nYour score: ${score}%\nCorrect answers: ${correct}/${total}\n\nThank you for completing the test.`
+          );
           this.router.navigate(['/tests']);
         }
       },
@@ -486,7 +494,6 @@ export class DominoTestModernComponent
       },
     });
   }
-
   // Animation helper methods
   resetAnimations(): void {
     this.animateQuestionInstructions = false;
