@@ -17,7 +17,10 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { InteractiveDominoComponent } from '../../DominoTest/components/interactive-domino/interactive-domino.component';
-import { DominoPosition } from '../../DominoTest/models/domino.model';
+import {
+  ArrowPosition,
+  DominoPosition,
+} from '../../DominoTest/models/domino.model';
 import { TestManagementService } from '../../../../core/services/test-management.service';
 
 import { CheckboxModule } from 'primeng/checkbox';
@@ -29,9 +32,7 @@ import { InputGroupModule } from 'primeng/inputgroup';
 import { TextareaModule } from 'primeng/textarea';
 
 import { InputTextModule } from 'primeng/inputtext';
-
-
-
+import { InteractiveArrowComponent } from '../../DominoTest/components/interactive-arrow/interactive-arrow.component';
 
 // Define question interface for better type safety
 export interface DominoQuestion {
@@ -42,6 +43,7 @@ export interface DominoQuestion {
   difficulty: 'easy' | 'medium' | 'hard' | 'expert';
   pattern: string;
   dominos: DominoPosition[];
+  arrows?: ArrowPosition[]; // Add this line
   gridLayout?: {
     rows: number;
     cols: number;
@@ -77,6 +79,7 @@ export interface DominoQuestion {
     TooltipModule,
     SliderModule,
     InputGroupModule,
+    InteractiveArrowComponent,
   ],
   templateUrl: './domino-layout-builder.component.html',
   styleUrls: ['./domino-layout-builder.component.css'],
@@ -179,6 +182,12 @@ export class DominoLayoutBuilderComponent
   showAdvancedOptions = false;
   timeLimit = 60; // default 60 seconds
   scoreWeight = 3; // default middle weight
+
+  // Add these properties to the component class
+  arrows: ArrowPosition[] = [];
+  arrowIdCounter: number = 1;
+  selectedArrow: ArrowPosition | null = null;
+  creationMode: 'domino' | 'arrow' = 'domino';
 
   // Toggle advanced options panel visibility
   toggleAdvancedOptions() {
@@ -306,10 +315,14 @@ export class DominoLayoutBuilderComponent
     const canvas = this.canvasRef?.nativeElement;
     if (!canvas) return;
 
-    // Make canvas clickable for creating new dominos
-    canvas.addEventListener('mousedown', (event) => {
+    // Make canvas clickable for creating new items
+    canvas.addEventListener('mousedown', (event: MouseEvent) => {
       if (event.target === canvas) {
-        this.addDominoAt(event.offsetX, event.offsetY);
+        if (this.creationMode === 'domino') {
+          this.addDominoAt(event.offsetX, event.offsetY);
+        } else if (this.creationMode === 'arrow') {
+          this.addArrowAt(event.offsetX, event.offsetY);
+        }
       }
     });
   }
@@ -986,9 +999,12 @@ export class DominoLayoutBuilderComponent
   /**
    * Clear the canvas, removing all dominos
    */
+  // Update the clear canvas method to clear arrows as well
   clearCanvas(): void {
     this.dominos = [];
+    this.arrows = [];
     this.selectedDomino = null;
+    this.selectedArrow = null;
     this.showPropertyPanel = false;
     this.correctAnswer = null;
     this.hasUnsavedChanges = true;
@@ -1167,6 +1183,7 @@ export class DominoLayoutBuilderComponent
       difficulty: this.questionDifficulty,
       pattern: this.questionPattern,
       dominos: this.dominos.map((domino) => ({ ...domino })), // Create a copy to avoid references
+      arrows: this.arrows.map((arrow) => ({ ...arrow })), // Include arrows in the question
       layoutType: this.layoutType,
       gridLayout: {
         rows: this.gridRows,
@@ -1790,17 +1807,41 @@ export class DominoLayoutBuilderComponent
     this.updateSelectedDomino();
   }
 
+  // Modify the adjustPosition method to handle both domino and arrow correctly
   adjustPosition(axis: 'x' | 'y', amount: number): void {
-    if (!this.selectedDomino) return;
+    // If we have a selected domino, adjust its position
+    if (this.selectedDomino) {
+      if (axis === 'x') {
+        this.selectedDomino.exactX = (this.selectedDomino.exactX ?? 0) + amount;
+      } else {
+        this.selectedDomino.exactY = (this.selectedDomino.exactY ?? 0) + amount;
+      }
+      this.updateSelectedDomino();
+    }
+    // If we have a selected arrow, adjust its position
+    else if (this.selectedArrow) {
+      if (axis === 'x') {
+        this.selectedArrow.exactX = (this.selectedArrow.exactX ?? 0) + amount;
+      } else {
+        this.selectedArrow.exactY = (this.selectedArrow.exactY ?? 0) + amount;
+      }
+      this.updateSelectedArrow();
+    }
+  }
 
-    if (axis === 'x') {
-      // Use nullish coalescing to provide a default value of 0
-      this.selectedDomino.exactX = (this.selectedDomino.exactX ?? 0) + amount;
-    } else {
-      this.selectedDomino.exactY = (this.selectedDomino.exactY ?? 0) + amount;
+  // Add this method to handle direct input changes for arrow position
+  updateArrowPosition(): void {
+    if (!this.selectedArrow) return;
+
+    // Make sure exactX and exactY are valid numbers
+    if (typeof this.selectedArrow.exactX !== 'number') {
+      this.selectedArrow.exactX = 0;
+    }
+    if (typeof this.selectedArrow.exactY !== 'number') {
+      this.selectedArrow.exactY = 0;
     }
 
-    this.updateSelectedDomino();
+    this.updateSelectedArrow();
   }
 
   setDominoValue(position: 'top' | 'bottom', value: number): void {
@@ -1826,4 +1867,302 @@ export class DominoLayoutBuilderComponent
 
     this.updateCorrectAnswer();
   }
+
+  // Add these methods for arrow management
+  toggleCreationMode(mode: 'domino' | 'arrow'): void {
+    this.creationMode = mode;
+    // Deselect any selected item when changing modes
+    this.selectedDomino = null;
+    this.selectedArrow = null;
+    this.showPropertyPanel = false;
+  }
+
+  // Method to add arrow at specific position on canvas
+  addArrowAt(x: number, y: number): void {
+    // Calculate grid position if snapping is enabled
+    const posX = this.snapToGrid
+      ? Math.round(x / this.gridSize) * this.gridSize
+      : x;
+    const posY = this.snapToGrid
+      ? Math.round(y / this.gridSize) * this.gridSize
+      : y;
+
+    // Create new arrow with default properties
+    const newArrow: ArrowPosition = {
+      id: this.arrowIdCounter++,
+      exactX: posX,
+      exactY: posY,
+      angle: 0,
+      uniqueId: `arrow-${Date.now()}`,
+      scale: 1.0,
+      length: 100,
+      arrowColor: '#4f46e5',
+      headSize: 10,
+      curved: false,
+      curvature: 0,
+    };
+
+    // Add to arrows array
+    this.arrows.push(newArrow);
+    this.hasUnsavedChanges = true;
+
+    // Select the new arrow for editing
+    this.selectArrow(newArrow);
+  }
+
+  // Method to select arrow for editing
+  selectArrow(arrow: ArrowPosition): void {
+    // Deselect any selected domino
+    this.selectedDomino = null;
+
+    // Select the arrow
+    this.selectedArrow = arrow;
+    this.showPropertyPanel = true;
+  }
+
+  // Modify the existing updateSelectedDomino method to handle arrows as well
+  updateSelectedArrow(): void {
+    if (!this.selectedArrow) return;
+
+    const index = this.arrows.findIndex((a) => a.id === this.selectedArrow!.id);
+    if (index >= 0) {
+      this.arrows[index] = { ...this.selectedArrow };
+      this.hasUnsavedChanges = true;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // Method to delete selected arrow
+  deleteArrow(): void {
+    if (!this.selectedArrow) return;
+
+    const index = this.arrows.findIndex((a) => a.id === this.selectedArrow!.id);
+    if (index >= 0) {
+      this.arrows.splice(index, 1);
+      this.selectedArrow = null;
+      this.showPropertyPanel = false;
+      this.hasUnsavedChanges = true;
+    }
+  }
+
+  // Method to duplicate selected arrow
+  duplicateArrow(): void {
+    if (!this.selectedArrow) return;
+
+    // Create a deep copy with a new ID
+    const duplicate: ArrowPosition = {
+      ...JSON.parse(JSON.stringify(this.selectedArrow)),
+      id: this.arrowIdCounter++,
+      exactX: (this.selectedArrow.exactX || 0) + 40,
+      exactY: (this.selectedArrow.exactY || 0) + 40,
+      uniqueId: `arrow-${Date.now()}`,
+    };
+
+    this.arrows.push(duplicate);
+    this.selectArrow(duplicate);
+    this.hasUnsavedChanges = true;
+    this.showNotification('Arrow duplicated', 'success');
+  }
+
+  // Method to center selected arrow on canvas
+  centerArrow(): void {
+    if (!this.selectedArrow) return;
+
+    this.selectedArrow.exactX = this.canvasWidth / 2;
+    this.selectedArrow.exactY = this.canvasHeight / 2;
+    this.hasUnsavedChanges = true;
+    this.updateSelectedArrow();
+  }
+
+  // Method to get arrow transform for positioning
+  getArrowTransform(arrow: ArrowPosition): string {
+    const x = arrow.exactX || 0;
+    const y = arrow.exactY || 0;
+    const angle = arrow.angle || 0;
+    const scale = arrow.scale || 1.0;
+
+    return `translate(${x}px, ${y}px) rotate(${angle}deg) scale(${scale})`;
+  }
+
+  // Update arrow color
+  setArrowColor(color: string): void {
+    if (!this.selectedArrow) return;
+    this.selectedArrow.arrowColor = color;
+    this.updateSelectedArrow();
+  }
+
+  // Toggle arrow curvature
+  toggleCurvedArrow(curved: boolean): void {
+    if (!this.selectedArrow) return;
+    this.selectedArrow.curved = curved;
+    this.updateSelectedArrow();
+  }
+
+  // Update arrow length
+  setArrowLength(length: number): void {
+    if (!this.selectedArrow) return;
+    this.selectedArrow.length = length;
+    this.updateSelectedArrow();
+  }
+
+  // Update arrow curvature
+  setArrowCurvature(curvature: number): void {
+    if (!this.selectedArrow) return;
+    this.selectedArrow.curvature = curvature;
+    this.updateSelectedArrow();
+  }
+
+  // Update arrow head size
+  setArrowHeadSize(size: number): void {
+    if (!this.selectedArrow) return;
+    this.selectedArrow.headSize = size;
+    this.updateSelectedArrow();
+  }
+
+  // Update arrow angle
+  setArrowAngle(angle: number): void {
+    if (!this.selectedArrow) return;
+    this.selectedArrow.angle = angle;
+    this.updateSelectedArrow();
+  }
+
+  // Start dragging an arrow
+  startDraggingArrow(event: MouseEvent, arrow: ArrowPosition): void {
+    this.isDragging = true;
+    this.dragStartX = event.clientX - (arrow.exactX || 0);
+    this.dragStartY = event.clientY - (arrow.exactY || 0);
+
+    // Prevent default and stop propagation
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Add document-level event listeners
+    document.addEventListener('mousemove', this.onMouseMoveArrow);
+    document.addEventListener('mouseup', this.onMouseUpArrow);
+
+    // Select the arrow being dragged
+    this.selectArrow(arrow);
+  }
+
+  // Handle mouse move during arrow dragging
+  onMouseMoveArrow = (event: MouseEvent) => {
+    if (this.isDragging && this.selectedArrow) {
+      // Calculate new position
+      let newX = event.clientX - this.dragStartX;
+      let newY = event.clientY - this.dragStartY;
+
+      // Apply grid snapping if enabled
+      if (this.snapToGrid) {
+        newX = Math.round(newX / this.gridSize) * this.gridSize;
+        newY = Math.round(newY / this.gridSize) * this.gridSize;
+      }
+
+      // Update arrow position
+      this.selectedArrow.exactX = newX;
+      this.selectedArrow.exactY = newY;
+      this.hasUnsavedChanges = true;
+      this.cdr.detectChanges();
+    }
+  };
+
+  // Handle mouse up after arrow dragging
+  onMouseUpArrow = () => {
+    this.isDragging = false;
+
+    // Remove document-level event listeners
+    document.removeEventListener('mousemove', this.onMouseMoveArrow);
+    document.removeEventListener('mouseup', this.onMouseUpArrow);
+  };
+
+  // Handle arrow selection from interactive arrow component
+  onArrowSelected(arrowId: number): void {
+    const arrow = this.arrows.find((a) => a.id === arrowId);
+    if (arrow) {
+      this.selectArrow(arrow);
+    }
+  }
+
+  // Add these methods to your component class
+
+/**
+ * Validates and formats hex color input
+ */
+validateHexColor(): void {
+  if (!this.selectedArrow) return;
+  
+  let color = this.selectedArrow.arrowColor;
+  
+  // Add # if missing
+  if (color && !color.startsWith('#')) {
+    color = '#' + color;
+  }
+  
+  // Validate hex color format
+  const isValidHex = /^#([0-9A-F]{3}){1,2}$/i.test(color);
+  
+  if (!isValidHex) {
+    // Reset to default color if invalid
+    color = '#4f46e5';
+  }
+  
+  this.selectedArrow.arrowColor = color;
+  this.updateSelectedArrow();
 }
+
+/**
+ * Converts hex color to RGB format
+ */
+hexToRgb(hex: string): string {
+  if (!hex) return '0, 0, 0';
+  
+  // Remove # if present
+  hex = hex.replace('#', '');
+  
+  // Convert 3-digit hex to 6-digit
+  if (hex.length === 3) {
+    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+  }
+  
+  // Parse the hex values
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  return `${r}, ${g}, ${b}`;
+}
+
+/**
+ * Updates color from RGB input
+ */
+updateFromRgb(event: any): void {
+  if (!this.selectedArrow) return;
+  
+  try {
+    const rgbValue = event.target.value;
+    const rgbParts = rgbValue.split(',').map((part: string) => parseInt(part.trim(), 10));
+    
+    if (rgbParts.length !== 3 || rgbParts.some(isNaN)) {
+      return;
+    }
+    
+    const [r, g, b] = rgbParts;
+    
+    // Validate RGB values (0-255)
+    if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
+      return;
+    }
+    
+    // Convert to hex
+    const toHex = (value: number) => {
+      const hex = value.toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+    
+    this.selectedArrow.arrowColor = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    this.updateSelectedArrow();
+  } catch (error) {
+    console.error('Failed to parse RGB value', error);
+  }
+}
+}
+

@@ -31,11 +31,29 @@ export interface DominoChange {
   isVertical?: boolean;
 }
 
+// Add this new interface for arrows
+export interface ArrowPosition {
+  id: number;
+  row?: number;
+  col?: number;
+  exactX: number;
+  exactY: number;
+  angle: number;
+  uniqueId: string;
+  scale: number;
+  length: number;
+  arrowColor: string;
+  headSize: number;
+  curved: boolean;
+  curvature: number;
+}
+
 export interface TestQuestion {
   id: number;
   title?: string;
   instruction: string;
   dominos: DominoPosition[];
+  arrows?:ArrowPosition[];
   gridLayout?: { rows: number; cols: number; width?: number; height?: number };
   answered: boolean;
   flaggedForReview: boolean;
@@ -75,7 +93,6 @@ export interface TestResult {
     };
   }[];
 }
-
 
 // Add these new interfaces to your existing models file
 
