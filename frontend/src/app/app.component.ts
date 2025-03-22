@@ -17,7 +17,7 @@ import AOS from 'aos';
   styleUrl: './app.component.css',
 })
 export class AppComponent implements OnInit {
-  title = 'frontend';
+  title = 'Cofat';
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 

@@ -25,48 +25,46 @@ interface TestSection {
     CommonModule,
     TooltipModule,
     RippleModule,
-    ButtonModule
+    ButtonModule,
   ],
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.css'
+  styleUrl: './sidebar.component.css',
 })
 export class SidebarComponent {
-  
   @Input() collapsed = false;
   @Output() toggleCollapse = new EventEmitter<void>();
-  
+
   tests: TestSection[] = [
-  {
-    name: 'Raisonnement Logique',
-    route: 'RaisonnementLogique',
-    expanded: false,
-    icon: 'pi-chart-line',  // Changed from pi-brain which doesn't exist
-    subsections: [
-      { name: 'Liste des Tests', route: 'Tests' },
-      { name: 'Statistiques', route: 'Statistique' },
-      { name: 'Utilisateurs', route: 'Users' },
-      
-    ]
-  },
-  {
-    name: 'Verbal Reasoning',
-    route: 'VerbalReasoning',
-    expanded: false,
-    icon: 'pi-comments',  // Changed from pi-comment
-    subsections: [
-      { name: 'Statistics', route: 'Statistics' },
-      { name: 'Users', route: 'Users' },
-      { name: 'Tests', route: 'Tests' },
-    ]
-  }
-];
-  
+    {
+      name: 'Raisonnement Logique',
+      route: 'RaisonnementLogique',
+      expanded: false,
+      icon: 'pi-chart-line', // Changed from pi-brain which doesn't exist
+      subsections: [
+        { name: 'Liste des Tests', route: 'Tests' },
+        { name: 'Statistiques', route: 'Statistique' },
+        { name: 'Utilisateurs', route: 'Users' },
+      ],
+    },
+    {
+      name: 'Verbal Reasoning',
+      route: 'VerbalReasoning',
+      expanded: false,
+      icon: 'pi-comments', // Changed from pi-comment
+      subsections: [
+        { name: 'Statistics', route: 'Statistics' },
+        { name: 'Users', route: 'Users' },
+        { name: 'Tests', route: 'Tests' },
+      ],
+    },
+  ];
+
   menuItems = [
     { label: 'Dashboard', icon: 'pi-chart-bar', route: '/dashboard/info' },
     { label: 'Users', icon: 'pi-users', route: '/dashboard/users' },
-    { label: 'Settings', icon: 'pi-cog', route: '/dashboard/settings' }
+    { label: 'Settings', icon: 'pi-cog', route: '/dashboard/settings' },
   ];
-  
+
   userName = 'Admin User';
   userRole = 'Administrator';
   userInitials = 'AU';
@@ -76,18 +74,18 @@ export class SidebarComponent {
 
   ngOnInit() {
     // Track current route to highlight active menu items
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: any) => {
-      this.currentRoute = event.urlAfterRedirects;
-      
-      // Auto-expand parent when child route is active
-      this.tests.forEach(test => {
-        if (this.currentRoute.includes(test.route)) {
-          test.expanded = true;
-        }
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event: any) => {
+        this.currentRoute = event.urlAfterRedirects;
+
+        // Auto-expand parent when child route is active
+        this.tests.forEach((test) => {
+          if (this.currentRoute.includes(test.route)) {
+            test.expanded = true;
+          }
+        });
       });
-    });
   }
 
   toggleSidebar() {
@@ -98,7 +96,7 @@ export class SidebarComponent {
     if (this.collapsed) {
       test.expanded = !test.expanded;
     } else {
-      this.tests.forEach(t => {
+      this.tests.forEach((t) => {
         if (t === test) {
           t.expanded = !t.expanded;
         } else {
@@ -112,7 +110,7 @@ export class SidebarComponent {
   isChildActive(test: TestSection): boolean {
     return this.currentRoute.includes(test.route);
   }
-  
+
   isRouteActive(route: string): boolean {
     return this.currentRoute === route;
   }

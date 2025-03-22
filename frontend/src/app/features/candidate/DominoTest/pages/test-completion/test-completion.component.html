@@ -1,0 +1,51 @@
+<div class="completion-container">
+  <div class="completion-card">
+    <div class="header">
+      <h1>Test Completed</h1>
+      <div class="checkmark-circle">
+        <div class="checkmark"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <h2>{{ testName }}</h2>
+
+      <div class="results-summary" *ngIf="showScore">
+        <div class="score-circle" [style.background]="getScoreColor()">
+          {{ score }}%
+        </div>
+        <div class="stats">
+          <div class="stat-item">
+            <span class="stat-label">Questions:</span>
+            <span class="stat-value">{{ totalQuestions }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Time Spent:</span>
+            <span class="stat-value">{{ formatTime(timeSpent) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="message">
+        <p>Thank you for completing the test!</p>
+        <p>Your answers have been submitted successfully.</p>
+        <p *ngIf="!showScore">
+          The test administrator will review your results.
+        </p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="btn btn-primary" (click)="navigateHome()">
+        Return to Dashboard
+      </button>
+      <button
+        class="btn btn-outline"
+        *ngIf="showScore"
+        (click)="viewDetailedResults()"
+      >
+        View Detailed Results
+      </button>
+    </div>
+  </div>
+</div>
