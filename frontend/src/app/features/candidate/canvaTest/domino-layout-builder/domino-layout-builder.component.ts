@@ -1,38 +1,27 @@
-import {
-  Component,
-  OnInit,
-  ViewChild,
-  ElementRef,
-  AfterViewInit,
-  Input,
-  Output,
-  EventEmitter,
-  OnChanges,
-  SimpleChanges,
-  ChangeDetectorRef,
-  HostListener,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
-
-import { InteractiveDominoComponent } from '../../DominoTest/components/interactive-domino/interactive-domino.component';
-import {
-  ArrowPosition,
-  DominoPosition,
-} from '../../DominoTest/models/domino.model';
-import { TestManagementService } from '../../../../core/services/test-management.service';
-
-import { CheckboxModule } from 'primeng/checkbox';
-import { SliderChangeEvent, SliderModule } from 'primeng/slider';
-import { ButtonModule } from 'primeng/button';
-import { DropdownModule } from 'primeng/dropdown';
-import { TooltipModule } from 'primeng/tooltip';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { TextareaModule } from 'primeng/textarea';
-
-import { InputTextModule } from 'primeng/inputtext';
-import { InteractiveArrowComponent } from '../../DominoTest/components/interactive-arrow/interactive-arrow.component';
+import { CommonModule } from "@angular/common";
+import { Component, OnInit, AfterViewInit, OnChanges, ViewChild, ElementRef, Input, Output, ChangeDetectorRef, SimpleChanges, HostListener } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
+import { EventEmitter } from "@angular/core";
+import { Router } from "@angular/router";
+import { ButtonModule } from "primeng/button";
+import { CheckboxModule } from "primeng/checkbox";
+import { DropdownModule } from "primeng/dropdown";
+import { InputGroupModule } from "primeng/inputgroup";
+import { SliderModule } from "primeng/slider";
+import { TextareaModule } from "primeng/textarea";
+import { TooltipModule } from "primeng/tooltip";
+import { TestManagementService } from "../../../../core/services/test-management.service";
+import { InteractiveArrowComponent } from "../../DominoTest/components/interactive-arrow/interactive-arrow.component";
+import { InteractiveDominoComponent } from "../../DominoTest/components/interactive-domino/interactive-domino.component";
+import { DominoPosition, ArrowPosition } from "../../DominoTest/models/domino.model";
+import { BuilderHeaderComponent } from "../builder-header/builder-header.component";
+import { EditorLayoutComponent, CorrectAnswer } from "../editor-layout/editor-layout.component";
+import { QuestionFormComponent } from "../question-form/question-form.component";
+import { ArrowPropertiesService } from "../services/arrow-properties.service";
+import { DominoPropertiesService } from "../services/domino-proprties.service";
+import { StatusBarComponent } from "../status-bar/status-bar.component";
+import { LayoutToolbarComponent } from "../toolbar/layout-toolbar.component";
 
 // Define question interface for better type safety
 export interface DominoQuestion {
@@ -43,7 +32,7 @@ export interface DominoQuestion {
   difficulty: 'easy' | 'medium' | 'hard' | 'expert';
   pattern: string;
   dominos: DominoPosition[];
-  arrows?: ArrowPosition[]; // Add this line
+  arrows?: ArrowPosition[];
   gridLayout?: {
     rows: number;
     cols: number;
@@ -68,7 +57,7 @@ interface CustomTemplate {
   id: string;
   name: string;
   dominos: DominoPosition[];
-  arrows?: ArrowPosition[]; // Add this line
+  arrows?: ArrowPosition[];
   thumbnail?: string;
 }
 @Component({
@@ -87,6 +76,11 @@ interface CustomTemplate {
     SliderModule,
     InputGroupModule,
     InteractiveArrowComponent,
+    BuilderHeaderComponent,
+    QuestionFormComponent,
+    LayoutToolbarComponent,
+    StatusBarComponent,
+    EditorLayoutComponent,
   ],
   templateUrl: './domino-layout-builder.component.html',
   styleUrls: ['./domino-layout-builder.component.css'],
@@ -140,11 +134,6 @@ export class DominoLayoutBuilderComponent
     bottomValue: number | null;
   } | null = null;
 
-  // Drag interaction state
-  isDragging = false;
-  dragStartX = 0;
-  dragStartY = 0;
-
   // UI state
   showPropertyPanel = false;
   gridSize = 20;
@@ -167,14 +156,6 @@ export class DominoLayoutBuilderComponent
   /* Add this to the component */
   gridJustApplied = false;
 
-  // Track rotation and resize states
-  private isRotating = false;
-  private isResizing = false;
-  private resizeCorner = '';
-  private initialAngle = 0;
-  private initialDist = 0;
-  private initialScale = 1;
-
   customTemplates: CustomTemplate[] = [];
 
   // Flag for showing the save template dialog
@@ -193,16 +174,42 @@ export class DominoLayoutBuilderComponent
   selectedArrow: ArrowPosition | null = null;
   creationMode: 'domino' | 'arrow' = 'domino';
 
+  // Add this with your other ViewChild declarations
+  @ViewChild(EditorLayoutComponent)
+  editorLayoutComponent!: EditorLayoutComponent;
+
   // Toggle advanced options panel visibility
   toggleAdvancedOptions() {
     this.showAdvancedOptions = !this.showAdvancedOptions;
+  }
+
+  onToolbarGridDimensionsChange(dimensions: {
+    rows: number;
+    cols: number;
+  }): void {
+    this.gridRows = dimensions.rows;
+    this.gridCols = dimensions.cols;
+    this.updateGridDimensions();
+  }
+
+  onToolbarDisplayOptionsChange(options: {
+    snapToGrid: boolean;
+    showGrid: boolean;
+    gridSize: number;
+  }): void {
+    this.snapToGrid = options.snapToGrid;
+    this.showGrid = options.showGrid;
+    this.gridSize = options.gridSize;
+    this.hasUnsavedChanges = true;
   }
 
   constructor(
     private testManagementService: TestManagementService,
     private router: Router,
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dominoPropertiesService: DominoPropertiesService,
+    private arrowPropertiesService: ArrowPropertiesService
   ) {}
 
   ngOnInit(): void {
@@ -236,9 +243,7 @@ export class DominoLayoutBuilderComponent
     }
   }
 
-  ngAfterViewInit(): void {
-    this.setupCanvasInteraction();
-  }
+  ngAfterViewInit(): void {}
 
   // Add this helper method to track when difficulty changes
   onDifficultyChange(value: string) {
@@ -323,401 +328,157 @@ export class DominoLayoutBuilderComponent
     });
   }
 
-  /**
-   * Set up canvas interaction for adding dominos on click
-   */
-  setupCanvasInteraction(): void {
-    const canvas = this.canvasRef?.nativeElement;
-    if (!canvas) return;
-
-    // Make canvas clickable for creating new items
-    canvas.addEventListener('mousedown', (event: MouseEvent) => {
-      if (event.target === canvas) {
-        if (this.creationMode === 'domino') {
-          this.addDominoAt(event.offsetX, event.offsetY);
-        } else if (this.creationMode === 'arrow') {
-          this.addArrowAt(event.offsetX, event.offsetY);
-        }
-      }
-    });
+  // Event handlers for child component events
+  onDominoAdded(domino: DominoPosition): void {
+    this.hasUnsavedChanges = true;
   }
 
-  /**
-   * Add a new domino at the specified position
-   */
-  addDominoAt(x: number, y: number): void {
-    // Calculate grid position if snapping is enabled
-    const posX = this.snapToGrid
-      ? Math.round(x / this.gridSize) * this.gridSize
-      : x;
-    const posY = this.snapToGrid
-      ? Math.round(y / this.gridSize) * this.gridSize
-      : y;
+  onDominoUpdated(domino: DominoPosition): void {
+    const index = this.dominos.findIndex((d) => d.id === domino.id);
+    if (index >= 0) {
+      this.dominos[index] = { ...domino };
+      this.hasUnsavedChanges = true;
+    }
+  }
 
-    // Create new domino with default properties
-    const newDomino: DominoPosition = {
-      id: this.dominoIdCounter++,
-      row: Math.floor(posY / (this.canvasHeight / this.gridRows)),
-      col: Math.floor(posX / (this.canvasWidth / this.gridCols)),
-      topValue: 1,
-      bottomValue: 2,
-      isEditable: false,
-      exactX: posX,
-      exactY: posY,
-      angle: 0,
-      uniqueId: `domino-${Date.now()}`,
-      scale: 1.0,
-    };
+  onDominoDeleted(id: number): void {
+    const index = this.dominos.findIndex((d) => d.id === id);
+    if (index >= 0) {
+      this.dominos.splice(index, 1);
+      this.hasUnsavedChanges = true;
+    }
+  }
 
-    // Add to dominos array
-    this.dominos.push(newDomino);
+  onDominoDuplicated(domino: DominoPosition): void {
+    this.dominos.push(domino);
     this.hasUnsavedChanges = true;
+  }
 
-    // Select the new domino for editing
-    this.selectDomino(newDomino);
+  onDominoValueChanged(event: {
+    id: number;
+    topValue: number | null;
+    bottomValue: number | null;
+  }): void {
+    const index = this.dominos.findIndex((d) => d.id === event.id);
+    if (index >= 0) {
+      this.dominos[index].topValue = event.topValue;
+      this.dominos[index].bottomValue = event.bottomValue;
+      this.hasUnsavedChanges = true;
+    }
+  }
+
+  onDominoRoleChanged(event: { dominoId: number; isEditable: boolean }): void {
+    const index = this.dominos.findIndex((d) => d.id === event.dominoId);
+    if (index >= 0) {
+      this.dominos[index].isEditable = event.isEditable;
+      this.hasUnsavedChanges = true;
+    }
+  }
+
+  onCorrectAnswerChanged(correctAnswer: CorrectAnswer | null): void {
+    this.correctAnswer = correctAnswer;
+    this.hasUnsavedChanges = true;
+  }
+
+  onArrowAdded(arrow: ArrowPosition): void {
+    this.hasUnsavedChanges = true;
+  }
+
+  onArrowUpdated(arrow: ArrowPosition): void {
+    const index = this.arrows.findIndex((a) => a.id === arrow.id);
+    if (index >= 0) {
+      this.arrows[index] = { ...arrow };
+      this.hasUnsavedChanges = true;
+    }
+  }
+
+  onArrowDeleted(id: number): void {
+    const index = this.arrows.findIndex((a) => a.id === id);
+    if (index >= 0) {
+      this.arrows.splice(index, 1);
+      this.hasUnsavedChanges = true;
+    }
+  }
+
+  onArrowDuplicated(arrow: ArrowPosition): void {
+    this.arrows.push(arrow);
+    this.hasUnsavedChanges = true;
+  }
+
+  onCreationModeChanged(mode: 'domino' | 'arrow'): void {
+    this.creationMode = mode;
   }
 
   /**
    * Add a domino in the center of the canvas
+   * Delegates to editor layout component
    */
   addDominoToCenter(): void {
-    this.addDominoAt(this.canvasWidth / 2, this.canvasHeight / 2);
-  }
+    if (this.editorLayoutComponent) {
+      this.editorLayoutComponent.addDominoToCenter();
+    } else {
+      // Fallback if the component reference isn't available
+      const centerX = this.canvasWidth / 2;
+      const centerY = this.canvasHeight / 2;
 
-  /**
-   * Select a domino for editing
-   */
-  selectDomino(domino: DominoPosition): void {
-    this.selectedDomino = domino;
-    this.showPropertyPanel = true;
-
-    // Handle correct answer for editable dominos
-    if (domino.isEditable) {
-      if (this.correctAnswer && this.correctAnswer.dominoId === domino.id) {
-        // Correct answer already exists for this domino
-      } else {
-        // Create a new correct answer with default values
-        this.correctAnswer = {
-          dominoId: domino.id,
-          topValue: 1,
-          bottomValue: 2,
-        };
-      }
-    }
-  }
-
-  /**
-   * Start dragging a domino
-   */
-  startDragging(event: MouseEvent, domino: DominoPosition): void {
-    this.isDragging = true;
-    this.dragStartX = event.clientX - (domino.exactX || 0);
-    this.dragStartY = event.clientY - (domino.exactY || 0);
-
-    // Prevent default and stop propagation
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Add document-level event listeners
-    document.addEventListener('mousemove', this.onMouseMove);
-    document.addEventListener('mouseup', this.onMouseUp);
-
-    // Select the domino being dragged
-    this.selectDomino(domino);
-  }
-
-  /**
-   * Handle mouse move during dragging
-   */
-  onMouseMove = (event: MouseEvent) => {
-    if (this.isDragging && this.selectedDomino) {
-      // Calculate new position
-      let newX = event.clientX - this.dragStartX;
-      let newY = event.clientY - this.dragStartY;
-
-      // Apply grid snapping if enabled
-      if (this.snapToGrid) {
-        newX = Math.round(newX / this.gridSize) * this.gridSize;
-        newY = Math.round(newY / this.gridSize) * this.gridSize;
-      }
-
-      // Update domino position
-      this.selectedDomino.exactX = newX;
-      this.selectedDomino.exactY = newY;
-
-      // Update grid cell position
-      if (this.layoutType === 'grid') {
-        this.selectedDomino.row = Math.floor(
-          newY / (this.canvasHeight / this.gridRows)
+      // Create a new domino position
+      const { posX, posY } =
+        this.dominoPropertiesService.calculateSnappedPosition(
+          centerX,
+          centerY,
+          this.gridSize,
+          this.snapToGrid
         );
-        this.selectedDomino.col = Math.floor(
-          newX / (this.canvasWidth / this.gridCols)
-        );
+
+      // Ensure unique ID
+      if (this.dominos.length > 0) {
+        const maxId = Math.max(...this.dominos.map((d) => d.id));
+        this.dominoIdCounter = Math.max(this.dominoIdCounter, maxId + 1);
       }
 
-      this.hasUnsavedChanges = true;
-    }
-  };
+      const newDomino: DominoPosition = {
+        id: this.dominoIdCounter++,
+        row: Math.floor(posY / (this.canvasHeight / this.gridRows)),
+        col: Math.floor(posX / (this.canvasWidth / this.gridCols)),
+        topValue: 1,
+        bottomValue: 2,
+        isEditable: false,
+        exactX: posX,
+        exactY: posY,
+        angle: 0,
+        uniqueId: `domino-${Date.now()}-${Math.random()
+          .toString(36)
+          .substr(2, 9)}`,
+        scale: 1.0,
+      };
 
-  /**
-   * Handle mouse up after dragging
-   */
-  onMouseUp = () => {
-    this.isDragging = false;
-
-    // Remove document-level event listeners
-    document.removeEventListener('mousemove', this.onMouseMove);
-    document.removeEventListener('mouseup', this.onMouseUp);
-  };
-
-  /**
-   * Update the selected domino's properties in the dominos array
-   */
-  updateSelectedDomino(): void {
-    if (!this.selectedDomino) return;
-
-    const index = this.dominos.findIndex(
-      (d) => d.id === this.selectedDomino!.id
-    );
-    if (index >= 0) {
-      // Replace the domino in the array with the current selectedDomino
-      this.dominos[index] = { ...this.selectedDomino };
-
-      // Force Angular to detect the change by creating a new array reference
-      this.dominos = [...this.dominos];
-
-      // Force detection of changes in the properties panel
-      this.cdr.detectChanges();
-
-      // Mark as having unsaved changes
+      this.dominos.push(newDomino);
       this.hasUnsavedChanges = true;
     }
   }
 
   /**
-   * Prevent propagation of mouse events to avoid conflicts between handlers
+   * Add an arrow at a specific position
+   * Delegates to editor layout component
    */
-  preventPropagation(event: MouseEvent): void {
-    event.stopPropagation();
-  }
-
-  /**
-   * Change the role of the selected domino (editable or fixed)
-   */
-  setDominoRole(isEditable: boolean): void {
-    if (!this.selectedDomino) return;
-
-    // If making a domino editable
-    if (isEditable && !this.selectedDomino.isEditable) {
-      // Check if another domino is already editable
-      const existingEditable = this.dominos.find(
-        (d) => d.isEditable && d.id !== this.selectedDomino!.id
-      );
-
-      if (existingEditable) {
-        // Confirm replacing the editable domino
-        if (
-          confirm(
-            'Only one domino can be editable. Make this the editable domino instead?'
-          )
-        ) {
-          // Reset the previous editable domino
-          existingEditable.isEditable = false;
-          existingEditable.topValue = 1;
-          existingEditable.bottomValue = 2;
-
-          // Make this one editable
-          this.selectedDomino.isEditable = true;
-          this.selectedDomino.topValue = null;
-          this.selectedDomino.bottomValue = null;
-
-          // Update correct answer to point to this domino
-          this.correctAnswer = {
-            dominoId: this.selectedDomino.id,
-            topValue: 1,
-            bottomValue: 2,
-          };
-
-          this.updateSelectedDomino();
-          this.showNotification('Domino is now editable', 'success');
-        }
-      } else {
-        // No other editable domino, make this one editable
-        this.selectedDomino.isEditable = true;
-        this.selectedDomino.topValue = null;
-        this.selectedDomino.bottomValue = null;
-
-        // Set default correct answer
-        this.correctAnswer = {
-          dominoId: this.selectedDomino.id,
-          topValue: 1,
-          bottomValue: 2,
-        };
-
-        this.updateSelectedDomino();
-        this.showNotification('Domino is now editable', 'success');
-      }
+  addArrowAt(x: number, y: number): void {
+    if (this.editorLayoutComponent) {
+      this.editorLayoutComponent.addArrowAt(x, y);
     }
-    // If making a domino non-editable
-    else if (!isEditable && this.selectedDomino.isEditable) {
-      this.selectedDomino.isEditable = false;
-      this.selectedDomino.topValue = 1;
-      this.selectedDomino.bottomValue = 2;
-
-      // Clear correct answer if it was for this domino
-      if (
-        this.correctAnswer &&
-        this.correctAnswer.dominoId === this.selectedDomino.id
-      ) {
-        this.correctAnswer = null;
-      }
-
-      this.updateSelectedDomino();
-      this.showNotification('Domino is no longer editable', 'info');
-    }
-  }
-
-  /**
-   * Update the correct answer for the editable domino
-   */
-  updateCorrectAnswer(): void {
-    if (
-      !this.correctAnswer ||
-      !this.selectedDomino ||
-      !this.selectedDomino.isEditable
-    )
-      return;
-
-    // Make sure the correct answer is linked to the right domino
-    this.correctAnswer.dominoId = this.selectedDomino.id;
-    this.hasUnsavedChanges = true;
-  }
-
-  /**
-   * Initialize the correct answer for an editable domino if missing
-   */
-  initializeCorrectAnswer(): void {
-    if (!this.selectedDomino || !this.selectedDomino.isEditable) return;
-
-    this.correctAnswer = {
-      dominoId: this.selectedDomino.id,
-      topValue: 1,
-      bottomValue: 1,
-    };
-    this.hasUnsavedChanges = true;
-  }
-
-  /**
-   * Delete the selected domino
-   */
-  deleteDomino(): void {
-    if (!this.selectedDomino) return;
-
-    const index = this.dominos.findIndex(
-      (d) => d.id === this.selectedDomino!.id
-    );
-    if (index >= 0) {
-      // If this was the editable domino, clear the correct answer
-      if (
-        this.selectedDomino.isEditable &&
-        this.correctAnswer &&
-        this.correctAnswer.dominoId === this.selectedDomino.id
-      ) {
-        this.correctAnswer = null;
-      }
-
-      // Remove the domino from the array
-      this.dominos.splice(index, 1);
-      this.selectedDomino = null;
-      this.showPropertyPanel = false;
-      this.hasUnsavedChanges = true;
-    }
-  }
-
-  /**
-   * Duplicate the selected domino
-   */
-  duplicateDomino(): void {
-    if (!this.selectedDomino) return;
-
-    // Create a deep copy with a new ID
-    const duplicate: DominoPosition = {
-      ...JSON.parse(JSON.stringify(this.selectedDomino)),
-      id: this.dominoIdCounter++,
-      exactX: (this.selectedDomino.exactX || 0) + 40,
-      exactY: (this.selectedDomino.exactY || 0) + 40,
-      uniqueId: `domino-${Date.now()}`,
-      isEditable: false, // Don't duplicate editable status
-    };
-
-    this.dominos.push(duplicate);
-    this.selectDomino(duplicate);
-    this.hasUnsavedChanges = true;
-    this.showNotification('Domino duplicated', 'success');
-  }
-
-  /**
-   * Center the selected domino on the canvas
-   */
-  centerDomino(): void {
-    if (!this.selectedDomino) return;
-
-    this.selectedDomino.exactX = this.canvasWidth / 2;
-    this.selectedDomino.exactY = this.canvasHeight / 2;
-    this.hasUnsavedChanges = true;
-    this.updateSelectedDomino();
-  }
-
-  /**
-   * Update scale for the selected domino
-   */
-  updateDominoScale(event: any): void {
-    if (!this.selectedDomino) return;
-
-    // Handle both direct event from HTML input and PrimeNG slider event
-    const scaleValue = event.target
-      ? parseFloat((event.target as HTMLInputElement).value)
-      : event.value !== undefined
-      ? event.value
-      : this.selectedDomino.scale;
-
-    this.selectedDomino.scale = scaleValue;
-    this.updateSelectedDomino();
-  }
-
-  /**
-   * Calculate transform value for domino positioning
-   */
-  getDominoTransform(domino: DominoPosition): string {
-    const x = domino.exactX || 0;
-    const y = domino.exactY || 0;
-    const angle = domino.angle || 0;
-    const scale = domino.scale || 1.0;
-
-    return `translate(${x}px, ${y}px) rotate(${angle}deg) scale(${scale})`;
   }
 
   /**
    * Update grid dimensions
    */
   updateGridDimensions(): void {
-    // Ensure grid dimensions are valid
-    this.gridRows = Math.max(1, Math.min(10, this.gridRows));
-    this.gridCols = Math.max(1, Math.min(10, this.gridCols));
-
-    this.showGrid = true;
+    // Implementation for updating grid dimensions
     this.hasUnsavedChanges = true;
-
-    // Update domino positions if using grid layout
-    if (this.layoutType === 'grid') {
-      this.updateDominoGridPositions();
-    }
   }
 
   /**
-   * Update domino positions based on grid
+   * Apply grid to arrange dominos
    */
-  updateDominoGridPositions(): void {
+  applyGridToPositions(): void {
     // Calculate cell dimensions
     const cellWidth = this.canvasWidth / this.gridCols;
     const cellHeight = this.canvasHeight / this.gridRows;
@@ -733,14 +494,6 @@ export class DominoLayoutBuilderComponent
     });
 
     this.hasUnsavedChanges = true;
-  }
-
-  /**
-   * Apply grid to arrange dominos
-   */
-  /* Modify the applyGridToPositions method */
-  applyGridToPositions(): void {
-    // existing code...
 
     this.gridJustApplied = true;
     setTimeout(() => {
@@ -1009,12 +762,8 @@ export class DominoLayoutBuilderComponent
   }
 
   /**
-   * Clear the canvas, removing all dominos
+   * Clear the canvas, removing all dominos and arrows
    */
-  /**
-   * Clear the canvas, removing all dominos
-   */
-  // Update the clear canvas method to clear arrows as well
   clearCanvas(): void {
     this.dominos = [];
     this.arrows = [];
@@ -1033,7 +782,6 @@ export class DominoLayoutBuilderComponent
     type: 'success' | 'error' | 'info' | 'warning'
   ): void {
     // Simple alert for now, could be enhanced with a notification service
-    // Based on type, use different styling/icons
     const icon =
       type === 'success'
         ? '✅'
@@ -1044,27 +792,7 @@ export class DominoLayoutBuilderComponent
         : 'ℹ️';
 
     console.log(`${icon} ${message}`);
-
-    // You could implement a more sophisticated notification system here
-    // For now, just show an alert
     alert(`${message}`);
-  }
-
-  /**
-   * Toggle preview mode to see how question will appear to candidates
-   */
-  togglePreviewMode(): void {
-    this.previewMode = !this.previewMode;
-
-    if (this.previewMode) {
-      // Create a deep copy of dominos for preview to avoid modifying the originals
-      this.previewDominos = JSON.parse(JSON.stringify(this.dominos));
-
-      // Hide property panel during preview
-      this.showPropertyPanel = false;
-    } else {
-      this.previewDominos = [];
-    }
   }
 
   /**
@@ -1097,37 +825,6 @@ export class DominoLayoutBuilderComponent
     this.previewMode = false;
     this.previewDominos = [];
     this.previewArrows = [];
-  }
-  /**
-   * Handle value changes from interactive domino component
-   */
-  onDominoValueChanged(event: {
-    id: number;
-    topValue: number | null;
-    bottomValue: number | null;
-  }): void {
-    // Find the domino by ID
-    const index = this.dominos.findIndex((d) => d.id === event.id);
-    if (index !== -1) {
-      // Update the values
-      this.dominos[index].topValue = event.topValue;
-      this.dominos[index].bottomValue = event.bottomValue;
-
-      // If this is the selected domino, update the reference as well
-      if (this.selectedDomino && this.selectedDomino.id === event.id) {
-        this.selectedDomino.topValue = event.topValue;
-        this.selectedDomino.bottomValue = event.bottomValue;
-      }
-
-      this.hasUnsavedChanges = true;
-    }
-  }
-
-  /**
-   * Handle domino selection from interactive domino component
-   */
-  onDominoSelected(domino: DominoPosition): void {
-    this.selectDomino(domino);
   }
 
   /**
@@ -1198,8 +895,8 @@ export class DominoLayoutBuilderComponent
       instruction: this.questionInstruction,
       difficulty: this.questionDifficulty,
       pattern: this.questionPattern,
-      dominos: this.dominos.map((domino) => ({ ...domino })), // Create a copy to avoid references
-      arrows: this.arrows ? this.arrows.map((arrow) => ({ ...arrow })) : [], // Include arrows in the question
+      dominos: this.dominos.map((domino) => ({ ...domino })),
+      arrows: this.arrows ? this.arrows.map((arrow) => ({ ...arrow })) : [],
       layoutType: this.layoutType,
       gridLayout: {
         rows: this.gridRows,
@@ -1208,8 +905,6 @@ export class DominoLayoutBuilderComponent
         height: this.canvasHeight,
       },
     };
-
-    console.log('Saving question:', question);
 
     // Add correct answer if defined
     if (this.correctAnswer) {
@@ -1228,16 +923,11 @@ export class DominoLayoutBuilderComponent
         .createQuestion(this.testId, question)
         .subscribe({
           next: (result) => {
-            console.log('Question saved successfully:', result);
-
             this.isSaving = false;
             this.hasUnsavedChanges = false;
             this.showNotification('Question saved successfully!', 'success');
-
-            // Emit saved event
             this.save.emit(result);
 
-            // Navigate back if needed
             if (this.returnUrl) {
               this.router.navigateByUrl(this.returnUrl);
             }
@@ -1266,11 +956,8 @@ export class DominoLayoutBuilderComponent
             this.isSaving = false;
             this.hasUnsavedChanges = false;
             this.showNotification('Question updated successfully!', 'success');
-
-            // Emit saved event
             this.save.emit(result);
 
-            // Navigate back if needed
             if (this.returnUrl) {
               this.router.navigateByUrl(this.returnUrl);
             }
@@ -1424,10 +1111,22 @@ export class DominoLayoutBuilderComponent
       };
 
       reader.readAsText(file);
-
-      // Reset input so the same file can be imported again if needed
       input.value = '';
     }
+  }
+
+  /**
+   * Transform calculation for dominos in preview mode
+   */
+  getDominoTransform(domino: DominoPosition): string {
+    return this.dominoPropertiesService.getDominoTransform(domino);
+  }
+
+  /**
+   * Transform calculation for arrows in preview mode
+   */
+  getArrowTransform(arrow: ArrowPosition): string {
+    return this.arrowPropertiesService.getArrowTransform(arrow);
   }
 
   /**
@@ -1471,21 +1170,9 @@ export class DominoLayoutBuilderComponent
   }
 
   /**
-   * Warn user before leaving if there are unsaved changes
+   * Determine if layout is grid based for UI purposes
    */
-  @HostListener('window:beforeunload', ['$event'])
-  onBeforeUnload(event: BeforeUnloadEvent): string | undefined {
-    if (this.hasUnsavedChanges) {
-      const message =
-        'You have unsaved changes. Are you sure you want to leave?';
-      event.returnValue = message;
-      return message;
-    }
-    return undefined;
-  }
-
   isGridBasedLayout(): boolean {
-    // These layouts benefit from grid controls
     return (
       this.layoutType === 'grid' ||
       this.layoutType === 'custom' ||
@@ -1493,180 +1180,6 @@ export class DominoLayoutBuilderComponent
       this.layoutType === 'rhombus-large'
     );
   }
-
-  /**
-   * Start rotation when rotation handle is dragged
-   */
-  startRotation(event: MouseEvent): void {
-    if (!this.selectedDomino) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-
-    this.isRotating = true;
-
-    // Calculate center of the domino
-    const dominoX = this.selectedDomino.exactX || 0;
-    const dominoY = this.selectedDomino.exactY || 0;
-
-    // Calculate initial angle between mouse and center
-    // The -90 adjustment aligns with our onRotate calculation
-    const mouseX = event.clientX;
-    const mouseY = event.clientY;
-    this.initialAngle =
-      Math.atan2(mouseY - dominoY, mouseX - dominoX) * (180 / Math.PI) + 90;
-
-    // Add document-level event listeners
-    document.addEventListener('mousemove', this.onRotate);
-    document.addEventListener('mouseup', this.endRotation);
-
-    const dominoWrapper = (event.target as Element)?.closest('.domino-wrapper');
-    if (dominoWrapper) {
-      dominoWrapper.classList.add('rotating');
-    }
-  }
-
-  /**
-   * Handle rotation during mouse move
-   */
-  onRotate = (event: MouseEvent) => {
-    if (!this.isRotating || !this.selectedDomino) return;
-
-    // Calculate center of the domino
-    const dominoX = this.selectedDomino.exactX || 0;
-    const dominoY = this.selectedDomino.exactY || 0;
-
-    // Get mouse position in page coordinates
-    const mouseX = event.clientX;
-    const mouseY = event.clientY;
-
-    // Calculate angle from center to mouse position
-    // The -90 adjustment is to make 0 degrees point up rather than right
-    const currentAngle =
-      Math.atan2(mouseY - dominoY, mouseX - dominoX) * (180 / Math.PI) + 90;
-
-    // Calculate the change in angle since starting the rotation
-    let angleDifference = currentAngle - this.initialAngle;
-
-    // Add the difference to the starting angle of the domino
-    let newAngle = this.selectedDomino.angle || 0;
-    newAngle += angleDifference;
-
-    // Snap to 15-degree increments if shift is held
-    if (event.shiftKey) {
-      newAngle = Math.round(newAngle / 15) * 15;
-    }
-
-    // Update the domino angle
-    this.selectedDomino.angle = newAngle;
-    this.updateSelectedDomino();
-
-    // Update the initial angle for the next move
-    this.initialAngle = currentAngle;
-  };
-
-  /**
-   * End rotation when mouse is released
-   */
-  endRotation = () => {
-    this.isRotating = false;
-
-    // Remove the rotating class
-    const rotatingDomino = document.querySelector('.domino-wrapper.rotating');
-    if (rotatingDomino) {
-      rotatingDomino.classList.remove('rotating');
-    }
-
-    // Remove document-level event listeners
-    document.removeEventListener('mousemove', this.onRotate);
-    document.removeEventListener('mouseup', this.endRotation);
-  };
-
-  /**
-   * Start resizing when corner handle is dragged
-   */
-  startResizing(event: MouseEvent, corner: string): void {
-    if (!this.selectedDomino) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-
-    this.isResizing = true;
-    this.resizeCorner = corner;
-
-    // Calculate center of the domino
-    const dominoX = this.selectedDomino.exactX || 0;
-    const dominoY = this.selectedDomino.exactY || 0;
-
-    // Calculate initial distance between mouse and center
-    const mouseX = event.clientX;
-    const mouseY = event.clientY;
-    this.initialDist = Math.sqrt(
-      Math.pow(mouseX - dominoX, 2) + Math.pow(mouseY - dominoY, 2)
-    );
-
-    // Store current scale
-    this.initialScale = this.selectedDomino.scale || 1.0;
-
-    // Add document-level event listeners
-    document.addEventListener('mousemove', this.onResize);
-    document.addEventListener('mouseup', this.endResizing);
-  }
-
-  /**
-   * Handle resizing during mouse move
-   */
-  onResize = (event: MouseEvent) => {
-    if (!this.isResizing || !this.selectedDomino) return;
-
-    // Calculate center of the domino
-    const dominoX = this.selectedDomino.exactX || 0;
-    const dominoY = this.selectedDomino.exactY || 0;
-
-    // Calculate new distance between mouse and center
-    const mouseX = event.clientX;
-    const mouseY = event.clientY;
-    const newDist = Math.sqrt(
-      Math.pow(mouseX - dominoX, 2) + Math.pow(mouseY - dominoY, 2)
-    );
-
-    // Calculate scale factor based on distance ratio
-    let scaleFactor = newDist / this.initialDist;
-
-    // Determine if we should scale up or down based on corner position
-    // For opposite corners (e.g., top-left when dragging to bottom-right)
-    // we might need to invert the scale factor
-    if (
-      (this.resizeCorner.includes('top') && mouseY > dominoY) ||
-      (this.resizeCorner.includes('bottom') && mouseY < dominoY)
-    ) {
-      scaleFactor = 1 / scaleFactor;
-    }
-
-    // Apply the scale
-    let newScale = this.initialScale * scaleFactor;
-
-    // Limit scale to reasonable bounds
-    newScale = Math.max(0.5, Math.min(2.0, newScale));
-
-    // Round to 1 decimal place for cleaner values
-    newScale = Math.round(newScale * 10) / 10;
-
-    // Update the domino scale
-    this.selectedDomino.scale = newScale;
-    this.updateSelectedDomino();
-  };
-
-  /**
-   * End resizing when mouse is released
-   */
-  endResizing = () => {
-    this.isResizing = false;
-
-    // Remove document-level event listeners
-    document.removeEventListener('mousemove', this.onResize);
-    document.removeEventListener('mouseup', this.endResizing);
-  };
 
   /**
    * Show dialog to save current layout as template
@@ -1699,7 +1212,6 @@ export class DominoLayoutBuilderComponent
       id: templateId,
       name: this.newTemplateName.trim(),
       dominos: JSON.parse(JSON.stringify(this.dominos)), // Deep copy
-      // Optional: generate a thumbnail (could be implemented later)
       arrows: JSON.parse(JSON.stringify(this.arrows)),
     };
 
@@ -1840,386 +1352,17 @@ export class DominoLayoutBuilderComponent
     this.loadTemplatesFromStorage();
   }
 
-  // Add these properties to your component class
-  activePropertyTab: 'position' | 'appearance' | 'values' | 'settings' =
-    'position';
-
-  // Add these methods to your component class
-  setAngle(angle: number): void {
-    if (!this.selectedDomino) return;
-    this.selectedDomino.angle = angle;
-    this.updateSelectedDomino();
-  }
-
-  setScale(scale: number): void {
-    if (!this.selectedDomino) return;
-    this.selectedDomino.scale = scale;
-    this.updateSelectedDomino();
-  }
-
-  setOrientation(isVertical: boolean): void {
-    if (!this.selectedDomino) return;
-    this.selectedDomino.isVertical = isVertical;
-    this.updateSelectedDomino();
-  }
-
-  // Modify the adjustPosition method to handle both domino and arrow correctly
-  adjustPosition(axis: 'x' | 'y', amount: number): void {
-    // If we have a selected domino, adjust its position
-    if (this.selectedDomino) {
-      if (axis === 'x') {
-        this.selectedDomino.exactX = (this.selectedDomino.exactX ?? 0) + amount;
-      } else {
-        this.selectedDomino.exactY = (this.selectedDomino.exactY ?? 0) + amount;
-      }
-      this.updateSelectedDomino();
-    }
-    // If we have a selected arrow, adjust its position
-    else if (this.selectedArrow) {
-      if (axis === 'x') {
-        this.selectedArrow.exactX = (this.selectedArrow.exactX ?? 0) + amount;
-      } else {
-        this.selectedArrow.exactY = (this.selectedArrow.exactY ?? 0) + amount;
-      }
-      this.updateSelectedArrow();
-    }
-  }
-
-  // Add this method to handle direct input changes for arrow position
-  updateArrowPosition(): void {
-    if (!this.selectedArrow) return;
-
-    // Make sure exactX and exactY are valid numbers
-    if (typeof this.selectedArrow.exactX !== 'number') {
-      this.selectedArrow.exactX = 0;
-    }
-    if (typeof this.selectedArrow.exactY !== 'number') {
-      this.selectedArrow.exactY = 0;
-    }
-
-    this.updateSelectedArrow();
-  }
-
-  setDominoValue(position: 'top' | 'bottom', value: number): void {
-    if (!this.selectedDomino) return;
-
-    if (position === 'top') {
-      this.selectedDomino.topValue = value;
-    } else {
-      this.selectedDomino.bottomValue = value;
-    }
-
-    this.updateSelectedDomino();
-  }
-
-  setCorrectAnswer(position: 'top' | 'bottom', value: number): void {
-    if (!this.correctAnswer) return;
-
-    if (position === 'top') {
-      this.correctAnswer.topValue = value;
-    } else {
-      this.correctAnswer.bottomValue = value;
-    }
-
-    this.updateCorrectAnswer();
-  }
-
-  // Add these methods for arrow management
-  toggleCreationMode(mode: 'domino' | 'arrow'): void {
-    this.creationMode = mode;
-    // Deselect any selected item when changing modes
-    this.selectedDomino = null;
-    this.selectedArrow = null;
-    this.showPropertyPanel = false;
-  }
-
-  // Method to add arrow at specific position on canvas
-  addArrowAt(x: number, y: number): void {
-    // Calculate grid position if snapping is enabled
-    const posX = this.snapToGrid
-      ? Math.round(x / this.gridSize) * this.gridSize
-      : x;
-    const posY = this.snapToGrid
-      ? Math.round(y / this.gridSize) * this.gridSize
-      : y;
-
-    // Create new arrow with default properties
-    const newArrow: ArrowPosition = {
-      id: this.arrowIdCounter++,
-      exactX: posX,
-      exactY: posY,
-      angle: 0,
-      uniqueId: `arrow-${Date.now()}`,
-      scale: 1.0,
-      length: 100,
-      arrowColor: '#4f46e5',
-      headSize: 10,
-      curved: false,
-      curvature: 0,
-    };
-
-    // Add to arrows array
-    this.arrows.push(newArrow);
-    this.hasUnsavedChanges = true;
-
-    // Select the new arrow for editing
-    this.selectArrow(newArrow);
-  }
-
-  // Method to select arrow for editing
-  selectArrow(arrow: ArrowPosition): void {
-    // Deselect any selected domino
-    this.selectedDomino = null;
-
-    // Select the arrow
-    this.selectedArrow = arrow;
-    this.showPropertyPanel = true;
-  }
-
-  // Modify the existing updateSelectedDomino method to handle arrows as well
-  updateSelectedArrow(): void {
-    if (!this.selectedArrow) return;
-
-    const index = this.arrows.findIndex((a) => a.id === this.selectedArrow!.id);
-    if (index >= 0) {
-      this.arrows[index] = { ...this.selectedArrow };
-      this.hasUnsavedChanges = true;
-      this.cdr.detectChanges();
-    }
-  }
-
-  // Method to delete selected arrow
-  deleteArrow(): void {
-    if (!this.selectedArrow) return;
-
-    const index = this.arrows.findIndex((a) => a.id === this.selectedArrow!.id);
-    if (index >= 0) {
-      this.arrows.splice(index, 1);
-      this.selectedArrow = null;
-      this.showPropertyPanel = false;
-      this.hasUnsavedChanges = true;
-    }
-  }
-
-  // Method to duplicate selected arrow
-  duplicateArrow(): void {
-    if (!this.selectedArrow) return;
-
-    // Create a deep copy with a new ID
-    const duplicate: ArrowPosition = {
-      ...JSON.parse(JSON.stringify(this.selectedArrow)),
-      id: this.arrowIdCounter++,
-      exactX: (this.selectedArrow.exactX || 0) + 40,
-      exactY: (this.selectedArrow.exactY || 0) + 40,
-      uniqueId: `arrow-${Date.now()}`,
-    };
-
-    this.arrows.push(duplicate);
-    this.selectArrow(duplicate);
-    this.hasUnsavedChanges = true;
-    this.showNotification('Arrow duplicated', 'success');
-  }
-
-  // Method to center selected arrow on canvas
-  centerArrow(): void {
-    if (!this.selectedArrow) return;
-
-    this.selectedArrow.exactX = this.canvasWidth / 2;
-    this.selectedArrow.exactY = this.canvasHeight / 2;
-    this.hasUnsavedChanges = true;
-    this.updateSelectedArrow();
-  }
-
-  // Method to get arrow transform for positioning
-  getArrowTransform(arrow: ArrowPosition): string {
-    const x = arrow.exactX || 0;
-    const y = arrow.exactY || 0;
-    const angle = arrow.angle || 0;
-    const scale = arrow.scale || 1.0;
-
-    return `translate(${x}px, ${y}px) rotate(${angle}deg) scale(${scale})`;
-  }
-
-  // Update arrow color
-  setArrowColor(color: string): void {
-    if (!this.selectedArrow) return;
-    this.selectedArrow.arrowColor = color;
-    this.updateSelectedArrow();
-  }
-
-  // Toggle arrow curvature
-  toggleCurvedArrow(curved: boolean): void {
-    if (!this.selectedArrow) return;
-    this.selectedArrow.curved = curved;
-    this.updateSelectedArrow();
-  }
-
-  // Update arrow length
-  setArrowLength(length: number): void {
-    if (!this.selectedArrow) return;
-    this.selectedArrow.length = length;
-    this.updateSelectedArrow();
-  }
-
-  // Update arrow curvature
-  setArrowCurvature(curvature: number): void {
-    if (!this.selectedArrow) return;
-    this.selectedArrow.curvature = curvature;
-    this.updateSelectedArrow();
-  }
-
-  // Update arrow head size
-  setArrowHeadSize(size: number): void {
-    if (!this.selectedArrow) return;
-    this.selectedArrow.headSize = size;
-    this.updateSelectedArrow();
-  }
-
-  // Update arrow angle
-  setArrowAngle(angle: number): void {
-    if (!this.selectedArrow) return;
-    this.selectedArrow.angle = angle;
-    this.updateSelectedArrow();
-  }
-
-  // Start dragging an arrow
-  startDraggingArrow(event: MouseEvent, arrow: ArrowPosition): void {
-    this.isDragging = true;
-    this.dragStartX = event.clientX - (arrow.exactX || 0);
-    this.dragStartY = event.clientY - (arrow.exactY || 0);
-
-    // Prevent default and stop propagation
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Add document-level event listeners
-    document.addEventListener('mousemove', this.onMouseMoveArrow);
-    document.addEventListener('mouseup', this.onMouseUpArrow);
-
-    // Select the arrow being dragged
-    this.selectArrow(arrow);
-  }
-
-  // Handle mouse move during arrow dragging
-  onMouseMoveArrow = (event: MouseEvent) => {
-    if (this.isDragging && this.selectedArrow) {
-      // Calculate new position
-      let newX = event.clientX - this.dragStartX;
-      let newY = event.clientY - this.dragStartY;
-
-      // Apply grid snapping if enabled
-      if (this.snapToGrid) {
-        newX = Math.round(newX / this.gridSize) * this.gridSize;
-        newY = Math.round(newY / this.gridSize) * this.gridSize;
-      }
-
-      // Update arrow position
-      this.selectedArrow.exactX = newX;
-      this.selectedArrow.exactY = newY;
-      this.hasUnsavedChanges = true;
-      this.cdr.detectChanges();
-    }
-  };
-
-  // Handle mouse up after arrow dragging
-  onMouseUpArrow = () => {
-    this.isDragging = false;
-
-    // Remove document-level event listeners
-    document.removeEventListener('mousemove', this.onMouseMoveArrow);
-    document.removeEventListener('mouseup', this.onMouseUpArrow);
-  };
-
-  // Handle arrow selection from interactive arrow component
-  onArrowSelected(arrowId: number): void {
-    const arrow = this.arrows.find((a) => a.id === arrowId);
-    if (arrow) {
-      this.selectArrow(arrow);
-    }
-  }
-
-  // Add these methods to your component class
-
   /**
-   * Validates and formats hex color input
+   * Warn user before leaving if there are unsaved changes
    */
-  validateHexColor(): void {
-    if (!this.selectedArrow) return;
-
-    let color = this.selectedArrow.arrowColor;
-
-    // Add # if missing
-    if (color && !color.startsWith('#')) {
-      color = '#' + color;
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): string | undefined {
+    if (this.hasUnsavedChanges) {
+      const message =
+        'You have unsaved changes. Are you sure you want to leave?';
+      event.returnValue = message;
+      return message;
     }
-
-    // Validate hex color format
-    const isValidHex = /^#([0-9A-F]{3}){1,2}$/i.test(color);
-
-    if (!isValidHex) {
-      // Reset to default color if invalid
-      color = '#4f46e5';
-    }
-
-    this.selectedArrow.arrowColor = color;
-    this.updateSelectedArrow();
-  }
-
-  /**
-   * Converts hex color to RGB format
-   */
-  hexToRgb(hex: string): string {
-    if (!hex) return '0, 0, 0';
-
-    // Remove # if present
-    hex = hex.replace('#', '');
-
-    // Convert 3-digit hex to 6-digit
-    if (hex.length === 3) {
-      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-    }
-
-    // Parse the hex values
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-
-    return `${r}, ${g}, ${b}`;
-  }
-
-  /**
-   * Updates color from RGB input
-   */
-  updateFromRgb(event: any): void {
-    if (!this.selectedArrow) return;
-
-    try {
-      const rgbValue = event.target.value;
-      const rgbParts = rgbValue
-        .split(',')
-        .map((part: string) => parseInt(part.trim(), 10));
-
-      if (rgbParts.length !== 3 || rgbParts.some(isNaN)) {
-        return;
-      }
-
-      const [r, g, b] = rgbParts;
-
-      // Validate RGB values (0-255)
-      if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
-        return;
-      }
-
-      // Convert to hex
-      const toHex = (value: number) => {
-        const hex = value.toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-      };
-
-      this.selectedArrow.arrowColor = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-      this.updateSelectedArrow();
-    } catch (error) {
-      console.error('Failed to parse RGB value', error);
-    }
+    return undefined;
   }
 }
