@@ -1279,59 +1279,70 @@
             </div>
 
             <div class="property-row color-selector-row">
-  <label for="arrowColor">Color:</label>
-  
-  <div class="color-selector-container">
-    <!-- Color picker with preview -->
-    <div class="color-picker-wrapper">
-      <input
-        type="color"
-        id="arrowColor"
-        [(ngModel)]="selectedArrow.arrowColor"
-        (change)="updateSelectedArrow()"
-        class="color-input"
-      />
-      <div class="color-preview" [style.background-color]="selectedArrow.arrowColor"></div>
-    </div>
-    
-    <!-- HEX input -->
-    <div class="color-text-input">
-      <div class="input-label">HEX</div>
-      <input
-        type="text"
-        [(ngModel)]="selectedArrow.arrowColor"
-        (change)="validateHexColor()"
-        class="hex-input"
-        placeholder="#4f46e5"
-      />
-    </div>
-    
-    <!-- RGB input -->
-    <div class="color-text-input">
-      <div class="input-label">RGB</div>
-      <input
-        type="text"
-        [value]="hexToRgb(selectedArrow.arrowColor)"
-        (change)="updateFromRgb($event)"
-        class="rgb-input"
-        placeholder="79, 70, 229"
-      />
-    </div>
-  </div>
-  
-  <!-- Color presets below inputs -->
-  <div class="color-presets">
-    <button
-      *ngFor="let color of ['#4f46e5', '#ef4444', '#10b981', '#f59e0b', '#000000']"
-      class="color-preset"
-      [style.background-color]="color"
-      (click)="setArrowColor(color)"
-      [attr.aria-label]="color"
-      pTooltip="{{color}}"
-      tooltipPosition="top"
-    ></button>
-  </div>
-</div>
+              <label for="arrowColor">Color:</label>
+
+              <div class="color-selector-container">
+                <!-- Color picker with preview -->
+                <div class="color-picker-wrapper">
+                  <input
+                    type="color"
+                    id="arrowColor"
+                    [(ngModel)]="selectedArrow.arrowColor"
+                    (change)="updateSelectedArrow()"
+                    class="color-input"
+                  />
+                  <div
+                    class="color-preview"
+                    [style.background-color]="selectedArrow.arrowColor"
+                  ></div>
+                </div>
+
+                <!-- HEX input -->
+                <div class="color-text-input">
+                  <div class="input-label">HEX</div>
+                  <input
+                    type="text"
+                    [(ngModel)]="selectedArrow.arrowColor"
+                    (change)="validateHexColor()"
+                    class="hex-input"
+                    placeholder="#4f46e5"
+                  />
+                </div>
+
+                <!-- RGB input -->
+                <div class="color-text-input">
+                  <div class="input-label">RGB</div>
+                  <input
+                    type="text"
+                    [value]="hexToRgb(selectedArrow.arrowColor)"
+                    (change)="updateFromRgb($event)"
+                    class="rgb-input"
+                    placeholder="79, 70, 229"
+                  />
+                </div>
+              </div>
+
+              <!-- Color presets below inputs -->
+              <div class="color-presets">
+                <button
+                  *ngFor="
+                    let color of [
+                      '#4f46e5',
+                      '#ef4444',
+                      '#10b981',
+                      '#f59e0b',
+                      '#000000'
+                    ]
+                  "
+                  class="color-preset"
+                  [style.background-color]="color"
+                  (click)="setArrowColor(color)"
+                  [attr.aria-label]="color"
+                  pTooltip="{{ color }}"
+                  tooltipPosition="top"
+                ></button>
+              </div>
+            </div>
 
             <div class="property-row">
               <label>Arrow Type:</label>
@@ -1408,65 +1419,71 @@
   </div>
 
   <!-- Preview overlay -->
-  <div class="preview-overlay" *ngIf="previewMode">
-    <div class="preview-header">
-      <h2>Question Preview</h2>
-      <p class="preview-instruction">{{ questionInstruction }}</p>
-    </div>
+<div class="preview-overlay" *ngIf="previewMode">
+  <div class="preview-header">
+    <h2>Question Preview</h2>
+    <p class="preview-instruction">{{ questionInstruction }}</p>
+  </div>
 
-    <div class="preview-canvas-container">
+  <div class="preview-canvas-container">
+    <div
+      class="preview-canvas"
+      [style.width.px]="canvasWidth"
+      [style.height.px]="canvasHeight"
+    >
+      <!-- Show grid lines if enabled -->
+      <div class="grid-lines" *ngIf="showGrid">
+        <!-- Grid lines implementation -->
+      </div>
+
+      <!-- Render preview dominos -->
       <div
-        class="preview-canvas"
-        [style.width.px]="canvasWidth"
-        [style.height.px]="canvasHeight"
+        *ngFor="let domino of previewDominos"
+        class="domino-preview"
+        [class.editable-domino]="domino.isEditable"
+        [style.transform]="getDominoTransform(domino)"
       >
-        <!-- Show grid lines if enabled -->
-        <div class="grid-lines" *ngIf="showGrid">
-          <!-- Vertical lines -->
-          <div
-            *ngFor="let col of [].constructor(gridCols); let i = index"
-            class="grid-line vertical"
-            [style.left.px]="(canvasWidth / gridCols) * i"
-          ></div>
+        <app-interactive-domino
+          [id]="domino.id"
+          [initialTopValue]="domino.topValue"
+          [initialBottomValue]="domino.bottomValue"
+          [isEditable]="domino.isEditable"
+          [scale]="domino.scale || 1.0"
+          [isVertical]="domino.isVertical || false"
+          (valueChanged)="onDominoValueChanged($event)"
+        ></app-interactive-domino>
+      </div>
 
-          <!-- Horizontal lines -->
-          <div
-            *ngFor="let row of [].constructor(gridRows); let i = index"
-            class="grid-line horizontal"
-            [style.top.px]="(canvasHeight / gridRows) * i"
-          ></div>
-        </div>
-
-        <!-- Render preview dominos -->
-        <div
-          *ngFor="let domino of previewDominos"
-          class="domino-preview"
-          [class.editable-domino]="domino.isEditable"
-          [style.transform]="getDominoTransform(domino)"
-        >
-          <app-interactive-domino
-            [id]="domino.id"
-            [initialTopValue]="domino.topValue"
-            [initialBottomValue]="domino.bottomValue"
-            [isEditable]="domino.isEditable"
-            [scale]="domino.scale || 1.0"
-            [isVertical]="domino.isVertical || false"
-            (valueChanged)="onDominoValueChanged($event)"
-          ></app-interactive-domino>
-        </div>
+      <!-- Render preview arrows -->
+      <div
+        *ngFor="let arrow of previewArrows"
+        class="arrow-preview"
+        [style.transform]="getArrowTransform(arrow)"
+      >
+        <app-interactive-arrow
+          [id]="arrow.id"
+          [length]="arrow.length"
+          [angle]="0"
+          [scale]="arrow.scale || 1.0"
+          [arrowColor]="arrow.arrowColor"
+          [headSize]="arrow.headSize"
+          [curved]="arrow.curved"
+          [curvature]="arrow.curvature"
+        ></app-interactive-arrow>
       </div>
     </div>
-
-    <div class="preview-footer">
-      <p class="preview-hint" *ngIf="hasEditableDominos()">
-        This is how the question will appear to candidates. The highlighted
-        domino needs to be filled in.
-      </p>
-      <button (click)="exitPreviewMode()" class="exit-preview-button">
-        <i class="pi pi-arrow-left"></i> Back to Editor
-      </button>
-    </div>
   </div>
+
+  <div class="preview-footer">
+    <p class="preview-hint" *ngIf="hasEditableDominos()">
+      This is how the question will appear to candidates. The highlighted
+      domino needs to be filled in.
+    </p>
+    <button (click)="exitPreviewMode()" class="exit-preview-button">
+      <i class="pi pi-arrow-left"></i> Back to Editor
+    </button>
+  </div>
+</div>
 
   <!-- Validation warnings -->
   <div class="validation-warnings" *ngIf="validationErrors.length > 0">

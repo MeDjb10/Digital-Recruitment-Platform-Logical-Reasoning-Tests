@@ -13,6 +13,7 @@ import {
   TestAnalytics,
   UserActionEvent,
   UserTestMetrics,
+  ArrowPosition,
 } from '../models/domino.model';
 import { TestManagementService } from '../../../../core/services/test-management.service';
 
@@ -44,6 +45,7 @@ export class DominoTestService {
   ) {}
 
   // Get test data
+  // Update in DominoTestService getTest method
   getTest(testId: string): Observable<any> {
     // Initialize test metrics when starting a new test
     this.initializeTestMetrics(testId);
@@ -52,43 +54,81 @@ export class DominoTestService {
       this.useMockData &&
       (testId === 'd70' || testId === 'd70-enhanced' || testId === 'd200')
     ) {
-      return this.mockDataService.getTest(testId).pipe(
-        map((test: TestData) => {
-          if (test && test.questions) {
-            // Process test questions to ensure isolation
-            test.questions = test.questions.map(
-              (question: TestQuestion, qIndex: number) => {
-                const questionId = question.id;
+     return this.mockDataService.getTest(testId).pipe(
+       map((test: TestData) => {
+         if (test && test.questions) {
+           // Process test questions to ensure isolation
+           test.questions = test.questions.map(
+             (question: TestQuestion, qIndex: number) => {
+               const questionId = question.id;
 
-                // Process dominos for this question
-                if (question.dominos) {
-                  question.dominos = question.dominos.map(
-                    (domino: DominoPosition, dIndex: number) => {
-                      // Create a new domino with a unique reference
-                      const newDomino = { ...domino };
+               console.log(`Processing question ${questionId} in service`);
+               console.log(
+                 `Question ${questionId} has ${
+                   question.arrows?.length || 0
+                 } arrows before processing`
+               );
 
-                      // Add extra information to help with debugging and isolation
-                      newDomino.uniqueId = `q${questionId}_d${domino.id}`;
-                      newDomino.questionId = questionId;
+               // Process dominos for this question
+               if (question.dominos) {
+                 question.dominos = question.dominos.map(
+                   (domino: DominoPosition) => {
+                     // Create a new domino with a unique reference
+                     const newDomino = { ...domino };
 
-                      // Reset editable dominos
-                      if (newDomino.isEditable) {
-                        newDomino.topValue = null;
-                        newDomino.bottomValue = null;
-                      }
+                     // Add extra information to help with debugging and isolation
+                     newDomino.uniqueId = `q${questionId}_d${domino.id}`;
+                     newDomino.questionId = questionId;
 
-                      return newDomino;
-                    }
-                  );
-                }
+                     // Reset editable dominos
+                     if (newDomino.isEditable) {
+                       newDomino.topValue = null;
+                       newDomino.bottomValue = null;
+                     }
 
-                return question;
-              }
-            );
-          }
-          return test;
-        })
-      );
+                     return newDomino;
+                   }
+                 );
+               }
+
+               // Process arrows for this question
+               if (question.arrows && question.arrows.length > 0) {
+                 console.log(
+                   `Processing ${question.arrows.length} arrows for question ${questionId}`
+                 );
+
+                 question.arrows = question.arrows.map(
+                   (arrow: ArrowPosition) => {
+                     // Create a new arrow with a unique reference
+                     const newArrow = { ...arrow };
+
+                     // Add extra information for easier tracking
+                     newArrow.uniqueId = `q${questionId}_a${arrow.id}`;
+
+                     console.log(
+                       `Processed arrow ${newArrow.id} for question ${questionId}`
+                     );
+                     return newArrow;
+                   }
+                 );
+               } else {
+                 // Ensure arrows is an array even if empty
+                 question.arrows = [];
+                 console.log(
+                   `No arrows for question ${questionId}, created empty array`
+                 );
+               }
+
+               console.log(
+                 `Question ${questionId} has ${question.arrows.length} arrows after processing`
+               );
+               return question;
+             }
+           );
+         }
+         return test;
+       })
+     );
     }
 
     // When connecting to real backend:
@@ -111,6 +151,17 @@ export class DominoTestService {
                 }
                 return newDomino;
               });
+            }
+
+            // Add the same arrow processing
+            if (question.arrows) {
+              question.arrows = question.arrows.map((arrow: any) => {
+                const newArrow = { ...arrow };
+                newArrow.uniqueId = `q${question.id}_a${arrow.id}`;
+                return newArrow;
+              });
+            } else {
+              question.arrows = [];
             }
             return question;
           });

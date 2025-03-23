@@ -30,6 +30,7 @@ export interface Question {
   difficulty: 'easy' | 'medium' | 'hard' | 'expert';
   pattern: string;
   dominos: any[]; // DominoPosition[]
+  arrows?: any[]; // ArrowPosition[]
   gridLayout?: {
     rows: number;
     cols: number;
@@ -331,6 +332,7 @@ export class TestManagementService {
       difficulty: question.difficulty || 'medium',
       pattern: question.pattern || '',
       dominos: question.dominos || [],
+      arrows: question.arrows || [],
       gridLayout: question.gridLayout || { rows: 3, cols: 3 },
       correctAnswer: question.correctAnswer,
       layoutType: question.layoutType || 'grid',
@@ -473,9 +475,11 @@ export class TestManagementService {
                   q.instruction ||
                   'Find the missing values in the domino pattern',
                 dominos: q.dominos || [],
+                arrows: q.arrows || [], // Make sure arrows are included
                 gridLayout: q.gridLayout || { rows: 3, cols: 3 },
                 pattern: q.pattern || '',
                 correctAnswer: q.correctAnswer,
+                layoutType: q.layoutType || 'grid',
               })),
             };
           })
@@ -635,6 +639,7 @@ export class TestManagementService {
             isEditable: true,
           },
         ],
+        arrows: [],
         gridLayout: { rows: 1, cols: 4 },
         correctAnswer: {
           dominoId: 4,
@@ -855,6 +860,7 @@ export class TestManagementService {
             isEditable: true,
           },
         ],
+        arrows: [],
       },
       {
         id: 'template-custom',

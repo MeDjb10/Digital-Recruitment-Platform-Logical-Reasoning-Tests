@@ -15,12 +15,17 @@ import { CommonModule } from '@angular/common';
 
 
 import { InteractiveDominoComponent } from '../interactive-domino/interactive-domino.component';
-import { DominoChange, DominoPosition } from '../../models/domino.model';
+import { ArrowPosition, DominoChange, DominoPosition } from '../../models/domino.model';
+import { InteractiveArrowComponent } from '../interactive-arrow/interactive-arrow.component';
 
 @Component({
   selector: 'app-simple-domino-grid',
   standalone: true,
-  imports: [CommonModule, InteractiveDominoComponent],
+  imports: [
+    CommonModule,
+    InteractiveDominoComponent,
+    InteractiveArrowComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
@@ -50,6 +55,25 @@ import { DominoChange, DominoPosition } from '../../models/domino.model';
           [style.width.px]="customLayoutWidth"
           [style.height.px]="customLayoutHeight"
         >
+          <!-- Render arrows first (so dominos appear on top) -->
+          <div
+            *ngFor="let arrow of arrows; trackBy: trackByArrowId"
+            class="arrow-wrapper"
+            [style.transform]="getArrowTransform(arrow)"
+          >
+            <app-interactive-arrow
+              [id]="arrow.id"
+              [length]="arrow.length"
+              [angle]="0"
+              [scale]="arrow.scale || 1.0"
+              [arrowColor]="arrow.arrowColor"
+              [headSize]="arrow.headSize"
+              [curved]="arrow.curved"
+              [curvature]="arrow.curvature"
+            ></app-interactive-arrow>
+          </div>
+
+          <!-- Render dominos as before -->
           <div
             *ngFor="let domino of dominos; trackBy: trackByDominoId"
             class="domino-wrapper"
@@ -81,6 +105,27 @@ import { DominoChange, DominoPosition } from '../../models/domino.model';
           [style.grid-template-rows]="getGridTemplateRows()"
           [style.gap.px]="getGridGap()"
         >
+          <!-- For grid layout, arrows need to be positioned absolutely over the grid -->
+          <div class="arrows-overlay">
+            <div
+              *ngFor="let arrow of arrows; trackBy: trackByArrowId"
+              class="arrow-wrapper"
+              [style.transform]="getArrowTransform(arrow)"
+            >
+              <app-interactive-arrow
+                [id]="arrow.id"
+                [length]="arrow.length"
+                [angle]="0"
+                [scale]="arrow.scale || 1.0"
+                [arrowColor]="arrow.arrowColor"
+                [headSize]="arrow.headSize"
+                [curved]="arrow.curved"
+                [curvature]="arrow.curvature"
+              ></app-interactive-arrow>
+            </div>
+          </div>
+
+          <!-- Render dominos in the grid as before -->
           <ng-container
             *ngFor="let domino of dominos; trackBy: trackByDominoId"
           >
@@ -242,11 +287,61 @@ import { DominoChange, DominoPosition } from '../../models/domino.model';
           opacity: 1;
         }
       }
+
+      /* Add these new styles for arrows */
+      .arrow-wrapper {
+        position: absolute;
+        transform-origin: center;
+        pointer-events: none;
+        z-index: 1; /* Keep arrows below dominos */
+      }
+
+      .arrows-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Enhance the custom layout positioning */
+      .custom-layout {
+        position: relative;
+        transform-origin: center;
+        margin: 0 auto;
+        min-height: 300px;
+      }
+
+      /* Add relative positioning to grid layout for arrow overlay */
+      .grid-layout {
+        position: relative;
+        display: grid;
+        justify-content: center;
+        align-items: center;
+        transform-origin: center;
+        margin: 0 auto;
+        min-height: 300px;
+      }
+
+      .arrow-wrapper {
+        position: absolute;
+        transform-origin: center;
+        pointer-events: none;
+        z-index: 3; /* Increase z-index to make sure arrows are visible */
+      }
+
+      /* Make arrows more visible */
+      :host ::ng-deep app-interactive-arrow svg {
+        filter: drop-shadow(0px 2px 3px rgba(0, 0, 0, 0.2));
+      }
     `,
   ],
 })
 export class SimpleDominoGridComponent implements OnChanges, AfterViewInit {
   @Input() dominos: DominoPosition[] = [];
+  @Input() arrows: ArrowPosition[] = [];
   @Input() gridLayout: {
     rows: number;
     cols: number;
@@ -280,12 +375,34 @@ export class SimpleDominoGridComponent implements OnChanges, AfterViewInit {
     this.adjustSizesForViewport();
   }
 
+  // Update ngOnChanges to consider arrows for custom layout detection
+  // Update this method in simpleDominoGrid.component.ts
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['dominos']) {
-      // Check if we're using custom layout
-      this.isCustomLayout = this.dominos.some(
-        (d) => d.hasOwnProperty('exactX') && d.hasOwnProperty('exactY')
+    // Check if dominos or arrows changed
+    if (changes['dominos'] || changes['arrows']) {
+      console.log('Arrows detected:', this.arrows?.length);
+      console.log('Arrows data:', this.arrows);
+
+      // Check for custom layout based on dominos
+      const dominosUseCustomLayout = this.dominos.some(
+        (d) => d.exactX !== undefined && d.exactY !== undefined
       );
+
+      // Check for custom layout based on arrows
+      const arrowsUseCustomLayout =
+        this.arrows &&
+        this.arrows.length > 0 &&
+        this.arrows.some(
+          (a) => a.exactX !== undefined && a.exactY !== undefined
+        );
+
+      // Use custom layout if either dominos or arrows need it
+      this.isCustomLayout = dominosUseCustomLayout || arrowsUseCustomLayout;
+
+      // Force custom layout if we have arrows
+      if (this.arrows && this.arrows.length > 0) {
+        this.isCustomLayout = true;
+      }
 
       // Check if we have editable dominos
       const hasEditables = this.dominos.some((d) => d.isEditable);
@@ -300,6 +417,15 @@ export class SimpleDominoGridComponent implements OnChanges, AfterViewInit {
       // Set initial zoom based on grid complexity
       this.setInitialZoom();
     }
+
+     if (changes['arrows']) {
+       this.adjustArrowPositionsForLayout();
+     }
+  
+
+    if (changes['arrows'] && this.arrows && this.arrows.length > 0) {
+      this.showArrowDebugInfo();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -308,32 +434,60 @@ export class SimpleDominoGridComponent implements OnChanges, AfterViewInit {
     }, 0);
   }
 
-  // Set dimensions for custom layout based on domino positions
+  // Fix this in simpleDominoGrid.component.ts
   setCustomLayoutDimensions(): void {
-    if (!this.isCustomLayout || !this.dominos.length) return;
+    if (!this.isCustomLayout) return;
 
-    // Find the boundaries of the custom layout
-    let maxX = 0;
-    let maxY = 0;
+    console.log('Setting custom layout dimensions');
+    console.log('Dominos:', this.dominos.length);
+    console.log('Arrows:', this.arrows?.length);
 
-    this.dominos.forEach((domino) => {
-      if (domino.exactX !== undefined && domino.exactY !== undefined) {
-        // Account for domino width/height and position
-        const dominoWidth = this.getDominoWidth();
-        const dominoHeight = this.getDominoHeight();
-        const vertical = domino.isVertical ?? false;
+    // Set a default minimum size
+    let maxX = 500;
+    let maxY = 300;
 
-        const endX = domino.exactX + (vertical ? dominoWidth : dominoHeight);
-        const endY = domino.exactY + (vertical ? dominoHeight : dominoWidth);
+    // If we have dominos, calculate their boundaries
+    if (this.dominos.length > 0) {
+      this.dominos.forEach((domino) => {
+        if (domino.exactX !== undefined && domino.exactY !== undefined) {
+          const dominoWidth = this.getDominoWidth();
+          const dominoHeight = this.getDominoHeight();
+          const isVertical = domino.isVertical ?? false;
 
-        maxX = Math.max(maxX, endX);
-        maxY = Math.max(maxY, endY);
-      }
-    });
+          // Calculate the space this domino takes
+          const width = isVertical ? dominoWidth : dominoHeight;
+          const height = isVertical ? dominoHeight : dominoWidth;
 
-    // Add padding
-    this.customLayoutWidth = maxX + 40;
-    this.customLayoutHeight = maxY + 40;
+          maxX = Math.max(maxX, domino.exactX + width);
+          maxY = Math.max(maxY, domino.exactY + height);
+        }
+      });
+    }
+
+    // If we have arrows, calculate their boundaries too
+    if (this.arrows && this.arrows.length > 0) {
+      this.arrows.forEach((arrow) => {
+        if (arrow.exactX !== undefined && arrow.exactY !== undefined) {
+          // Calculate how much space this arrow needs
+          const arrowLength = arrow.length || 100;
+          const arrowScale = arrow.scale || 1.0;
+          const totalLength = arrowLength * arrowScale;
+
+          // Simple estimation of arrow boundaries
+          // This is approximate since arrows can point in different directions
+          maxX = Math.max(maxX, arrow.exactX + totalLength);
+          maxY = Math.max(maxY, arrow.exactY + 20); // Allow height for arrow head
+        }
+      });
+    }
+
+    // Add padding and set dimensions
+    this.customLayoutWidth = maxX + 80;
+    this.customLayoutHeight = maxY + 80;
+
+    console.log(
+      `Custom layout dimensions: ${this.customLayoutWidth}×${this.customLayoutHeight}`
+    );
   }
 
   // Adjust sizes based on viewport
@@ -478,5 +632,97 @@ export class SimpleDominoGridComponent implements OnChanges, AfterViewInit {
   // Track dominos by ID for better rendering performance
   trackByDominoId(index: number, domino: DominoPosition): string {
     return domino.uniqueId || `${domino.questionId || ''}_${domino.id}`;
+  }
+  // Add these methods to the SimpleDominoGridComponent class
+
+  // Track arrows by ID for better rendering performance
+  trackByArrowId(index: number, arrow: ArrowPosition): string {
+    return arrow.uniqueId || `arrow-${arrow.id}`;
+  }
+
+  // Calculate arrow transform for positioning
+  // Update this in simpleDominoGrid.component.ts
+  getArrowTransform(arrow: ArrowPosition): string {
+    try {
+      // Make sure these values exist with fallbacks
+      const x = arrow.exactX !== undefined ? arrow.exactX : 0;
+      const y = arrow.exactY !== undefined ? arrow.exactY : 0;
+      const angle = arrow.angle !== undefined ? arrow.angle : 0;
+      const scale = arrow.scale !== undefined ? arrow.scale : 1.0;
+
+      console.log(
+        `Arrow ${arrow.id} transform: x=${x}, y=${y}, angle=${angle}, scale=${scale}`
+      );
+      return `translate(${x}px, ${y}px) rotate(${angle}deg) scale(${scale})`;
+    } catch (err) {
+      console.error('Error generating arrow transform:', err, arrow);
+      return 'translate(0, 0)';
+    }
+  }
+
+  showArrowDebugInfo(): void {
+    if (!this.arrows || this.arrows.length === 0) {
+      console.log('No arrows to debug');
+      return;
+    }
+
+    console.log('Arrow Debug Information:');
+    this.arrows.forEach((arrow) => {
+      console.log(`Arrow ${arrow.id}:`, {
+        position: `X: ${arrow.exactX}, Y: ${arrow.exactY}`,
+        length: arrow.length,
+        angle: arrow.angle,
+        scale: arrow.scale,
+        color: arrow.arrowColor,
+        curved: arrow.curved,
+        curvature: arrow.curvature,
+      });
+    });
+  }
+
+  // Add this method to SimpleDominoGridComponent
+  adjustArrowPositionsForLayout(): void {
+    if (!this.arrows || this.arrows.length === 0) return;
+
+    // For grid layout, we need to adjust arrow positions based on grid cells
+    if (!this.isCustomLayout) {
+      this.arrows.forEach((arrow) => {
+        // If row and col are defined but exactX/exactY are not, calculate positions
+        if (
+          arrow.row !== undefined &&
+          arrow.col !== undefined &&
+          (arrow.exactX === undefined || arrow.exactY === undefined)
+        ) {
+          const cellWidth = this.getDominoWidth() + this.getGridGap();
+          const cellHeight = this.getDominoHeight() + this.getGridGap();
+
+          // Calculate center of the cell
+          arrow.exactX = arrow.col * cellWidth + cellWidth / 2;
+          arrow.exactY = arrow.row * cellHeight + cellHeight / 2;
+        }
+      });
+    }
+
+    // For very simple layouts where arrows might not have positions
+    if (
+      this.isCustomLayout &&
+      this.arrows.some((a) => a.exactX === undefined)
+    ) {
+      // Set default positions in the middle of the layout
+      const centerX = this.customLayoutWidth / 2;
+      const centerY = this.customLayoutHeight / 2;
+
+      let posX = 50;
+
+      this.arrows.forEach((arrow) => {
+        if (arrow.exactX === undefined) {
+          arrow.exactX = posX;
+          posX += 100; // Space out horizontally
+        }
+        if (arrow.exactY === undefined) {
+          arrow.exactY = centerY;
+        }
+      });
+    }
   }
 }

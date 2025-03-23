@@ -3243,29 +3243,34 @@ input[type="color"]::-webkit-color-swatch {
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible; /* Changed from hidden to visible */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-/* 
+
 .color-input {
   position: absolute;
-  top: -5px;
-  left: -5px;
-  width: 50px;
- 
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
   border: none;
   background: none;
   cursor: pointer;
-  opacity: 0;
-} */
-
+  opacity: 0; /* The input is still invisible */
+  z-index: 10; /* But it's now on top and clickable */
+  padding: 0; /* Remove padding */
+}
 .color-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   border: 2px solid white;
   border-radius: 8px;
   box-shadow: 0 0 0 1px #e2e8f0;
   transition: transform 0.2s ease;
+  pointer-events: none; /* Ensure clicks pass through to color input */
 }
 
 .color-picker-wrapper:hover .color-preview {

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
+import { ArrowPosition } from '../models/domino.model';
 
 export interface MockDominoTest {
   id: string;
@@ -32,6 +33,7 @@ export interface MockQuestion {
     relatesTo?: number[];
     uniqueId?: string;
   }[];
+  arrows?: ArrowPosition[] ,
   gridLayout: { rows: number; cols: number; width?: number; height?: number };
   pattern?: string;
   dominoLayout?: string;
@@ -105,6 +107,34 @@ export class MockDataService {
             topValue: null,
             bottomValue: null,
             isEditable: true,
+          },
+        ],
+        arrows: [
+          {
+            id: 1,
+            exactX: 120,
+            exactY: 80,
+            angle: 0,
+            uniqueId: 'q1_a1',
+            scale: 1,
+            length: 80,
+            arrowColor: '#4f46e5',
+            headSize: 10,
+            curved: false,
+            curvature: 0,
+          },
+          {
+            id: 2,
+            exactX: 240,
+            exactY: 80,
+            angle: 0,
+            uniqueId: 'q1_a2',
+            scale: 1,
+            length: 80,
+            arrowColor: '#4f46e5',
+            headSize: 10,
+            curved: false,
+            curvature: 0,
           },
         ],
         gridLayout: { rows: 1, cols: 6 },
@@ -656,6 +686,161 @@ export class MockDataService {
           dominoId: 7,
         },
       },
+      {
+        id: 19,
+        title: 'Arrow Sequence Pattern',
+        instruction: 'Complete the sequence following the arrow pattern.',
+        dominos: [
+          {
+            id: 1,
+            row: 2,
+            col: 2,
+            topValue: 3,
+            bottomValue: 2,
+            isEditable: false,
+            exactX: 350, // Center position
+            exactY: 250, // Center position
+            angle: 90,
+            connectsTo: [2],
+            uniqueId: 'spiral-domino-1',
+          },
+          // Domino 2: First turn of spiral (below domino 1)
+          {
+            id: 2,
+            row: 3,
+            col: 2,
+            topValue: 2,
+            bottomValue: 4,
+            isEditable: false,
+            exactX: 210, // Same X as domino 1
+            exactY: 400, // Increased spacing from domino 1 (was 350)
+            angle: 80,
+            connectsTo: [3],
+            uniqueId: 'spiral-domino-2',
+          },
+          // Domino 3: Second turn of spiral (left of domino 2)
+          {
+            id: 3,
+            row: 3,
+            col: 1,
+            topValue: 5,
+            bottomValue: 3,
+            isEditable: false,
+            exactX: 20, // More left spacing from domino 2 (was 250)
+            exactY: 350, // Same Y as domino 2
+            angle: -40,
+            connectsTo: [4],
+            uniqueId: 'spiral-domino-3',
+          },
+          // Domino 4: Third turn of spiral (above domino 3)
+          {
+            id: 4,
+            row: 2,
+            col: 1,
+            topValue: 6,
+            bottomValue: 2,
+            isEditable: false,
+            exactX: 10, // Same X as domino 3
+            exactY: 140, // Further up from center (was 150)
+            angle: 10,
+            connectsTo: [5],
+            uniqueId: 'spiral-domino-4',
+          },
+          // Domino 5: Fourth turn of spiral (right of domino 4)
+          {
+            id: 5,
+            row: 2,
+            col: 3,
+            topValue: 1,
+            bottomValue: 5,
+            isEditable: false,
+            exactX: 140, // Further right (was 450)
+            exactY: 10, // Same Y as domino 4
+            angle: 90,
+            connectsTo: [6],
+            uniqueId: 'spiral-domino-5',
+          },
+          // Domino 6: Fifth turn of spiral (below domino 5, right of domino 1)
+          {
+            id: 6,
+            row: 3,
+            col: 3,
+            topValue: 4,
+            bottomValue: 6,
+            isEditable: false,
+            exactX: 480, // Same X as domino 5
+            exactY: 250, // Same Y as domino 1
+            angle: -30,
+            connectsTo: [7],
+            uniqueId: 'spiral-domino-6',
+          },
+          // Domino 7 (Editable): Final piece of spiral (below and right of domino 6)
+          {
+            id: 7,
+            row: 4,
+            col: 3,
+            topValue: null,
+            bottomValue: null,
+            isEditable: true,
+            exactX: 280, // Same X as domino 6
+            exactY: 500, // Much lower than domino 6 (was 450)
+            angle: 0,
+            connectsTo: [],
+            uniqueId: 'spiral-domino-7',
+          },
+        ],
+        arrows: [
+          {
+            id: 1,
+            exactX: 125,
+            exactY: 100,
+            angle: 0,
+            uniqueId: 'q1_a1',
+            scale: 1,
+            length: 50,
+            arrowColor: '#4f46e5',
+            headSize: 10,
+            curved: false,
+            curvature: 0,
+          },
+          {
+            id: 2,
+            exactX: 275,
+            exactY: 100,
+            angle: 0,
+            uniqueId: 'q1_a2',
+            scale: 1,
+            length: 50,
+            arrowColor: '#4f46e5',
+            headSize: 10,
+            curved: false,
+            curvature: 0,
+          },
+          {
+            id: 3,
+            exactX: 425,
+            exactY: 100,
+            angle: 0,
+            uniqueId: 'q1_a3',
+            scale: 1,
+            length: 50,
+            arrowColor: '#4f46e5',
+            headSize: 10,
+            curved: false,
+            curvature: 0,
+          },
+        ],
+        gridLayout: { rows: 1, cols: 4, width: 600, height: 200 },
+        dominoLayout: 'spiral',
+        isCircularPattern: true,
+        pattern:
+          'Spiral pattern of dominos with increasing size as the path progresses',
+        correctAnswer: {
+          topValue: 4,
+          bottomValue: 2,
+          dominoId: 7,
+        },
+      },
     ],
   };
 
@@ -738,9 +923,9 @@ export class MockDataService {
   }
 
   getTest(testId: string): Observable<any> {
-      if (testId === 'd70-enhanced') {
-        return of(this.getD70TestData()).pipe(delay(300));
-      }
+    if (testId === 'd70-enhanced') {
+      return of(this.getD70TestData()).pipe(delay(300));
+    }
     const test = this.tests[testId];
 
     if (!test) {
@@ -822,8 +1007,8 @@ export class MockDataService {
 
   // Add this method to your MockDataService
   public getD70TestData(): MockDominoTest {
-  return this.d70Test;
-}
+    return this.d70Test;
+  }
 
   getTestResults(
     testId: string,

@@ -64,6 +64,13 @@ export interface DominoQuestion {
     | 'spiral';
 }
 
+interface CustomTemplate {
+  id: string;
+  name: string;
+  dominos: DominoPosition[];
+  arrows?: ArrowPosition[]; // Add this line
+  thumbnail?: string;
+}
 @Component({
   selector: 'app-domino-layout-builder',
   standalone: true,
@@ -168,12 +175,7 @@ export class DominoLayoutBuilderComponent
   private initialDist = 0;
   private initialScale = 1;
 
-  customTemplates: {
-    id: string;
-    name: string;
-    dominos: DominoPosition[];
-    thumbnail?: string;
-  }[] = [];
+  customTemplates: CustomTemplate[] = [];
 
   // Flag for showing the save template dialog
   showSaveTemplateDialog = false;
@@ -185,6 +187,8 @@ export class DominoLayoutBuilderComponent
 
   // Add these properties to the component class
   arrows: ArrowPosition[] = [];
+
+  previewArrows: ArrowPosition[] = [];
   arrowIdCounter: number = 1;
   selectedArrow: ArrowPosition | null = null;
   creationMode: 'domino' | 'arrow' = 'domino';
@@ -275,6 +279,17 @@ export class DominoLayoutBuilderComponent
       // Update domino counter to avoid ID conflicts
       const maxId = Math.max(...this.dominos.map((d) => d.id));
       this.dominoIdCounter = maxId + 1;
+    }
+
+    // Load arrows if available
+    if (this.initialQuestion.arrows && this.initialQuestion.arrows.length) {
+      this.arrows = JSON.parse(JSON.stringify(this.initialQuestion.arrows));
+
+      // Update arrow counter to avoid ID conflicts
+      const maxArrowId = Math.max(...this.arrows.map((a) => a.id));
+      this.arrowIdCounter = maxArrowId + 1;
+    } else {
+      this.arrows = []; // Ensure arrows array is initialized even if no arrows in question
     }
 
     // Set correct answer if available
@@ -1058,8 +1073,9 @@ export class DominoLayoutBuilderComponent
   generatePreview(): void {
     this.previewMode = true;
 
-    // Create a deep copy of dominos for the preview
+    // Create a deep copy of dominos and arrows for the preview
     this.previewDominos = JSON.parse(JSON.stringify(this.dominos));
+    this.previewArrows = JSON.parse(JSON.stringify(this.arrows));
 
     // For each editable domino, ensure its values are reset to null
     // to show how it will appear to candidates
@@ -1080,8 +1096,8 @@ export class DominoLayoutBuilderComponent
   exitPreviewMode(): void {
     this.previewMode = false;
     this.previewDominos = [];
+    this.previewArrows = [];
   }
-
   /**
    * Handle value changes from interactive domino component
    */
@@ -1183,7 +1199,7 @@ export class DominoLayoutBuilderComponent
       difficulty: this.questionDifficulty,
       pattern: this.questionPattern,
       dominos: this.dominos.map((domino) => ({ ...domino })), // Create a copy to avoid references
-      arrows: this.arrows.map((arrow) => ({ ...arrow })), // Include arrows in the question
+      arrows: this.arrows ? this.arrows.map((arrow) => ({ ...arrow })) : [], // Include arrows in the question
       layoutType: this.layoutType,
       gridLayout: {
         rows: this.gridRows,
@@ -1192,6 +1208,8 @@ export class DominoLayoutBuilderComponent
         height: this.canvasHeight,
       },
     };
+
+    console.log('Saving question:', question);
 
     // Add correct answer if defined
     if (this.correctAnswer) {
@@ -1210,6 +1228,8 @@ export class DominoLayoutBuilderComponent
         .createQuestion(this.testId, question)
         .subscribe({
           next: (result) => {
+            console.log('Question saved successfully:', result);
+
             this.isSaving = false;
             this.hasUnsavedChanges = false;
             this.showNotification('Question saved successfully!', 'success');
@@ -1281,6 +1301,7 @@ export class DominoLayoutBuilderComponent
         pattern: this.questionPattern,
         layoutType: this.layoutType,
         dominos: this.dominos,
+        arrows: this.arrows,
         gridLayout: {
           rows: this.gridRows,
           cols: this.gridCols,
@@ -1354,6 +1375,25 @@ export class DominoLayoutBuilderComponent
               ...d,
               uniqueId: d.uniqueId || `imported-domino-${Date.now()}-${d.id}`,
             }));
+
+            // Import arrows if available
+            if (
+              importedData.question.arrows &&
+              importedData.question.arrows.length
+            ) {
+              this.arrows = importedData.question.arrows.map((a: any) => ({
+                ...a,
+                uniqueId: a.uniqueId || `imported-arrow-${Date.now()}-${a.id}`,
+              }));
+
+              // Update arrow counter
+              if (this.arrows.length > 0) {
+                const maxArrowId = Math.max(...this.arrows.map((a) => a.id));
+                this.arrowIdCounter = maxArrowId + 1;
+              }
+            } else {
+              this.arrows = []; // Reset arrows if none in import
+            }
 
             // Update domino counter
             if (this.dominos.length > 0) {
@@ -1660,6 +1700,7 @@ export class DominoLayoutBuilderComponent
       name: this.newTemplateName.trim(),
       dominos: JSON.parse(JSON.stringify(this.dominos)), // Deep copy
       // Optional: generate a thumbnail (could be implemented later)
+      arrows: JSON.parse(JSON.stringify(this.arrows)),
     };
 
     // Add to templates array
@@ -1710,6 +1751,21 @@ export class DominoLayoutBuilderComponent
 
     // Set the dominos
     this.dominos = templateDominos;
+
+    // Handle arrows if available in the template
+    if (template.arrows && template.arrows.length) {
+      const templateArrows = JSON.parse(JSON.stringify(template.arrows));
+
+      // Assign new IDs to avoid conflicts
+      const maxArrowId: number = templateArrows.reduce(
+        (max: number, arrow: ArrowPosition) => Math.max(max, arrow.id),
+        0
+      );
+      this.arrowIdCounter = maxArrowId + 1;
+
+      // Set the arrows
+      this.arrows = templateArrows;
+    }
 
     // Update correct answer if there's an editable domino
     const editableDomino = this.dominos.find((d) => d.isEditable);
@@ -2084,85 +2140,86 @@ export class DominoLayoutBuilderComponent
 
   // Add these methods to your component class
 
-/**
- * Validates and formats hex color input
- */
-validateHexColor(): void {
-  if (!this.selectedArrow) return;
-  
-  let color = this.selectedArrow.arrowColor;
-  
-  // Add # if missing
-  if (color && !color.startsWith('#')) {
-    color = '#' + color;
-  }
-  
-  // Validate hex color format
-  const isValidHex = /^#([0-9A-F]{3}){1,2}$/i.test(color);
-  
-  if (!isValidHex) {
-    // Reset to default color if invalid
-    color = '#4f46e5';
-  }
-  
-  this.selectedArrow.arrowColor = color;
-  this.updateSelectedArrow();
-}
+  /**
+   * Validates and formats hex color input
+   */
+  validateHexColor(): void {
+    if (!this.selectedArrow) return;
 
-/**
- * Converts hex color to RGB format
- */
-hexToRgb(hex: string): string {
-  if (!hex) return '0, 0, 0';
-  
-  // Remove # if present
-  hex = hex.replace('#', '');
-  
-  // Convert 3-digit hex to 6-digit
-  if (hex.length === 3) {
-    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-  }
-  
-  // Parse the hex values
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  
-  return `${r}, ${g}, ${b}`;
-}
+    let color = this.selectedArrow.arrowColor;
 
-/**
- * Updates color from RGB input
- */
-updateFromRgb(event: any): void {
-  if (!this.selectedArrow) return;
-  
-  try {
-    const rgbValue = event.target.value;
-    const rgbParts = rgbValue.split(',').map((part: string) => parseInt(part.trim(), 10));
-    
-    if (rgbParts.length !== 3 || rgbParts.some(isNaN)) {
-      return;
+    // Add # if missing
+    if (color && !color.startsWith('#')) {
+      color = '#' + color;
     }
-    
-    const [r, g, b] = rgbParts;
-    
-    // Validate RGB values (0-255)
-    if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
-      return;
+
+    // Validate hex color format
+    const isValidHex = /^#([0-9A-F]{3}){1,2}$/i.test(color);
+
+    if (!isValidHex) {
+      // Reset to default color if invalid
+      color = '#4f46e5';
     }
-    
-    // Convert to hex
-    const toHex = (value: number) => {
-      const hex = value.toString(16);
-      return hex.length === 1 ? '0' + hex : hex;
-    };
-    
-    this.selectedArrow.arrowColor = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+
+    this.selectedArrow.arrowColor = color;
     this.updateSelectedArrow();
-  } catch (error) {
-    console.error('Failed to parse RGB value', error);
+  }
+
+  /**
+   * Converts hex color to RGB format
+   */
+  hexToRgb(hex: string): string {
+    if (!hex) return '0, 0, 0';
+
+    // Remove # if present
+    hex = hex.replace('#', '');
+
+    // Convert 3-digit hex to 6-digit
+    if (hex.length === 3) {
+      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+
+    // Parse the hex values
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    return `${r}, ${g}, ${b}`;
+  }
+
+  /**
+   * Updates color from RGB input
+   */
+  updateFromRgb(event: any): void {
+    if (!this.selectedArrow) return;
+
+    try {
+      const rgbValue = event.target.value;
+      const rgbParts = rgbValue
+        .split(',')
+        .map((part: string) => parseInt(part.trim(), 10));
+
+      if (rgbParts.length !== 3 || rgbParts.some(isNaN)) {
+        return;
+      }
+
+      const [r, g, b] = rgbParts;
+
+      // Validate RGB values (0-255)
+      if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
+        return;
+      }
+
+      // Convert to hex
+      const toHex = (value: number) => {
+        const hex = value.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      };
+
+      this.selectedArrow.arrowColor = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+      this.updateSelectedArrow();
+    } catch (error) {
+      console.error('Failed to parse RGB value', error);
+    }
   }
 }
-}
-
