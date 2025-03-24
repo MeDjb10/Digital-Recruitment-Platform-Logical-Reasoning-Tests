@@ -349,87 +349,106 @@
   background-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Properties Tabs */
+/* Enhanced Properties Tabs Navigation */
 .properties-tabs {
-  padding: 0;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
   display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  flex-wrap: wrap;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.25rem 0.25rem 0;
+  overflow-x: visible;
   scrollbar-width: none;
-}
-
-.properties-tabs::-webkit-scrollbar {
-  display: none;
+  justify-content: space-around;
+  gap: 0.25rem;
 }
 
 .tab-button {
-  flex: 1;
-  padding: 12px 8px;
-  min-width: 80px;
+  position: relative;
+  padding: 0.75rem 0.25rem 0.5rem;
   border: none;
   background: none;
+  font-size: 0.8rem;
+  font-weight: 600;
   color: #64748b;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  position: relative;
-  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  flex: 1;
+  min-width: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  border-bottom: 2px solid transparent;
+  gap: 0.5rem;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.2s ease;
+  margin-bottom: -1px;
+  overflow: hidden;
 }
 
 .tab-button i {
   font-size: 1rem;
-  transition: all 0.3s ease;
+  margin-bottom: 0.125rem;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .tab-button::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
+  left: 25%;
+  width: 50%;
+  height: 3px;
   background-color: transparent;
   transition: all 0.3s ease;
+  border-radius: 3px 3px 0 0;
 }
 
 .tab-button:hover {
-  color: #4f46e5;
-  background-color: rgba(79, 70, 229, 0.05);
+  background-color: rgba(241, 245, 249, 0.7);
+  color: #334155;
 }
 
 .tab-button:hover i {
-  transform: scale(1.1);
+  transform: translateY(-2px);
 }
 
 .tab-button.active {
   color: #4f46e5;
-  font-weight: 600;
+  background-color: #f1f5f9;
+  font-weight: 700;
+  border-bottom: 2px solid #4f46e5;
 }
 
 .tab-button.active::after {
+  left: 0;
+  width: 100%;
   background-color: #4f46e5;
 }
 
 .tab-button.active i {
+  transform: translateY(-2px);
   color: #4f46e5;
-  animation: subtle-pulse 2s infinite;
 }
 
+.tab-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+/* Add subtle pulse animation to the icon when tab is active */
 @keyframes subtle-pulse {
-  0%, 100% {
-    opacity: 1;
+  0% {
+    transform: translateY(-2px) scale(1);
   }
   50% {
-    opacity: 0.8;
+    transform: translateY(-2px) scale(1.1);
   }
+  100% {
+    transform: translateY(-2px) scale(1);
+  }
+}
+
+.tab-button.active i {
+  animation: subtle-pulse 1.5s ease-in-out infinite;
 }
 
 /* Panel Content */
@@ -489,27 +508,34 @@
   border-bottom: 1px solid #f3f4f6;
 }
 
-/* Property Rows */
+/* Make sure the property row has enough width */
 .property-row {
   display: flex;
-  align-items: center;
+  flex-direction: column; /* Changed to column for narrow screens */
+  align-items: flex-start; /* Left align items */
   gap: 0.5rem;
+  
+  
   margin-bottom: 1rem;
-  flex-wrap: wrap;
+  width: 100%; /* Ensure it takes full width */
 }
 
 .property-row label {
-  min-width: 60px;
+  min-width: 20px; /* Reduce min-width */
   font-size: 0.875rem;
   color: #455a64;
   font-weight: 500;
+   margin-bottom: 0.75rem; /* Remove bottom margin */
 }
+
 
 .property-row p-slider {
   width: 100% !important;
   min-width: auto;
   max-width: none;
+  margin-bottom:0.5rem;
 }
+
 
 /* Property Grid */
 .property-grid {
@@ -519,59 +545,76 @@
   width: 100%;
 }
 
-/* Input Groups */
+/* Input with increment buttons */
 .property-input-group {
   display: flex;
-  align-items: center;
-  width: 100%;
-  height: 36px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #f8fafc;
+  align-items: stretch; /* Changed from center to stretch for full height */
+  width: 100%; /* Ensure the group takes full width */
 }
 
 .property-input-group input {
   flex: 1;
-  height: 100%;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px 0 0 6px;
-  padding: 0 12px;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px 0 0 4px; /* Rounded corners only on the left side */
   font-size: 0.875rem;
-  color: #334155;
-  background: #ffffff;
+  min-width: 0; /* Allow input to shrink if needed */
+  height: 36px; /* Fixed height to match buttons */
 }
 
-.property-input-group input:focus {
-  outline: none;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+/* Make the number input fields smaller */
+.property-input-group input[type="number"] {
+  flex: 1;
+  max-width: 70px; /* Restrict width of number inputs */
+  min-width: 50px; /* Ensure minimum width */
+  padding: 0.375rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px 0 0 4px;
+  font-size: 0.875rem;
+  height: 36px;
 }
+
+/* Hide spin buttons on number inputs for cleaner look */
+.property-input-group input[type="number"]::-webkit-inner-spin-button,
+.property-input-group input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.property-input-group input[type="number"] {
+  appearance: textfield; /* Standard */
+  -moz-appearance: textfield; /* Firefox */
+}
+
 
 .increment-btn {
-  width: 36px;
-  height: 100%;
+  width: 30px; /* Slightly wider buttons */
+  height: 36px; /* Fixed height */
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 1rem;
+  font-weight: 500;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f1f5f9;
-  border: 1px solid #e2e8f0;
   cursor: pointer;
-  font-weight: bold;
-  color: #64748b;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  padding: 0;
+  flex-shrink: 0; /* Prevent buttons from shrinking */
 }
 
 .increment-btn:first-of-type {
-  border-right: none;
+  border-left: none;
+  border-radius: 0;
 }
 
 .increment-btn:last-of-type {
-  border-left: none;
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 4px 4px 0;
 }
 
 .increment-btn:hover {
-  background-color: #e2e8f0;
+  background: #e2e8f0;
   color: #334155;
 }
 
@@ -961,183 +1004,232 @@
   margin-bottom: 0.5rem;
 }
 
-/* Floating Creation Controls */
+/* Add these styles for the floating creation controls */
 .floating-creation-controls {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 12px;
+  right: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  z-index: 100;
+  gap: 8px;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  backdrop-filter: blur(5px);
 }
 
 .creation-toggle-btn {
-  width: 40px;
-  height: 40px;
-  background-color: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  cursor: pointer;
+  width: 38px;
+  height: 38px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 6px;
+  background-color: #f8fafc;
   color: #64748b;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.creation-toggle-btn::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background-color: transparent;
-  transition: all 0.2s ease;
-}
-
-.creation-toggle-btn:hover {
-  color: #4f46e5;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-}
-
-.creation-toggle-btn.active {
-  color: #4f46e5;
-  background-color: #eff6ff;
-  border-color: #bfdbfe;
-  animation: active-pulse 2s infinite;
-}
-
-.creation-toggle-btn.active::after {
-  background-color: #4f46e5;
-}
-
-.domino-btn.active {
-  color: #4f46e5;
-}
-
-.arrow-btn.active {
-  color: #4f46e5;
-}
-
-.creation-toggle-btn svg {
-  width: 24px;
-  height: 24px;
-}
-
-@keyframes active-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(79, 70, 229, 0);
-  }
-}
-
-/* Arrow Type Toggle */
-.arrow-type-toggle {
-  display: flex;
-  width: 100%;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
   overflow: hidden;
 }
 
-.arrow-type-btn {
-  flex: 1;
-  background-color: #f8fafc;
-  color: #64748b;
-  border: none;
-  padding: 0.5rem 0;
-  font-size: 0.875rem;
+.creation-toggle-btn::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: transparent;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.creation-toggle-btn:hover {
+  background-color: #f1f5f9;
+  color: #334155;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+}
+
+.creation-toggle-btn.active {
+  background-color: #4f46e5;
+  color: white;
+  border-color: #4338ca;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.4);
+}
+
+.creation-toggle-btn.active::after {
+  background-color: white;
+  transform: translateX(0);
+}
+
+.domino-btn.active {
+  background: linear-gradient(45deg, #4f46e5, #6366f1);
+}
+
+.arrow-btn.active {
+  background: linear-gradient(45deg, #4f46e5, #818cf8);
+}
+
+.creation-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+/* Add subtle pulse animation when a button is active */
+@keyframes active-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(79, 70, 229, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+  }
+}
+
+.creation-toggle-btn.active {
+  animation: active-pulse 2s infinite;
+}
+
+/* Add indicator showing current mode */
+.creation-toggle-btn.active::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 60%;
+  background-color: white;
+  border-radius: 0 2px 2px 0;
+}
+
+.arrow-type-toggle {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.arrow-type-btn {
+  background-color: #f0f0f0;
+  border: 2px solid #ddd;
+  border-radius: 25px;
+  padding: 10px 20px;
+  margin: 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .arrow-type-btn:hover {
-  background-color: #f1f5f9;
-  color: #475569;
+  background-color: #e0e0e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .arrow-type-btn.active {
-  background-color: #4f46e5;
+  background-color: #4a90e2;
   color: white;
+  border-color: #3a80d2;
 }
 
 /* Animation for click effect */
 .arrow-type-btn:active {
-  transform: scale(0.98);
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Enhanced styling for color selector */
 .color-selector-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  margin-bottom: 20px;
 }
 
 .color-selector-container {
   display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
-  gap: 0.5rem;
 }
 
 .color-picker-wrapper {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  overflow: visible; /* Changed from hidden to visible */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .color-input {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
   cursor: pointer;
+  opacity: 0; /* The input is still invisible */
+  z-index: 10; /* But it's now on top and clickable */
+  padding: 0; /* Remove padding */
 }
-
 .color-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
+  border: 2px solid white;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 0 1px #e2e8f0;
+  transition: transform 0.2s ease;
+  pointer-events: none; /* Ensure clicks pass through to color input */
 }
 
 .color-picker-wrapper:hover .color-preview {
   transform: scale(1.05);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .color-text-input {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  flex: 1;
+  max-width: calc(50% - 25px);
+  min-width: 80px;
 }
 
 .input-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
   color: #64748b;
-  font-weight: 500;
+  margin-bottom: 4px;
+  text-transform: uppercase;
 }
 
 .hex-input,
 .rgb-input {
-  width: 100px;
-  padding: 0.375rem 0.5rem;
+  width: 100%;
+  padding: 8px;
   border: 1px solid #e2e8f0;
-  border-radius: 4px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
   font-size: 0.875rem;
-  font-family: monospace;
+  background: #f8fafc;
+  color: #334155;
+  transition: all 0.2s ease;
 }
 
 .hex-input:focus,
@@ -1145,28 +1237,32 @@
   outline: none;
   border-color: #4f46e5;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+  background: #fff;
 }
 
 .color-presets {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .color-preset {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 1px solid #e2e8f0;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #e2e8f0;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  overflow: hidden;
 }
 
 .color-preset:hover {
   transform: scale(1.1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  z-index: 1;
 }
 
 .color-preset:active {
@@ -1177,21 +1273,30 @@
 .color-preset::after {
   content: '';
   position: absolute;
-  top: -3px;
-  right: -3px;
-  width: 12px;
-  height: 12px;
+  right: 2px;
+  bottom: 2px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background-color: white;
-  border: 2px solid #4f46e5;
+  background: white;
   opacity: 0;
-  transform: scale(0);
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .color-preset.selected::after {
   opacity: 1;
-  transform: scale(1);
+}
+
+@media (max-width: 400px) {
+  .color-selector-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .color-text-input {
+    max-width: 100%;
+    width: 100%;
+  }
 }
 
 /* Arrow wrapper styles */

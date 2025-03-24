@@ -112,7 +112,7 @@
         *ngFor="let domino of previewDominos"
         class="domino-preview"
         [class.editable-domino]="domino.isEditable"
-        [style.transform]="getDominoTransform(domino)"
+        [style.transform]="dominoPropertiesService.getDominoTransform(domino)"
       >
         <app-interactive-domino
           [id]="domino.id"
@@ -129,7 +129,7 @@
       <div
         *ngFor="let arrow of previewArrows"
         class="arrow-preview"
-        [style.transform]="getArrowTransform(arrow)"
+        [style.transform]="arrowPropertiesService.getArrowTransform(arrow)"
       >
         <app-interactive-arrow
           [id]="arrow.id"

@@ -208,8 +208,8 @@ export class DominoLayoutBuilderComponent
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
-    private dominoPropertiesService: DominoPropertiesService,
-    private arrowPropertiesService: ArrowPropertiesService
+    public dominoPropertiesService: DominoPropertiesService,
+    public arrowPropertiesService: ArrowPropertiesService
   ) {}
 
   ngOnInit(): void {
@@ -1115,20 +1115,7 @@ export class DominoLayoutBuilderComponent
     }
   }
 
-  /**
-   * Transform calculation for dominos in preview mode
-   */
-  getDominoTransform(domino: DominoPosition): string {
-    return this.dominoPropertiesService.getDominoTransform(domino);
-  }
-
-  /**
-   * Transform calculation for arrows in preview mode
-   */
-  getArrowTransform(arrow: ArrowPosition): string {
-    return this.arrowPropertiesService.getArrowTransform(arrow);
-  }
-
+ 
   /**
    * Confirm before canceling if there are unsaved changes
    */
