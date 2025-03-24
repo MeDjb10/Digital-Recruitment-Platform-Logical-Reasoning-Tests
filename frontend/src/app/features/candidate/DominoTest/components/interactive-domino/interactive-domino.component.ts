@@ -92,12 +92,12 @@ export class InteractiveDominoComponent implements OnInit, OnChanges {
     this.updateDotPositions();
 
     // Debug logging
-    console.log(`Domino ${this.id} initialized:`, {
-      isEditable: this.isEditable,
-      isSelected: this.isSelected,
-      topValue: this.topValue,
-      bottomValue: this.bottomValue,
-    });
+    // console.log(`Domino ${this.id} initialized:`, {
+    //   isEditable: this.isEditable,
+    //   isSelected: this.isSelected,
+    //   topValue: this.topValue,
+    //   bottomValue: this.bottomValue,
+    // });
   }
 
   ngOnChanges(changes: SimpleChanges): void {

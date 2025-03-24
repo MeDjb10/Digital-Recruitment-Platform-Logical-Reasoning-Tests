@@ -1,0 +1,23 @@
+.interactive-arrow {
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.interactive-arrow:hover .arrow-line {
+  stroke-width: 3;
+}
+
+.interactive-arrow.selected .arrow-line {
+  stroke-width: 3;
+}
+
+.selection-indicator {
+  animation: dash 1s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -12;
+  }
+}

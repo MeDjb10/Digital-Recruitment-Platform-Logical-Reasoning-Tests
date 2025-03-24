@@ -1,0 +1,848 @@
+<div class="editor-layout">
+  <!-- Canvas where dominos are placed -->
+  <div class="canvas-container">
+    <div class="floating-creation-controls">
+      <button
+        class="creation-toggle-btn domino-btn"
+        [class.active]="creationMode === 'domino'"
+        (click)="toggleCreationMode('domino')"
+        pTooltip="Create Dominos"
+        tooltipPosition="left"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            x="2"
+            y="2"
+            width="20"
+            height="20"
+            rx="2"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+          <line
+            x1="12"
+            y1="2"
+            x2="12"
+            y2="22"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+          <circle cx="7" cy="7" r="1.5" fill="currentColor" />
+          <circle cx="17" cy="7" r="1.5" fill="currentColor" />
+          <circle cx="7" cy="12" r="1.5" fill="currentColor" />
+          <circle cx="17" cy="17" r="1.5" fill="currentColor" />
+        </svg>
+      </button>
+      <button
+        class="creation-toggle-btn arrow-btn"
+        [class.active]="creationMode === 'arrow'"
+        (click)="toggleCreationMode('arrow')"
+        pTooltip="Create Arrows"
+        tooltipPosition="left"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M5 12H19M19 12L12 5M19 12L12 19"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      #canvas
+      class="canvas"
+      [ngClass]="{ 'show-grid': showGrid }"
+      [style.width.px]="canvasWidth"
+      [style.height.px]="canvasHeight"
+      [style.background-size.px]="gridSize"
+      (click)="canvasClicked($event)"
+    >
+      <!-- Grid lines if enabled -->
+      <div
+        class="grid-lines"
+        *ngIf="showGrid"
+        [style.background-size.px]="gridSize"
+      ></div>
+
+      <!-- Dominos display -->
+      <div
+        *ngFor="let domino of dominos"
+        class="domino-wrapper"
+        [class.selected]="selectedDomino?.id === domino.id"
+        [class.editable]="domino.isEditable"
+        [style.transform]="getDominoTransform(domino)"
+        (mousedown)="startDragging($event, domino)"
+      >
+        <!-- Interactive domino component -->
+        <app-interactive-domino
+          [id]="domino.id"
+          [initialTopValue]="domino.topValue"
+          [initialBottomValue]="domino.bottomValue"
+          [isEditable]="domino.isEditable"
+          [isVertical]="domino.isVertical || false"
+          [scale]="domino.scale || 1.0"
+          (valueChanged)="onDominoValueChanged($event)"
+          (dominoSelected)="onDominoSelected(domino)"
+        ></app-interactive-domino>
+
+        <!-- Selection indicator -->
+        <!-- Enhanced selection indicator with rotation and resize handles -->
+        <div
+          class="selection-indicator"
+          *ngIf="selectedDomino?.id === domino.id"
+        >
+          <div
+            class="rotation-handle"
+            title="Drag to rotate"
+            (mousedown)="startRotation($event)"
+          ></div>
+          <div
+            class="corner-handle top-left"
+            title="Drag to resize"
+            (mousedown)="startResizing($event, 'top-left')"
+          ></div>
+          <div
+            class="corner-handle top-right"
+            title="Drag to resize"
+            (mousedown)="startResizing($event, 'top-right')"
+          ></div>
+          <div
+            class="corner-handle bottom-left"
+            title="Drag to resize"
+            (mousedown)="startResizing($event, 'bottom-left')"
+          ></div>
+          <div
+            class="corner-handle bottom-right"
+            title="Drag to resize"
+            (mousedown)="startResizing($event, 'bottom-right')"
+          ></div>
+        </div>
+
+        <!-- Enhanced editable indicator -->
+        <div class="editable-indicator" *ngIf="domino.isEditable">
+          <i class="pi pi-pencil"></i>
+          <span>Answer</span>
+        </div>
+
+        <!-- Domino ID label for easier reference -->
+        <div class="domino-id-label">{{ domino.id }}</div>
+      </div>
+
+      <!-- After the dominos display section, add this -->
+      <!-- Arrows display -->
+      <div
+        *ngFor="let arrow of arrows"
+        class="arrow-wrapper"
+        [class.selected]="selectedArrow?.id === arrow.id"
+        [style.transform]="getArrowTransform(arrow)"
+        (mousedown)="startDraggingArrow($event, arrow)"
+      >
+        <!-- Interactive arrow component -->
+        <app-interactive-arrow
+          [id]="arrow.id"
+          [length]="arrow.length"
+          [angle]="0"
+          [scale]="arrow.scale || 1.0"
+          [arrowColor]="arrow.arrowColor"
+          [headSize]="arrow.headSize"
+          [curved]="arrow.curved"
+          [curvature]="arrow.curvature"
+          [isSelected]="selectedArrow?.id === arrow.id"
+          (arrowSelected)="onArrowSelected($event)"
+        ></app-interactive-arrow>
+
+        <!-- Selection indicator -->
+        <div class="selection-indicator" *ngIf="selectedArrow?.id === arrow.id">
+          <div
+            class="rotation-handle"
+            title="Drag to rotate"
+            (mousedown)="startRotation($event)"
+          ></div>
+          <div
+            class="corner-handle top-left"
+            title="Drag to resize"
+            (mousedown)="startResizing($event, 'top-left')"
+          ></div>
+          <div
+            class="corner-handle top-right"
+            title="Drag to resize"
+            (mousedown)="startResizing($event, 'top-right')"
+          ></div>
+          <div
+            class="corner-handle bottom-left"
+            title="Drag to resize"
+            (mousedown)="startResizing($event, 'bottom-left')"
+          ></div>
+          <div
+            class="corner-handle bottom-right"
+            title="Drag to resize"
+            (mousedown)="startResizing($event, 'bottom-right')"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Canvas center indicator -->
+      <div
+        class="canvas-center"
+        [style.left.px]="canvasWidth / 2"
+        [style.top.px]="canvasHeight / 2"
+      ></div>
+
+      <!-- Canvas instructions when empty -->
+      <div
+        class="canvas-instructions"
+        *ngIf="dominos.length === 0 && arrows.length === 0"
+      >
+        <p>Click anywhere on the canvas to add a {{ creationMode }}</p>
+        <p>Or use one of the pre-defined layouts from the toolbar</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Properties panel -->
+  <div class="properties-panel" [class.visible]="showPropertyPanel">
+    <div class="panel-header">
+      <h3>{{ selectedArrow ? "Arrow Properties" : "Domino Properties" }}</h3>
+      <button class="close-btn" (click)="showPropertyPanel = false">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <div class="panel-content" *ngIf="selectedDomino">
+      <!-- Tabbed navigation for properties -->
+      <div class="properties-tabs">
+        <button
+          class="tab-button"
+          [class.active]="activePropertyTab === 'position'"
+          (click)="activePropertyTab = 'position'"
+        >
+          <i class="pi pi-arrows-alt"></i> Position
+        </button>
+        <button
+          class="tab-button"
+          [class.active]="activePropertyTab === 'appearance'"
+          (click)="activePropertyTab = 'appearance'"
+        >
+          <i class="pi pi-palette"></i> Appearance
+        </button>
+        <button
+          class="tab-button"
+          [class.active]="activePropertyTab === 'values'"
+          (click)="activePropertyTab = 'values'"
+        >
+          <i class="pi pi-list"></i> Values
+        </button>
+        <button
+          class="tab-button"
+          [class.active]="activePropertyTab === 'settings'"
+          (click)="activePropertyTab = 'settings'"
+        >
+          <i class="pi pi-cog"></i> Settings
+        </button>
+      </div>
+
+      <!-- Position Tab -->
+      <div
+        class="property-tab-content"
+        *ngIf="activePropertyTab === 'position'"
+      >
+        <div class="property-group">
+          <h4>Position & Rotation</h4>
+
+          <div class="property-grid">
+            <div class="property-row">
+              <label for="dominoX">X:</label>
+              <div class="property-input-group">
+                <input
+                  type="number"
+                  id="dominoX"
+                  [(ngModel)]="selectedDomino.exactX"
+                  (change)="updateSelectedDomino()"
+                />
+                <button class="increment-btn" (click)="adjustPosition('x', -1)">
+                  -
+                </button>
+                <button class="increment-btn" (click)="adjustPosition('x', 1)">
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div class="property-row">
+              <label for="dominoY">Y:</label>
+              <div class="property-input-group">
+                <input
+                  type="number"
+                  id="dominoY"
+                  [(ngModel)]="selectedDomino.exactY"
+                  (change)="updateSelectedDomino()"
+                />
+                <button class="increment-btn" (click)="adjustPosition('y', -1)">
+                  -
+                </button>
+                <button class="increment-btn" (click)="adjustPosition('y', 1)">
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="property-row rotation-row">
+            <label for="dominoAngle"
+              >Angle:
+              <span class="slider-value"
+                >{{ selectedDomino.angle }}°</span
+              ></label
+            >
+
+            <div class="slider-with-presets">
+              <p-slider
+                [(ngModel)]="selectedDomino.angle"
+                [min]="0"
+                [max]="360"
+                [step]="5"
+                (onChange)="updateSelectedDomino()"
+              ></p-slider>
+
+              <div class="angle-presets">
+                <button class="preset-btn" (click)="setAngle(0)">0°</button>
+                <button class="preset-btn" (click)="setAngle(45)">45°</button>
+                <button class="preset-btn" (click)="setAngle(90)">90°</button>
+                <button class="preset-btn" (click)="setAngle(135)">135°</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="action-btn center-btn" (click)="centerDomino()">
+            <i class="pi pi-compass"></i> Center on Canvas
+          </button>
+        </div>
+      </div>
+
+      <!-- Appearance Tab -->
+      <div
+        class="property-tab-content"
+        *ngIf="activePropertyTab === 'appearance'"
+      >
+        <div class="property-group">
+          <h4>Size & Orientation</h4>
+
+          <div class="property-row">
+            <label for="dominoScale"
+              >Scale:<span class="slider-value">{{
+                selectedDomino.scale | number : "1.1-1"
+              }}</span></label
+            >
+            <div class="slider-with-actions">
+              <p-slider
+                [(ngModel)]="selectedDomino.scale"
+                [min]="0.5"
+                [max]="2.0"
+                [step]="0.1"
+                (onChange)="updateDominoScale($event)"
+              ></p-slider>
+
+              <div class="scale-actions">
+                <button class="scale-btn" (click)="setScale(0.8)">S</button>
+                <button class="scale-btn" (click)="setScale(1.0)">M</button>
+                <button class="scale-btn" (click)="setScale(1.5)">L</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="property-row orientation-row">
+            <label>Orientation:</label>
+            <div class="orientation-toggle">
+              <button
+                class="orientation-btn"
+                [class.active]="!selectedDomino.isVertical"
+                (click)="setOrientation(false)"
+              >
+                <i class="pi pi-minus"></i> Horizontal
+              </button>
+              <button
+                class="orientation-btn"
+                [class.active]="selectedDomino.isVertical"
+                (click)="setOrientation(true)"
+              >
+                <i class="pi pi-bars"></i> Vertical
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Values Tab -->
+      <div class="property-tab-content" *ngIf="activePropertyTab === 'values'">
+        <div class="property-group">
+          <h4>Domino Values</h4>
+
+          <div *ngIf="!selectedDomino.isEditable" class="domino-values">
+            <div class="value-half">
+              <label for="dominoTop">Top Half:</label>
+              <div class="value-selector">
+                <button
+                  *ngFor="let val of dominoValueOptions"
+                  class="value-btn"
+                  [class.active]="selectedDomino.topValue === val"
+                  (click)="setDominoValue('top', val)"
+                >
+                  {{ val }}
+                </button>
+              </div>
+            </div>
+
+            <div class="value-half">
+              <label for="dominoBottom">Bottom Half:</label>
+              <div class="value-selector">
+                <button
+                  *ngFor="let val of dominoValueOptions"
+                  class="value-btn"
+                  [class.active]="selectedDomino.bottomValue === val"
+                  (click)="setDominoValue('bottom', val)"
+                >
+                  {{ val }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="selectedDomino.isEditable" class="editable-message">
+            <i class="pi pi-info-circle"></i>
+            This domino is set as an answer field. Values will be editable by
+            test takers.
+          </div>
+        </div>
+
+        <div *ngIf="selectedDomino.isEditable" class="property-group">
+          <h4>Correct Answer</h4>
+          <div class="correct-answer-grid">
+            <div class="value-half">
+              <label for="correctTop">Top Value:</label>
+              <div class="value-selector">
+                <button
+                  *ngFor="let val of dominoValueOptions"
+                  class="value-btn"
+                  [class.active]="correctAnswer!.topValue === val"
+                  (click)="setCorrectAnswer('top', val)"
+                >
+                  {{ val }}
+                </button>
+              </div>
+            </div>
+
+            <div class="value-half">
+              <label for="correctBottom">Bottom Value:</label>
+              <div class="value-selector">
+                <button
+                  *ngFor="let val of dominoValueOptions"
+                  class="value-btn"
+                  [class.active]="correctAnswer!.bottomValue === val"
+                  (click)="setCorrectAnswer('bottom', val)"
+                >
+                  {{ val }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div
+        class="property-tab-content"
+        *ngIf="activePropertyTab === 'settings'"
+      >
+        <div class="property-group">
+          <h4>Domino Role</h4>
+          <div class="role-options">
+            <div
+              class="role-card"
+              [class.selected]="!selectedDomino.isEditable"
+              (click)="setDominoRole(false)"
+            >
+              <div class="role-icon"><i class="pi pi-th-large"></i></div>
+              <div class="role-details">
+                <h5>Fixed Domino</h5>
+                <p>Part of the pattern</p>
+              </div>
+              <div class="role-radio">
+                <input
+                  type="radio"
+                  id="regularDomino"
+                  name="dominoRole"
+                  [checked]="!selectedDomino.isEditable"
+                />
+                <span class="checkmark"></span>
+              </div>
+            </div>
+
+            <div
+              class="role-card"
+              [class.selected]="selectedDomino.isEditable"
+              (click)="setDominoRole(true)"
+            >
+              <div class="role-icon answer-icon">
+                <i class="pi pi-pencil"></i>
+              </div>
+              <div class="role-details">
+                <h5>Answer Field</h5>
+                <p>Editable by test taker</p>
+              </div>
+              <div class="role-radio">
+                <input
+                  type="radio"
+                  id="editableDomino"
+                  name="dominoRole"
+                  [checked]="selectedDomino.isEditable"
+                />
+                <span class="checkmark"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="property-actions">
+          <button class="action-btn duplicate-btn" (click)="duplicateDomino()">
+            <i class="pi pi-copy"></i> Duplicate Domino
+          </button>
+          <button class="action-btn delete-btn" (click)="deleteDomino()">
+            <i class="pi pi-trash"></i> Delete Domino
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Show arrow properties if an arrow is selected -->
+    <div class="panel-content" *ngIf="selectedArrow">
+      <!-- Tabbed navigation for arrow properties -->
+      <div class="properties-tabs">
+        <button
+          class="tab-button"
+          [class.active]="activePropertyTab === 'position'"
+          (click)="activePropertyTab = 'position'"
+        >
+          <i class="pi pi-arrows-alt"></i> Position
+        </button>
+        <button
+          class="tab-button"
+          [class.active]="activePropertyTab === 'appearance'"
+          (click)="activePropertyTab = 'appearance'"
+        >
+          <i class="pi pi-palette"></i> Appearance
+        </button>
+        <button
+          class="tab-button"
+          [class.active]="activePropertyTab === 'settings'"
+          (click)="activePropertyTab = 'settings'"
+        >
+          <i class="pi pi-cog"></i> Settings
+        </button>
+      </div>
+
+      <!-- Position Tab for Arrow -->
+      <div
+        class="property-tab-content"
+        *ngIf="activePropertyTab === 'position'"
+      >
+        <div class="property-group">
+          <h4>Position & Rotation</h4>
+
+          <div class="property-grid">
+            <div class="property-row">
+              <label for="arrowX">X:</label>
+              <div class="property-input-group">
+                <input
+                  type="number"
+                  id="arrowX"
+                  [(ngModel)]="selectedArrow.exactX"
+                  (change)="updateArrowPosition()"
+                />
+                <button class="increment-btn" (click)="adjustPosition('x', -1)">
+                  -
+                </button>
+                <button class="increment-btn" (click)="adjustPosition('x', 1)">
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div class="property-row">
+              <label for="arrowY">Y:</label>
+              <div class="property-input-group">
+                <input
+                  type="number"
+                  id="arrowY"
+                  [(ngModel)]="selectedArrow.exactY"
+                  (change)="updateArrowPosition()"
+                />
+                <button class="increment-btn" (click)="adjustPosition('y', -1)">
+                  -
+                </button>
+                <button class="increment-btn" (click)="adjustPosition('y', 1)">
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="property-row rotation-row">
+            <label for="arrowAngle"
+              >Angle:
+              <span class="slider-value"
+                >{{ selectedArrow.angle }}°</span
+              ></label
+            >
+
+            <div class="slider-with-presets">
+              <p-slider
+                [(ngModel)]="selectedArrow.angle"
+                [min]="0"
+                [max]="360"
+                [step]="5"
+                (onChange)="updateSelectedArrow()"
+              ></p-slider>
+
+              <div class="angle-presets">
+                <button class="preset-btn" (click)="setArrowAngle(0)">
+                  0°
+                </button>
+                <button class="preset-btn" (click)="setArrowAngle(90)">
+                  90°
+                </button>
+                <button class="preset-btn" (click)="setArrowAngle(180)">
+                  180°
+                </button>
+                <button class="preset-btn" (click)="setArrowAngle(270)">
+                  270°
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button class="action-btn center-btn" (click)="centerArrow()">
+            <i class="pi pi-compass"></i> Center on Canvas
+          </button>
+        </div>
+      </div>
+
+      <!-- Appearance Tab for Arrow -->
+      <div
+        class="property-tab-content"
+        *ngIf="activePropertyTab === 'appearance'"
+      >
+        <div class="property-group">
+          <h4>Arrow Style</h4>
+
+          <div class="property-row">
+            <label for="arrowLength"
+              >Length:<span class="slider-value"
+                >{{ selectedArrow.length }}px</span
+              ></label
+            >
+            <div class="slider-with-actions">
+              <p-slider
+                [(ngModel)]="selectedArrow.length"
+                [min]="20"
+                [max]="300"
+                [step]="5"
+                (onChange)="updateSelectedArrow()"
+              ></p-slider>
+
+              <div class="scale-actions">
+                <button class="scale-btn" (click)="setArrowLength(50)">
+                  S
+                </button>
+                <button class="scale-btn" (click)="setArrowLength(100)">
+                  M
+                </button>
+                <button class="scale-btn" (click)="setArrowLength(200)">
+                  L
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="property-row">
+            <label for="arrowHeadSize"
+              >Head Size:<span class="slider-value"
+                >{{ selectedArrow.headSize }}px</span
+              ></label
+            >
+            <p-slider
+              [(ngModel)]="selectedArrow.headSize"
+              [min]="5"
+              [max]="20"
+              [step]="1"
+              (onChange)="updateSelectedArrow()"
+            ></p-slider>
+          </div>
+
+          <div class="property-row">
+            <label for="arrowScale"
+              >Scale:<span class="slider-value">{{
+                selectedArrow.scale | number : "1.1-1"
+              }}</span></label
+            >
+            <div class="slider-with-actions">
+              <p-slider
+                [(ngModel)]="selectedArrow.scale"
+                [min]="0.5"
+                [max]="2.0"
+                [step]="0.1"
+                (onChange)="updateSelectedArrow()"
+              ></p-slider>
+            </div>
+          </div>
+
+          <div class="property-row color-selector-row">
+            <label for="arrowColor">Color:</label>
+
+            <div class="color-selector-container">
+              <!-- Color picker with preview -->
+              <div class="color-picker-wrapper">
+                <input
+                  type="color"
+                  id="arrowColor"
+                  [(ngModel)]="selectedArrow.arrowColor"
+                  (change)="updateSelectedArrow()"
+                  class="color-input"
+                />
+                <div
+                  class="color-preview"
+                  [style.background-color]="selectedArrow.arrowColor"
+                ></div>
+              </div>
+
+              <!-- HEX input -->
+              <div class="color-text-input">
+                <div class="input-label">HEX</div>
+                <input
+                  type="text"
+                  [(ngModel)]="selectedArrow.arrowColor"
+                  (change)="validateHexColor()"
+                  class="hex-input"
+                  placeholder="#4f46e5"
+                />
+              </div>
+
+              <!-- RGB input -->
+              <div class="color-text-input">
+                <div class="input-label">RGB</div>
+                <input
+                  type="text"
+                  [value]="hexToRgb(selectedArrow.arrowColor)"
+                  (change)="updateFromRgb($event)"
+                  class="rgb-input"
+                  placeholder="79, 70, 229"
+                />
+              </div>
+            </div>
+
+            <!-- Color presets below inputs -->
+            <div class="color-presets">
+              <button
+                *ngFor="
+                  let color of [
+                    '#4f46e5',
+                    '#ef4444',
+                    '#10b981',
+                    '#f59e0b',
+                    '#000000'
+                  ]
+                "
+                class="color-preset"
+                [style.background-color]="color"
+                (click)="setArrowColor(color)"
+                [attr.aria-label]="color"
+                pTooltip="{{ color }}"
+                tooltipPosition="top"
+              ></button>
+            </div>
+          </div>
+
+          <div class="property-row">
+            <label>Arrow Type:</label>
+            <div class="arrow-type-toggle">
+              <button
+                class="arrow-type-btn"
+                [class.active]="!selectedArrow.curved"
+                (click)="toggleCurvedArrow(false)"
+              >
+                <i class="fa-solid fa-arrow-right"></i>Straight
+              </button>
+              <button
+                class="arrow-type-btn"
+                [class.active]="selectedArrow.curved"
+                (click)="toggleCurvedArrow(true)"
+              >
+                <i class="fa-solid fa-arrows-turn-right"></i> Curved
+              </button>
+            </div>
+          </div>
+
+          <div class="property-row" *ngIf="selectedArrow.curved">
+            <label for="curvature"
+              >Curvature:<span class="slider-value">{{
+                selectedArrow.curvature | number : "1.1-1"
+              }}</span></label
+            >
+            <p-slider
+              [(ngModel)]="selectedArrow.curvature"
+              [min]="-2.0"
+              [max]="2.0"
+              [step]="0.1"
+              (onChange)="setArrowCurvature($event.value ?? 0)"
+            ></p-slider>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tab for Arrow -->
+      <div
+        class="property-tab-content"
+        *ngIf="activePropertyTab === 'settings'"
+      >
+        <div class="property-actions">
+          <button class="action-btn duplicate-btn" (click)="duplicateArrow()">
+            <i class="pi pi-copy"></i> Duplicate Arrow
+          </button>
+          <button class="action-btn delete-btn" (click)="deleteArrow()">
+            <i class="pi pi-trash"></i> Delete Arrow
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-content empty" *ngIf="!selectedDomino && !selectedArrow">
+      <div class="empty-state">
+        <i class="pi pi-info-circle"></i>
+        <p>Select an item on the canvas to edit its properties</p>
+        <button
+          class="action-btn"
+          (click)="
+            creationMode === 'domino' ? addDominoToCenter() : addArrowAt(0, 0)
+          "
+        >
+          <i class="pi pi-plus"></i> Add New
+          {{ creationMode === "domino" ? "Domino" : "Arrow" }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

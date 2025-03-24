@@ -66,6 +66,7 @@
         <app-simple-domino-grid
           *ngIf="currentQuestion"
           [dominos]="currentQuestion.dominos"
+          [arrows]="currentQuestion.arrows || []"
           [gridLayout]="
             currentQuestion.gridLayout || {
               rows: getAutoGridRows(currentQuestion.dominos),

@@ -10,17 +10,19 @@ import {
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 
-
 import { Subscription, interval } from 'rxjs';
 
-import { DominoChange, DominoPosition, TestQuestion } from '../../models/domino.model';
+import {
+  DominoChange,
+  DominoPosition,
+  TestQuestion,
+} from '../../models/domino.model';
 import { HelpTooltipComponent } from '../../components/help-tooltip/helpTooltip.component';
 import { NavigationControlsComponent } from '../../components/navigation-controls/navigationControls.component';
 import { SimpleDominoGridComponent } from '../../components/simple-domino-grid/simpleDominoGrid.component';
 import { TestHeaderComponent } from '../../components/test-header/testHeader.component';
 import { TestSidebarComponent } from '../../components/test-sidebar/testSidebar.component';
 import { DominoTestService } from '../../services/domino-test.service';
-
 
 @Component({
   selector: 'app-domino-test-modern',
@@ -116,6 +118,8 @@ export class DominoTestModernComponent
       }
 
       // Load the test data
+      console.log('testId', this.testId);
+
       this.loadTestData(this.testId);
     });
   }
@@ -143,18 +147,38 @@ export class DominoTestModernComponent
   }
 
   loadTestData(testId: string): void {
+    console.log('Loading test data for ID:', testId);
     // Check if we have any saved progress
     const savedProgress = this.dominoTestService.loadProgress(testId);
 
-    if (savedProgress) {
-      this.handleSavedProgress(savedProgress);
-      return;
-    }
+    // if (savedProgress) {
+    //   this.handleSavedProgress(savedProgress);
+    //   return;
+    // }
+
+    console.log('testIddddd', testId);
 
     // Otherwise load fresh test data
     this.dominoTestService.getTest(testId).subscribe({
       next: (testData) => {
-        if (testData) {
+        console.log('testData', testData);
+
+        if (testData && testData.questions) {
+          // Additional debugging for arrows in questions
+          testData.questions.forEach((q: any, index: number) => {
+            console.log(`Question ${index + 1}:`);
+            console.log('- Arrows:', q.arrows ? q.arrows.length : 'undefined');
+            if (q.arrows && q.arrows.length > 0) {
+              console.log('- First arrow data:', JSON.stringify(q.arrows[0]));
+            } else {
+              // If arrows array is undefined, create an empty array
+              if (q.arrows === undefined) {
+                console.log('- Initializing empty arrows array for question');
+                q.arrows = [];
+              }
+            }
+          });
+
           this.testName = testData.name;
           this.testDuration = testData.duration;
           this.timeLeft = testData.duration * 60;
@@ -167,12 +191,23 @@ export class DominoTestModernComponent
             instruction:
               q.instruction || 'Find the missing values in the domino pattern',
             dominos: q.dominos,
+            arrows: q.arrows || [], // Ensure arrows is never undefined
             gridLayout: q.gridLayout,
             answered: false,
             flaggedForReview: false,
             visited: false,
             pattern: q.pattern || '',
           }));
+
+          // Debug the arrows from the first question
+          if (this.questions.length > 0) {
+            const firstQuestion = this.questions[0];
+            console.log('First question arrows:', firstQuestion.arrows);
+            console.log(
+              'First question arrows raw:',
+              JSON.stringify(firstQuestion.arrows)
+            );
+          }
 
           // Set the first question as visited
           if (this.questions.length > 0) {
@@ -534,6 +569,7 @@ export class DominoTestModernComponent
                 q.instruction ||
                 'Find the missing values in the domino pattern',
               dominos: q.dominos,
+              arrows: q.arrows || [],
               gridLayout: q.gridLayout || { rows: 3, cols: 3 },
               answered: false,
               flaggedForReview: false,
@@ -610,6 +646,7 @@ export class DominoTestModernComponent
                   q.instruction ||
                   'Find the missing values in the domino pattern',
                 dominos: q.dominos,
+                arrows: q.arrows || [],
                 gridLayout: q.gridLayout || { rows: 3, cols: 3 },
                 answered: false,
                 flaggedForReview: false,

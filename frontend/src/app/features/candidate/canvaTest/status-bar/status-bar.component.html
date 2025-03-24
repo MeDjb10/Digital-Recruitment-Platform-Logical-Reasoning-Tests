@@ -1,0 +1,26 @@
+<div class="status-bar">
+  <div class="status-info">
+    <span *ngIf="dominosCount > 0">
+      <i class="pi pi-th-large"></i> {{ dominosCount }} domino{{
+        dominosCount !== 1 ? "s" : ""
+      }}
+    </span>
+    <span *ngIf="hasEditableDomino" class="editable-count">
+      <i class="pi pi-pencil"></i> 1 answer field
+    </span>
+    <span *ngIf="hasCorrectAnswer" class="answer-defined">
+      <i class="pi pi-check-circle"></i> Answer defined
+    </span>
+  </div>
+  <div class="canvas-dimensions">
+    <i class="pi pi-desktop"></i> {{ canvasWidth }}×{{ canvasHeight }}
+  </div>
+  <div class="status-actions">
+    <div *ngIf="hasUnsavedChanges" class="unsaved-indicator">
+      <i class="pi pi-save"></i> Unsaved changes
+    </div>
+    <div *ngIf="!hasUnsavedChanges" class="saved-indicator">
+      <i class="pi pi-check"></i> All changes saved
+    </div>
+  </div>
+</div>

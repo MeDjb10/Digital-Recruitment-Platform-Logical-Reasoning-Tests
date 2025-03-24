@@ -1,0 +1,183 @@
+<div class="question-form-container">
+  <div class="form-section-header">
+    <i class="pi pi-file-edit"></i>
+    <h3>Question Details</h3>
+  </div>
+
+  <div class="question-form">
+    <!-- Question Title and Difficulty row -->
+    <div class="form-row">
+      <!-- Question Title with character count -->
+      <div class="form-field title-field">
+        <label for="questionTitle">
+          <i class="pi pi-tag"></i> Question Title
+        </label>
+        <span class="p-input-icon-right w-full">
+          <i
+            class="pi pi-info-circle"
+            pTooltip="Give your question a clear title"
+            tooltipPosition="top"
+          ></i>
+          <input
+            id="questionTitle"
+            type="text"
+            pInputText
+            [(ngModel)]="title"
+            (ngModelChange)="onTitleChange($event)"
+            placeholder="e.g., Find the Missing Domino"
+            maxlength="100"
+            class="w-full"
+          />
+        </span>
+        <small *ngIf="title" class="char-count">
+          {{ title.length }}/100
+        </small>
+      </div>
+
+      <!-- Difficulty Rating with visual indicators -->
+      <div class="form-field difficulty-field">
+        <label for="questionDifficulty">
+          <i class="pi pi-chart-line"></i> Difficulty Level
+        </label>
+        <p-dropdown
+          id="questionDifficulty"
+          [(ngModel)]="difficulty"
+          [options]="difficultyOptions"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="false"
+          placeholder="Select Difficulty"
+          styleClass="w-full"
+          (onChange)="onDifficultyChange($event.value)"
+        >
+          <ng-template pTemplate="selectedItem">
+            <div class="difficulty-item" *ngIf="difficulty">
+              <i
+                class="pi pi-circle-fill"
+                [ngClass]="difficulty + '-indicator'"
+              ></i>
+              <span>{{ difficulty | titlecase }}</span>
+            </div>
+          </ng-template>
+          <ng-template let-option pTemplate="item">
+            <div class="difficulty-item">
+              <i class="pi" [ngClass]="option.icon"></i>
+              <span>{{ option.label }}</span>
+            </div>
+          </ng-template>
+        </p-dropdown>
+      </div>
+    </div>
+
+    <!-- Instructions Field with rich text capabilities -->
+    <div class="form-row">
+      <div class="form-field w-full">
+        <label for="questionInstruction">
+          <i class="pi pi-directions"></i> Instructions
+          <span class="required">*</span>
+        </label>
+        <span class="p-input-icon-right w-full">
+          <i
+            class="pi pi-info-circle"
+            pTooltip="Clear instructions help candidates understand what to do"
+            tooltipPosition="top"
+          ></i>
+          <textarea
+            id="questionInstruction"
+            pTextarea
+            [(ngModel)]="instruction"
+            (ngModelChange)="onInstructionChange($event)"
+            placeholder="e.g., Complete the pattern by filling in the missing domino"
+            [autoResize]="true"
+            rows="3"
+            class="w-full"
+          ></textarea>
+        </span>
+        <small *ngIf="!instruction" class="validation-hint">
+          <i class="pi pi-exclamation-circle"></i> Required field
+        </small>
+      </div>
+    </div>
+
+    <!-- Pattern Description Field -->
+    <div class="form-row">
+      <div class="form-field w-full">
+        <div class="label-with-help">
+          <label for="questionPattern">
+            <i class="pi pi-chart-bar"></i> Pattern Description
+          </label>
+          <p-button
+            icon="pi pi-question-circle"
+            styleClass="p-button-rounded p-button-text p-button-sm help-button"
+            pTooltip="Used for analytics and scoring purposes, not shown to candidates"
+          ></p-button>
+        </div>
+        <span class="p-input-icon-right w-full">
+          <i
+            class="pi pi-info-circle"
+            pTooltip="Describe the logical pattern for scoring algorithm"
+            tooltipPosition="top"
+          ></i>
+          <input
+            id="questionPattern"
+            type="text"
+            pInputText
+            [(ngModel)]="pattern"
+            (ngModelChange)="onPatternChange($event)"
+            placeholder="e.g., Sequential increments by 1"
+            class="w-full"
+          />
+        </span>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <p-button
+        icon="pi pi-plus"
+        label="Advanced Options"
+        styleClass="p-button-outlined p-button-secondary"
+        (click)="toggleAdvancedOptions()"
+      ></p-button>
+    </div>
+
+    <!-- Advanced Options (initially hidden) -->
+    <div class="advanced-options" [class.visible]="showAdvancedOptions">
+      <h4><i class="pi pi-cog"></i> Advanced Settings</h4>
+
+      <div class="advanced-options-grid">
+        <div class="advanced-option-field">
+          <label class="option-label">Time Limit</label>
+          <div class="p-inputgroup w-full">
+            <input
+              pInputText
+              type="number"
+              min="15"
+              max="300"
+              [(ngModel)]="timeLimit"
+              (ngModelChange)="onTimeLimitChange($event)"
+              class="w-full"
+            />
+            <span class="p-inputgroup-addon">seconds</span>
+          </div>
+        </div>
+
+        <div class="advanced-option-field">
+          <label class="option-label">Score Weight</label>
+          <p-slider
+            [(ngModel)]="scoreWeight"
+            (onChange)="onScoreWeightChange($event.value ?? 0)"
+            [min]="1"
+            [max]="5"
+            [step]="1"
+            class="w-full"
+          ></p-slider>
+          <div class="weight-indicators">
+            <span>Low</span>
+            <span>High</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

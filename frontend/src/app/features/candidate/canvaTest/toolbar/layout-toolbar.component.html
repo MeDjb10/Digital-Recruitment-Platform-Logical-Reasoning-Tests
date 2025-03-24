@@ -1,0 +1,269 @@
+<div class="toolbar-container">
+  <div class="form-section-header toolbar-header">
+    <i class="pi pi-pencil"></i>
+    <h3>Layout Editor</h3>
+  </div>
+  <!-- Layout editor toolbar -->
+  <div class="editor-toolbar">
+    <div class="toolbar-divider"></div>
+
+    <!-- Combined Layout Types and Custom Templates Section -->
+    <div class="toolbar-section layout-section">
+      <span class="section-title"
+        ><i class="pi pi-th-large"></i> Layout Options</span
+      >
+
+      <!-- Predefined Layout Types -->
+      <div class="layout-subsection">
+        <h5 class="subsection-title">Predefined Layouts</h5>
+        <div class="button-group">
+          <button
+            class="toolbar-btn"
+            [class.active]="layoutType === 'grid'"
+            (click)="setLayoutType('grid')"
+          >
+            <i class="pi pi-th-large"></i> Grid
+          </button>
+          <button
+            class="toolbar-btn"
+            [class.active]="layoutType === 'row'"
+            (click)="setLayoutType('row')"
+          >
+            <i class="pi pi-bars"></i> Row
+          </button>
+          <button
+            class="toolbar-btn"
+            [class.active]="layoutType === 'rhombus'"
+            (click)="setLayoutType('rhombus')"
+          >
+            <i class="pi pi-stop"></i> Rhombus
+          </button>
+          <button
+            class="toolbar-btn"
+            [class.active]="layoutType === 'rhombus-large'"
+            (click)="setLayoutType('rhombus-large')"
+          >
+            <i class="pi pi-stop-circle"></i> Large Rhombus
+          </button>
+          <button
+            class="toolbar-btn"
+            [class.active]="layoutType === 'spiral'"
+            (click)="setLayoutType('spiral')"
+          >
+            <i class="pi pi-spinner"></i> Spiral
+          </button>
+          <button
+            class="toolbar-btn"
+            [class.active]="layoutType === 'custom'"
+            (click)="setLayoutType('custom')"
+          >
+            <i class="pi pi-pencil"></i> Custom
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom Templates -->
+      <div class="layout-subsection templates-subsection">
+        <h5 class="subsection-title">Saved Templates</h5>
+
+        <!-- When no templates exist -->
+        <div *ngIf="customTemplates.length === 0" class="no-templates">
+          <p>No custom templates saved</p>
+          <button
+            class="save-template-btn"
+            (click)="onOpenSaveTemplateDialog()"
+            [disabled]="dominoCount === 0"
+          >
+            <i class="pi pi-save"></i> Save Current Layout
+          </button>
+        </div>
+
+        <!-- When templates exist -->
+        <div *ngIf="customTemplates.length > 0" class="template-actions">
+          <div class="template-header">
+            <button
+              class="toolbar-btn save-template-btn"
+              (click)="onOpenSaveTemplateDialog()"
+              [disabled]="dominoCount === 0"
+            >
+              <i class="pi pi-save"></i> Save Current Layout
+            </button>
+          </div>
+
+          <div class="templates-container">
+            <div
+              *ngFor="let template of customTemplates"
+              class="template-item"
+            >
+              <button
+                class="toolbar-btn template-btn"
+                [title]="template.name"
+                (click)="onApplyTemplate(template.id)"
+              >
+                <i class="pi pi-copy"></i> {{ template.name }}
+              </button>
+              <button
+                class="template-delete-btn"
+                title="Delete template"
+                (click)="onDeleteTemplate(template.id)"
+              >
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar-divider"></div>
+    <!-- Combined Grid Settings & Options Section -->
+    <div class="toolbar-section grid-section">
+      <span class="section-title"
+        ><i class="pi pi-th-large"></i> Grid Controls</span
+      >
+
+      <div class="grid-settings-container">
+        <!-- Grid dimensions -->
+        <div class="grid-dimensions" [class.active]="isGridBasedLayout">
+          <h5 class="subsection-title">Grid Size</h5>
+          <div class="dimensions-controls">
+            <div class="grid-control">
+              <label for="gridRows">Rows:</label>
+              <input
+                type="number"
+                id="gridRows"
+                [(ngModel)]="gridRows"
+                min="1"
+                max="10"
+                (change)="onGridDimensionsChange()"
+                class="p-inputtext p-component"
+              />
+            </div>
+            <div class="grid-control">
+              <label for="gridCols">Columns:</label>
+              <input
+                type="number"
+                id="gridCols"
+                [(ngModel)]="gridCols"
+                min="1"
+                max="10"
+                (change)="onGridDimensionsChange()"
+                class="p-inputtext p-component"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid display options -->
+        <div class="grid-display-options">
+          <h5 class="subsection-title">Display Options</h5>
+          <div class="grid-options">
+            <div class="option-item">
+              <p-checkbox
+                [(ngModel)]="snapToGrid"
+                [binary]="true"
+                inputId="snapGrid"
+                (onChange)="onDisplayOptionsChange()"
+              ></p-checkbox>
+              <label for="snapGrid" class="p-checkbox-label"
+                >Snap to Grid</label
+              >
+            </div>
+            <div class="option-item">
+              <p-checkbox
+                [(ngModel)]="showGrid"
+                [binary]="true"
+                inputId="showGrid"
+                (onChange)="onDisplayOptionsChange()"
+              ></p-checkbox>
+              <label for="showGrid" class="p-checkbox-label">Show Grid</label>
+            </div>
+            <div class="option-item">
+              <label for="gridSize">Cell Size:</label>
+              <input
+                type="number"
+                id="gridSize"
+                [(ngModel)]="gridSize"
+                min="10"
+                max="50"
+                step="5"
+                (change)="onDisplayOptionsChange()"
+                class="p-inputtext p-component"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apply Grid Button - Now at the bottom of the combined section -->
+      <button
+        type="button"
+        class="grid-apply-btn"
+        (click)="onApplyGrid()"
+        [disabled]="!isGridBasedLayout"
+      >
+        <i class="pi pi-th-large"></i> Apply Grid to Dominos
+      </button>
+    </div>
+    <div class="toolbar-divider"></div>
+    <!-- Add arrow-specific action button to action section -->
+    <div class="toolbar-section action-section">
+      <span class="section-title">Actions</span>
+      <div class="action-buttons">
+        <button
+          class="toolbar-btn"
+          title="Add New Domino"
+          (click)="onAddDomino()"
+          *ngIf="creationMode === 'domino'"
+        >
+          <i class="pi pi-plus"></i> Add Domino
+        </button>
+        <button
+          class="toolbar-btn"
+          title="Add New Arrow"
+          (click)="onAddArrow()"
+          *ngIf="creationMode === 'arrow'"
+        >
+          <i class="pi pi-plus"></i> Add Arrow
+        </button>
+        <button
+          class="toolbar-btn"
+          title="Clear Canvas"
+          (click)="onClearCanvas()"
+        >
+          <i class="pi pi-trash"></i> Clear
+        </button>
+        <button
+          class="toolbar-btn"
+          *ngIf="layoutType !== 'custom'"
+          title="Auto-Generate Layout"
+          (click)="onGenerateAutoLayout()"
+        >
+          <i class="pi pi-sync"></i> Auto-Generate
+        </button>
+        <button
+          class="toolbar-btn"
+          title="Preview Question"
+          (click)="onGeneratePreview()"
+        >
+          <i class="pi pi-eye"></i> Preview
+        </button>
+        <label class="import-btn">
+          <i class="pi pi-upload"></i> Import JSON
+          <input
+            type="file"
+            accept=".json"
+            (change)="onImportJson($event)"
+            style="display: none"
+          />
+        </label>
+        <button
+          class="toolbar-btn"
+          title="Export Layout as JSON"
+          (click)="onExportJson()"
+        >
+          <i class="pi pi-download"></i> Export JSON
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
