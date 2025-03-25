@@ -10,6 +10,7 @@ const {
   validateUserStatus,
   validateTestAuthRequest,
   validateTestAuthStatusUpdate,
+  validateBulkTestAuthStatusUpdate,
 } = require("../utils/validation.util");
 const verifyServiceToken = require("../middleware/service-auth.middleware");
 
@@ -464,3 +465,43 @@ router.put(
 
 
 module.exports = router;
+
+
+/**
+ * @swagger
+ * /api/users/test-authorization/bulk:
+ *   put:
+ *     summary: Bulk update test authorization statuses
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userIds
+ *               - status
+ *             properties:
+ *               userIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               status:
+ *                 type: string
+ *                 enum: [approved, rejected]
+ *     responses:
+ *       200:
+ *         description: Test authorization statuses updated successfully
+ *       400:
+ *         description: Invalid input
+ *       403:
+ *         description: Forbidden - insufficient permissions
+ */
+router.put(
+  "/test-authorization/bulk",
+  verifyToken(["admin", "moderator", "psychologist"]),
+  validateBulkTestAuthStatusUpdate,
+  userController.bulkUpdateTestAuthorizationStatus
+);

@@ -1,5 +1,6 @@
 const User = require("../models/user.model");
 const { asyncHandler, ErrorResponse } = require("../utils/error-handler.util");
+const emailUtil = require("../utils/email.util");
 const mongoose = require("mongoose");
 
 /**
@@ -380,12 +381,16 @@ exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
     { new: true, runValidators: true }
   ).select("-password");
   
+  // Send confirmation email
+  await emailUtil.sendRequestSubmissionEmail(updatedUser);
+  
   res.status(200).json({
     success: true,
     message: "Test authorization request submitted and profile updated successfully",
     user: updatedUser
   });
 });
+
 
 /**
  * @desc    Get all test authorization requests with pagination and filtering
@@ -462,9 +467,72 @@ exports.updateTestAuthorizationStatus = asyncHandler(async (req, res) => {
     { new: true }
   ).select("-password");
 
+  // Send status change email
+  await emailUtil.sendStatusChangeEmail(updatedUser, status);
+
   res.status(200).json({
     success: true,
     message: `Test authorization request ${status}`,
     user: updatedUser,
+  });
+});
+
+
+/**
+ * @desc    Bulk update test authorization statuses
+ * @route   PUT /api/users/test-authorization/bulk
+ * @access  Private (Admin, Moderator, Psychologist)
+ */
+exports.bulkUpdateTestAuthorizationStatus = asyncHandler(async (req, res) => {
+  const { userIds, status } = req.body;
+  
+  // Validate input
+  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    throw new ErrorResponse("User IDs array is required", 400);
+  }
+  
+  if (!["approved", "rejected"].includes(status)) {
+    throw new ErrorResponse("Invalid status value", 400);
+  }
+  
+  // Validate all user IDs
+  for (const userId of userIds) {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new ErrorResponse(`Invalid user ID format: ${userId}`, 400);
+    }
+  }
+  
+  // Update all users
+  const updateResult = await User.updateMany(
+    { 
+      _id: { $in: userIds },
+      testAuthorizationStatus: { $ne: "not_submitted" } // Only update users who have submitted a request
+    },
+    { 
+      testAuthorizationStatus: status,
+      testAuthorizationDate: new Date(),
+      authorizedBy: req.userId
+    }
+  );
+  
+  // Find the updated users to send emails
+  const updatedUsers = await User.find({
+    _id: { $in: userIds },
+    testAuthorizationStatus: status
+  });
+  
+  // Send emails to all updated users
+  const emailPromises = updatedUsers.map(user => 
+    emailUtil.sendStatusChangeEmail(user, status)
+  );
+  
+  // Wait for all emails to be sent
+  await Promise.allSettled(emailPromises);
+  
+  res.status(200).json({
+    success: true,
+    message: `Bulk updated ${updateResult.modifiedCount} test authorization requests to ${status}`,
+    updatedCount: updateResult.modifiedCount,
+    totalRequested: userIds.length
   });
 });
