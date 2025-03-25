@@ -23,7 +23,8 @@ const verifyToken = (req, res, next) => {
 
     // Add user info to request
     req.user = {
-      id: decoded.userId,
+      id: decoded.userId || decoded.id || decoded.sub || decoded._id,
+
       email: decoded.email,
       role: decoded.role,
     };
