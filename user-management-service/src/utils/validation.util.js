@@ -153,3 +153,30 @@ exports.validateUserStatus = (req, res, next) => {
 
   next();
 };
+
+exports.validateTestAuthRequest = (req, res, next) => {
+  const { jobPosition, company } = req.body;
+
+  if (!jobPosition || !company) {
+    return res.status(400).json({
+      success: false,
+      message: "Job position and company are required fields",
+    });
+  }
+
+  next();
+};
+
+// Validate test authorization status update
+exports.validateTestAuthStatusUpdate = (req, res, next) => {
+  const { status } = req.body;
+
+  if (!status || !["approved", "rejected"].includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: "Status must be either 'approved' or 'rejected'",
+    });
+  }
+
+  next();
+};

@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-   
-   
   firstName: {
     type: String,
     required: [true, "First name is required"],
@@ -56,6 +54,25 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["active", "inactive", "suspended"],
     default: "active",
+  },
+  testAuthorizationStatus: {
+    type: String,
+    enum: ["pending", "approved", "rejected", "not_submitted"],
+    default: "not_submitted",
+  },
+  testAuthorizationDate: {
+    type: Date,
+  },
+  authorizedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+  testEligibilityInfo: {
+    jobPosition: String,
+    company: String,
+    department: String,
+    additionalInfo: String,
+    submissionDate: Date,
   },
   createdAt: {
     type: Date,

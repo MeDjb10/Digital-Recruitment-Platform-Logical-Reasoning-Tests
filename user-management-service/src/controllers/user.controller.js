@@ -312,3 +312,159 @@ exports.getUserRole = asyncHandler(async (req, res) => {
     role: user.role
   });
 });
+
+/**
+ * @desc    Submit test authorization request
+ * @route   POST /api/users/test-authorization
+ * @access  Private (Candidates only)
+ */
+exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
+  // Check if user is a candidate
+  const user = await User.findById(req.userId);
+  
+  if (!user) {
+    throw new ErrorResponse("User not found", 404);
+  }
+  
+  if (user.role !== "candidate") {
+    throw new ErrorResponse("Only candidates can submit test authorization requests", 403);
+  }
+  
+  const { 
+    // Test authorization data
+    jobPosition, 
+    company, 
+    department, 
+    additionalInfo,
+    
+    // User profile data
+    firstName,
+    lastName,
+    dateOfBirth,
+    gender,
+    currentPosition,
+    desiredPosition,
+    educationLevel
+  } = req.body;
+  
+  // Validate required fields for test authorization
+  if (!jobPosition || !company) {
+    throw new ErrorResponse("Job position and company are required fields", 400);
+  }
+  
+  // Build update object including both test authorization and profile data
+  const updateData = {
+    testAuthorizationStatus: "pending",
+    testEligibilityInfo: {
+      jobPosition,
+      company,
+      department,
+      additionalInfo,
+      submissionDate: new Date()
+    }
+  };
+  
+  // Add profile data if provided
+  if (firstName) updateData.firstName = firstName;
+  if (lastName) updateData.lastName = lastName;
+  if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
+  if (gender) updateData.gender = gender;
+  if (currentPosition) updateData.currentPosition = currentPosition;
+  if (desiredPosition) updateData.desiredPosition = desiredPosition;
+  if (educationLevel) updateData.educationLevel = educationLevel;
+  
+  // Update user with both test authorization request data and profile data
+  const updatedUser = await User.findByIdAndUpdate(
+    req.userId,
+    { $set: updateData },
+    { new: true, runValidators: true }
+  ).select("-password");
+  
+  res.status(200).json({
+    success: true,
+    message: "Test authorization request submitted and profile updated successfully",
+    user: updatedUser
+  });
+});
+
+/**
+ * @desc    Get all test authorization requests with pagination and filtering
+ * @route   GET /api/users/test-authorization-requests
+ * @access  Private (Admin, Moderator, Psychologist)
+ */
+exports.getTestAuthorizationRequests = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  // Build filters
+  const filter = { testAuthorizationStatus: req.query.status || "pending" };
+
+  if (req.query.search) {
+    filter.$or = [
+      { firstName: { $regex: req.query.search, $options: "i" } },
+      { lastName: { $regex: req.query.search, $options: "i" } },
+      { email: { $regex: req.query.search, $options: "i" } },
+      { "testEligibilityInfo.jobPosition": { $regex: req.query.search, $options: "i" } },
+      { "testEligibilityInfo.company": { $regex: req.query.search, $options: "i" } },
+    ];
+  }
+
+  // Execute query with pagination
+  const requests = await User.find(filter, { password: 0 })
+    .sort({ "testEligibilityInfo.submissionDate": -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalRequests = await User.countDocuments(filter);
+
+  res.status(200).json({
+    success: true,
+    requests,
+    pagination: {
+      total: totalRequests,
+      page,
+      pages: Math.ceil(totalRequests / limit),
+      limit,
+    },
+  });
+});
+
+/**
+ * @desc    Update test authorization status (approve/reject)
+ * @route   PUT /api/users/:userId/test-authorization
+ * @access  Private (Admin, Moderator, Psychologist)
+ */
+exports.updateTestAuthorizationStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+
+  if (!["approved", "rejected"].includes(status)) {
+    throw new ErrorResponse("Invalid status value", 400);
+  }
+
+  const user = await User.findById(req.params.userId);
+  
+  if (!user) {
+    throw new ErrorResponse("User not found", 404);
+  }
+  
+  if (user.testAuthorizationStatus === "not_submitted") {
+    throw new ErrorResponse("This user has not submitted a test authorization request", 400);
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    req.params.userId,
+    { 
+      testAuthorizationStatus: status,
+      testAuthorizationDate: new Date(),
+      authorizedBy: req.userId
+    },
+    { new: true }
+  ).select("-password");
+
+  res.status(200).json({
+    success: true,
+    message: `Test authorization request ${status}`,
+    user: updatedUser,
+  });
+});
