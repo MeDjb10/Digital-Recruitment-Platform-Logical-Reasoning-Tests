@@ -68,6 +68,7 @@ app.get("/", (req, res) => {
       health: "/health",
       auth: "/api/auth/*",
       users: "/api/users/*",
+      tests: "/api/tests/*", // Add this line
     },
   });
 });
@@ -136,6 +137,40 @@ app.use(
   })
 );
 
+// Add this after your existing proxy middleware configurations (around line 92):
+
+// Add proxy middleware for Test Service
+app.use(
+  "/api/tests",
+  proxy("http://localhost:3002", {
+    timeout: 5000,
+    proxyReqPathResolver: (req) => {
+      console.log(`Proxying to test service: ${req.originalUrl}`);
+      return req.originalUrl.replace(/^\/api\/tests/, '/api/v1');
+    },
+    proxyErrorHandler: (err, res, next) => {
+      console.error("Test proxy error:", err.message);
+      if (err.code === "ECONNREFUSED") {
+        return res.status(503).json({
+          status: "error",
+          message: "Test service is unavailable",
+        });
+      }
+      if (err.code === "ETIMEDOUT") {
+        return res.status(504).json({
+          status: "error",
+          message: "Test service timed out",
+        });
+      }
+      res.status(500).json({
+        status: "error",
+        message: "Error connecting to test service",
+        error: process.env.NODE_ENV === "development" ? err.message : undefined,
+      });
+    },
+  })
+);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error("Gateway error:", err);
@@ -147,12 +182,14 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
+// Update this section (around line 112):
 app.listen(PORT, () => {
   console.log(`⚡️ API Gateway running on port ${PORT}`);
   console.log("Available routes:");
   console.log(`🔍 Health: http://localhost:${PORT}/health`);
   console.log(`🔐 Auth Service: http://localhost:${PORT}/api/auth/*`);
   console.log(`👤 User Service: http://localhost:${PORT}/api/users/*`);
+  console.log(`📝 Test Service: http://localhost:${PORT}/api/tests/*`);  // Add this line
 });
 
 // Handle unhandled promise rejections
