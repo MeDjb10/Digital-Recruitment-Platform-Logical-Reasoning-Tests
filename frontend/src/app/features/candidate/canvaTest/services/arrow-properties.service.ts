@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ArrowPosition } from '../../DominoTest/models/domino.model';
+import { ArrowPosition } from '../../../../core/models/domino.model';
 
 
 @Injectable({

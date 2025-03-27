@@ -322,6 +322,11 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  getCurrentUserId(): string {
+    const currentUser = this.getCurrentUser();
+    return currentUser ? currentUser.id : 'guest-user';
+  }
+
   // Store tokens in local/session storage
   private storeTokens(
     accessToken: string,

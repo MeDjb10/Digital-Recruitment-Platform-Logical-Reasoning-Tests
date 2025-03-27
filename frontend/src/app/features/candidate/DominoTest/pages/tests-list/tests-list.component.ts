@@ -24,7 +24,7 @@ import { DominoTestService } from '../../services/domino-test.service';
         <div class="spinner"></div>
         <p>Loading available tests...</p>
       </div>
-     
+
       <div class="tests-list" *ngIf="!loading">
         <div class="test-card" *ngFor="let test of availableTests">
           <div class="test-info">
@@ -43,7 +43,9 @@ import { DominoTestService } from '../../services/domino-test.service';
           </div>
 
           <div class="test-actions">
-            <a [routerLink]="['/tests', test.id]" class="btn btn-primary"
+            <a
+              [routerLink]="['/tests', test.id || test._id]"
+              class="btn btn-primary"
               >Start Test</a
             >
           </div>
@@ -258,6 +260,7 @@ export class TestsListComponent implements OnInit {
 
     this.dominoTestService.getAvailableTests().subscribe({
       next: (tests) => {
+        console.log('Available tests loaded:', tests);
         this.availableTests = tests;
         this.loading = false;
         this.cdr.markForCheck();
@@ -265,6 +268,7 @@ export class TestsListComponent implements OnInit {
       error: (error) => {
         console.error('Error loading tests:', error);
         this.errorMessage =
+          error.message ||
           'Unable to load available tests. Please try again later.';
         this.loading = false;
         this.cdr.markForCheck();

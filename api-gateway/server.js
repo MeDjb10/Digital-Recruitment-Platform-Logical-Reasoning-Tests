@@ -139,34 +139,70 @@ app.use(
 
 // Add this after your existing proxy middleware configurations (around line 92):
 
-// Add proxy middleware for Test Service
+// Proxy for test-related routes
 app.use(
   "/api/tests",
   proxy("http://localhost:3002", {
     timeout: 5000,
     proxyReqPathResolver: (req) => {
-      console.log(`Proxying to test service: ${req.originalUrl}`);
-      return req.originalUrl.replace(/^\/api\/tests/, '/api/v1');
+      const newPath = req.originalUrl.replace(/^\/api\/tests/, '/api/v1/tests');
+      console.log(`Proxying to test service: ${req.originalUrl} -> ${newPath}`);
+      return newPath;
     },
     proxyErrorHandler: (err, res, next) => {
       console.error("Test proxy error:", err.message);
-      if (err.code === "ECONNREFUSED") {
-        return res.status(503).json({
-          status: "error",
-          message: "Test service is unavailable",
-        });
-      }
-      if (err.code === "ETIMEDOUT") {
-        return res.status(504).json({
-          status: "error",
-          message: "Test service timed out",
-        });
-      }
-      res.status(500).json({
-        status: "error",
-        message: "Error connecting to test service",
-        error: process.env.NODE_ENV === "development" ? err.message : undefined,
-      });
+      // Error handling code...
+    },
+  })
+);
+
+// Proxy for question-related routes
+app.use(
+  "/api/questions",
+  proxy("http://localhost:3002", {
+    timeout: 5000,
+    proxyReqPathResolver: (req) => {
+      const newPath = req.originalUrl.replace(/^\/api\/questions/, '/api/v1/questions');
+      console.log(`Proxying to test service (questions): ${req.originalUrl} -> ${newPath}`);
+      return newPath;
+    },
+    proxyErrorHandler: (err, res, next) => {
+      console.error("Question proxy error:", err.message);
+      // Error handling code...
+    },
+  })
+);
+
+// Proxy for attempt-related routes
+app.use(
+  "/api/attempts",
+  proxy("http://localhost:3002", {
+    timeout: 5000,
+    proxyReqPathResolver: (req) => {
+      const newPath = req.originalUrl.replace(/^\/api\/attempts/, '/api/v1/attempts');
+      console.log(`Proxying to test service (attempts): ${req.originalUrl} -> ${newPath}`);
+      return newPath;
+    },
+    proxyErrorHandler: (err, res, next) => {
+      console.error("Attempt proxy error:", err.message);
+      // Error handling code...
+    },
+  })
+);
+
+// Proxy for analytics-related routes 
+app.use(
+  "/api/analytics",
+  proxy("http://localhost:3002", {
+    timeout: 5000,
+    proxyReqPathResolver: (req) => {
+      const newPath = req.originalUrl.replace(/^\/api\/analytics/, '/api/v1/analytics');
+      console.log(`Proxying to test service (analytics): ${req.originalUrl} -> ${newPath}`);
+      return newPath;
+    },
+    proxyErrorHandler: (err, res, next) => {
+      console.error("Analytics proxy error:", err.message);
+      // Error handling code...
     },
   })
 );

@@ -8,7 +8,8 @@ import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { Test } from '../../../../../core/services/test-management.service';
+import { Test } from '../../../../../core/models/test.model';
+
 
 @Component({
   selector: 'app-tests-list-rl',
@@ -107,7 +108,7 @@ import { Test } from '../../../../../core/services/test-management.service';
                     icon="pi pi-pencil"
                     [routerLink]="[
                       '/dashboard/RaisonnementLogique/Tests/edit',
-                      test.id
+                      test.id || test._id
                     ]"
                     class="p-button-rounded p-button-text"
                     title="Edit"
@@ -314,7 +315,7 @@ export class TestsListRLComponent implements OnInit {
       (tests) => {
         // Filter only logical reasoning tests if needed
         this.tests = tests.filter(
-          (test) => test.category === 'logical-reasoning'
+          (test) => test.category === 'logical'
         );
         this.loading = false;
       },
@@ -334,7 +335,7 @@ export class TestsListRLComponent implements OnInit {
     this.confirmationService.confirm({
       message: `Are you sure you want to delete the test "${test.name}"? This will permanently remove all associated questions.`,
       accept: () => {
-        this.deleteTest(test.id);
+        this.deleteTest(test._id);
       },
     });
   }
@@ -342,7 +343,7 @@ export class TestsListRLComponent implements OnInit {
   deleteTest(testId: string): void {
     this.testService.deleteTest(testId).subscribe(
       () => {
-        this.tests = this.tests.filter((t) => t.id !== testId);
+        this.tests = this.tests.filter((t) => t._id !== testId);
         this.messageService.add({
           severity: 'success',
           summary: 'Success',

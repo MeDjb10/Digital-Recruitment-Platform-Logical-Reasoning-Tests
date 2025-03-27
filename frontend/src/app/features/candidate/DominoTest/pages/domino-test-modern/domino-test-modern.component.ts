@@ -148,77 +148,58 @@ export class DominoTestModernComponent
 
   loadTestData(testId: string): void {
     console.log('Loading test data for ID:', testId);
-    // Check if we have any saved progress
+
+    // Check for saved progress first
     const savedProgress = this.dominoTestService.loadProgress(testId);
+    if (savedProgress) {
+      console.log('Found saved progress, loading it');
+      this.handleSavedProgress(savedProgress);
+      return;
+    }
 
-    // if (savedProgress) {
-    //   this.handleSavedProgress(savedProgress);
-    //   return;
-    // }
-
-    console.log('testIddddd', testId);
-
-    // Otherwise load fresh test data
+    // Load fresh data from backend
     this.dominoTestService.getTest(testId).subscribe({
       next: (testData) => {
-        console.log('testData', testData);
+        console.log('Test data loaded:', testData);
 
-        if (testData && testData.questions) {
-          // Additional debugging for arrows in questions
-          testData.questions.forEach((q: any, index: number) => {
-            console.log(`Question ${index + 1}:`);
-            console.log('- Arrows:', q.arrows ? q.arrows.length : 'undefined');
-            if (q.arrows && q.arrows.length > 0) {
-              console.log('- First arrow data:', JSON.stringify(q.arrows[0]));
-            } else {
-              // If arrows array is undefined, create an empty array
-              if (q.arrows === undefined) {
-                console.log('- Initializing empty arrows array for question');
-                q.arrows = [];
-              }
-            }
-          });
-
-          this.testName = testData.name;
-          this.testDuration = testData.duration;
-          this.timeLeft = testData.duration * 60;
+        if (testData) {
+          // Store test data
+          this.testName = testData.name || 'Logical Reasoning Test';
+          this.testDuration = testData.duration || 30;
+          this.timeLeft = this.testDuration * 60;
           this.updateFormattedTime();
 
-          // Process questions
+          // Process questions - handle both _id and id formats
           this.questions = testData.questions.map((q: any) => ({
-            id: q.id,
-            title: q.title || `Question ${q.id}`,
+            id: q._id || q.id, // Support both formats
+            title: q.title || '',
             instruction:
               q.instruction || 'Find the missing values in the domino pattern',
-            dominos: q.dominos,
-            arrows: q.arrows || [], // Ensure arrows is never undefined
-            gridLayout: q.gridLayout,
-            answered: false,
-            flaggedForReview: false,
-            visited: false,
+            dominos: q.dominos || [],
+            arrows: q.arrows || [],
+            gridLayout: q.gridLayout || { rows: 3, cols: 3 },
+            correctAnswer: q.correctAnswer,
+            answered: q.answered || false,
+            flaggedForReview: q.flaggedForReview || false,
+            visited: q.visited || false,
             pattern: q.pattern || '',
+            layoutType: q.layoutType || 'grid',
+            userAnswer: q.userAnswer,
           }));
 
-          // Debug the arrows from the first question
-          if (this.questions.length > 0) {
-            const firstQuestion = this.questions[0];
-            console.log('First question arrows:', firstQuestion.arrows);
-            console.log(
-              'First question arrows raw:',
-              JSON.stringify(firstQuestion.arrows)
-            );
-          }
-
-          // Set the first question as visited
+          // Set first question as visited
           if (this.questions.length > 0) {
             this.questions[0].visited = true;
+            this.dominoTestService.trackQuestionVisit(this.questions[0].id);
           }
 
-          // Start the timer
+          // Start timer and calculate progress
           this.startTimer();
+          this.recalculateProgress();
           this.cdr.markForCheck();
         } else {
           this.loadingError = 'Failed to load test data.';
+          this.cdr.markForCheck();
         }
       },
       error: (error) => {
@@ -228,7 +209,6 @@ export class DominoTestModernComponent
       },
     });
   }
-
   handleSavedProgress(savedProgress: any): void {
     // Restore test state
     this.testName = savedProgress.testName;
@@ -377,15 +357,23 @@ export class DominoTestModernComponent
   }
 
   toggleFlag(): void {
-    if (this.currentQuestion) {
-      this.currentQuestion.flaggedForReview =
-        !this.currentQuestion.flaggedForReview;
-      this.recalculateProgress();
-      this.cdr.markForCheck();
+    if (!this.currentQuestion) return;
 
-      // Auto-save progress
-      this.saveProgress();
-    }
+    this.currentQuestion.flaggedForReview =
+      !this.currentQuestion.flaggedForReview;
+
+    this.dominoTestService
+      .toggleQuestionFlag(
+        this.currentQuestion.id,
+        this.currentQuestion.flaggedForReview
+      )
+      .subscribe({
+        error: (err) => console.error('Error toggling flag:', err),
+      });
+
+    this.recalculateProgress();
+    this.saveProgress();
+    this.cdr.markForCheck();
   }
 
   dismissTooltip(): void {
@@ -402,36 +390,43 @@ export class DominoTestModernComponent
   onDominoChanged(change: DominoChange): void {
     if (!this.currentQuestion) return;
 
-    // Find the domino in the current question
     const dominoIndex = this.currentQuestion.dominos.findIndex(
       (d) => d.id === change.id
     );
 
     if (dominoIndex !== -1) {
       // Update the domino values
-      this.currentQuestion.dominos[dominoIndex] = {
-        ...this.currentQuestion.dominos[dominoIndex],
-        topValue: change.topValue,
-        bottomValue: change.bottomValue,
-      };
+      this.currentQuestion.dominos[dominoIndex].topValue = change.topValue;
+      this.currentQuestion.dominos[dominoIndex].bottomValue =
+        change.bottomValue;
 
-      // Store the user's answer
-      this.currentQuestion.userAnswer = {
+      // Set answer for the current question
+      this.currentQuestion.answered = true;
+
+      // Create the answer in the correct format
+      const dominoAnswer = {
         dominoId: change.id,
         topValue: change.topValue,
         bottomValue: change.bottomValue,
       };
 
-      // Mark as answered if at least one value is set
-      this.currentQuestion.answered =
-        change.topValue !== null || change.bottomValue !== null;
+      // Store the answer in the question object
+      this.currentQuestion.userAnswer = dominoAnswer;
 
-      // Update progress count
+      console.log('Submitting domino answer:', dominoAnswer);
+
+      // Submit the answer to backend
+      this.dominoTestService
+        .submitAnswer(this.currentQuestion.id, dominoAnswer)
+        .subscribe({
+          next: (response) =>
+            console.log('Answer submitted successfully:', response),
+          error: (err) => console.error('Error submitting answer:', err),
+        });
+
       this.recalculateProgress();
+      this.saveProgress(); // Save progress after answering
       this.cdr.markForCheck();
-
-      // Auto-save progress
-      this.saveProgress();
     }
   }
 
@@ -469,18 +464,16 @@ export class DominoTestModernComponent
   }
 
   // Update the finishTest method
+  // Update the finishTest method to correctly handle the score
+  // Update the finishTest method to use correct navigation
   finishTest(autoSubmit: boolean = false): void {
-    // Prevent double submission
     if (this.isSubmittingTest) return;
 
-    // If not all questions are answered, show confirmation
     const unansweredCount = this.questions.length - this.answeredCount;
     if (!autoSubmit && unansweredCount > 0) {
       if (
         !confirm(
-          `You have ${unansweredCount} unanswered ${
-            unansweredCount === 1 ? 'question' : 'questions'
-          }. Are you sure you want to finish the test?`
+          `You have ${unansweredCount} unanswered question(s). Are you sure you want to submit your test?`
         )
       ) {
         return;
@@ -489,37 +482,41 @@ export class DominoTestModernComponent
 
     this.isSubmittingTest = true;
 
-    // Prepare answers for submission
-    const answers = this.questions.map((q) => ({
-      id: q.id,
-      userAnswer: q.userAnswer || null,
-    }));
-
-    // Submit the test
-    this.dominoTestService.submitTest(this.testId, answers).subscribe({
+    this.dominoTestService.submitTest(this.testId).subscribe({
       next: (result) => {
+        console.log('Test submitted successfully:', result);
         this.isTestComplete = true;
         this.isSubmittingTest = false;
 
-        // Navigate to results page or show completion message
-        if (['d70', 'd70-enhanced', 'd200'].includes(this.testId)) {
-          // For mock tests with results page
-          this.router.navigate(['/tests', this.testId, 'results']);
-        } else {
-          // For custom tests, show result and navigate to tests list
-          const score = result.score !== undefined ? result.score : 'N/A';
-          const correct =
-            result.correctAnswers !== undefined ? result.correctAnswers : 'N/A';
-          const total =
-            result.totalQuestions !== undefined
-              ? result.totalQuestions
-              : this.questions.length;
+        // Extract score from the correct location in the response
+        let attemptId = 'unknown';
+        let score = 0;
 
-          alert(
-            `Test completed successfully!\n\nYour score: ${score}%\nCorrect answers: ${correct}/${total}\n\nThank you for completing the test.`
-          );
-          this.router.navigate(['/tests']);
+        // Handle different response formats
+        if (result.data) {
+          // Standard API response format
+          attemptId = result.data._id;
+          score = result.data.percentageScore;
+        } else {
+          // Direct object format
+          attemptId = result._id;
+          score = result.percentageScore;
         }
+
+        console.log(
+          `Test completed, score: ${score}%, attemptId: ${attemptId}`
+        );
+
+        // IMPORTANT: Fix navigation path to use a route, not an API path
+        // Make sure you have this route defined in your app's routing module
+        this.router.navigate(['/candidate/tests/complete'], {
+          queryParams: {
+            attemptId: attemptId,
+            score: score,
+          },
+        });
+
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Error submitting test:', error);

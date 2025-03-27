@@ -14,45 +14,24 @@ import { TooltipModule } from "primeng/tooltip";
 import { TestManagementService } from "../../../../core/services/test-management.service";
 import { InteractiveArrowComponent } from "../../DominoTest/components/interactive-arrow/interactive-arrow.component";
 import { InteractiveDominoComponent } from "../../DominoTest/components/interactive-domino/interactive-domino.component";
-import { DominoPosition, ArrowPosition } from "../../DominoTest/models/domino.model";
+
 import { BuilderHeaderComponent } from "../builder-header/builder-header.component";
-import { EditorLayoutComponent, CorrectAnswer } from "../editor-layout/editor-layout.component";
+import { EditorLayoutComponent } from "../editor-layout/editor-layout.component";
 import { QuestionFormComponent } from "../question-form/question-form.component";
 import { ArrowPropertiesService } from "../services/arrow-properties.service";
 import { DominoPropertiesService } from "../services/domino-proprties.service";
 import { StatusBarComponent } from "../status-bar/status-bar.component";
 import { LayoutToolbarComponent } from "../toolbar/layout-toolbar.component";
+import { DominoQuestion } from "../../../../core/models/question.model";
+import { ArrowPosition, DominoPosition } from "../../../../core/models/domino.model";
 
 // Define question interface for better type safety
-export interface DominoQuestion {
-  id?: string;
-  testId?: string;
-  title?: string;
-  instruction: string;
-  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
-  pattern: string;
-  dominos: DominoPosition[];
-  arrows?: ArrowPosition[];
-  gridLayout?: {
-    rows: number;
-    cols: number;
-    width?: number;
-    height?: number;
-  };
-  correctAnswer?: {
-    dominoId: number;
-    topValue: number | null;
-    bottomValue: number | null;
-  };
-  layoutType:
-    | 'row'
-    | 'grid'
-    | 'rhombus'
-    | 'custom'
-    | 'rhombus-large'
-    | 'spiral';
-}
 
+interface CorrectAnswer {
+  dominoId: number;
+  topValue: number | null;
+  bottomValue: number | null;
+}
 interface CustomTemplate {
   id: string;
   name: string;
@@ -90,14 +69,14 @@ export class DominoLayoutBuilderComponent
 {
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLDivElement>;
 
-  // Component inputs
+  // Update the input type to accept backend model
   @Input() initialQuestion: DominoQuestion | null = null;
   @Input() testId: string | null = null;
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() returnUrl: string = '/admin/tests';
 
-  // Component outputs
-  @Output() save = new EventEmitter<DominoQuestion>();
+  // Update the output type to emit backend model
+  @Output() save = new EventEmitter<Partial<DominoQuestion>>();
   @Output() cancel = new EventEmitter<void>();
 
   // Canvas properties
@@ -254,11 +233,14 @@ export class DominoLayoutBuilderComponent
   /**
    * Initialize the builder from an existing question
    */
+  /**
+   * Initialize the builder from an existing question
+   */
   initializeFromQuestion(): void {
     if (!this.initialQuestion) return;
 
     // Set basic properties
-    this.questionId = this.initialQuestion.id || '';
+    this.questionId = this.initialQuestion._id || '';
     this.questionTitle = this.initialQuestion.title || '';
     this.questionInstruction = this.initialQuestion.instruction || '';
     this.questionDifficulty = this.initialQuestion.difficulty || 'medium';
@@ -313,9 +295,19 @@ export class DominoLayoutBuilderComponent
     this.testManagementService.getQuestionById(questionId).subscribe({
       next: (question) => {
         if (question) {
-          this.initialQuestion = question;
-          this.testId = question.testId || null;
-          this.initializeFromQuestion();
+          // Check if it's a DominoQuestion type
+          if (question.questionType === 'DominoQuestion') {
+            // Cast as DominoQuestion to access properties
+            this.initialQuestion = question as DominoQuestion;
+            this.testId = question.testId || null;
+            this.initializeFromQuestion();
+          } else {
+            // Not a domino question
+            this.showNotification(
+              'This question is not a domino question',
+              'error'
+            );
+          }
         }
       },
       error: (error) => {
@@ -871,102 +863,116 @@ export class DominoLayoutBuilderComponent
     return this.validationErrors.length === 0;
   }
 
-  /**
-   * Save the current question
-   */
+  // Update the saveQuestion method
   saveQuestion(): void {
-    // Validate the question first
     if (!this.validateQuestion()) {
-      alert(
-        `Please fix the following issues before saving:\n${this.validationErrors.join(
-          '\n'
-        )}`
-      );
       return;
     }
 
     this.isSaving = true;
+    console.log('Saving question to backend...');
 
-    // Create question object
-    const question: DominoQuestion = {
-      id: this.questionId || undefined,
-      testId: this.testId || undefined,
+    // Prepare the question data for saving
+    const questionData: Partial<DominoQuestion> = {
       title: this.questionTitle,
       instruction: this.questionInstruction,
       difficulty: this.questionDifficulty,
+      questionType: 'DominoQuestion',
       pattern: this.questionPattern,
-      dominos: this.dominos.map((domino) => ({ ...domino })),
-      arrows: this.arrows ? this.arrows.map((arrow) => ({ ...arrow })) : [],
       layoutType: this.layoutType,
-      gridLayout: {
-        rows: this.gridRows,
-        cols: this.gridCols,
-        width: this.canvasWidth,
-        height: this.canvasHeight,
-      },
+      dominos: this.dominos.map((d) => ({
+        ...d,
+        // Ensure all required fields are present
+        id: d.id,
+        topValue: d.topValue,
+        bottomValue: d.bottomValue,
+        isEditable: d.isEditable,
+      })),
+      arrows: this.arrows,
+      gridLayout:
+        this.layoutType === 'grid'
+          ? {
+              rows: this.gridRows,
+              cols: this.gridCols,
+              width: this.canvasWidth,
+              height: this.canvasHeight,
+            }
+          : undefined,
+      correctAnswer: this.correctAnswer,
     };
 
-    // Add correct answer if defined
-    if (this.correctAnswer) {
-      question.correctAnswer = { ...this.correctAnswer };
-    }
+    console.log('Question data to save:', questionData);
 
-    // Save the question based on mode
-    if (this.mode === 'create') {
-      if (!this.testId) {
-        alert('Test ID is required to create a question');
-        this.isSaving = false;
-        return;
-      }
-
+    if (this.mode === 'edit' && this.questionId) {
+      // Update existing question
       this.testManagementService
-        .createQuestion(this.testId, question)
+        .updateQuestion(this.questionId, questionData)
         .subscribe({
-          next: (result) => {
+          next: (response) => {
+            console.log('Question updated successfully:', response);
             this.isSaving = false;
             this.hasUnsavedChanges = false;
-            this.showNotification('Question saved successfully!', 'success');
-            this.save.emit(result);
+            this.showNotification('Question updated successfully!', 'success');
 
-            if (this.returnUrl) {
-              this.router.navigateByUrl(this.returnUrl);
-            }
+            // Update the questionId with the backend _id
+            this.questionId = response._id;
+
+            // Combine the response and local data into a properly formatted object
+            const updatedQuestion: Partial<DominoQuestion> = {
+              _id: response._id,
+              testId: response.testId,
+              ...questionData,
+            };
+
+            this.save.emit(updatedQuestion);
           },
           error: (error) => {
+            console.error('Error updating question:', error);
             this.isSaving = false;
-            console.error('Error saving question:', error);
             this.showNotification(
-              'Error saving question. Please try again.',
+              'Failed to update question: ' + error.message,
               'error'
             );
           },
         });
     } else {
-      // Editing existing question
-      if (!this.questionId) {
-        alert('Question ID is required to update a question');
+      // Create new question
+      if (!this.testId) {
+        this.showNotification(
+          'Test ID is required to create a question',
+          'error'
+        );
         this.isSaving = false;
         return;
       }
 
       this.testManagementService
-        .updateQuestion(this.questionId, question)
+        .createQuestion(this.testId, questionData)
         .subscribe({
-          next: (result) => {
+          next: (response) => {
+            console.log('Question created successfully:', response);
             this.isSaving = false;
             this.hasUnsavedChanges = false;
-            this.showNotification('Question updated successfully!', 'success');
-            this.save.emit(result);
+            this.showNotification('Question created successfully!', 'success');
 
-            if (this.returnUrl) {
-              this.router.navigateByUrl(this.returnUrl);
-            }
+            // Update mode and ID for future saves
+            this.mode = 'edit';
+            this.questionId = response._id;
+
+            // Combine the response and local data into a properly formatted object
+            const newQuestion: Partial<DominoQuestion> = {
+              _id: response._id,
+              testId: this.testId ?? undefined,
+              ...questionData,
+            };
+
+            this.save.emit(newQuestion);
           },
           error: (error) => {
+            console.error('Error creating question:', error);
             this.isSaving = false;
-            console.error('Error updating question:', error);
             this.showNotification(
-              'Error updating question. Please try again.',
+              'Failed to create question: ' + error.message,
               'error'
             );
           },
@@ -981,7 +987,7 @@ export class DominoLayoutBuilderComponent
     const exportData = {
       testId: this.testId,
       question: {
-        id: this.questionId,
+        _id: this.questionId, // Use _id for consistency with backend
         title: this.questionTitle,
         instruction: this.questionInstruction,
         difficulty: this.questionDifficulty,
@@ -996,6 +1002,7 @@ export class DominoLayoutBuilderComponent
           height: this.canvasHeight,
         },
         correctAnswer: this.correctAnswer,
+        questionType: 'DominoQuestion',
       },
     };
 
@@ -1115,7 +1122,6 @@ export class DominoLayoutBuilderComponent
     }
   }
 
- 
   /**
    * Confirm before canceling if there are unsaved changes
    */

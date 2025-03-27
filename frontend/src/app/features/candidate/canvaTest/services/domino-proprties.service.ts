@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { DominoPosition } from '../../DominoTest/models/domino.model';
+import { DominoPosition } from '../../../../core/models/domino.model';
 
 
 @Injectable({

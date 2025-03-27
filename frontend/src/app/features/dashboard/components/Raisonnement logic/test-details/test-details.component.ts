@@ -45,7 +45,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
             class="p-button-outlined"
             [routerLink]="[
               '/dashboard/RaisonnementLogique/Tests/edit',
-              test.id
+              test._id || test.id
             ]"
           ></button>
           <button
@@ -73,7 +73,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
             icon="pi pi-plus"
             [routerLink]="[
               '/dashboard/RaisonnementLogique/Tests',
-              test.id,
+              test._id || test.id,
               'questions',
               'create'
             ]"
@@ -104,9 +104,9 @@ import { ConfirmationService, MessageService } from 'primeng/api';
                 class="p-button-sm p-button-outlined"
                 [routerLink]="[
                   '/dashboard/RaisonnementLogique/Tests',
-                  test.id,
+                  test._id || test.id,
                   'questions',
-                  question.id,
+                  question._id || question.id,
                   'edit'
                 ]"
               ></button>
@@ -115,7 +115,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
                 icon="pi pi-trash"
                 label="Delete"
                 class="p-button-sm p-button-outlined p-button-danger"
-                (click)="confirmDeleteQuestion(question.id)"
+                (click)="confirmDeleteQuestion(question._id || question.id)"
               ></button>
             </div>
           </div>

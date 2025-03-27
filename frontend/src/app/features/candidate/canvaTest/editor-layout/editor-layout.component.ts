@@ -17,7 +17,8 @@ import { InteractiveArrowComponent } from '../../DominoTest/components/interacti
 import { InteractiveDominoComponent } from '../../DominoTest/components/interactive-domino/interactive-domino.component';
 import { ArrowPropertiesService } from '../services/arrow-properties.service';
 import { DominoPropertiesService } from '../services/domino-proprties.service';
-import { DominoPosition, ArrowPosition } from '../../DominoTest/models/domino.model';
+import { ArrowPosition, DominoPosition } from '../../../../core/models/domino.model';
+
 
 
 
