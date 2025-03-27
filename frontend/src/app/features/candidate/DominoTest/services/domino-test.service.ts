@@ -1,59 +1,261 @@
-
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { environment } from '../../../../../environments/environment';
 import { TestService } from '../../../../core/services/test.service';
 import { AuthService } from '../../../../core/auth/services/auth.service';
-import { DominoChange } from '../../../../core/models/domino.model';
-
-// Define interfaces for tracking test metrics
-interface UserTestMetrics {
-  testId: string;
-  startTime: Date;
-  totalTimeSpent: number;
-  questionsAnswered: number;
-  questionsSkipped: number;
-  answerChanges: number;
-  flaggedQuestions: number;
-  visitCounts: Record<number, number>;
-  timePerQuestion: Record<number, number>;
-  lastQuestionStartTime: Date | null;
-  currentQuestionId: number | null;
-  questionStartTimes: Record<number, Date>;
-}
-
-interface UserActionEvent {
-  action: string;
-  target: string;
-  timestamp: Date;
-  data?: any;
-}
+import { TestAttemptTrackingService } from '../../../../core/services/testAttemptTracking.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DominoTestService {
- 
-  private readonly STORAGE_KEY = 'domino_test_progress';
+  private readonly STORAGE_KEY_PREFIX = 'domino_test_progress_';
   private currentAttemptId: string | null = null;
 
-  // Track current test session metrics
-  private currentTestMetrics = new BehaviorSubject<UserTestMetrics | null>(
-    null
-  );
-  currentTestMetrics$ = this.currentTestMetrics.asObservable();
-
-  // Track user actions for analytics
-  private userActions: UserActionEvent[] = [];
-
   constructor(
-    private http: HttpClient,
     private testService: TestService,
-    private authService: AuthService
-  ) {
-  
+    private authService: AuthService,
+    private trackingService: TestAttemptTrackingService
+  ) {}
+
+  /**
+   * Get test with questions from the backend
+   */
+  getTest(testId: string): Observable<any> {
+    return this.testService.getTestWithQuestions(testId).pipe(
+      tap((response) => {
+        // Store the attempt ID for future reference
+        if (response && response.attemptId) {
+          this.currentAttemptId = response.attemptId;
+
+          // Initialize the tracking service with this attempt ID
+          this.trackingService.initAttempt(response.attemptId);
+
+          console.log(`Test loaded with attempt ID: ${response.attemptId}`);
+        }
+      }),
+      catchError((error) => {
+        console.error('Error fetching test data:', error);
+        // Return placeholder empty data on error
+        return of({
+          id: testId,
+          name: 'Error Loading Test',
+          description:
+            'There was a problem loading the test. Please try again.',
+          duration: 30,
+          questions: [],
+        });
+      })
+    );
+  }
+
+  /**
+   * Submit an answer for a question
+   */
+  submitAnswer(questionId: string, answer: any): Observable<any> {
+    // Use the tracking service to submit answers which will handle the API call
+    return this.trackingService.submitAnswer(questionId, answer).pipe(
+      tap((response) => {
+        console.log(`Answer submitted for question ${questionId}:`, response);
+      }),
+      catchError((error) => {
+        console.error('Error submitting answer:', error);
+        return of(null);
+      })
+    );
+  }
+
+  /**
+   * Toggle flag for a question
+   */
+  toggleQuestionFlag(questionId: string): Observable<any> {
+    // Use the tracking service to toggle flags
+    return this.trackingService.toggleQuestionFlag(questionId).pipe(
+      tap((response) => {
+        console.log(`Flag toggled for question ${questionId}:`, response);
+      }),
+      catchError((error) => {
+        console.error('Error toggling question flag:', error);
+        return of(null);
+      })
+    );
+  }
+
+  /**
+   * Skip the current question
+   */
+  skipQuestion(questionId: string): Observable<any> {
+    // Use the tracking service to record a skip
+    return this.trackingService.skipQuestion(questionId).pipe(
+      tap((response) => {
+        console.log(`Question ${questionId} skipped:`, response);
+      }),
+      catchError((error) => {
+        console.error('Error skipping question:', error);
+        return of(null);
+      })
+    );
+  }
+
+  /**
+   * Start tracking a question visit - call this when a user navigates to a question
+   */
+  startQuestionVisit(questionId: string): void {
+    this.trackingService.startQuestionVisit(questionId);
+  }
+
+  /**
+   * End tracking a question visit - call this when a user navigates away from a question
+   * This automatically sends the time spent to the backend
+   */
+  endQuestionVisit(): void {
+    this.trackingService.endCurrentQuestionVisit();
+  }
+
+  /**
+   * Complete the test attempt
+   */
+  completeTest(): Observable<any> {
+    // First end the current question visit to record the final time
+    this.endQuestionVisit();
+
+    // Then complete the attempt
+    return this.trackingService.completeAttempt().pipe(
+      tap((response) => {
+        console.log('Test completed successfully:', response);
+
+        // Clean up local storage and tracking data
+        if (this.currentAttemptId) {
+          this.clearTestProgress(this.currentAttemptId);
+        }
+      }),
+      catchError((error) => {
+        console.error('Error completing test:', error);
+        return of(null);
+      })
+    );
+  }
+
+  /**
+   * Get the total time spent on a specific question
+   */
+  getTimeSpentOnQuestion(questionId: string): number {
+    return this.trackingService.getTimeSpentOnQuestion(questionId);
+  }
+
+  /**
+   * Save test progress to localStorage
+   */
+  saveProgress(testId: string, progressData: any): void {
+    const key = this.getStorageKey(testId);
+    try {
+      // Add attempt ID to the saved data
+      progressData.attemptId = this.currentAttemptId;
+
+      localStorage.setItem(key, JSON.stringify(progressData));
+      console.log(`Progress saved for test ${testId}`);
+    } catch (e) {
+      console.error('Error saving test progress:', e);
+    }
+  }
+
+  /**
+   * Load test progress from localStorage
+   */
+  loadProgress(testId: string): any {
+    const key = this.getStorageKey(testId);
+    try {
+      const progressData = localStorage.getItem(key);
+      if (!progressData) return null;
+
+      const progress = JSON.parse(progressData);
+
+      // Restore attempt ID if available
+      if (progress.attemptId) {
+        this.currentAttemptId = progress.attemptId;
+        this.trackingService.initAttempt(progress.attemptId);
+      }
+
+      return progress;
+    } catch (e) {
+      console.error('Error loading test progress:', e);
+      return null;
+    }
+  }
+
+  /**
+   * Clear test progress from localStorage and reset tracking
+   */
+  clearTestProgress(testId: string): void {
+    const key = this.getStorageKey(testId);
+    localStorage.removeItem(key);
+
+    // Also clean up tracking service data
+    this.trackingService.cleanup();
+    this.currentAttemptId = null;
+  }
+
+  /**
+   * Get the current attempt ID
+   */
+  getCurrentAttemptId(): string | null {
+    return this.currentAttemptId;
+  }
+
+  /**
+   * Evaluate an answer to check if it's correct
+   * This is a utility method that can be used client-side to show immediate feedback
+   */
+  evaluateAnswer(
+    userAnswer: { topValue: number | null; bottomValue: number | null },
+    correctAnswer: { topValue: number | null; bottomValue: number | null }
+  ): {
+    isCorrect: boolean;
+    isReversed: boolean;
+    isHalfCorrect: boolean;
+  } {
+    // Handle null cases
+    if (
+      !userAnswer ||
+      !correctAnswer ||
+      userAnswer.topValue === null ||
+      userAnswer.bottomValue === null ||
+      correctAnswer.topValue === null ||
+      correctAnswer.bottomValue === null
+    ) {
+      return { isCorrect: false, isReversed: false, isHalfCorrect: false };
+    }
+
+    // Exact match
+    const exactMatch =
+      userAnswer.topValue === correctAnswer.topValue &&
+      userAnswer.bottomValue === correctAnswer.bottomValue;
+
+    // Reversed match (domino flipped)
+    const reversedMatch =
+      userAnswer.topValue === correctAnswer.bottomValue &&
+      userAnswer.bottomValue === correctAnswer.topValue;
+
+    // Half match (only one side correct)
+    const halfMatch =
+      (userAnswer.topValue === correctAnswer.topValue ||
+        userAnswer.bottomValue === correctAnswer.bottomValue ||
+        userAnswer.topValue === correctAnswer.bottomValue ||
+        userAnswer.bottomValue === correctAnswer.topValue) &&
+      !(exactMatch || reversedMatch);
+
+    return {
+      isCorrect: exactMatch,
+      isReversed: reversedMatch,
+      isHalfCorrect: halfMatch,
+    };
+  }
+
+  /**
+   * Get storage key for a specific test
+   */
+  private getStorageKey(testId: string): string {
+    return `${this.STORAGE_KEY_PREFIX}${testId}`;
   }
 
   // Get available tests for candidates
@@ -85,459 +287,5 @@ export class DominoTestService {
           return throwError(() => new Error('Failed to load available tests'));
         })
       );
-  }
-
-  // Get test with questions for the test-taking interface
-  getTest(testId: string): Observable<any> {
-    // Initialize metrics when starting a new test
-    this.initializeTestMetrics(testId);
-
-    console.log(`Loading test ${testId} from backend`);
-
-    // Use TestService to get the test with questions
-    return this.testService.getTestWithQuestions(testId).pipe(
-      map((testData) => {
-        console.log('Test data received from backend:', testData);
-
-        // Store the attempt ID for future API calls
-        if (testData.attemptId) {
-          this.currentAttemptId = testData.attemptId;
-          console.log(`Current attempt ID set to: ${this.currentAttemptId}`);
-        }
-
-        return testData;
-      }),
-      catchError((error) => {
-        console.error('Error loading test:', error);
-        return throwError(() => new Error('Failed to load test data'));
-      })
-    );
-  }
-
-  // Submit an answer for a question
-  submitAnswer(
-    questionId: number | string,
-    answer: {
-      topValue: number | null;
-      bottomValue: number | null;
-      dominoId: number;
-    }
-  ): Observable<any> {
-    // Track metrics
-    this.trackQuestionAnswer(
-      typeof questionId === 'string' ? parseInt(questionId) : questionId,
-      answer,
-      false
-    );
-
-    if (!this.currentAttemptId) {
-      console.error('No attempt ID available, cannot submit answer');
-      return throwError(() => new Error('No active test attempt found'));
-    }
-
-    console.log(
-      `Submitting answer for question ${questionId}, attempt ${this.currentAttemptId}`
-    );
-
-    // Use TestService to submit the answer
-    return this.testService
-      .submitAnswer(this.currentAttemptId, questionId.toString(), {
-         answer,
-      })
-      .pipe(
-        tap((response) => {
-          console.log('Answer submission response:', response);
-        }),
-        catchError((error) => {
-          console.error('Error submitting answer:', error);
-          return throwError(() => new Error('Failed to submit answer'));
-        })
-      );
-  }
-
-  // Toggle flag on a question
-  toggleQuestionFlag(
-    questionId: number | string,
-    isFlagged: boolean
-  ): Observable<any> {
-    // Track in metrics
-    this.trackQuestionFlag(
-      typeof questionId === 'string' ? parseInt(questionId) : questionId,
-      isFlagged
-    );
-
-    if (!this.currentAttemptId) {
-      console.error('No attempt ID available, cannot toggle flag');
-      return throwError(() => new Error('No active test attempt found'));
-    }
-
-    // Use TestService to toggle the flag
-    return this.testService
-      .toggleQuestionFlag(this.currentAttemptId, questionId.toString())
-      .pipe(
-        catchError((error) => {
-          console.error('Error toggling question flag:', error);
-          return throwError(() => new Error('Failed to toggle flag'));
-        })
-      );
-  }
-
-  // Submit a completed test
-  submitTest(testId: string): Observable<any> {
-    // Finalize metrics
-    const finalMetrics = this.finalizeTestMetrics();
-
-    if (!this.currentAttemptId) {
-      console.error('No attempt ID available, cannot submit test');
-      return throwError(() => new Error('No active test attempt found'));
-    }
-
-    // Complete the attempt through the API
-    return this.testService.completeAttempt(this.currentAttemptId).pipe(
-      tap((response) => {
-        console.log('Test completion response:', response);
-        this.clearTestProgress(testId);
-      }),
-      catchError((error) => {
-        console.error('Error submitting test:', error);
-        return throwError(() => new Error('Failed to submit test'));
-      })
-    );
-  }
-
-  // Clear saved progress for a test
-  clearTestProgress(testId: string): void {
-    const storageKey = `${this.STORAGE_KEY}_${testId}`;
-    localStorage.removeItem(storageKey);
-    console.log(`Cleared saved progress for test ${testId}`);
-
-    this.currentTestMetrics.next(null);
-    this.currentAttemptId = null;
-  }
-
-  // Track when a user visits a question
-  trackQuestionVisit(
-    questionId: number | string,
-    previousQuestionId: number | null = null
-  ): void {
-    // Convert string questionId to number if needed
-    const qId =
-      typeof questionId === 'string' ? parseInt(questionId) : questionId;
-
-    const metrics = this.currentTestMetrics.value;
-    if (!metrics) return;
-
-    const now = new Date();
-
-    // If we were tracking a different question, calculate time spent on it
-    if (metrics.currentQuestionId !== null && metrics.lastQuestionStartTime) {
-      const timeSpent = now.getTime() - metrics.lastQuestionStartTime.getTime();
-      const currentId = metrics.currentQuestionId;
-
-      // Update time per question
-      metrics.timePerQuestion[currentId] =
-        (metrics.timePerQuestion[currentId] || 0) + timeSpent;
-
-      // Report this visit to the API
-      if (this.currentAttemptId) {
-        this.testService
-          .visitQuestion(
-            this.currentAttemptId,
-            currentId.toString(),
-            Math.round(timeSpent / 1000) // Convert to seconds
-          )
-          .subscribe({
-            error: (err) =>
-              console.error('Error reporting question visit:', err),
-          });
-      }
-
-      // Log the time spent on previous question
-      this.logUserAction('question_exit', currentId.toString(), {
-        timeSpent,
-        totalTimeOnQuestion: metrics.timePerQuestion[currentId],
-      });
-    }
-
-    // Update visit count for this question
-    metrics.visitCounts[qId] = (metrics.visitCounts[qId] || 0) + 1;
-
-    // Set the current question and start time
-    metrics.currentQuestionId = qId;
-    metrics.lastQuestionStartTime = now;
-    metrics.questionStartTimes[qId] = now;
-
-    // Log the question visit
-    this.logUserAction('question_visit', qId.toString(), {
-      visitCount: metrics.visitCounts[qId],
-      previousQuestion: previousQuestionId,
-    });
-
-    this.currentTestMetrics.next(metrics);
-  }
-
-  /**
-   * Track when a user answers a question
-   */
-  trackQuestionAnswer(
-    questionId: number,
-    answer: {
-      topValue: number | null;
-      bottomValue: number | null;
-      dominoId?: number;
-    },
-    isChanged: boolean = false
-  ): void {
-    const metrics = this.currentTestMetrics.value;
-    if (!metrics) return;
-
-    // If this is the first time answering, increment questions answered
-    if (!isChanged) {
-      metrics.questionsAnswered++;
-    } else {
-      metrics.answerChanges++;
-    }
-
-    // Calculate time spent if we have a start time
-    if (metrics.questionStartTimes[questionId]) {
-      const timeSpent =
-        new Date().getTime() - metrics.questionStartTimes[questionId].getTime();
-
-      // Log the answer action
-      this.logUserAction('question_answer', questionId.toString(), {
-        answer,
-        isChanged,
-        timeSpent,
-      });
-    }
-
-    this.currentTestMetrics.next(metrics);
-  }
-
-  /**
-   * Track when a user skips a question
-   */
-  trackQuestionSkip(questionId: number): void {
-    const metrics = this.currentTestMetrics.value;
-    if (!metrics) return;
-
-    metrics.questionsSkipped++;
-
-    // Log the skip action
-    this.logUserAction('question_skip', questionId.toString());
-
-    this.currentTestMetrics.next(metrics);
-  }
-
-  /**
-   * Track when a user flags a question
-   */
-  trackQuestionFlag(questionId: number, isFlagged: boolean): void {
-    const metrics = this.currentTestMetrics.value;
-    if (!metrics) return;
-
-    // Increment or decrement flagged questions count
-    if (isFlagged) {
-      metrics.flaggedQuestions++;
-    } else {
-      metrics.flaggedQuestions = Math.max(0, metrics.flaggedQuestions - 1);
-    }
-
-    // Log the flag action
-    this.logUserAction('question_flag', questionId.toString(), { isFlagged });
-
-    this.currentTestMetrics.next(metrics);
-  }
-
-  /**
-   * Initialize metrics for a new test attempt
-   */
-  private initializeTestMetrics(testId: string): void {
-    const metrics: UserTestMetrics = {
-      testId,
-      startTime: new Date(),
-      totalTimeSpent: 0,
-      questionsAnswered: 0,
-      questionsSkipped: 0,
-      answerChanges: 0,
-      flaggedQuestions: 0,
-      visitCounts: {},
-      timePerQuestion: {},
-      lastQuestionStartTime: null,
-      currentQuestionId: null,
-      questionStartTimes: {},
-    };
-
-    this.currentTestMetrics.next(metrics);
-    this.userActions = [];
-
-    // Log test start event
-    this.logUserAction('test_start', testId);
-  }
-
-  /**
-   * Log user actions for analytics
-   */
-  private logUserAction(action: string, target: string, data: any = {}): void {
-    const event: UserActionEvent = {
-      action,
-      target,
-      timestamp: new Date(),
-      data,
-    };
-
-    this.userActions.push(event);
-  }
-
-  /**
-   * Calculate final test metrics before submission
-   */
-  private finalizeTestMetrics(): UserTestMetrics | null {
-    const metrics = this.currentTestMetrics.value;
-    if (!metrics) return null;
-
-    // Calculate total time spent on the test
-    const now = new Date();
-    metrics.totalTimeSpent = now.getTime() - metrics.startTime.getTime();
-
-    // If we're still tracking a question, finalize its time
-    if (metrics.currentQuestionId !== null && metrics.lastQuestionStartTime) {
-      const timeSpent = now.getTime() - metrics.lastQuestionStartTime.getTime();
-      const currentId = metrics.currentQuestionId;
-
-      metrics.timePerQuestion[currentId] =
-        (metrics.timePerQuestion[currentId] || 0) + timeSpent;
-    }
-
-    // Log test completion
-    this.logUserAction('test_complete', metrics.testId, {
-      totalTimeSpent: metrics.totalTimeSpent,
-      questionsAnswered: metrics.questionsAnswered,
-    });
-
-    return metrics;
-  }
-
-  // Save test progress to localStorage
-  saveProgress(testId: string, progress: any): void {
-    // Enhance progress data with metrics
-    if (this.currentTestMetrics.value) {
-      progress.metrics = this.currentTestMetrics.value;
-      progress.userActions = this.userActions;
-      progress.attemptId = this.currentAttemptId;
-    }
-
-    // Save to localStorage
-    const storageKey = `${this.STORAGE_KEY}_${testId}`;
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(progress));
-      console.log(`Progress saved for test ${testId}`);
-    } catch (e) {
-      console.error('Error saving progress:', e);
-    }
-  }
-
-  // Load test progress from localStorage
-  loadProgress(testId: string): any {
-    const storageKey = `${this.STORAGE_KEY}_${testId}`;
-
-    try {
-      const progressData = localStorage.getItem(storageKey);
-      if (!progressData) return null;
-
-      const progress = JSON.parse(progressData);
-
-      // Restore attempt ID if available
-      if (progress.attemptId) {
-        this.currentAttemptId = progress.attemptId;
-        console.log(`Restored attempt ID: ${this.currentAttemptId}`);
-      }
-
-      // Restore metrics if available
-      if (progress.metrics) {
-        // Convert string dates back to Date objects
-        if (progress.metrics.startTime) {
-          progress.metrics.startTime = new Date(progress.metrics.startTime);
-        }
-        if (progress.metrics.lastQuestionStartTime) {
-          progress.metrics.lastQuestionStartTime = new Date(
-            progress.metrics.lastQuestionStartTime
-          );
-        }
-
-        // Restore question start times
-        if (progress.metrics.questionStartTimes) {
-          Object.keys(progress.metrics.questionStartTimes).forEach((key) => {
-            progress.metrics.questionStartTimes[key] = new Date(
-              progress.metrics.questionStartTimes[key]
-            );
-          });
-        }
-
-        this.currentTestMetrics.next(progress.metrics);
-      }
-
-      // Restore user actions if available
-      if (progress.userActions) {
-        // Convert string dates back to Date objects
-        this.userActions = progress.userActions.map((action: any) => ({
-          ...action,
-          timestamp: new Date(action.timestamp),
-        }));
-      }
-
-      return progress;
-    } catch (e) {
-      console.error('Error parsing saved test progress:', e);
-      return null;
-    }
-  }
-
-  /**
-   * Evaluate an answer against the correct answer
-   * Handles rotation and orientation issues with dominos
-   */
-  evaluateAnswer(
-    userAnswer: { topValue: number | null; bottomValue: number | null },
-    correctAnswer: { topValue: number | null; bottomValue: number | null }
-  ): {
-    isCorrect: boolean;
-    isReversed: boolean;
-    isHalfCorrect: boolean;
-  } {
-    // Guard against null values
-    if (
-      !userAnswer ||
-      !correctAnswer ||
-      userAnswer.topValue === null ||
-      userAnswer.bottomValue === null ||
-      correctAnswer.topValue === null ||
-      correctAnswer.bottomValue === null
-    ) {
-      return { isCorrect: false, isReversed: false, isHalfCorrect: false };
-    }
-
-    // Check for exact match
-    const exactMatch =
-      userAnswer.topValue === correctAnswer.topValue &&
-      userAnswer.bottomValue === correctAnswer.bottomValue;
-
-    // Check for reversed match
-    const reversedMatch =
-      userAnswer.topValue === correctAnswer.bottomValue &&
-      userAnswer.bottomValue === correctAnswer.topValue;
-
-    // Check for half match (only one value correct)
-    const halfMatch =
-      userAnswer.topValue === correctAnswer.topValue ||
-      userAnswer.bottomValue === correctAnswer.bottomValue ||
-      userAnswer.topValue === correctAnswer.bottomValue ||
-      userAnswer.bottomValue === correctAnswer.topValue;
-
-    return {
-      isCorrect: exactMatch,
-      isReversed: reversedMatch,
-      isHalfCorrect: !exactMatch && !reversedMatch && halfMatch,
-    };
   }
 }

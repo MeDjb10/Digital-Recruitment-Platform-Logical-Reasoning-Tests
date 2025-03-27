@@ -4,13 +4,15 @@
     <div class="auth-container p-4 sm:p-8 w-full max-w-md mx-auto flex flex-col h-full">
       <!-- Fixed logo section at top -->
       <div class="flex-shrink-0 mb-4">
-        <div class="flex items-start">
-          <img 
-            src="assets/cofatLogo.png" 
-            alt="COFAT Logo" 
-            class="w-28 sm:w-32 object-contain"
-            loading="eager"
-          >
+        <div class="flex items-start logo-container">
+          <a [routerLink]="['/home']" class="outline-none">
+        <img 
+          src="assets/cofatLogo.png" 
+          alt="COFAT Logo" 
+          class="w-28 sm:w-32 object-contain cursor-pointer" 
+          loading="eager"
+        >
+          </a>
         </div>
       </div>
       

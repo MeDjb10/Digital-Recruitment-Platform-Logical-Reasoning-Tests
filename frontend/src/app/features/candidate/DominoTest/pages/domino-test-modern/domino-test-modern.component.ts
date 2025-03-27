@@ -6,23 +6,20 @@ import {
   ChangeDetectorRef,
   AfterViewInit,
   ViewChild,
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-
 import { Subscription, interval } from 'rxjs';
-
-import {
-  DominoChange,
-  DominoPosition,
-  TestQuestion,
-} from '../../models/domino.model';
+import { TestAttemptTrackingService } from '../../../../../core/services/testAttemptTracking.service';
 import { HelpTooltipComponent } from '../../components/help-tooltip/helpTooltip.component';
 import { NavigationControlsComponent } from '../../components/navigation-controls/navigationControls.component';
 import { SimpleDominoGridComponent } from '../../components/simple-domino-grid/simpleDominoGrid.component';
 import { TestHeaderComponent } from '../../components/test-header/testHeader.component';
 import { TestSidebarComponent } from '../../components/test-sidebar/testSidebar.component';
 import { DominoTestService } from '../../services/domino-test.service';
+import { TestQuestion, DominoChange } from '../../models/domino.model';
+import { DominoPosition } from '../../../../../core/models/domino.model';
 
 @Component({
   selector: 'app-domino-test-modern',
@@ -33,7 +30,6 @@ import { DominoTestService } from '../../services/domino-test.service';
     TestHeaderComponent,
     TestSidebarComponent,
     SimpleDominoGridComponent,
-
     NavigationControlsComponent,
     HelpTooltipComponent,
   ],
@@ -49,6 +45,7 @@ export class DominoTestModernComponent
   // Test meta data
   testName: string = 'Domino Logical Reasoning Test';
   testId: string = 'd70'; // Default to d70 test
+  attemptId: string | null = null;
 
   // Questions and navigation
   questions: TestQuestion[] = [];
@@ -107,8 +104,17 @@ export class DominoTestModernComponent
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private dominoTestService: DominoTestService
+    private dominoTestService: DominoTestService,
+    private trackingService: TestAttemptTrackingService
   ) {}
+
+  // React to browser/tab close to save progress
+  @HostListener('window:beforeunload')
+  onBeforeUnload() {
+    // Record time spent on current question before leaving
+    this.trackingService.endCurrentQuestionVisit();
+    this.saveProgress();
+  }
 
   ngOnInit(): void {
     // Get test ID from route if available
@@ -119,7 +125,6 @@ export class DominoTestModernComponent
 
       // Load the test data
       console.log('testId', this.testId);
-
       this.loadTestData(this.testId);
     });
   }
@@ -142,8 +147,10 @@ export class DominoTestModernComponent
       this.timerSubscription.unsubscribe();
     }
 
-    // Save progress before leaving
+    // Record time spent and save progress before leaving
+    this.trackingService.endCurrentQuestionVisit();
     this.saveProgress();
+    this.trackingService.cleanup();
   }
 
   loadTestData(testId: string): void {
@@ -169,6 +176,15 @@ export class DominoTestModernComponent
           this.timeLeft = this.testDuration * 60;
           this.updateFormattedTime();
 
+          // Store the attempt ID for tracking
+          if (testData.attemptId) {
+            this.attemptId = testData.attemptId;
+            // Initialize the tracking service
+            this.trackingService.initAttempt(testData.attemptId);
+          } else {
+            console.error('No attempt ID provided in test data');
+          }
+
           // Process questions - handle both _id and id formats
           this.questions = testData.questions.map((q: any) => ({
             id: q._id || q.id, // Support both formats
@@ -187,10 +203,14 @@ export class DominoTestModernComponent
             userAnswer: q.userAnswer,
           }));
 
-          // Set first question as visited
+          // Set first question as visited and start tracking it
           if (this.questions.length > 0) {
             this.questions[0].visited = true;
-            this.dominoTestService.trackQuestionVisit(this.questions[0].id);
+            if (this.attemptId) {
+              this.trackingService.startQuestionVisit(
+                String(this.questions[0].id)
+              );
+            }
           }
 
           // Start timer and calculate progress
@@ -209,16 +229,28 @@ export class DominoTestModernComponent
       },
     });
   }
+
   handleSavedProgress(savedProgress: any): void {
     // Restore test state
     this.testName = savedProgress.testName;
     this.timeLeft = savedProgress.timeLeft;
     this.testDuration = savedProgress.testDuration;
+    this.attemptId = savedProgress.attemptId;
     this.updateFormattedTime();
+
+    // Initialize tracking service if we have an attempt ID
+    if (this.attemptId) {
+      this.trackingService.initAttempt(this.attemptId);
+    }
 
     // Restore questions and progress
     this.questions = savedProgress.questions;
     this.currentQuestionIndex = savedProgress.currentQuestionIndex || 0;
+
+    // Start tracking the current question
+    if (this.attemptId && this.currentQuestion) {
+      this.trackingService.startQuestionVisit(String(this.currentQuestion.id));
+    }
 
     // Calculate answered and flagged counts
     this.recalculateProgress();
@@ -227,8 +259,6 @@ export class DominoTestModernComponent
     this.startTimer();
     this.cdr.markForCheck();
 
-    // Show notification that progress was restored
-    // In a real app, you might use a toast notification here
     console.log('Test progress restored from previous session.');
   }
 
@@ -238,6 +268,7 @@ export class DominoTestModernComponent
 
     const progress = {
       testId: this.testId,
+      attemptId: this.attemptId,
       testName: this.testName,
       timeLeft: this.timeLeft,
       testDuration: this.testDuration,
@@ -314,6 +345,9 @@ export class DominoTestModernComponent
       index < this.questions.length &&
       index !== this.currentQuestionIndex
     ) {
+      // Record time spent on current question before navigating away
+      this.trackingService.endCurrentQuestionVisit();
+
       // Mark current question as visited
       if (this.currentQuestion) {
         this.currentQuestion.visited = true;
@@ -322,9 +356,12 @@ export class DominoTestModernComponent
       // Update current index
       this.currentQuestionIndex = index;
 
-      // Mark new question as visited
+      // Mark new question as visited and start tracking time
       if (this.questions[index]) {
         this.questions[index].visited = true;
+        this.trackingService.startQuestionVisit(
+          String(this.questions[index].id)
+        );
       }
 
       // Reset animations to trigger them again
@@ -359,20 +396,24 @@ export class DominoTestModernComponent
   toggleFlag(): void {
     if (!this.currentQuestion) return;
 
+    // Update UI state immediately for better UX
     this.currentQuestion.flaggedForReview =
       !this.currentQuestion.flaggedForReview;
 
-    this.dominoTestService
-      .toggleQuestionFlag(
-        this.currentQuestion.id,
-        this.currentQuestion.flaggedForReview
-      )
-      .subscribe({
-        error: (err) => console.error('Error toggling flag:', err),
-      });
+    if (this.attemptId) {
+      // Use the tracking service to toggle the flag on the server
+      this.trackingService
+        .toggleQuestionFlag(String(this.currentQuestion.id))
+        .subscribe({
+          next: () => {
+            this.recalculateProgress();
+            this.saveProgress();
+          },
+          error: (err) => console.error('Error toggling flag:', err),
+        });
+    }
 
     this.recalculateProgress();
-    this.saveProgress();
     this.cdr.markForCheck();
   }
 
@@ -386,7 +427,6 @@ export class DominoTestModernComponent
     this.cdr.markForCheck();
   }
 
-  // In domino-test-modern.component.ts
   onDominoChanged(change: DominoChange): void {
     if (!this.currentQuestion) return;
 
@@ -395,43 +435,53 @@ export class DominoTestModernComponent
     );
 
     if (dominoIndex !== -1) {
-      // Update the domino values
-      this.currentQuestion.dominos[dominoIndex].topValue = change.topValue;
-      this.currentQuestion.dominos[dominoIndex].bottomValue =
-        change.bottomValue;
+      // Only submit if both values are set (not null)
+      if (change.topValue !== null && change.bottomValue !== null) {
+        // Update the domino values in the UI
+        this.currentQuestion.dominos[dominoIndex].topValue = change.topValue;
+        this.currentQuestion.dominos[dominoIndex].bottomValue =
+          change.bottomValue;
 
-      // Set answer for the current question
-      this.currentQuestion.answered = true;
+        // Create the answer in the correct format for the backend
+        const dominoAnswer = {
+          dominoId: change.id,
+          topValue: change.topValue,
+          bottomValue: change.bottomValue,
+        };
 
-      // Create the answer in the correct format
-      const dominoAnswer = {
-        dominoId: change.id,
-        topValue: change.topValue,
-        bottomValue: change.bottomValue,
-      };
+        // Store the answer in the question object
+        this.currentQuestion.userAnswer = dominoAnswer;
+        this.currentQuestion.answered = true;
 
-      // Store the answer in the question object
-      this.currentQuestion.userAnswer = dominoAnswer;
+        console.log('Submitting domino answer:', dominoAnswer);
 
-      console.log('Submitting domino answer:', dominoAnswer);
+        // Submit the answer to backend via tracking service
+        if (this.attemptId) {
+          this.trackingService
+            .submitAnswer(String(this.currentQuestion.id), dominoAnswer)
+            .subscribe({
+              next: (response) => {
+                console.log('Answer submitted successfully:', response);
+                this.recalculateProgress();
+                this.saveProgress(); // Save progress after answering
+              },
+              error: (err) => console.error('Error submitting answer:', err),
+            });
+        } else {
+          console.error('Cannot submit answer: No attempt ID available');
+        }
 
-      // Submit the answer to backend
-      this.dominoTestService
-        .submitAnswer(this.currentQuestion.id, dominoAnswer)
-        .subscribe({
-          next: (response) =>
-            console.log('Answer submitted successfully:', response),
-          error: (err) => console.error('Error submitting answer:', err),
-        });
-
-      this.recalculateProgress();
-      this.saveProgress(); // Save progress after answering
-      this.cdr.markForCheck();
+        this.recalculateProgress();
+        this.cdr.markForCheck();
+      } else {
+        console.log(
+          'Waiting for both domino values to be set before submitting'
+        );
+      }
     }
   }
 
   onDominoSelected(id: number): void {
-    // This can be used to highlight a selected domino if needed
     console.log(`Domino ${id} selected`);
 
     // Hide the tooltip after first interaction
@@ -463,9 +513,29 @@ export class DominoTestModernComponent
     }
   }
 
-  // Update the finishTest method
-  // Update the finishTest method to correctly handle the score
-  // Update the finishTest method to use correct navigation
+  skipCurrentQuestion(): void {
+    if (!this.currentQuestion || !this.attemptId) return;
+
+    // Mark as skipped in the UI
+    this.currentQuestion.answered = false;
+    this.currentQuestion.userAnswer = undefined;
+
+    // Send skip request to the server
+    this.trackingService
+      .skipQuestion(String(this.currentQuestion.id))
+      .subscribe({
+        next: () => {
+          console.log(`Question ${this.currentQuestion?.id} marked as skipped`);
+
+          // Move to the next question if available
+          if (this.currentQuestionIndex < this.questions.length - 1) {
+            this.nextQuestion();
+          }
+        },
+        error: (err) => console.error('Error skipping question:', err),
+      });
+  }
+
   finishTest(autoSubmit: boolean = false): void {
     if (this.isSubmittingTest) return;
 
@@ -482,33 +552,39 @@ export class DominoTestModernComponent
 
     this.isSubmittingTest = true;
 
-    this.dominoTestService.submitTest(this.testId).subscribe({
+    // Make sure to record the time spent on the current question
+    this.trackingService.endCurrentQuestionVisit();
+
+    // Complete the attempt through the tracking service
+    this.trackingService.completeAttempt().subscribe({
       next: (result) => {
         console.log('Test submitted successfully:', result);
         this.isTestComplete = true;
         this.isSubmittingTest = false;
 
         // Extract score from the correct location in the response
-        let attemptId = 'unknown';
+        let attemptId = this.attemptId || 'unknown';
         let score = 0;
 
         // Handle different response formats
-        if (result.data) {
+        if (result && result.data) {
           // Standard API response format
-          attemptId = result.data._id;
-          score = result.data.percentageScore;
-        } else {
+          attemptId = result.data._id || this.attemptId;
+          score = result.data.percentageScore || 0;
+        } else if (result) {
           // Direct object format
-          attemptId = result._id;
-          score = result.percentageScore;
+          attemptId = result._id || this.attemptId;
+          score = result.percentageScore || 0;
         }
 
         console.log(
           `Test completed, score: ${score}%, attemptId: ${attemptId}`
         );
 
-        // IMPORTANT: Fix navigation path to use a route, not an API path
-        // Make sure you have this route defined in your app's routing module
+        // Clear saved progress since test is complete
+        this.dominoTestService.clearTestProgress(this.testId);
+
+        // Navigate to the completion page
         this.router.navigate(['/candidate/tests/complete'], {
           queryParams: {
             attemptId: attemptId,
@@ -526,6 +602,7 @@ export class DominoTestModernComponent
       },
     });
   }
+
   // Animation helper methods
   resetAnimations(): void {
     this.animateQuestionInstructions = false;
@@ -545,52 +622,18 @@ export class DominoTestModernComponent
     this.cdr.markForCheck();
   }
 
-  // In domino-test-modern.component.ts
-
-  setupDemoTest(): void {
-    // Use the enhanced test variant for a better demo
-    this.dominoTestService.getTest('d70-enhanced').subscribe({
-      next: (testData) => {
-        if (testData) {
-          this.testName = testData.name || 'Enhanced Domino Reasoning Test';
-          this.testDuration = testData.duration || 30;
-          this.timeLeft = this.testDuration * 60;
-          this.updateFormattedTime();
-
-          // Process questions
-          if (testData.questions && testData.questions.length > 0) {
-            this.questions = testData.questions.map((q: any) => ({
-              id: q.id,
-              title: q.title || `Question ${q.id}`,
-              instruction:
-                q.instruction ||
-                'Find the missing values in the domino pattern',
-              dominos: q.dominos,
-              arrows: q.arrows || [],
-              gridLayout: q.gridLayout || { rows: 3, cols: 3 },
-              answered: false,
-              flaggedForReview: false,
-              visited: false,
-              pattern: q.pattern || '',
-            }));
-
-            // Set the first question as visited
-            if (this.questions.length > 0) {
-              this.questions[0].visited = true;
-            }
-          }
-
-          // Start the timer
-          this.startTimer();
-          this.cdr.markForCheck();
-        }
-      },
-      error: (error) => {
-        console.error('Error loading test data:', error);
-        // Create fallback questions only if needed
-        this.createBasicDemoQuestions();
-        this.cdr.markForCheck();
-      },
+  getProgressMarkers(): {
+    position: number;
+    active: boolean;
+    flagged: boolean;
+  }[] {
+    return this.questions.map((q, index) => {
+      const position = ((index + 1) / this.questions.length) * 100;
+      return {
+        position,
+        active: this.currentQuestionIndex === index,
+        flagged: q.flaggedForReview || false,
+      };
     });
   }
 
@@ -664,7 +707,6 @@ export class DominoTestModernComponent
         },
         error: (error) => {
           console.error('Error loading test data:', error);
-          this.createBasicDemoQuestions();
 
           // Mark first question as visited
           if (this.questions.length > 0) {
@@ -683,67 +725,5 @@ export class DominoTestModernComponent
       ...dominos.map((d) => (d.col !== undefined ? d.col : 0))
     );
     return maxCol + 1; // Add 1 because cols are 0-indexed
-  }
-
-  getProgressMarkers(): {
-    position: number;
-    active: boolean;
-    flagged: boolean;
-  }[] {
-    return this.questions.map((q, index) => {
-      const position = ((index + 1) / this.questions.length) * 100;
-      return {
-        position,
-        active: this.currentQuestionIndex === index,
-        flagged: q.flaggedForReview || false,
-      };
-    });
-  }
-  createBasicDemoQuestions(): void {
-    this.questions = [
-      {
-        id: 1,
-        title: 'Simple Pattern',
-        instruction: 'Identify the pattern and complete the missing domino.',
-        dominos: [
-          {
-            id: 1,
-            row: 0,
-            col: 0,
-            topValue: 1,
-            bottomValue: 2,
-            isEditable: false,
-          },
-          {
-            id: 2,
-            row: 0,
-            col: 1,
-            topValue: 2,
-            bottomValue: 3,
-            isEditable: false,
-          },
-          {
-            id: 3,
-            row: 0,
-            col: 2,
-            topValue: 3,
-            bottomValue: 4,
-            isEditable: false,
-          },
-          {
-            id: 4,
-            row: 0,
-            col: 3,
-            topValue: null,
-            bottomValue: null,
-            isEditable: true,
-          },
-        ],
-        gridLayout: { rows: 1, cols: 4 },
-        answered: false,
-        flaggedForReview: false,
-        visited: true,
-      },
-    ];
   }
 }

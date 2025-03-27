@@ -197,7 +197,16 @@ export class TestService {
       .post<AttemptResponse>(`${this.attemptApiUrl}/tests/${testId}/start`, {
         candidateId,
       })
-      .pipe(catchError(this.handleError));
+      .pipe(
+        tap((response) => {
+          this.logApiInteraction(
+            'startTestAttempt',
+            { testId, candidateId },
+            response
+          );
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -221,44 +230,38 @@ export class TestService {
   }
 
   /**
- * Submit an answer for a question
- */
-submitAnswer(
-  attemptId: string,
-  questionId: string,
-  answer: any
-): Observable<any> {
-  const candidateId = this.authService.getCurrentUserId();
+   * Submit an answer for a question
+   */
+  submitAnswer(
+    attemptId: string,
+    questionId: string,
+    answer: any
+  ): Observable<any> {
+    const candidateId = this.authService.getCurrentUserId();
 
-  // Send the answer in the format it's received - don't wrap it again
-  return this.http
-    .post(
-      `${this.attemptApiUrl}/${attemptId}/questions/${questionId}/answer`,
-      {
-        candidateId,
-        ...answer  // This spreads the already formatted answer into the request body
-      }
-    )
-    .pipe(
-      tap((response) => {
-        this.logApiInteraction(
-          'submitAnswer',
-          { questionId, answer },
-          response
-        );
-      }),
-      catchError(this.handleError)
-    );
-}
+    // Format the answer payload according to the backend expectations
+    const payload = {
+      candidateId,
+      answer: answer, // This is now explicitly sent as 'answer' property
+    };
 
-  // Add debug method to log API interactions
-  private logApiInteraction(action: string, data: any, response?: any): void {
-    console.group(`API: ${action}`);
-    console.log('Sent data:', data);
-    if (response) {
-      console.log('Received response:', response);
-    }
-    console.groupEnd();
+    this.logApiInteraction('submitAnswer-payload', payload);
+
+    return this.http
+      .post(
+        `${this.attemptApiUrl}/${attemptId}/questions/${questionId}/answer`,
+        payload
+      )
+      .pipe(
+        tap((response) => {
+          this.logApiInteraction(
+            'submitAnswer-response',
+            { questionId, answer },
+            response
+          );
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -271,7 +274,16 @@ submitAnswer(
       .post(`${this.attemptApiUrl}/${attemptId}/questions/${questionId}/flag`, {
         candidateId,
       })
-      .pipe(catchError(this.handleError));
+      .pipe(
+        tap((response) => {
+          this.logApiInteraction(
+            'toggleQuestionFlag',
+            { attemptId, questionId, candidateId },
+            response
+          );
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -284,12 +296,28 @@ submitAnswer(
   ): Observable<any> {
     const candidateId = this.authService.getCurrentUserId();
 
+    const payload = {
+      candidateId,
+      timeSpent: timeSpent || 0,
+    };
+
+    this.logApiInteraction('visitQuestion-payload', payload);
+
     return this.http
       .post(
         `${this.attemptApiUrl}/${attemptId}/questions/${questionId}/visit`,
-        { candidateId, timeSpent }
+        payload
       )
-      .pipe(catchError(this.handleError));
+      .pipe(
+        tap((response) => {
+          this.logApiInteraction(
+            'visitQuestion-response',
+            { timeSpent },
+            response
+          );
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -302,7 +330,16 @@ submitAnswer(
       .post(`${this.attemptApiUrl}/${attemptId}/questions/${questionId}/skip`, {
         candidateId,
       })
-      .pipe(catchError(this.handleError));
+      .pipe(
+        tap((response) => {
+          this.logApiInteraction(
+            'skipQuestion',
+            { attemptId, questionId },
+            response
+          );
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -315,7 +352,12 @@ submitAnswer(
       .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/complete`, {
         candidateId,
       })
-      .pipe(catchError(this.handleError));
+      .pipe(
+        tap((response) => {
+          this.logApiInteraction('completeAttempt', { attemptId }, response);
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -477,6 +519,16 @@ submitAnswer(
         userAnswer: response?.dominoAnswer,
       };
     });
+  }
+
+  // Debug method to log API interactions
+  private logApiInteraction(action: string, data: any, response?: any): void {
+    console.group(`API: ${action}`);
+    console.log('Sent data:', data);
+    if (response) {
+      console.log('Received response:', response);
+    }
+    console.groupEnd();
   }
 
   // Error handling

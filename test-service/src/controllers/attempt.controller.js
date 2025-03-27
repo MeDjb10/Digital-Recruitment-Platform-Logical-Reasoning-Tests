@@ -684,4 +684,8 @@ module.exports = {
   getCandidateAttempts,
   getTestAttempts,
   getAttemptResults,
+
+  getUserDevice,
+  getUserBrowser,
+  getQuestionsForTest,
 };

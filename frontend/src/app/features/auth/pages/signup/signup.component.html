@@ -367,7 +367,7 @@
         pButton
         [disabled]="verificationCode.join('').length !== 6 || isProcessing"
         (click)="verifyCode()"
-        class="p-button-primary h-12 rounded-lg shadow-md transition-all duration-200 hover:shadow-lg"
+        class="p-button-primary h-12 rounded-lg shadow-md transition-all duration-200 hover:shadow-lg cursor-pointer"
         [ngClass]="{
           'opacity-70 cursor-not-allowed':
             verificationCode.join('').length !== 6 || isProcessing,

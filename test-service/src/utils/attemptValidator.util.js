@@ -21,24 +21,56 @@ const validateSubmitAnswer = [
     .withMessage("Candidate ID is required")
     .notEmpty()
     .withMessage("Candidate ID cannot be empty"),
-  // For domino questions
-  body("answer.dominoId")
-    .optional()
-    .isNumeric()
-    .withMessage("Domino ID must be a number"),
-  body("answer.topValue")
-    .optional()
-    .isInt({ min: 1, max: 6 })
-    .withMessage("Top value must be between 1 and 6"),
-  body("answer.bottomValue")
-    .optional()
-    .isInt({ min: 1, max: 6 })
-    .withMessage("Bottom value must be between 1 and 6"),
-  // For multiple choice questions
-  body("answer")
-    .optional()
-    .isArray()
-    .withMessage("Multiple choice answers must be an array"),
+  // For questions
+  body("answer").custom((value, { req }) => {
+    // For domino questions with top/bottom properties
+    if (
+      value &&
+      typeof value === "object" &&
+      (value.top !== undefined || value.bottom !== undefined)
+    ) {
+      if (value.top !== undefined && (value.top < 1 || value.top > 6)) {
+        throw new Error("Top value must be between 1 and 6");
+      }
+      if (
+        value.bottom !== undefined &&
+        (value.bottom < 1 || value.bottom > 6)
+      ) {
+        throw new Error("Bottom value must be between 1 and 6");
+      }
+      return true;
+    }
+
+    // For multiple choice questions
+    if (Array.isArray(value)) {
+      return true;
+    }
+
+    // For domino questions with dominoId/topValue/bottomValue
+    if (
+      value &&
+      typeof value === "object" &&
+      (value.dominoId !== undefined ||
+        value.topValue !== undefined ||
+        value.bottomValue !== undefined)
+    ) {
+      if (
+        value.topValue !== undefined &&
+        (value.topValue < 1 || value.topValue > 6)
+      ) {
+        throw new Error("Top value must be between 1 and 6");
+      }
+      if (
+        value.bottomValue !== undefined &&
+        (value.bottomValue < 1 || value.bottomValue > 6)
+      ) {
+        throw new Error("Bottom value must be between 1 and 6");
+      }
+      return true;
+    }
+
+    throw new Error("Invalid answer format");
+  }),
   validateRequest,
 ];
 
