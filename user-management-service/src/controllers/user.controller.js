@@ -2,6 +2,10 @@ const User = require("../models/user.model");
 const { asyncHandler, ErrorResponse } = require("../utils/error-handler.util");
 const emailUtil = require("../utils/email.util");
 const mongoose = require("mongoose");
+const {
+  processAndSaveImage,
+  deleteOldProfilePicture,
+} = require("../utils/file-upload.util");
 
 /**
  * @desc    Get all users with pagination and filtering
@@ -137,6 +141,12 @@ exports.updateUser = asyncHandler(async (req, res) => {
     throw new ErrorResponse("Not authorized to update this user profile", 403);
   }
 
+  // Get current user data to access role for folder organization
+  const currentUser = await User.findById(req.params.userId);
+  if (!currentUser) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
   // Fields that regular users can update
   const allowedUpdates = [
     "firstName",
@@ -161,6 +171,22 @@ exports.updateUser = asyncHandler(async (req, res) => {
     }
   });
 
+  // Handle profile picture upload if provided
+  if (req.file) {
+    // Delete old profile picture if exists
+    await deleteOldProfilePicture(currentUser.profilePicture);
+    
+    // Process and save new profile picture
+    const profilePicturePath = await processAndSaveImage(
+      req.file,
+      req.params.userId,
+      currentUser.role
+    );
+    
+    // Add profile picture path to update data
+    updateData.profilePicture = profilePicturePath;
+  }
+
   const updatedUser = await User.findByIdAndUpdate(
     req.params.userId,
     { $set: updateData },
@@ -177,6 +203,7 @@ exports.updateUser = asyncHandler(async (req, res) => {
     user: updatedUser,
   });
 });
+
 
 /**
  * @desc    Assign role to user
@@ -217,6 +244,86 @@ exports.assignRole = asyncHandler(async (req, res) => {
     success: true,
     message: `User role updated to ${role} successfully`,
     user: updatedUser,
+  });
+});
+
+/**
+ * @desc    Upload or update profile picture
+ * @route   POST /api/users/:userId/profile-picture
+ * @access  Private (Self or Admin)
+ */
+exports.updateProfilePicture = asyncHandler(async (req, res) => {
+  // Check if user is updating their own profile picture or is an admin
+  if (req.params.userId !== req.userId && req.userRole !== "admin") {
+    throw new ErrorResponse("Not authorized to update this user's profile picture", 403);
+  }
+
+  if (!req.file) {
+    throw new ErrorResponse("No file uploaded", 400);
+  }
+
+  // Get current user to determine role for folder organization
+  const user = await User.findById(req.params.userId);
+  if (!user) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
+  // Delete old profile picture if exists
+  await deleteOldProfilePicture(user.profilePicture);
+  
+  // Process and save new profile picture
+  const profilePicturePath = await processAndSaveImage(
+    req.file,
+    req.params.userId,
+    user.role
+  );
+  
+  // Update user with new profile picture path
+  const updatedUser = await User.findByIdAndUpdate(
+    req.params.userId,
+    { profilePicture: profilePicturePath },
+    { new: true }
+  ).select("-password");
+
+  res.status(200).json({
+    success: true,
+    message: "Profile picture updated successfully",
+    user: updatedUser
+  });
+});
+
+/**
+ * @desc    Delete profile picture
+ * @route   DELETE /api/users/:userId/profile-picture
+ * @access  Private (Self or Admin)
+ */
+exports.deleteProfilePicture = asyncHandler(async (req, res) => {
+  // Check if user is deleting their own profile picture or is an admin
+  if (req.params.userId !== req.userId && req.userRole !== "admin") {
+    throw new ErrorResponse("Not authorized to delete this user's profile picture", 403);
+  }
+
+  const user = await User.findById(req.params.userId);
+  if (!user) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
+  // Delete profile picture if exists
+  if (user.profilePicture) {
+    await deleteOldProfilePicture(user.profilePicture);
+  }
+
+  // Update user to remove profile picture reference
+  const updatedUser = await User.findByIdAndUpdate(
+    req.params.userId,
+    { $unset: { profilePicture: 1 } },
+    { new: true }
+  ).select("-password");
+
+  res.status(200).json({
+    success: true,
+    message: "Profile picture deleted successfully",
+    user: updatedUser
   });
 });
 
@@ -373,6 +480,22 @@ exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
   if (currentPosition) updateData.currentPosition = currentPosition;
   if (desiredPosition) updateData.desiredPosition = desiredPosition;
   if (educationLevel) updateData.educationLevel = educationLevel;
+  
+  // Handle profile picture upload if provided
+  if (req.file) {
+    // Delete old profile picture if exists
+    await deleteOldProfilePicture(user.profilePicture);
+    
+    // Process and save new profile picture
+    const profilePicturePath = await processAndSaveImage(
+      req.file,
+      req.userId,
+      user.role
+    );
+    
+    // Add profile picture path to update data
+    updateData.profilePicture = profilePicturePath;
+  }
   
   // Update user with both test authorization request data and profile data
   const updatedUser = await User.findByIdAndUpdate(

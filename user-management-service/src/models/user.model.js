@@ -31,6 +31,9 @@ const userSchema = new mongoose.Schema({
     enum: ["candidate", "admin", "moderator", "psychologist"],
     default: "candidate",
   },
+  profilePicture: {
+    type: String,
+  },
   dateOfBirth: {
     type: Date,
   },

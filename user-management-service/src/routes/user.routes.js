@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user.controller");
 const verifyToken = require("../middleware/auth.middleware");
+const { uploadMiddleware } = require("../utils/file-upload.util");
 const {
   validateUserFilters,
   validateUserId,
@@ -81,6 +82,7 @@ router.get(
 router.post(
   "/test-authorization",
   verifyToken(["candidate"]),
+  uploadMiddleware,
   validateTestAuthRequest,
   userController.submitTestAuthorizationRequest
 );
@@ -298,8 +300,77 @@ router.put(
   "/:userId",
   verifyToken(),
   validateUserId,
+  uploadMiddleware,
   validateUserUpdate,
   userController.updateUser
+);
+
+/**
+ * @swagger
+ * /api/users/{userId}/profile-picture:
+ *   post:
+ *     summary: Upload or update profile picture
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profilePicture:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Profile picture updated successfully
+ *       400:
+ *         description: No file uploaded
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
+router.post(
+  "/:userId/profile-picture",
+  verifyToken(),
+  validateUserId,
+  uploadMiddleware,
+  userController.updateProfilePicture
+);
+
+/**
+ * @swagger
+ * /api/users/{userId}/profile-picture:
+ *   delete:
+ *     summary: Delete profile picture
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Profile picture deleted successfully
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
+router.delete(
+  "/:userId/profile-picture",
+  verifyToken(),
+  validateUserId,
+  userController.deleteProfilePicture
 );
 
 /**
