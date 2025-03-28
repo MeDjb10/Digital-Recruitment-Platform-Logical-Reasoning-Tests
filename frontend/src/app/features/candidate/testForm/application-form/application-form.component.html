@@ -38,111 +38,157 @@
         <p-step-panel [value]="1">
           <ng-template #content let-activateCallback="activateCallback">
             <p-card styleClass="shadow-lg">
-              <div class="text-center mb-4">
-                <h2 class="text-xl font-semibold text-blue-800">
+              <div class="text-center mb-5">
+                <h2 class="text-2xl font-bold text-blue-800">
                   Profile Picture
                 </h2>
-                <p class="text-gray-600">
+                <p class="text-gray-600 mt-2">
                   Upload a professional photo for your profile
                 </p>
-              </div>
-
-              <!-- Profile Picture Preview -->
-              <div class="flex flex-col items-center justify-center mb-4">
                 <div
-                  class="w-40 h-40 rounded-full border-2 border-blue-200 overflow-hidden mb-4 bg-gray-100 flex items-center justify-center"
-                >
-                  <img
-                    *ngIf="profilePicturePreview"
-                    [src]="profilePicturePreview"
-                    alt="Profile Preview"
-                    class="w-full h-full object-cover"
-                  />
-                  <i
-                    *ngIf="!profilePicturePreview"
-                    class="pi pi-user text-6xl text-gray-300"
-                  ></i>
-                </div>
-                <h3 *ngIf="profilePictureFile" class="text-sm font-semibold">
-                  {{ profilePictureFile.name }} ({{
-                    formatSize(profilePictureFile.size)
-                  }})
-                </h3>
+                  class="w-32 h-1 bg-blue-500 mx-auto mt-3 rounded-full"
+                ></div>
               </div>
 
-              <!-- File Upload -->
-              <p-fileUpload
-                #fileUpload
-                [showUploadButton]="false"
-                [showCancelButton]="false"
-                [maxFileSize]="1000000"
-                accept="image/*"
-                [multiple]="false"
-                chooseLabel="Select Image"
-                (onSelect)="onProfilePictureSelect($event)"
-              >
-                <ng-template pTemplate="content">
+              <!-- Enhanced Profile Picture Preview with Upload Options -->
+              <div class="profile-section">
+                <!-- Left side: Preview -->
+                <div class="profile-preview-container">
                   <div
-                    class="flex flex-col items-center justify-center py-4"
-                    *ngIf="!profilePictureFile"
+                    class="profile-preview"
+                    tabindex="0"
+                    aria-label="Profile picture preview"
                   >
-                    <i
-                      class="pi pi-cloud-upload text-4xl text-blue-500 mb-2"
-                    ></i>
-                    <p class="text-center text-gray-600">
-                      Drag and drop your profile picture here<br />
-                      or click to browse
-                    </p>
-                    <small class="text-gray-500 mt-2"
-                      >Maximum file size: 1MB</small
+                    <ng-container
+                      *ngIf="profilePicturePreview; else placeholderTemplate"
+                    >
+                      <img
+                        [src]="profilePicturePreview"
+                        alt="Profile Preview"
+                        class="w-full h-full object-cover"
+                      />
+                    </ng-container>
+                    <ng-template #placeholderTemplate>
+                      <div class="profile-placeholder">
+                        <i class="pi pi-user"></i>
+                      </div>
+                    </ng-template>
+                  </div>
+
+                  <!-- File information badge -->
+                  <div
+                    *ngIf="profilePictureFile"
+                    class="file-info-badge"
+                    role="status"
+                  >
+                    <i class="pi pi-check-circle"></i>
+                    <span
+                      >{{ profilePictureFile.name }} ({{
+                        formatSize(profilePictureFile.size)
+                      }})</span
                     >
                   </div>
+                </div>
 
-                  <p-progressBar
-                    *ngIf="uploadProgress > 0"
-                    [value]="uploadProgress"
-                  ></p-progressBar>
+                <!-- Right side: Upload options -->
+                <div class="upload-options">
+                  <h3 class="upload-options-title">Upload Options</h3>
 
-                  <div
-                    class="flex justify-center mt-4"
-                    *ngIf="profilePictureFile"
+                  <!-- Hidden FileUpload component -->
+                  <p-fileUpload
+                    #fileUpload
+                    [showUploadButton]="false"
+                    [showCancelButton]="false"
+                    [maxFileSize]="1000000"
+                    accept="image/*"
+                    [multiple]="false"
+                    chooseLabel="Select Image"
+                    styleClass="hidden-upload"
+                    (onSelect)="onProfilePictureSelect($event)"
+                  ></p-fileUpload>
+
+                  <!-- Custom button that triggers the file upload -->
+                  <button
+                    type="button"
+                    class="select-image-btn"
+                    (click)="triggerFileInput()"
                   >
-                    <p-button
-                      label="Remove"
-                      icon="pi pi-times"
-                      severity="danger"
-                      (onClick)="removeProfilePicture()"
-                      styleClass="p-button-sm p-button-outlined"
-                    ></p-button>
-                  </div>
-                </ng-template>
-              </p-fileUpload>
+                    <i class="pi pi-image mr-2"></i>
+                    Browse Photos
+                  </button>
 
-              <div
-                class="bg-blue-50 p-4 rounded-lg mt-6 flex items-start border-l-4 border-blue-500 shadow-sm"
-              >
-                <i class="pi pi-info-circle text-blue-500 mr-3 text-xl"></i>
-                <div>
-                  <h4 class="text-blue-700 font-medium mb-1 text-sm">
-                    Profile Picture Guidelines
-                  </h4>
-                  <ul class="text-sm text-gray-600 list-disc ml-4">
-                    <li>Upload a clear, professional headshot</li>
-                    <li>Use a neutral background</li>
-                    <li>Ensure your face is clearly visible</li>
-                    <li>Maximum file size: 1MB</li>
-                  </ul>
+                  <p class="upload-divider"><span>or</span></p>
+
+                  <!-- Enhanced drag area -->
+                  <div
+                    class="enhanced-drop-zone"
+                    [class.active-zone]="isDragOver"
+                    (dragover)="onDragOver($event)"
+                    (dragleave)="onDragLeave($event)"
+                    (drop)="onDrop($event)"
+                    (click)="triggerFileInput()"
+                    tabindex="0"
+                    role="button"
+                    aria-label="Drag and drop area for image upload"
+                    (keydown.enter)="triggerFileInput()"
+                  >
+                    <i class="pi pi-cloud-upload"></i>
+                    <p>Drag &amp; Drop Image Here</p>
+                  </div>
+
+                  <!-- Remove button for when an image is selected -->
+                  <button
+                    *ngIf="profilePictureFile"
+                    type="button"
+                    class="remove-image-btn"
+                    (click)="removeProfilePicture()"
+                  >
+                    <i class="pi pi-trash mr-2"></i>
+                    Remove Photo
+                  </button>
                 </div>
               </div>
 
-              <!-- Navigation -->
+              <!-- Progress indicator -->
+              <div
+                *ngIf="uploadProgress > 0 && uploadProgress < 100"
+                class="upload-progress"
+              >
+                <p-progressBar
+                  [value]="uploadProgress"
+                  [showValue]="true"
+                  styleClass="mt-3"
+                  aria-label="Upload progress"
+                ></p-progressBar>
+              </div>
+
+              <!-- Enhanced Guidelines Card -->
+              <div
+                class="guidelines-card"
+                role="region"
+                aria-label="Profile picture guidelines"
+              >
+                <div class="guidelines-title">
+                  <i class="pi pi-info-circle"></i>
+                  <h3>Profile Picture Guidelines</h3>
+                </div>
+                <ul class="guidelines-list text-gray-600">
+                  <li>Upload a clear, professional headshot</li>
+                  <li>Use a neutral background</li>
+                  <li>Ensure your face is clearly visible</li>
+                  <li>Maximum file size: 1MB</li>
+                </ul>
+              </div>
+
+              <!-- Navigation with improved styling -->
               <div class="flex pt-4 justify-end">
                 <p-button
                   label="Next"
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   (onClick)="activateCallback(2)"
-                  styleClass="p-button-raised"
+                  styleClass="p-button-raised p-button-primary"
+                  [disabled]="!profilePictureFile"
                 ></p-button>
               </div>
             </p-card>

@@ -64,9 +64,10 @@ export class ApplicationFormComponent implements OnInit {
   maxDate = new Date(); // For date of birth - can't be future date
 
   // Profile picture handling
-  profilePictureFile: File | undefined ;
+  profilePictureFile: File | undefined;
   profilePicturePreview: string | null = null;
   uploadProgress = 0;
+  isDragOver = false;
 
   // Dropdown options
   genderOptions = [
@@ -90,6 +91,8 @@ export class ApplicationFormComponent implements OnInit {
     { label: 'Within 2 weeks', value: 'two_weeks' },
     { label: 'Within a month', value: 'one_month' },
   ];
+
+  @ViewChild('fileUpload') fileUpload: any;
 
   constructor(
     private fb: FormBuilder,
@@ -179,10 +182,92 @@ export class ApplicationFormComponent implements OnInit {
     }
   }
 
+  // Replace the triggerFileInput method with this improved version
+
+  triggerFileInput(): void {
+    setTimeout(() => {
+      if (
+        this.fileUpload &&
+        this.fileUpload.basicFileInput &&
+        this.fileUpload.basicFileInput.nativeElement
+      ) {
+        this.fileUpload.basicFileInput.nativeElement.click();
+      } else {
+        // Try to directly access the file input element by query selector
+        const fileInput = document.querySelector(
+          '.p-fileupload input[type=file]'
+        ) as HTMLInputElement;
+        if (fileInput) {
+          fileInput.click();
+        } else {
+          console.error('File input element not found');
+          // Fallback message if the file input can't be found
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail:
+              'Unable to open file browser. Please try again or drag and drop your file.',
+            life: 3000,
+          });
+        }
+      }
+    }, 0);
+  }
+  
   removeProfilePicture(): void {
     this.profilePictureFile = undefined;
     this.profilePicturePreview = null;
     this.uploadProgress = 0;
+  }
+
+  // Handle drag over event
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = true;
+  }
+
+  // Handle drag leave event
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+  }
+
+  // Handle drop event
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+
+    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+      const file = event.dataTransfer.files[0];
+
+      // Check if it's an image
+      if (file.type.startsWith('image/')) {
+        // Create a file list-like object that PrimeNG's FileUpload expects
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+
+        // Create the event object that mimics what PrimeNG's FileUpload would create
+        const fileUploadEvent = {
+          originalEvent: event,
+          files: dataTransfer.files,
+          currentFiles: [file],
+        };
+
+        // Call the same method that handles the file upload selection
+        this.onProfilePictureSelect(fileUploadEvent);
+      } else {
+        // Not an image file
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Invalid File Type',
+          detail: 'Please upload an image file.',
+          life: 3000,
+        });
+      }
+    }
   }
 
   // Computed properties for label display
