@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -21,8 +21,14 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
 import { ToastModule } from 'primeng/toast';
+import { FileUploadModule } from 'primeng/fileupload';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { BadgeModule } from 'primeng/badge';
 import { AuthService } from '../../../../core/auth/services/auth.service';
-import { User } from '../../../../core/models/user.model';
+import {
+  User,
+  TestAuthorizationRequest,
+} from '../../../../core/models/user.model';
 import { UserService } from '../../../../core/services/user.service';
 
 @Component({
@@ -43,6 +49,9 @@ import { UserService } from '../../../../core/services/user.service';
     CardModule,
     DividerModule,
     ToastModule,
+    FileUploadModule,
+    ProgressBarModule,
+    BadgeModule,
   ],
   providers: [MessageService],
 })
@@ -50,14 +59,20 @@ export class ApplicationFormComponent implements OnInit {
   currentUser: User | null = null;
   personalInfoForm!: FormGroup;
   jobInfoForm!: FormGroup;
+  companyInfoForm!: FormGroup; // New form for company information
   submitting = false;
   maxDate = new Date(); // For date of birth - can't be future date
+
+  // Profile picture handling
+  profilePictureFile: File | undefined ;
+  profilePicturePreview: string | null = null;
+  uploadProgress = 0;
 
   // Dropdown options
   genderOptions = [
     { label: 'Male', value: 'Male' },
     { label: 'Female', value: 'Female' },
- 
+    { label: 'Other', value: 'Other' },
   ];
 
   educationOptions = [
@@ -129,6 +144,45 @@ export class ApplicationFormComponent implements OnInit {
       ],
       availability: ['immediately', Validators.required], // Default value
     });
+
+    // Company information form (for test authorization)
+    this.companyInfoForm = this.fb.group({
+      jobPosition: ['', Validators.required],
+      company: ['', Validators.required],
+      department: [''],
+      additionalInfo: [''],
+    });
+  }
+
+  // Profile picture handling methods
+  onProfilePictureSelect(event: any): void {
+    if (event.currentFiles && event.currentFiles.length > 0) {
+      this.profilePictureFile = event.currentFiles[0];
+
+      // Create preview
+      if (this.profilePictureFile) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.profilePicturePreview = reader.result as string;
+        };
+        reader.readAsDataURL(this.profilePictureFile);
+
+        // Show success message
+        this.messageService.add({
+          severity: 'info',
+          summary: 'File Selected',
+          detail: `Profile picture "${this.profilePictureFile.name}" selected successfully`,
+        });
+
+        this.uploadProgress = 100;
+      }
+    }
+  }
+
+  removeProfilePicture(): void {
+    this.profilePictureFile = undefined;
+    this.profilePicturePreview = null;
+    this.uploadProgress = 0;
   }
 
   // Computed properties for label display
@@ -161,12 +215,11 @@ export class ApplicationFormComponent implements OnInit {
     );
   }
 
-  // Submit form data
   onSubmit(): void {
     if (
       this.personalInfoForm.invalid ||
       this.jobInfoForm.invalid ||
-      !this.currentUser?.id
+      this.companyInfoForm.invalid
     ) {
       this.messageService.add({
         severity: 'error',
@@ -178,65 +231,88 @@ export class ApplicationFormComponent implements OnInit {
     }
 
     this.submitting = true;
-    
 
-    // Combine form data
-    const formData = {
-      ...this.personalInfoForm.value,
-      ...this.jobInfoForm.value,
-      // Format date to ISO string if needed
+    // Create test auth request object
+    const testAuthRequest: TestAuthorizationRequest = {
+      firstName: this.personalInfoForm.value.firstName,
+      lastName: this.personalInfoForm.value.lastName,
+      gender: this.personalInfoForm.value.gender,
       dateOfBirth: this.personalInfoForm.value.dateOfBirth
         ? this.personalInfoForm.value.dateOfBirth.toISOString()
-        : undefined,
+        : '',
+      currentPosition: this.jobInfoForm.value.currentPosition,
+      desiredPosition: this.jobInfoForm.value.desiredPosition,
+      educationLevel: this.jobInfoForm.value.educationLevel,
+      jobPosition: this.companyInfoForm.value.jobPosition,
+      company: this.companyInfoForm.value.company,
+      department: this.companyInfoForm.value.department || '',
+      additionalInfo: this.companyInfoForm.value.additionalInfo || '',
     };
 
-    delete formData.availability;
-    console.log(formData);
-    
+    // Test if there's a profile picture issue by trying without it first
+    const hasProfilePicture = !!this.profilePictureFile;
 
-    this.userService.updateUser(this.currentUser.id, formData).subscribe({
-      next: (response) => {
-        this.submitting = false;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Your application has been submitted successfully!',
-          life: 5000,
-        });
+    // Option 1: Try without profile picture first
+    if (hasProfilePicture) {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Testing',
+        detail:
+          'Submitting form data first, then will upload profile picture separately.',
+        life: 3000,
+      });
+    }
 
-        // Navigate to tests page after a short delay
-        setTimeout(() => {
-          this.router.navigate(['/tests']);
-        }, 2000);
-      },
-      error: (error) => {
-        this.submitting = false;
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: `Failed to submit your application: ${error.message}`,
-          life: 5000,
-        });
-      },
-    });
+    this.userService
+      .submitTestAuthorizationRequest(testAuthRequest, this.profilePictureFile)
+      .subscribe({
+        next: (response) => {
+          this.submitting = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail:
+              'Your test authorization request has been submitted successfully!',
+            life: 5000,
+          });
+
+          setTimeout(() => {
+            this.router.navigate(['/dashboard']);
+          }, 2000);
+        },
+        error: (error) => {
+          this.submitting = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: `Failed to submit your application: ${error.message}`,
+            life: 5000,
+          });
+        },
+      });
   }
+  // Helper for formatting file size
+  formatSize(bytes: number): string {
+    if (bytes === 0) {
+      return '0 B';
+    }
 
-  // Add to your component.ts
-  // This updates the progress bar when moving between steps
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
 
   // Add this method to your component
   updateProgress(step: number): void {
     const progressBar = document.getElementById('progressBar');
     if (progressBar) {
-      // Calculate progress based on step
-      const progress = Math.min(100, step * 33);
+      // Calculate progress based on step (now with 4 steps)
+      const progress = Math.min(100, step * 25);
       progressBar.style.width = `${progress}%`;
     }
   }
-
-  // Modify your activateCallback handling to include progress updates
-  // For example, where you use (onClick)="activateCallback(2)", you might use:
-  // (onClick)="changeStep(2, activateCallback)"
 
   // Add this method to your component
   changeStep(step: number, activateCallback: Function): void {

@@ -137,6 +137,17 @@ app.use(
   })
 );
 
+app.use(
+  "/uploads",
+  proxy("http://localhost:3001", {
+    timeout: 5000,
+    proxyReqPathResolver: (req) => {
+      console.log(`Proxying static file: ${req.originalUrl}`);
+      return req.originalUrl;
+    },
+  })
+);
+
 // Add this after your existing proxy middleware configurations (around line 92):
 
 // Proxy for test-related routes
