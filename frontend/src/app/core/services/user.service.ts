@@ -3,9 +3,11 @@ import {
   HttpClient,
   HttpParams,
   HttpErrorResponse,
+  HttpEventType,
+  HttpResponse,
 } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   User,
@@ -73,21 +75,65 @@ export class UserService {
       .pipe(catchError(this.handleError));
   }
 
-  // Update profile picture
+  // Update the updateProfilePicture method to handle file uploads correctly
   updateProfilePicture(userId: string, file: File): Observable<UserResponse> {
     if (!this.isValidObjectId(userId)) {
       return throwError(() => new Error('Invalid user ID format'));
     }
 
-    const formData = new FormData();
-    formData.append('profilePicture', file);
+    // Log the file being uploaded
+    console.log('Uploading profile picture:', {
+      userId,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+    });
 
+    // Create a FormData object
+    const formData = new FormData();
+
+    // Add the file to the FormData object
+    // The field name MUST match what the server expects (profilePicture)
+    formData.append('profilePicture', file, file.name);
+
+    // Log the FormData entries (for debugging)
+    console.log(
+      `FormData created with file: ${file.name} (${file.size} bytes)`
+    );
+
+    // Return the HTTP request, without setting Content-Type
+    // The browser will set the correct Content-Type with boundary
     return this.http
-      .post<UserResponse>(`${this.apiUrl}/${userId}/profile-picture`, formData)
-      .pipe(catchError(this.handleError));
+      .post<UserResponse>(
+        `${this.apiUrl}/${userId}/profile-picture`,
+        formData,
+        {
+          // Important: Do NOT set Content-Type header here
+          reportProgress: true,
+          observe: 'events',
+        }
+      )
+      .pipe(
+        // Filter for the final response event
+        filter((event: any) => event.type === HttpEventType.Response),
+        map((event: HttpResponse<UserResponse>) => event.body as UserResponse),
+        tap((response) => {
+          console.log('Profile picture upload successful:', response);
+          if (response.user?.profilePicture) {
+            // Update the profile picture URL to use the full path
+            response.user.profilePicture = this.getFullProfilePictureUrl(
+              response.user.profilePicture
+            );
+          }
+        }),
+        catchError((error) => {
+          console.error('Error in updateProfilePicture:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
-  // Delete profile picture
+  // Add a method to delete profile picture
   deleteProfilePicture(userId: string): Observable<UserResponse> {
     if (!this.isValidObjectId(userId)) {
       return throwError(() => new Error('Invalid user ID format'));
@@ -95,7 +141,27 @@ export class UserService {
 
     return this.http
       .delete<UserResponse>(`${this.apiUrl}/${userId}/profile-picture`)
-      .pipe(catchError(this.handleError));
+      .pipe(
+        tap((response) => console.log('Profile picture deleted successfully')),
+        catchError(this.handleError)
+      );
+  }
+
+  // Helper method to convert relative URLs to full URLs
+  private getFullProfilePictureUrl(url: string): string {
+    if (!url) return url;
+
+    // If it's already a complete URL, return it
+    if (url.startsWith('http')) return url;
+
+    // If it's a relative URL, prepend the API base URL
+    if (url.startsWith('/uploads')) {
+      const baseUrl = environment.apiUrl.split('/api')[0]; // Get base URL without /api
+      return `${baseUrl}${url}`;
+    }
+
+    // Return original if neither condition matches
+    return url;
   }
 
   // Submit test authorization request

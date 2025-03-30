@@ -99,6 +99,23 @@ export class AuthService {
     return this.currentUserSubject.value?.role || 'candidate';
   }
 
+  // Add this method to update the current user
+  updateCurrentUser(updatedUser: User): void {
+    // Get the current user
+    const currentUser = this.currentUserSubject.value;
+
+    if (currentUser && updatedUser) {
+      // Merge the current user with the updated properties
+      const mergedUser = { ...currentUser, ...updatedUser };
+
+      // Update the BehaviorSubject with the new merged user
+      this.currentUserSubject.next(mergedUser);
+      console.log('Current user updated:', mergedUser);
+    } else {
+      console.warn('Cannot update user: No current user or updated user data');
+    }
+  }
+
   // Verify email with OTP after registration
   verifyEmail(
     email: string,

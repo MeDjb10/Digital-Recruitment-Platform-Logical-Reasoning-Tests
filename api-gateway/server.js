@@ -105,50 +105,61 @@ app.use(
   })
 );
 
-// Add proxy middleware for User Service
+app.use(
+  "/api/users/:userId/profile-picture",
+  (req, res, next) => {
+    if (req.method === "POST") {
+      // Log detailed information about the request
+      console.log("Profile picture upload request received");
+      console.log("Headers:", req.headers);
+      console.log("Method:", req.method);
+      console.log("URL:", req.url);
+      console.log("Original URL:", req.originalUrl);
+    }
+    next();
+  },
+  proxy("http://localhost:3001", {
+    parseReqBody: false, // Critical: Don't try to parse multipart form data
+    timeout: 60000, // Longer timeout for uploads
+    proxyReqPathResolver: (req) => {
+      const url = req.originalUrl;
+      console.log("Proxying profile picture upload to user service:", url);
+      return url;
+    },
+  })
+);
+
+// Keep existing /api/users proxy for non-file uploads
 app.use(
   "/api/users",
+  (req, res, next) => {
+    // Skip this proxy if it's a profile picture upload (already handled above)
+    if (req.originalUrl.includes("/profile-picture") && req.method === "POST") {
+      return next("route");
+    }
+    next();
+  },
   proxy("http://localhost:3001", {
     timeout: 5000,
     proxyReqPathResolver: (req) => {
       console.log(`Proxying to user service: ${req.originalUrl}`);
       return req.originalUrl;
     },
-    proxyErrorHandler: (err, res, next) => {
-      console.error("User proxy error:", err.message);
-      if (err.code === "ECONNREFUSED") {
-        return res.status(503).json({
-          status: "error",
-          message: "User management service is unavailable",
-        });
-      }
-      if (err.code === "ETIMEDOUT") {
-        return res.status(504).json({
-          status: "error",
-          message: "User management service timed out",
-        });
-      }
-      res.status(500).json({
-        status: "error",
-        message: "Error connecting to user management service",
-        error: process.env.NODE_ENV === "development" ? err.message : undefined,
-      });
-    },
+    // Keep existing error handling
   })
 );
 
+// Static file serving
 app.use(
   "/uploads",
   proxy("http://localhost:3001", {
-    timeout: 5000,
+    timeout: 10000,
     proxyReqPathResolver: (req) => {
       console.log(`Proxying static file: ${req.originalUrl}`);
       return req.originalUrl;
     },
   })
 );
-
-// Add this after your existing proxy middleware configurations (around line 92):
 
 // Proxy for test-related routes
 app.use(

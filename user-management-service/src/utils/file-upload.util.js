@@ -1,50 +1,125 @@
-const fs = require("fs");
-const path = require("path");
 const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 const sharp = require("sharp");
 const { v4: uuidv4 } = require("uuid");
 const { ErrorResponse } = require("./error-handler.util");
 
-// Base directory for profile pictures
-const PROFILE_PICS_DIR = path.join(__dirname, "../../uploads/profile-pictures");
+// Base directories
+const UPLOADS_DIR = path.join(__dirname, "../../uploads");
+const PROFILE_PICS_DIR = path.join(UPLOADS_DIR, "profile-pictures");
+const TEMP_DIR = path.join(UPLOADS_DIR, "temp");
 
 // Ensure directories exist
 const ensureDirectoriesExist = () => {
-  const directories = [
-    PROFILE_PICS_DIR,
-    path.join(PROFILE_PICS_DIR, "candidates"),
-    path.join(PROFILE_PICS_DIR, "admins"),
-    path.join(PROFILE_PICS_DIR, "psychologists"),
-    path.join(PROFILE_PICS_DIR, "moderators"),
-  ];
+  console.log("Ensuring directories exist...");
 
-  directories.forEach((dir) => {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    console.log(`Creating uploads directory: ${UPLOADS_DIR}`);
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+
+  if (!fs.existsSync(PROFILE_PICS_DIR)) {
+    console.log(`Creating profile pictures directory: ${PROFILE_PICS_DIR}`);
+    fs.mkdirSync(PROFILE_PICS_DIR, { recursive: true });
+  }
+
+  if (!fs.existsSync(TEMP_DIR)) {
+    console.log(`Creating temp directory: ${TEMP_DIR}`);
+    fs.mkdirSync(TEMP_DIR, { recursive: true });
+  }
+
+  // Create role-based subdirectories
+  ["candidates", "admins", "moderators", "psychologists"].forEach((role) => {
+    const dir = path.join(PROFILE_PICS_DIR, role);
     if (!fs.existsSync(dir)) {
+      console.log(`Creating role directory: ${dir}`);
       fs.mkdirSync(dir, { recursive: true });
     }
   });
+
+  console.log("All directories ready");
 };
 
-// Configure storage
-const storage = multer.memoryStorage();
+// Create directories at startup
+ensureDirectoriesExist();
 
-// File filter to accept only images
+// Configure storage - simplified for robustness
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, TEMP_DIR);
+  },
+  filename: (req, file, cb) => {
+    // Create a unique filename to avoid collisions
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
+    cb(null, `temp-${uniqueSuffix}${ext}`);
+  },
+});
+
+// Simple file filter for images
 const fileFilter = (req, file, cb) => {
+  console.log(
+    `Filtering file: ${file.originalname}, mimetype: ${file.mimetype}`
+  );
+
+  // Only accept image files
   if (file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
+    console.log(`Rejected file: ${file.originalname} - not an image`);
     cb(new ErrorResponse("Only image files are allowed", 400), false);
   }
 };
 
-// Setup multer upload
+// Create multer middleware
 const upload = multer({
-  storage: storage,
+  storage,
+  fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB file size limit
+    fileSize: 10 * 1024 * 1024, // 10MB
+    files: 1,
   },
-  fileFilter: fileFilter,
 });
+
+// Simplified upload middleware - single file only
+const uploadMiddleware = (req, res, next) => {
+  console.log("Starting file upload middleware");
+  console.log("Headers:", req.headers);
+
+  // Use .single() for a single file with field name 'profilePicture'
+  upload.single("profilePicture")(req, res, (err) => {
+    // Log upload completion
+    if (req.file) {
+      console.log(`Upload completed with file: ${req.file.originalname}`);
+      console.log("File details:", {
+        filename: req.file.filename,
+        size: req.file.size,
+        path: req.file.path,
+      });
+    } else {
+      console.log("Upload completed without file");
+    }
+
+    // Handle errors
+    if (err) {
+      console.error("Upload error:", err);
+
+      // Handle specific error types
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return next(new ErrorResponse("File too large (max 10MB)", 400));
+        }
+        return next(new ErrorResponse(`Upload error: ${err.code}`, 400));
+      }
+
+      return next(new ErrorResponse(`Upload error: ${err.message}`, 400));
+    }
+
+    // Continue to next middleware
+    next();
+  });
+};
 
 // Get folder based on role
 const getFolderByRole = (role) => {
@@ -62,37 +137,77 @@ const getFolderByRole = (role) => {
 
 // Process and save image
 const processAndSaveImage = async (file, userId, role) => {
-  ensureDirectoriesExist();
+  if (!file) {
+    throw new ErrorResponse("No file provided", 400);
+  }
 
-  const folder = getFolderByRole(role);
-  const filename = `${userId}-${uuidv4()}.webp`;
-  const filePath = path.join(PROFILE_PICS_DIR, folder, filename);
+  console.log(
+    `Processing image: ${file.path} for user: ${userId} with role: ${role}`
+  );
 
-  // Process image with sharp - resize and convert to webp for optimization
-  await sharp(file.buffer)
-    .resize(300, 300)
-    .webp({ quality: 80 })
-    .toFile(filePath);
+  try {
+    // Get the appropriate folder for this user's role
+    const folder = getFolderByRole(role);
 
-  return `/uploads/profile-pictures/${folder}/${filename}`;
+    // Create a unique filename with the user ID
+    const filename = `${userId}-${uuidv4()}.webp`;
+
+    // Full path to save the processed image
+    const outputPath = path.join(PROFILE_PICS_DIR, folder, filename);
+
+    // Process the image with Sharp (resize and convert to webp)
+    await sharp(file.path)
+      .resize(300, 300, { fit: "cover" })
+      .webp({ quality: 80 })
+      .toFile(outputPath);
+
+    console.log(`Image processed and saved to: ${outputPath}`);
+
+    // Clean up the temporary file
+    fs.unlinkSync(file.path);
+    console.log(`Temporary file deleted: ${file.path}`);
+
+    // Return the public URL path
+    return `/uploads/profile-pictures/${folder}/${filename}`;
+  } catch (error) {
+    console.error("Error processing image:", error);
+
+    // Clean up temp file if it exists
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+
+    throw new ErrorResponse(`Image processing failed: ${error.message}`, 500);
+  }
 };
 
-// Delete old profile picture if it exists
+// Delete old profile picture
 const deleteOldProfilePicture = async (picturePath) => {
   if (!picturePath) return;
 
   try {
+    // Security check - ensure path is within uploads directory
+    if (!picturePath.startsWith("/uploads/profile-pictures/")) {
+      console.error("Invalid profile picture path:", picturePath);
+      return;
+    }
+
     const fullPath = path.join(__dirname, "../../", picturePath);
+    console.log("Attempting to delete file:", fullPath);
+
     if (fs.existsSync(fullPath)) {
       fs.unlinkSync(fullPath);
+      console.log("Successfully deleted profile picture:", fullPath);
+    } else {
+      console.log("Profile picture not found for deletion:", fullPath);
     }
   } catch (error) {
-    console.error("Error deleting old profile picture:", error);
+    console.error("Error deleting profile picture:", error);
   }
 };
 
 module.exports = {
-  uploadMiddleware: upload.single("profilePicture"),
+  uploadMiddleware,
   processAndSaveImage,
   deleteOldProfilePicture,
 };

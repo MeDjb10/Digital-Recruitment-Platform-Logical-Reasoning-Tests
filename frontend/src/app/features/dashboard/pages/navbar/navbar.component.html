@@ -177,6 +177,7 @@
         </div>
       </div>
 
+      <p-toast position="top-right"></p-toast>
       <!-- User Dropdown with improved interaction -->
       <div class="relative">
         <button
@@ -185,13 +186,42 @@
           (click)="toggleUserDropdown()"
           pRipple
         >
-          <img
-            src="https://ui-avatars.com/api/?name=Admin+User&background=3b82f6&color=fff&bold=true"
-            class="h-9 w-9 rounded-full border-2 border-white shadow-sm"
-            alt="User avatar"
-          />
-          <span class="hidden md:block ml-2 font-medium text-sm text-gray-700"
-            >{{userFullName}}</span
+          <!-- Profile picture with upload functionality -->
+          <div class="avatar-container relative">
+            <img
+              [src]="
+                avatarUrl ||
+                'https://ui-avatars.com/api/?name=' +
+                  encodeURIComponent(userFullName) +
+                  '&background=3b82f6&color=fff&bold=true'
+              "
+              class="h-9 w-9 rounded-full border-2 border-white shadow-sm"
+              [class.profile-loading]="isUploading"
+              alt="User avatar"
+              (error)="handleImageError()"
+              (click)="$event.stopPropagation(); fileInput.click()"
+            />
+            <!-- Overlay with icon when hovering -->
+            <div class="avatar-upload-overlay">
+              <i class="pi pi-camera"></i>
+            </div>
+            <!-- Hidden file input -->
+            <input
+              #fileInput
+              type="file"
+              (change)="onFileSelected($event)"
+              accept="image/png, image/jpeg, image/jpg, image/gif, image/webp"
+              style="display: none"
+            />
+            <!-- Loading spinner -->
+            <div *ngIf="isUploading" class="avatar-loading-spinner">
+              <i class="pi pi-spin pi-spinner"></i>
+            </div>
+          </div>
+
+          <span
+            class="hidden md:block ml-2 font-medium text-sm text-gray-700"
+            >{{ userFullName }}</span
           >
           <i
             class="pi pi-chevron-down ml-1 text-xs transition-transform duration-200"
@@ -203,21 +233,29 @@
         <div *ngIf="showUserDropdown" class="user-dropdown">
           <div class="p-3 border-b border-gray-100">
             <div class="flex items-start">
-              <img
-                src="https://ui-avatars.com/api/?name=Admin+User&background=3b82f6&color=fff&bold=true"
-                class="h-10 w-10 rounded-full border-2 border-white shadow-sm"
-                alt="User avatar"
-              />
+              <div class="relative">
+                <img
+                  [src]="
+                    avatarUrl ||
+                    'https://ui-avatars.com/api/?name=' +
+                      encodeURIComponent(userFullName) +
+                      '&background=3b82f6&color=fff&bold=true'
+                  "
+                  class="h-10 w-10 rounded-full border-2 border-white shadow-sm object-cover"
+                  [class.profile-loading]="isUploading"
+                  alt="User avatar"
+                />
+              </div>
               <div class="ml-3">
                 <p class="font-medium text-gray-900">{{ userFullName }}</p>
                 <p class="text-xs text-gray-500 mt-0.5">
-                 {{ userEmail }}
+                  {{ userEmail }}
                 </p>
                 <div class="mt-2">
                   <span
                     class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
                   >
-                     {{ userRole }}
+                    {{ userRole }}
                   </span>
                 </div>
               </div>
@@ -225,6 +263,21 @@
           </div>
 
           <div class="py-1">
+            <a
+              class="user-dropdown-item"
+              (click)="triggerProfilePictureUpload(); $event.preventDefault()"
+            >
+              <i class="pi pi-camera"></i>
+              <span>Change profile photo</span>
+            </a>
+            <a
+              *ngIf="avatarUrl"
+              class="user-dropdown-item"
+              (click)="deleteProfilePicture(); $event.preventDefault()"
+            >
+              <i class="pi pi-trash"></i>
+              <span>Delete profile photo</span>
+            </a>
             <a class="user-dropdown-item">
               <i class="pi pi-user"></i>
               <span>Profile</span>
@@ -245,7 +298,7 @@
               <i class="pi pi-users"></i>
               <span>Team</span>
             </a>
-             <a [routerLink]="'/home'" class="user-dropdown-item">
+            <a [routerLink]="'/home'" class="user-dropdown-item">
               <i class="pi pi-home"></i>
               <span>Home</span>
             </a>

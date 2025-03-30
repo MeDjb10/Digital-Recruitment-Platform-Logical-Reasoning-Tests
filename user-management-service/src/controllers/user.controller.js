@@ -253,43 +253,80 @@ exports.assignRole = asyncHandler(async (req, res) => {
  * @access  Private (Self or Admin)
  */
 exports.updateProfilePicture = asyncHandler(async (req, res) => {
-  // Check if user is updating their own profile picture or is an admin
-  if (req.params.userId !== req.userId && req.userRole !== "admin") {
-    throw new ErrorResponse("Not authorized to update this user's profile picture", 403);
+  console.log("Update profile picture request received");
+  console.log("Request body:", req.body);
+  console.log(
+    "Request file:",
+    req.file
+      ? {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          path: req.file.path,
+        }
+      : "No file"
+  );
+
+  // Check permissions - only the user or admin can update profile picture
+  const requestedUserId = req.params.userId;
+
+  if (requestedUserId !== req.userId && req.userRole !== "admin") {
+    throw new ErrorResponse(
+      "Not authorized to update this user's profile picture",
+      403
+    );
   }
 
-  if (!req.file) {
-    throw new ErrorResponse("No file uploaded", 400);
-  }
-
-  // Get current user to determine role for folder organization
-  const user = await User.findById(req.params.userId);
+  // Find the user
+  const user = await User.findById(requestedUserId);
   if (!user) {
     throw new ErrorResponse("User not found", 404);
   }
+  console.log("User found:", user._id);
 
-  // Delete old profile picture if exists
-  await deleteOldProfilePicture(user.profilePicture);
-  
-  // Process and save new profile picture
-  const profilePicturePath = await processAndSaveImage(
-    req.file,
-    req.params.userId,
-    user.role
-  );
-  
-  // Update user with new profile picture path
-  const updatedUser = await User.findByIdAndUpdate(
-    req.params.userId,
-    { profilePicture: profilePicturePath },
-    { new: true }
-  ).select("-password");
+  // Check if a file was uploaded
+  if (!req.file) {
+    throw new ErrorResponse("No image file provided", 400);
+  }
 
-  res.status(200).json({
-    success: true,
-    message: "Profile picture updated successfully",
-    user: updatedUser
-  });
+  try {
+    // Process the new image
+    console.log("Processing new image:", req.file.path);
+    const profilePicturePath = await processAndSaveImage(
+      req.file,
+      requestedUserId,
+      user.role
+    );
+
+    // Delete old profile picture if it exists
+    if (user.profilePicture) {
+      await deleteOldProfilePicture(user.profilePicture);
+    }
+
+    // Update the user's profile picture in the database
+    const updatedUser = await User.findByIdAndUpdate(
+      requestedUserId,
+      { profilePicture: profilePicturePath },
+      { new: true }
+    ).select("-password");
+
+    // Add cache control headers
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    res.status(200).json({
+      success: true,
+      message: "Profile picture updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating profile picture:", error);
+    throw new ErrorResponse(
+      `Failed to update profile picture: ${error.message}`,
+      500
+    );
+  }
 });
 
 /**

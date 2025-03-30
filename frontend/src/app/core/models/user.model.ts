@@ -1,3 +1,5 @@
+import { environment } from "../../../environments/environment";
+
 export interface User {
   id: string; // Use id consistently across the application
   _id?: string;
@@ -70,4 +72,22 @@ export interface TestAuthorizationRequestsResponse {
     pages: number;
     limit: number;
   };
+}
+
+
+export function getFullProfilePictureUrl(
+  url: string | undefined
+): string | undefined {
+  if (!url) return undefined;
+
+  // If it's already a complete URL, return it
+  if (url.startsWith('http')) return url;
+
+  // If it's a relative URL, prepend the API base URL
+  if (url.startsWith('/uploads')) {
+    const baseUrl = environment.apiUrl.split('/api')[0]; // Get base URL without /api
+    return `${baseUrl}${url}`;
+  }
+
+  return url;
 }
