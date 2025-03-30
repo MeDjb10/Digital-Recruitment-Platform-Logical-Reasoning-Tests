@@ -96,6 +96,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
+  // Update the ngOnInit method to include proper profile picture loading:
   ngOnInit(): void {
     // Update page title based on current route
     this.routeSub = this.router.events
@@ -109,13 +110,31 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     // Get current user information
     this.userSub = this.authService.currentUser$.subscribe((user) => {
+      // Check if this is just a profile picture update
+      const isJustProfileUpdate =
+        this.currentUser &&
+        user &&
+        this.currentUser.id === user.id &&
+        this.currentUser.profilePicture !== user.profilePicture;
+
+      // Update the current user reference
       this.currentUser = user;
 
       if (user) {
         this.userFullName = `${user.firstName} ${user.lastName}`;
         this.userEmail = user.email;
         this.userRole = this.formatRole(user.role);
+
+        // Update avatar from current user data
         this.updateAvatarUrl(user);
+
+        // Only fetch the full profile if:
+        // 1. We don't already have a profile picture OR
+        // 2. This isn't just an update triggered by our own profilePicture change
+        if (!user.profilePicture && !isJustProfileUpdate) {
+          console.log('No profile picture in current user, fetching profile');
+          this.fetchCurrentUserProfile(user.id);
+        }
       } else {
         // Reset user info if no user is logged in
         this.userFullName = 'User';
@@ -140,6 +159,62 @@ export class NavbarComponent implements OnInit, OnDestroy {
       });
     }
   }
+
+  fetchCurrentUserProfile(userId: string): void {
+    if (!userId) return;
+
+    // Skip fetching if we already have a profile picture
+    // This prevents the recursive loop
+    if (this.currentUser?.profilePicture) {
+      console.log('Profile picture already exists, skipping fetch');
+      this.avatarUrl = this.getFullProfilePictureUrl(
+        this.currentUser.profilePicture
+      );
+      return;
+    }
+
+    // Add a flag to prevent multiple simultaneous requests
+    if (this._fetchingProfile) {
+      console.log('Already fetching profile, skipping duplicate request');
+      return;
+    }
+
+    this._fetchingProfile = true;
+
+    this.userService.getUserById(userId).subscribe({
+      next: (response) => {
+        this._fetchingProfile = false;
+        if (response.success && response.user) {
+          // IMPORTANT: Only update fields that we need, not the entire user
+          // This prevents triggering the auth service subscription again
+          if (
+            response.user.profilePicture &&
+            (!this.currentUser?.profilePicture ||
+              this.currentUser.profilePicture !== response.user.profilePicture)
+          ) {
+            console.log(
+              'Found profile picture in API response, updating avatar'
+            );
+            this.avatarUrl = this.getFullProfilePictureUrl(
+              response.user.profilePicture
+            );
+
+            // Only update the profilePicture field in the current user
+            if (this.currentUser) {
+              this.currentUser.profilePicture = response.user.profilePicture;
+            }
+          }
+        }
+      },
+      error: (error) => {
+        this._fetchingProfile = false;
+        console.error('Failed to fetch current user profile:', error);
+      },
+    });
+  }
+
+  // Add this property to the class
+  private _fetchingProfile = false;
 
   ngOnDestroy(): void {
     // Clean up subscriptions to prevent memory leaks

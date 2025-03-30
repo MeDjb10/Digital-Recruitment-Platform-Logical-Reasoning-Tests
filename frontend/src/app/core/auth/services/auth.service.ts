@@ -99,18 +99,44 @@ export class AuthService {
     return this.currentUserSubject.value?.role || 'candidate';
   }
 
-  // Add this method to update the current user
+  // Replace the updateCurrentUser method with this version:
   updateCurrentUser(updatedUser: User): void {
     // Get the current user
     const currentUser = this.currentUserSubject.value;
 
     if (currentUser && updatedUser) {
-      // Merge the current user with the updated properties
-      const mergedUser = { ...currentUser, ...updatedUser };
+      // Check if there are actual changes to avoid unnecessary updates
+      let hasChanges = false;
 
-      // Update the BehaviorSubject with the new merged user
-      this.currentUserSubject.next(mergedUser);
-      console.log('Current user updated:', mergedUser);
+      // Create a merged user object
+      const mergedUser = { ...currentUser };
+
+      // Only update fields that have changed
+      Object.keys(updatedUser).forEach((key) => {
+        const typedKey = key as keyof User;
+        if (
+          updatedUser[typedKey] !== undefined &&
+          updatedUser[typedKey] !== currentUser[typedKey]
+        ) {
+          // Type assertion to ensure type compatibility
+          (mergedUser[typedKey] as typeof updatedUser[typeof typedKey]) = updatedUser[typedKey];
+          hasChanges = true;
+        }
+      });
+
+      // Only update the BehaviorSubject if there were actual changes
+      if (hasChanges) {
+        console.log(
+          'Updating current user with changes:',
+          Object.keys(updatedUser).filter((key) => {
+            const typedKey = key as keyof User;
+            return updatedUser[typedKey] !== currentUser[typedKey];
+          })
+        );
+        this.currentUserSubject.next(mergedUser);
+      } else {
+        console.log('No changes to current user, skipping update');
+      }
     } else {
       console.warn('Cannot update user: No current user or updated user data');
     }
