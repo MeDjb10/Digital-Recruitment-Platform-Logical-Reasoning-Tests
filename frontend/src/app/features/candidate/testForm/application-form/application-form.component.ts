@@ -30,7 +30,12 @@ import {
   TestAuthorizationRequest,
 } from '../../../../core/models/user.model';
 import { UserService } from '../../../../core/services/user.service';
+import { DatePickerModule } from 'primeng/datepicker';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { SelectModule } from 'primeng/select';
+import { AvatarModule } from 'primeng/avatar';
 
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 @Component({
   selector: 'app-application-form',
   templateUrl: './application-form.component.html',
@@ -43,8 +48,8 @@ import { UserService } from '../../../../core/services/user.service';
     ButtonModule,
     InputTextModule,
     TextareaModule,
-    DropdownModule,
-    CalendarModule,
+    SelectModule, // Updated
+    DatePickerModule,
     RadioButtonModule,
     CardModule,
     DividerModule,
@@ -52,6 +57,9 @@ import { UserService } from '../../../../core/services/user.service';
     FileUploadModule,
     ProgressBarModule,
     BadgeModule,
+    AvatarModule, // New
+    InputGroupModule, // New
+    InputGroupAddonModule, // New
   ],
   providers: [MessageService],
 })

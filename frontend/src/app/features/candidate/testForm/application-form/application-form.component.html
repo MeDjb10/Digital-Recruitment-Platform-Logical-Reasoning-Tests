@@ -290,7 +290,7 @@
                     >
                       Gender <span class="text-red-500">*</span>
                     </label>
-                    <p-dropdown
+                    <p-select
                       id="gender"
                       formControlName="gender"
                       [options]="genderOptions"
@@ -299,7 +299,7 @@
                       placeholder="Select Gender"
                       [showClear]="true"
                       styleClass="w-full"
-                    ></p-dropdown>
+                    ></p-select>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(personalInfoForm, 'gender')"
@@ -316,7 +316,7 @@
                     >
                       Date of Birth <span class="text-red-500">*</span>
                     </label>
-                    <p-calendar
+                    <p-datePicker
                       id="dateOfBirth"
                       formControlName="dateOfBirth"
                       [showIcon]="true"
@@ -325,7 +325,7 @@
                       styleClass="w-full"
                       [showButtonBar]="true"
                       placeholder="Select Date"
-                    ></p-calendar>
+                    ></p-datePicker>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(personalInfoForm, 'dateOfBirth')"
@@ -439,7 +439,7 @@
                     >
                       Education Level <span class="text-red-500">*</span>
                     </label>
-                    <p-dropdown
+                    <p-select
                       id="educationLevel"
                       formControlName="educationLevel"
                       [options]="educationOptions"
@@ -448,7 +448,7 @@
                       placeholder="Select Education Level"
                       [showClear]="true"
                       styleClass="w-full"
-                    ></p-dropdown>
+                    ></p-select>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(jobInfoForm, 'educationLevel')"
@@ -465,7 +465,7 @@
                     >
                       Test Availability <span class="text-red-500">*</span>
                     </label>
-                    <p-dropdown
+                    <p-select
                       id="availability"
                       formControlName="availability"
                       [options]="availabilityOptions"
@@ -473,7 +473,7 @@
                       optionValue="value"
                       placeholder="Select Availability"
                       styleClass="w-full"
-                    ></p-dropdown>
+                    ></p-select>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(jobInfoForm, 'availability')"
@@ -615,21 +615,54 @@
                   </div>
 
                   <!-- Additional Info -->
+                  <!-- Replace the Additional Info field with this enhanced version -->
                   <div class="field col-span-2">
-                    <label
-                      for="additionalInfo"
-                      class="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Additional Information
-                    </label>
-                    <textarea
-                      pInputTextarea
-                      id="additionalInfo"
-                      formControlName="additionalInfo"
-                      class="w-full"
-                      rows="4"
-                      placeholder="Any additional information relevant to your application (optional)"
-                    ></textarea>
+                    <!-- Header with label and optional badge side by side -->
+                    <div class="textarea-header">
+                      <label for="additionalInfo" class="enhanced-label">
+                        <i class="pi pi-align-left text-blue-600 mr-2"></i>
+                        Additional Information
+                      </label>
+                      <span class="textarea-badge">
+                        <i class="pi pi-info-circle mr-1"></i>Optional
+                      </span>
+                    </div>
+
+                    <!-- Textarea with floating icon -->
+                    <div class="textarea-wrapper">
+                      <textarea
+                        pInputTextarea
+                        id="additionalInfo"
+                        formControlName="additionalInfo"
+                        class="enhanced-textarea"
+                        rows="5"
+                        placeholder="Include any relevant details about your experience, skills, or special requirements for this position..."
+                      ></textarea>
+                      <div class="textarea-icon">
+                        <i class="pi pi-pencil"></i>
+                      </div>
+                    </div>
+
+                    <!-- Footer with character counter and hint text side by side -->
+                    <div class="textarea-footer">
+                      <small class="textarea-hint">
+                        <i class="pi pi-lightbulb text-yellow-500 mr-2"></i>
+                        <span
+                          >Include specific qualifications or motivations
+                          related to this position</span
+                        >
+                      </small>
+
+                      <span
+                        class="textarea-counter"
+                        *ngIf="companyInfoForm.get('additionalInfo')?.value"
+                      >
+                        {{
+                          companyInfoForm.get("additionalInfo")?.value.length
+                        }}
+                        characters
+                      </span>
+                    </div>
                   </div>
                 </div>
               </form>
