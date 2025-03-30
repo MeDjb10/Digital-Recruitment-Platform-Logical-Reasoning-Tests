@@ -139,7 +139,8 @@ class RandomForestTrainer:
             'class_weight': ['balanced', None]
         }
 
-        rf = RandomForestClassifier(random_state=42)
+        rf = RandomForestClassifier(random_state=42) #nombre de tirage 
+        print(rf)
         grid_search = GridSearchCV(
             estimator=rf,
             param_grid=param_grid,

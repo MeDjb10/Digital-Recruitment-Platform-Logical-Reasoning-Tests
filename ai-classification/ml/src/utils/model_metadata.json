@@ -9,11 +9,11 @@
     "arithmetic"
   ],
   "category_mapping": {
-    "Très Faible": 0,
+    "Tr\u00e8s Faible": 0,
     "Faible": 1,
     "Moyen": 2,
     "Fort": 3,
-    "Très Fort": 4
+    "Tr\u00e8s Fort": 4
   },
   "model_params": {
     "bootstrap": true,
