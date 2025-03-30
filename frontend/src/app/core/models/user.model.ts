@@ -25,6 +25,7 @@ export interface User {
     company: string;
     department?: string;
     additionalInfo?: string;
+    availability?: string; // Add this new field
     submissionDate?: string | Date;
   };
   createdAt?: string | Date;
@@ -53,6 +54,7 @@ export interface TestAuthorizationRequest {
   company: string;
   department?: string;
   additionalInfo?: string;
+  availability?: string;
   // Optional user profile updates
   firstName?: string;
   lastName?: string;

@@ -770,30 +770,18 @@
                     </h3>
                     <p-divider></p-divider>
 
-                    <div class="grid grid-cols-1 gap-2">
-                      <div class="flex justify-between">
-                        <span class="font-medium">Current Position:</span>
-                        <span>{{
-                          jobInfoForm.get("currentPosition")?.value
-                        }}</span>
-                      </div>
+                    <div class="grid grid-cols-2 gap-y-2">
+                      <div class="font-semibold">Current Position:</div>
+                      <div>{{ jobInfoForm.get("currentPosition")?.value }}</div>
 
-                      <div class="flex justify-between">
-                        <span class="font-medium">Desired Position:</span>
-                        <span>{{
-                          jobInfoForm.get("desiredPosition")?.value
-                        }}</span>
-                      </div>
+                      <div class="font-semibold">Desired Position:</div>
+                      <div>{{ jobInfoForm.get("desiredPosition")?.value }}</div>
 
-                      <div class="flex justify-between">
-                        <span class="font-medium">Education:</span>
-                        <span>{{ educationLabel }}</span>
-                      </div>
+                      <div class="font-semibold">Education Level:</div>
+                      <div>{{ educationLabel }}</div>
 
-                      <div class="flex justify-between">
-                        <span class="font-medium">Availability:</span>
-                        <span>{{ availabilityLabel }}</span>
-                      </div>
+                      <div class="font-semibold">Availability:</div>
+                      <div>{{ availabilityLabel }}</div>
                     </div>
                   </div>
 

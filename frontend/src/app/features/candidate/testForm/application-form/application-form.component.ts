@@ -213,7 +213,7 @@ export class ApplicationFormComponent implements OnInit {
       }
     }, 0);
   }
-  
+
   removeProfilePicture(): void {
     this.profilePictureFile = undefined;
     this.profilePicturePreview = null;
@@ -328,25 +328,12 @@ export class ApplicationFormComponent implements OnInit {
       currentPosition: this.jobInfoForm.value.currentPosition,
       desiredPosition: this.jobInfoForm.value.desiredPosition,
       educationLevel: this.jobInfoForm.value.educationLevel,
+      availability: this.jobInfoForm.value.availability, // Add the availability field
       jobPosition: this.companyInfoForm.value.jobPosition,
       company: this.companyInfoForm.value.company,
       department: this.companyInfoForm.value.department || '',
       additionalInfo: this.companyInfoForm.value.additionalInfo || '',
     };
-
-    // Test if there's a profile picture issue by trying without it first
-    const hasProfilePicture = !!this.profilePictureFile;
-
-    // Option 1: Try without profile picture first
-    if (hasProfilePicture) {
-      this.messageService.add({
-        severity: 'info',
-        summary: 'Testing',
-        detail:
-          'Submitting form data first, then will upload profile picture separately.',
-        life: 3000,
-      });
-    }
 
     this.userService
       .submitTestAuthorizationRequest(testAuthRequest, this.profilePictureFile)

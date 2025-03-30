@@ -466,22 +466,26 @@ exports.getUserRole = asyncHandler(async (req, res) => {
 exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
   // Check if user is a candidate
   const user = await User.findById(req.userId);
-  
+
   if (!user) {
     throw new ErrorResponse("User not found", 404);
   }
-  
+
   if (user.role !== "candidate") {
-    throw new ErrorResponse("Only candidates can submit test authorization requests", 403);
+    throw new ErrorResponse(
+      "Only candidates can submit test authorization requests",
+      403
+    );
   }
-  
-  const { 
+
+  const {
     // Test authorization data
-    jobPosition, 
-    company, 
-    department, 
+    jobPosition,
+    company,
+    department,
     additionalInfo,
-    
+    availability, // Add this new field
+
     // User profile data
     firstName,
     lastName,
@@ -489,14 +493,17 @@ exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
     gender,
     currentPosition,
     desiredPosition,
-    educationLevel
+    educationLevel,
   } = req.body;
-  
+
   // Validate required fields for test authorization
   if (!jobPosition || !company) {
-    throw new ErrorResponse("Job position and company are required fields", 400);
+    throw new ErrorResponse(
+      "Job position and company are required fields",
+      400
+    );
   }
-  
+
   // Build update object including both test authorization and profile data
   const updateData = {
     testAuthorizationStatus: "pending",
@@ -505,10 +512,11 @@ exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
       company,
       department,
       additionalInfo,
-      submissionDate: new Date()
-    }
+      availability: availability || "immediately", // Add availability with default
+      submissionDate: new Date(),
+    },
   };
-  
+
   // Add profile data if provided
   if (firstName) updateData.firstName = firstName;
   if (lastName) updateData.lastName = lastName;
@@ -517,37 +525,52 @@ exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
   if (currentPosition) updateData.currentPosition = currentPosition;
   if (desiredPosition) updateData.desiredPosition = desiredPosition;
   if (educationLevel) updateData.educationLevel = educationLevel;
-  
+
   // Handle profile picture upload if provided
   if (req.file) {
-    // Delete old profile picture if exists
-    await deleteOldProfilePicture(user.profilePicture);
-    
-    // Process and save new profile picture
-    const profilePicturePath = await processAndSaveImage(
-      req.file,
-      req.userId,
-      user.role
-    );
-    
-    // Add profile picture path to update data
-    updateData.profilePicture = profilePicturePath;
+    console.log("Processing profile picture for test authorization request", {
+      fileName: req.file.originalname,
+      fileSize: req.file.size,
+      filePath: req.file.path,
+    });
+
+    try {
+      // Delete old profile picture if exists
+      if (user.profilePicture) {
+        await deleteOldProfilePicture(user.profilePicture);
+      }
+
+      // Process and save new profile picture
+      const profilePicturePath = await processAndSaveImage(
+        req.file,
+        req.userId,
+        user.role
+      );
+
+      // Add profile picture path to update data
+      updateData.profilePicture = profilePicturePath;
+      console.log("Profile picture saved:", profilePicturePath);
+    } catch (error) {
+      console.error("Error processing profile picture:", error);
+      // Continue with the request even if profile picture processing fails
+    }
   }
-  
+
   // Update user with both test authorization request data and profile data
   const updatedUser = await User.findByIdAndUpdate(
     req.userId,
     { $set: updateData },
     { new: true, runValidators: true }
   ).select("-password");
-  
+
   // Send confirmation email
   await emailUtil.sendRequestSubmissionEmail(updatedUser);
-  
+
   res.status(200).json({
     success: true,
-    message: "Test authorization request submitted and profile updated successfully",
-    user: updatedUser
+    message:
+      "Test authorization request submitted and profile updated successfully",
+    user: updatedUser,
   });
 });
 

@@ -9,6 +9,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+
+function isMultipartFormData(req) {
+  const contentType = req.headers["content-type"] || "";
+  return contentType.startsWith("multipart/form-data");
+}
+
 // Enable CORS
 app.use(cors());
 app.use(
@@ -106,35 +112,46 @@ app.use(
 );
 
 app.use(
-  "/api/users/:userId/profile-picture",
+  ["/api/users/:userId/profile-picture", "/api/users/test-authorization"],
   (req, res, next) => {
-    if (req.method === "POST") {
+    if (isMultipartFormData(req)) {
       // Log detailed information about the request
-      console.log("Profile picture upload request received");
+      console.log(`File upload request received: ${req.originalUrl}`);
       console.log("Headers:", req.headers);
       console.log("Method:", req.method);
-      console.log("URL:", req.url);
-      console.log("Original URL:", req.originalUrl);
+
+      // Handle with special file upload proxy settings
+      proxy("http://localhost:3001", {
+        parseReqBody: false, // Critical: Don't try to parse multipart form data
+        timeout: 120000, // 2 minute timeout for uploads
+        proxyReqPathResolver: (req) => {
+          const url = req.originalUrl;
+          console.log(`Proxying file upload to user service: ${url}`);
+          return url;
+        },
+        proxyErrorHandler: (err, res, next) => {
+          console.error("File upload proxy error:", err.message);
+          res.status(500).json({
+            success: false,
+            message: "Error during file upload",
+            error:
+              process.env.NODE_ENV === "development" ? err.message : undefined,
+          });
+        },
+      })(req, res, next);
+    } else {
+      // Not a multipart request, proceed to next handler
+      next();
     }
-    next();
-  },
-  proxy("http://localhost:3001", {
-    parseReqBody: false, // Critical: Don't try to parse multipart form data
-    timeout: 60000, // Longer timeout for uploads
-    proxyReqPathResolver: (req) => {
-      const url = req.originalUrl;
-      console.log("Proxying profile picture upload to user service:", url);
-      return url;
-    },
-  })
+  }
 );
 
-// Keep existing /api/users proxy for non-file uploads
+// 3. Then modify the general users proxy to skip file upload requests
 app.use(
   "/api/users",
   (req, res, next) => {
-    // Skip this proxy if it's a profile picture upload (already handled above)
-    if (req.originalUrl.includes("/profile-picture") && req.method === "POST") {
+    // Skip this proxy if it's a multipart/form-data request (already handled above)
+    if (isMultipartFormData(req)) {
       return next("route");
     }
     next();

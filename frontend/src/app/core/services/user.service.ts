@@ -165,6 +165,7 @@ export class UserService {
   }
 
   // Submit test authorization request
+  // Submit test authorization request
   submitTestAuthorizationRequest(
     request: TestAuthorizationRequest,
     profilePicture?: File
@@ -183,12 +184,33 @@ export class UserService {
 
     // Append profile picture if provided
     if (profilePicture) {
+      console.log(
+        'Adding profile picture to request:',
+        profilePicture.name,
+        profilePicture.size
+      );
       formData.append('profilePicture', profilePicture, profilePicture.name);
     }
 
+    // Log FormData contents for debugging
+    formData.forEach((value, key) => {
+      if (value instanceof File) {
+        console.log(
+          `FormData: ${key} = File(${value.name}, ${value.size} bytes)`
+        );
+      } else {
+        console.log(`FormData: ${key} = ${value}`);
+      }
+    });
+
     return this.http
       .post<UserResponse>(`${this.apiUrl}/test-authorization`, formData)
-      .pipe(catchError(this.handleError));
+      .pipe(
+        tap((response) =>
+          console.log('Test authorization request submitted:', response)
+        ),
+        catchError(this.handleError)
+      );
   }
 
   // Get test authorization requests (for admin/moderator/psychologist)
