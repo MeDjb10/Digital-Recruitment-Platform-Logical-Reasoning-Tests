@@ -114,18 +114,46 @@ export class EditQuestionComponent implements OnInit {
     });
   }
 
+  // Update the loadQuestion method to handle API response format
   loadQuestion() {
     this.loading = true;
-    this.testManagementService.getQuestionById(this.questionId).subscribe(
-      (question) => {
-        this.question = question;
+    this.testManagementService.getQuestionById(this.questionId).subscribe({
+      next: (question) => {
+        if (question) {
+          // Check if it's a DominoQuestion by looking for dominos property
+          if (question.questionType === 'DominoQuestion') {
+            // Map the question to the expected format
+            this.question = {
+              id: question._id,
+              testId: question.testId,
+              title: question.title || '',
+              instruction: question.instruction,
+              difficulty: question.difficulty,
+              pattern: question.pattern || '',
+              dominos: question.dominos || [],
+              arrows: question.arrows || [],
+              gridLayout: question.gridLayout || { rows: 3, cols: 3 },
+              correctAnswer: question.correctAnswer,
+              layoutType: question.layoutType || 'grid',
+              questionType: question.questionType,
+            };
+          } else {
+            // Handle non-domino questions
+            console.error(
+              'Not a domino question, cannot edit in this component'
+            );
+            this.question = null;
+          }
+        } else {
+          console.error('Question is null');
+        }
         this.loading = false;
       },
-      (error) => {
+      error: (error) => {
         console.error('Error loading question:', error);
         this.loading = false;
-      }
-    );
+      },
+    });
   }
 
   onQuestionSaved(question: any) {

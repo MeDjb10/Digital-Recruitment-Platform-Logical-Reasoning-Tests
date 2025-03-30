@@ -43,6 +43,11 @@ const errorHandler = (err, req, res, next) => {
     const message = `Resource not found with id of ${err.value}`;
     error = new AppError(message, StatusCodes.NOT_FOUND);
   }
+  // Add specific error handling for attempt errors
+  if (err.message.includes("test attempt") || err.message.includes("Attempt")) {
+    statusCode = err.statusCode || StatusCodes.BAD_REQUEST;
+    message = err.message;
+  }
 
   // Send error response
   res.status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR).json({

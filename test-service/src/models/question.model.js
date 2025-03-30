@@ -100,7 +100,6 @@ const DominoQuestionSchema = new Schema({
       exactY: Number,
       angle: { type: Number, default: 0 },
       scale: { type: Number, default: 1 },
-      connectsTo: [Number],
       uniqueId: String,
     },
   ],

@@ -2,6 +2,10 @@ const User = require("../models/user.model");
 const { asyncHandler, ErrorResponse } = require("../utils/error-handler.util");
 const emailUtil = require("../utils/email.util");
 const mongoose = require("mongoose");
+const {
+  processAndSaveImage,
+  deleteOldProfilePicture,
+} = require("../utils/file-upload.util");
 
 /**
  * @desc    Get all users with pagination and filtering
@@ -137,6 +141,12 @@ exports.updateUser = asyncHandler(async (req, res) => {
     throw new ErrorResponse("Not authorized to update this user profile", 403);
   }
 
+  // Get current user data to access role for folder organization
+  const currentUser = await User.findById(req.params.userId);
+  if (!currentUser) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
   // Fields that regular users can update
   const allowedUpdates = [
     "firstName",
@@ -161,6 +171,22 @@ exports.updateUser = asyncHandler(async (req, res) => {
     }
   });
 
+  // Handle profile picture upload if provided
+  if (req.file) {
+    // Delete old profile picture if exists
+    await deleteOldProfilePicture(currentUser.profilePicture);
+    
+    // Process and save new profile picture
+    const profilePicturePath = await processAndSaveImage(
+      req.file,
+      req.params.userId,
+      currentUser.role
+    );
+    
+    // Add profile picture path to update data
+    updateData.profilePicture = profilePicturePath;
+  }
+
   const updatedUser = await User.findByIdAndUpdate(
     req.params.userId,
     { $set: updateData },
@@ -177,6 +203,7 @@ exports.updateUser = asyncHandler(async (req, res) => {
     user: updatedUser,
   });
 });
+
 
 /**
  * @desc    Assign role to user
@@ -217,6 +244,123 @@ exports.assignRole = asyncHandler(async (req, res) => {
     success: true,
     message: `User role updated to ${role} successfully`,
     user: updatedUser,
+  });
+});
+
+/**
+ * @desc    Upload or update profile picture
+ * @route   POST /api/users/:userId/profile-picture
+ * @access  Private (Self or Admin)
+ */
+exports.updateProfilePicture = asyncHandler(async (req, res) => {
+  console.log("Update profile picture request received");
+  console.log("Request body:", req.body);
+  console.log(
+    "Request file:",
+    req.file
+      ? {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          path: req.file.path,
+        }
+      : "No file"
+  );
+
+  // Check permissions - only the user or admin can update profile picture
+  const requestedUserId = req.params.userId;
+
+  if (requestedUserId !== req.userId && req.userRole !== "admin") {
+    throw new ErrorResponse(
+      "Not authorized to update this user's profile picture",
+      403
+    );
+  }
+
+  // Find the user
+  const user = await User.findById(requestedUserId);
+  if (!user) {
+    throw new ErrorResponse("User not found", 404);
+  }
+  console.log("User found:", user._id);
+
+  // Check if a file was uploaded
+  if (!req.file) {
+    throw new ErrorResponse("No image file provided", 400);
+  }
+
+  try {
+    // Process the new image
+    console.log("Processing new image:", req.file.path);
+    const profilePicturePath = await processAndSaveImage(
+      req.file,
+      requestedUserId,
+      user.role
+    );
+
+    // Delete old profile picture if it exists
+    if (user.profilePicture) {
+      await deleteOldProfilePicture(user.profilePicture);
+    }
+
+    // Update the user's profile picture in the database
+    const updatedUser = await User.findByIdAndUpdate(
+      requestedUserId,
+      { profilePicture: profilePicturePath },
+      { new: true }
+    ).select("-password");
+
+    // Add cache control headers
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    res.status(200).json({
+      success: true,
+      message: "Profile picture updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating profile picture:", error);
+    throw new ErrorResponse(
+      `Failed to update profile picture: ${error.message}`,
+      500
+    );
+  }
+});
+
+/**
+ * @desc    Delete profile picture
+ * @route   DELETE /api/users/:userId/profile-picture
+ * @access  Private (Self or Admin)
+ */
+exports.deleteProfilePicture = asyncHandler(async (req, res) => {
+  // Check if user is deleting their own profile picture or is an admin
+  if (req.params.userId !== req.userId && req.userRole !== "admin") {
+    throw new ErrorResponse("Not authorized to delete this user's profile picture", 403);
+  }
+
+  const user = await User.findById(req.params.userId);
+  if (!user) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
+  // Delete profile picture if exists
+  if (user.profilePicture) {
+    await deleteOldProfilePicture(user.profilePicture);
+  }
+
+  // Update user to remove profile picture reference
+  const updatedUser = await User.findByIdAndUpdate(
+    req.params.userId,
+    { $unset: { profilePicture: 1 } },
+    { new: true }
+  ).select("-password");
+
+  res.status(200).json({
+    success: true,
+    message: "Profile picture deleted successfully",
+    user: updatedUser
   });
 });
 
@@ -322,22 +466,26 @@ exports.getUserRole = asyncHandler(async (req, res) => {
 exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
   // Check if user is a candidate
   const user = await User.findById(req.userId);
-  
+
   if (!user) {
     throw new ErrorResponse("User not found", 404);
   }
-  
+
   if (user.role !== "candidate") {
-    throw new ErrorResponse("Only candidates can submit test authorization requests", 403);
+    throw new ErrorResponse(
+      "Only candidates can submit test authorization requests",
+      403
+    );
   }
-  
-  const { 
+
+  const {
     // Test authorization data
-    jobPosition, 
-    company, 
-    department, 
+    jobPosition,
+    company,
+    department,
     additionalInfo,
-    
+    availability, // Add this new field
+
     // User profile data
     firstName,
     lastName,
@@ -345,14 +493,17 @@ exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
     gender,
     currentPosition,
     desiredPosition,
-    educationLevel
+    educationLevel,
   } = req.body;
-  
+
   // Validate required fields for test authorization
   if (!jobPosition || !company) {
-    throw new ErrorResponse("Job position and company are required fields", 400);
+    throw new ErrorResponse(
+      "Job position and company are required fields",
+      400
+    );
   }
-  
+
   // Build update object including both test authorization and profile data
   const updateData = {
     testAuthorizationStatus: "pending",
@@ -361,10 +512,11 @@ exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
       company,
       department,
       additionalInfo,
-      submissionDate: new Date()
-    }
+      availability: availability || "immediately", // Add availability with default
+      submissionDate: new Date(),
+    },
   };
-  
+
   // Add profile data if provided
   if (firstName) updateData.firstName = firstName;
   if (lastName) updateData.lastName = lastName;
@@ -373,21 +525,52 @@ exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
   if (currentPosition) updateData.currentPosition = currentPosition;
   if (desiredPosition) updateData.desiredPosition = desiredPosition;
   if (educationLevel) updateData.educationLevel = educationLevel;
-  
+
+  // Handle profile picture upload if provided
+  if (req.file) {
+    console.log("Processing profile picture for test authorization request", {
+      fileName: req.file.originalname,
+      fileSize: req.file.size,
+      filePath: req.file.path,
+    });
+
+    try {
+      // Delete old profile picture if exists
+      if (user.profilePicture) {
+        await deleteOldProfilePicture(user.profilePicture);
+      }
+
+      // Process and save new profile picture
+      const profilePicturePath = await processAndSaveImage(
+        req.file,
+        req.userId,
+        user.role
+      );
+
+      // Add profile picture path to update data
+      updateData.profilePicture = profilePicturePath;
+      console.log("Profile picture saved:", profilePicturePath);
+    } catch (error) {
+      console.error("Error processing profile picture:", error);
+      // Continue with the request even if profile picture processing fails
+    }
+  }
+
   // Update user with both test authorization request data and profile data
   const updatedUser = await User.findByIdAndUpdate(
     req.userId,
     { $set: updateData },
     { new: true, runValidators: true }
   ).select("-password");
-  
+
   // Send confirmation email
   await emailUtil.sendRequestSubmissionEmail(updatedUser);
-  
+
   res.status(200).json({
     success: true,
-    message: "Test authorization request submitted and profile updated successfully",
-    user: updatedUser
+    message:
+      "Test authorization request submitted and profile updated successfully",
+    user: updatedUser,
   });
 });
 

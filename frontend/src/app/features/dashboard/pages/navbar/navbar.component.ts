@@ -9,6 +9,8 @@ import {
   OnInit,
   OnDestroy,
   PLATFORM_ID,
+  ViewChild,
+  ElementRef,
 } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
@@ -18,6 +20,10 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MenuModule } from 'primeng/menu';
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { User } from '../../../../core/models/user.model';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { environment } from '../../../../../environments/environment';
+import { UserService } from '../../../../core/services/user.service';
 
 interface Notification {
   id: number;
@@ -38,9 +44,11 @@ interface Notification {
     RippleModule,
     TooltipModule,
     MenuModule,
+    ToastModule,
   ],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css',
+  providers: [MessageService],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   @Input() sidebarCollapsed = false;
@@ -63,6 +71,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private userSub: Subscription | null = null;
   private routeSub: Subscription | null = null;
 
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
+  // Add properties for image upload
+  isUploading = false;
+  maxFileSize = 5 * 1024 * 1024; // 5MB
+
   notifications: Notification[] = [
     // Your existing notifications...
   ];
@@ -75,11 +89,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authService: AuthService,
+    private userService: UserService, // Add this
+    private messageService: MessageService, // Add this
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
+  // Update the ngOnInit method to include proper profile picture loading:
   ngOnInit(): void {
     // Update page title based on current route
     this.routeSub = this.router.events
@@ -93,13 +110,31 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     // Get current user information
     this.userSub = this.authService.currentUser$.subscribe((user) => {
+      // Check if this is just a profile picture update
+      const isJustProfileUpdate =
+        this.currentUser &&
+        user &&
+        this.currentUser.id === user.id &&
+        this.currentUser.profilePicture !== user.profilePicture;
+
+      // Update the current user reference
       this.currentUser = user;
 
       if (user) {
         this.userFullName = `${user.firstName} ${user.lastName}`;
         this.userEmail = user.email;
         this.userRole = this.formatRole(user.role);
+
+        // Update avatar from current user data
         this.updateAvatarUrl(user);
+
+        // Only fetch the full profile if:
+        // 1. We don't already have a profile picture OR
+        // 2. This isn't just an update triggered by our own profilePicture change
+        if (!user.profilePicture && !isJustProfileUpdate) {
+          console.log('No profile picture in current user, fetching profile');
+          this.fetchCurrentUserProfile(user.id);
+        }
       } else {
         // Reset user info if no user is logged in
         this.userFullName = 'User';
@@ -125,6 +160,62 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
   }
 
+  fetchCurrentUserProfile(userId: string): void {
+    if (!userId) return;
+
+    // Skip fetching if we already have a profile picture
+    // This prevents the recursive loop
+    if (this.currentUser?.profilePicture) {
+      console.log('Profile picture already exists, skipping fetch');
+      this.avatarUrl = this.getFullProfilePictureUrl(
+        this.currentUser.profilePicture
+      );
+      return;
+    }
+
+    // Add a flag to prevent multiple simultaneous requests
+    if (this._fetchingProfile) {
+      console.log('Already fetching profile, skipping duplicate request');
+      return;
+    }
+
+    this._fetchingProfile = true;
+
+    this.userService.getUserById(userId).subscribe({
+      next: (response) => {
+        this._fetchingProfile = false;
+        if (response.success && response.user) {
+          // IMPORTANT: Only update fields that we need, not the entire user
+          // This prevents triggering the auth service subscription again
+          if (
+            response.user.profilePicture &&
+            (!this.currentUser?.profilePicture ||
+              this.currentUser.profilePicture !== response.user.profilePicture)
+          ) {
+            console.log(
+              'Found profile picture in API response, updating avatar'
+            );
+            this.avatarUrl = this.getFullProfilePictureUrl(
+              response.user.profilePicture
+            );
+
+            // Only update the profilePicture field in the current user
+            if (this.currentUser) {
+              this.currentUser.profilePicture = response.user.profilePicture;
+            }
+          }
+        }
+      },
+      error: (error) => {
+        this._fetchingProfile = false;
+        console.error('Failed to fetch current user profile:', error);
+      },
+    });
+  }
+
+  // Add this property to the class
+  private _fetchingProfile = false;
+
   ngOnDestroy(): void {
     // Clean up subscriptions to prevent memory leaks
     if (this.userSub) {
@@ -141,14 +232,289 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Update the avatar URL based on user info
+  // Update the avatar URL method
   updateAvatarUrl(user: User): void {
-    // Generate avatar URL based on user's name
-    this.avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      user.firstName + ' ' + user.lastName
-    )}&background=3b82f6&color=fff&bold=true`;
+    if (user && user.profilePicture) {
+      // Use the profile picture from the user
+      this.avatarUrl = this.getFullProfilePictureUrl(user.profilePicture);
+      console.log('Using profile picture URL:', this.avatarUrl);
+    } else {
+      // Generate avatar URL based on user's name
+      this.avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        user.firstName + ' ' + user.lastName
+      )}&background=3b82f6&color=fff&bold=true`;
+      console.log('Using generated avatar URL:', this.avatarUrl);
+    }
   }
 
+  // Helper method to ensure full URL
+  private getFullProfilePictureUrl(url: string | undefined): string {
+    if (!url) return '';
+
+    // If it's already a complete URL, return it
+    if (url.startsWith('http')) return url;
+
+    // If it's a relative URL, prepend the API base URL
+    if (url.startsWith('/uploads')) {
+      const baseUrl = environment.apiUrl.split('/api')[0];
+      return `${baseUrl}${url}`;
+    }
+
+    return url;
+  }
+
+  // Handle image loading error
+  handleImageError(): void {
+    console.log('Image loading error, falling back to default avatar');
+    if (this.currentUser) {
+      this.avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        this.currentUser.firstName + ' ' + this.currentUser.lastName
+      )}&background=3b82f6&color=fff&bold=true`;
+    }
+  }
+
+  // Trigger file input click
+  triggerProfilePictureUpload(): void {
+    this.fileInput.nativeElement.click();
+    this.showUserDropdown = false; // Close dropdown
+  }
+
+  // Handle file selection
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+
+    const file = input.files[0];
+
+    // Validate file type
+    const validTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/jpg',
+    ];
+    if (!validTypes.includes(file.type)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Invalid File',
+        detail: 'Please select a valid image file (JPEG, PNG, GIF, WEBP)',
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > this.maxFileSize) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'File Too Large',
+        detail: 'Please select an image under 5MB',
+      });
+      return;
+    }
+
+    // Upload the file
+    this.uploadProfilePicture(file);
+
+    // Clear the input value to allow re-uploading the same file
+    input.value = '';
+  }
+
+  // Update the uploadProfilePicture method:
+  uploadProfilePicture(file: File): void {
+    if (!this.currentUser?.id) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'User information not available',
+      });
+      return;
+    }
+
+    // Input validation
+    if (!file) {
+      console.error('No file provided');
+      return;
+    }
+
+    console.log('Uploading profile picture:', {
+      userId: this.currentUser.id,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+    });
+
+    this.isUploading = true;
+
+    // Create FormData manually to ensure it's done correctly
+    const formData = new FormData();
+    formData.append('profilePicture', file, file.name);
+
+    // Log all FormData entries to verify
+    console.log('FormData entries:');
+    // @ts-ignore: FormData forEach exists but TypeScript may not recognize it
+    formData.forEach((value, key) => {
+      console.log(`${key}: ${value instanceof File ? value.name : value}`);
+    });
+
+    // Use HttpClient directly to have more control
+    const uploadUrl = `${environment.apiUrl}/users/${this.currentUser.id}/profile-picture`;
+    console.log('Upload URL:', uploadUrl);
+
+    // Use XMLHttpRequest for more debugging visibility
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', uploadUrl, true);
+
+    // Add authorization header
+    const token =
+      localStorage.getItem('access_token') ||
+      sessionStorage.getItem('access_token');
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    } else {
+      console.error('No authentication token available');
+      this.isUploading = false;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Authentication Error',
+        detail: 'Your session may have expired. Please login again.',
+      });
+      return;
+    }
+
+    xhr.onload = () => {
+      this.isUploading = false;
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        // Success
+        console.log('Upload successful');
+
+        try {
+          const response = JSON.parse(xhr.responseText);
+
+          if (response.success && response.user) {
+            // Update current user in auth service with new profile picture
+            this.authService.updateCurrentUser(response.user);
+
+            // Update avatar URL
+            if (response.user.profilePicture) {
+              this.avatarUrl = this.getFullProfilePictureUrl(
+                response.user.profilePicture
+              );
+            }
+
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: 'Profile picture updated',
+            });
+          }
+        } catch (e) {
+          console.error('Error parsing response:', e);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error updating profile picture',
+          });
+        }
+      } else {
+        // Error
+        console.error(
+          'Upload failed:',
+          xhr.status,
+          xhr.statusText,
+          xhr.responseText
+        );
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Failed to Update',
+          detail: `Error: ${xhr.status} ${xhr.statusText}`,
+        });
+      }
+    };
+
+    xhr.onerror = () => {
+      this.isUploading = false;
+      console.error('Network error during upload');
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Network Error',
+        detail: 'Could not connect to the server',
+      });
+    };
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        console.log(`Upload progress: ${percentComplete}%`);
+      }
+    };
+
+    // Send the FormData
+    xhr.send(formData);
+  }
+  // Delete profile picture
+  deleteProfilePicture(): void {
+    if (!this.currentUser?.id) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'User information not available',
+      });
+      return;
+    }
+
+    this.isUploading = true;
+
+    this.userService.deleteProfilePicture(this.currentUser.id).subscribe({
+      next: (response) => {
+        this.isUploading = false;
+
+        if (response.success) {
+          // Clear profile picture from current user
+          if (this.currentUser) {
+            this.currentUser.profilePicture = undefined;
+          }
+
+          // Update auth service
+          this.authService.updateCurrentUser({
+            ...this.currentUser!,
+            profilePicture: undefined,
+          });
+
+          // Reset avatar URL to generated one
+          if (this.currentUser) {
+            this.avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              this.currentUser.firstName + ' ' + this.currentUser.lastName
+            )}&background=3b82f6&color=fff&bold=true`;
+          }
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Profile picture removed',
+          });
+        }
+      },
+      error: (error) => {
+        this.isUploading = false;
+        console.error('Profile picture deletion failed:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Failed to Delete',
+          detail: 'Could not delete profile picture. Please try again.',
+        });
+      },
+    });
+  }
+
+  // URI encoding helper for template
+  encodeURIComponent(str: string): string {
+    return encodeURIComponent(str);
+  }
   // Format role for display (capitalize first letter)
   formatRole(role: string): string {
     if (!role) return 'User';

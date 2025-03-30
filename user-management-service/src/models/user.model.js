@@ -31,6 +31,9 @@ const userSchema = new mongoose.Schema({
     enum: ["candidate", "admin", "moderator", "psychologist"],
     default: "candidate",
   },
+  profilePicture: {
+    type: String,
+  },
   dateOfBirth: {
     type: Date,
   },
@@ -72,6 +75,11 @@ const userSchema = new mongoose.Schema({
     company: String,
     department: String,
     additionalInfo: String,
+    availability: {
+      type: String,
+      enum: ["immediately", "one_week", "two_weeks", "one_month"],
+      default: "immediately",
+    },
     submissionDate: Date,
   },
   createdAt: {

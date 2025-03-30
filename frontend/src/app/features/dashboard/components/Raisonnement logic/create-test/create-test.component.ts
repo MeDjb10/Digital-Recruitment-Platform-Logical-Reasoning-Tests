@@ -259,7 +259,9 @@ export class CreateTestComponent implements OnInit {
       difficulty: ['medium', [Validators.required]],
       instructionsGeneral: [''],
       isActive: [true],
-      category: ['logical-reasoning'], // Hidden field, always set for this component
+      category: ['logical'], // Default category
+      type: ['domino'], // Set test type to domino
+      totalQuestions: [0], // Initialize with 0 questions
     });
   }
 
@@ -267,6 +269,7 @@ export class CreateTestComponent implements OnInit {
     return this.testForm.controls;
   }
 
+  // Update the onSubmit method to handle API response format
   onSubmit(): void {
     this.submitted = true;
 
@@ -275,32 +278,42 @@ export class CreateTestComponent implements OnInit {
     }
 
     this.creating = true;
-    this.testService.createTest(this.testForm.value).subscribe(
-      (test) => {
+
+    // Log the request payload for debugging
+    console.log('Creating test with data:', this.testForm.value);
+
+    this.testService.createTest(this.testForm.value).subscribe({
+      next: (test) => {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
           detail: 'Test created successfully',
         });
 
+        console.log('Test created successfully:', test);
+
         // Navigate to the test details page where questions can be added
         setTimeout(() => {
           this.router.navigate([
             '/dashboard/RaisonnementLogique/Tests',
-            test.id,
+            test._id,
           ]);
         }, 1500);
       },
-      (error) => {
+      error: (error) => {
         console.error('Error creating test:', error);
         this.creating = false;
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Failed to create test. Please try again.',
+          detail:
+            'Failed to create test: ' + (error.message || 'Unknown error'),
         });
-      }
-    );
+      },
+      complete: () => {
+        this.creating = false;
+      },
+    });
   }
 
   goBack(): void {

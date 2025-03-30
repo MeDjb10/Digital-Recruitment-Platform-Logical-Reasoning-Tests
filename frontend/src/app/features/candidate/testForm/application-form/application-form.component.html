@@ -6,11 +6,11 @@
     <span
       class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold mb-2 animate-bounce"
     >
-      <i class="pi pi-file-edit mr-1"></i>Application Process
+      <i class="pi pi-file-edit mr-1"></i>Test Authorization Request
     </span>
     <h1 class="text-3xl font-bold text-blue-800 mb-2">Application Form</h1>
     <p class="text-gray-600">
-      Complete your profile to start the assessment test
+      Complete your profile to request permission for the assessment test
     </p>
     <div class="relative mx-auto">
       <div
@@ -26,14 +26,177 @@
   <div class="card flex justify-center">
     <p-stepper [value]="1" class="w-full max-w-4xl">
       <p-step-list>
-        <p-step [value]="1">Personal Info</p-step>
-        <p-step [value]="2">Professional Info</p-step>
-        <p-step [value]="3">Confirmation</p-step>
+        <p-step [value]="1">Profile Picture</p-step>
+        <p-step [value]="2">Personal Info</p-step>
+        <p-step [value]="3">Professional Info</p-step>
+        <p-step [value]="4">Company Info</p-step>
+        <p-step [value]="5">Confirmation</p-step>
       </p-step-list>
 
       <p-step-panels>
-        <!-- Step 1: Personal Information -->
+        <!-- Step 1: Profile Picture -->
         <p-step-panel [value]="1">
+          <ng-template #content let-activateCallback="activateCallback">
+            <p-card styleClass="shadow-lg">
+              <div class="text-center mb-5">
+                <h2 class="text-2xl font-bold text-blue-800">
+                  Profile Picture
+                </h2>
+                <p class="text-gray-600 mt-2">
+                  Upload a professional photo for your profile
+                </p>
+                <div
+                  class="w-32 h-1 bg-blue-500 mx-auto mt-3 rounded-full"
+                ></div>
+              </div>
+
+              <!-- Enhanced Profile Picture Preview with Upload Options -->
+              <div class="profile-section">
+                <!-- Left side: Preview -->
+                <div class="profile-preview-container">
+                  <div
+                    class="profile-preview"
+                    tabindex="0"
+                    aria-label="Profile picture preview"
+                  >
+                    <ng-container
+                      *ngIf="profilePicturePreview; else placeholderTemplate"
+                    >
+                      <img
+                        [src]="profilePicturePreview"
+                        alt="Profile Preview"
+                        class="w-full h-full object-cover"
+                      />
+                    </ng-container>
+                    <ng-template #placeholderTemplate>
+                      <div class="profile-placeholder">
+                        <i class="pi pi-user"></i>
+                      </div>
+                    </ng-template>
+                  </div>
+
+                  <!-- File information badge -->
+                  <div
+                    *ngIf="profilePictureFile"
+                    class="file-info-badge"
+                    role="status"
+                  >
+                    <i class="pi pi-check-circle"></i>
+                    <span
+                      >{{ profilePictureFile.name }} ({{
+                        formatSize(profilePictureFile.size)
+                      }})</span
+                    >
+                  </div>
+                </div>
+
+                <!-- Right side: Upload options -->
+                <div class="upload-options">
+                  <h3 class="upload-options-title">Upload Options</h3>
+
+                  <!-- Hidden FileUpload component -->
+                  <p-fileUpload
+                    #fileUpload
+                    [showUploadButton]="false"
+                    [showCancelButton]="false"
+                    [maxFileSize]="1000000"
+                    accept="image/*"
+                    [multiple]="false"
+                    chooseLabel="Select Image"
+                    styleClass="hidden-upload"
+                    (onSelect)="onProfilePictureSelect($event)"
+                  ></p-fileUpload>
+
+                  <!-- Custom button that triggers the file upload -->
+                  <button
+                    type="button"
+                    class="select-image-btn"
+                    (click)="triggerFileInput()"
+                  >
+                    <i class="pi pi-image mr-2"></i>
+                    Browse Photos
+                  </button>
+
+                  <p class="upload-divider"><span>or</span></p>
+
+                  <!-- Enhanced drag area -->
+                  <div
+                    class="enhanced-drop-zone"
+                    [class.active-zone]="isDragOver"
+                    (dragover)="onDragOver($event)"
+                    (dragleave)="onDragLeave($event)"
+                    (drop)="onDrop($event)"
+                    (click)="triggerFileInput()"
+                    tabindex="0"
+                    role="button"
+                    aria-label="Drag and drop area for image upload"
+                    (keydown.enter)="triggerFileInput()"
+                  >
+                    <i class="pi pi-cloud-upload"></i>
+                    <p>Drag &amp; Drop Image Here</p>
+                  </div>
+
+                  <!-- Remove button for when an image is selected -->
+                  <button
+                    *ngIf="profilePictureFile"
+                    type="button"
+                    class="remove-image-btn"
+                    (click)="removeProfilePicture()"
+                  >
+                    <i class="pi pi-trash mr-2"></i>
+                    Remove Photo
+                  </button>
+                </div>
+              </div>
+
+              <!-- Progress indicator -->
+              <div
+                *ngIf="uploadProgress > 0 && uploadProgress < 100"
+                class="upload-progress"
+              >
+                <p-progressBar
+                  [value]="uploadProgress"
+                  [showValue]="true"
+                  styleClass="mt-3"
+                  aria-label="Upload progress"
+                ></p-progressBar>
+              </div>
+
+              <!-- Enhanced Guidelines Card -->
+              <div
+                class="guidelines-card"
+                role="region"
+                aria-label="Profile picture guidelines"
+              >
+                <div class="guidelines-title">
+                  <i class="pi pi-info-circle"></i>
+                  <h3>Profile Picture Guidelines</h3>
+                </div>
+                <ul class="guidelines-list text-gray-600">
+                  <li>Upload a clear, professional headshot</li>
+                  <li>Use a neutral background</li>
+                  <li>Ensure your face is clearly visible</li>
+                  <li>Maximum file size: 1MB</li>
+                </ul>
+              </div>
+
+              <!-- Navigation with improved styling -->
+              <div class="flex pt-4 justify-end">
+                <p-button
+                  label="Next"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  (onClick)="activateCallback(2)"
+                  styleClass="p-button-raised p-button-primary"
+                  [disabled]="!profilePictureFile"
+                ></p-button>
+              </div>
+            </p-card>
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Step 2: Personal Information -->
+        <p-step-panel [value]="2">
           <ng-template #content let-activateCallback="activateCallback">
             <p-card styleClass="shadow-lg">
               <form [formGroup]="personalInfoForm">
@@ -127,7 +290,7 @@
                     >
                       Gender <span class="text-red-500">*</span>
                     </label>
-                    <p-dropdown
+                    <p-select
                       id="gender"
                       formControlName="gender"
                       [options]="genderOptions"
@@ -136,7 +299,7 @@
                       placeholder="Select Gender"
                       [showClear]="true"
                       styleClass="w-full"
-                    ></p-dropdown>
+                    ></p-select>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(personalInfoForm, 'gender')"
@@ -153,7 +316,7 @@
                     >
                       Date of Birth <span class="text-red-500">*</span>
                     </label>
-                    <p-calendar
+                    <p-datePicker
                       id="dateOfBirth"
                       formControlName="dateOfBirth"
                       [showIcon]="true"
@@ -162,7 +325,7 @@
                       styleClass="w-full"
                       [showButtonBar]="true"
                       placeholder="Select Date"
-                    ></p-calendar>
+                    ></p-datePicker>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(personalInfoForm, 'dateOfBirth')"
@@ -187,13 +350,20 @@
                 </div>
               </div>
               <!-- Navigation -->
-              <div class="flex pt-4 justify-end">
+              <div class="flex pt-4 justify-between">
+                <p-button
+                  label="Back"
+                  icon="pi pi-arrow-left"
+                  (onClick)="activateCallback(1)"
+                  styleClass="p-button-outlined"
+                ></p-button>
+
                 <p-button
                   label="Next"
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   [disabled]="personalInfoForm.invalid"
-                  (onClick)="activateCallback(2)"
+                  (onClick)="activateCallback(3)"
                   styleClass="p-button-raised"
                 ></p-button>
               </div>
@@ -201,8 +371,8 @@
           </ng-template>
         </p-step-panel>
 
-        <!-- Step 2: Job Information -->
-        <p-step-panel [value]="2">
+        <!-- Step 3: Professional Information -->
+        <p-step-panel [value]="3">
           <ng-template #content let-activateCallback="activateCallback">
             <p-card styleClass="shadow-lg">
               <form [formGroup]="jobInfoForm">
@@ -269,7 +439,7 @@
                     >
                       Education Level <span class="text-red-500">*</span>
                     </label>
-                    <p-dropdown
+                    <p-select
                       id="educationLevel"
                       formControlName="educationLevel"
                       [options]="educationOptions"
@@ -278,7 +448,7 @@
                       placeholder="Select Education Level"
                       [showClear]="true"
                       styleClass="w-full"
-                    ></p-dropdown>
+                    ></p-select>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(jobInfoForm, 'educationLevel')"
@@ -295,7 +465,7 @@
                     >
                       Test Availability <span class="text-red-500">*</span>
                     </label>
-                    <p-dropdown
+                    <p-select
                       id="availability"
                       formControlName="availability"
                       [options]="availabilityOptions"
@@ -303,7 +473,7 @@
                       optionValue="value"
                       placeholder="Select Availability"
                       styleClass="w-full"
-                    ></p-dropdown>
+                    ></p-select>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(jobInfoForm, 'availability')"
@@ -314,12 +484,27 @@
                 </div>
               </form>
 
+              <div
+                class="bg-blue-50 p-4 rounded-lg mt-4 flex items-start border-l-4 border-blue-500 shadow-sm"
+              >
+                <i class="pi pi-info-circle text-blue-500 mr-3 text-xl"></i>
+                <div>
+                  <h4 class="text-blue-700 font-medium mb-1 text-sm">
+                    Professional Information
+                  </h4>
+                  <p class="text-sm text-gray-600">
+                    This information helps us understand your professional
+                    background and tailor the assessment accordingly.
+                  </p>
+                </div>
+              </div>
+
               <!-- Navigation -->
               <div class="flex pt-4 justify-between">
                 <p-button
                   label="Back"
                   icon="pi pi-arrow-left"
-                  (onClick)="activateCallback(1)"
+                  (onClick)="activateCallback(2)"
                   styleClass="p-button-outlined"
                 ></p-button>
 
@@ -328,7 +513,7 @@
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   [disabled]="jobInfoForm.invalid"
-                  (onClick)="activateCallback(3)"
+                  (onClick)="activateCallback(4)"
                   styleClass="p-button-raised"
                 ></p-button>
               </div>
@@ -336,8 +521,191 @@
           </ng-template>
         </p-step-panel>
 
-        <!-- Step 3: Confirmation -->
-        <p-step-panel [value]="3">
+        <!-- Step 4: Company Information -->
+        <p-step-panel [value]="4">
+          <ng-template #content let-activateCallback="activateCallback">
+            <p-card styleClass="shadow-lg">
+              <div class="text-center mb-4">
+                <h2 class="text-xl font-semibold text-blue-800">
+                  Company Information
+                </h2>
+                <p class="text-gray-600">
+                  Tell us about the company and position you're applying for
+                </p>
+              </div>
+
+              <form [formGroup]="companyInfoForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <!-- Job Position -->
+                  <div class="field">
+                    <label
+                      for="jobPosition"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Job Position <span class="text-red-500">*</span>
+                    </label>
+                    <div class="p-inputgroup w-full">
+                      <span class="p-inputgroup-addon">
+                        <i class="pi pi-id-card"></i>
+                      </span>
+                      <input
+                        pInputText
+                        id="jobPosition"
+                        formControlName="jobPosition"
+                        class="w-full"
+                        placeholder="Position you're applying for"
+                      />
+                    </div>
+                    <small
+                      class="text-red-500"
+                      *ngIf="isFieldInvalid(companyInfoForm, 'jobPosition')"
+                    >
+                      Job position is required
+                    </small>
+                  </div>
+
+                  <!-- Company -->
+                  <div class="field">
+                    <label
+                      for="company"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Company <span class="text-red-500">*</span>
+                    </label>
+                    <div class="p-inputgroup w-full">
+                      <span class="p-inputgroup-addon">
+                        <i class="pi pi-building"></i>
+                      </span>
+                      <input
+                        pInputText
+                        id="company"
+                        formControlName="company"
+                        class="w-full"
+                        placeholder="Company name"
+                      />
+                    </div>
+                    <small
+                      class="text-red-500"
+                      *ngIf="isFieldInvalid(companyInfoForm, 'company')"
+                    >
+                      Company name is required
+                    </small>
+                  </div>
+
+                  <!-- Department -->
+                  <div class="field">
+                    <label
+                      for="department"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Department
+                    </label>
+                    <div class="p-inputgroup w-full">
+                      <span class="p-inputgroup-addon">
+                        <i class="pi pi-sitemap"></i>
+                      </span>
+                      <input
+                        pInputText
+                        id="department"
+                        formControlName="department"
+                        class="w-full"
+                        placeholder="Department (optional)"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Additional Info -->
+                  <!-- Replace the Additional Info field with this enhanced version -->
+                  <div class="field col-span-2">
+                    <!-- Header with label and optional badge side by side -->
+                    <div class="textarea-header">
+                      <label for="additionalInfo" class="enhanced-label">
+                        <i class="pi pi-align-left text-blue-600 mr-2"></i>
+                        Additional Information
+                      </label>
+                      <span class="textarea-badge">
+                        <i class="pi pi-info-circle mr-1"></i>Optional
+                      </span>
+                    </div>
+
+                    <!-- Textarea with floating icon -->
+                    <div class="textarea-wrapper">
+                      <textarea
+                        pInputTextarea
+                        id="additionalInfo"
+                        formControlName="additionalInfo"
+                        class="enhanced-textarea"
+                        rows="5"
+                        placeholder="Include any relevant details about your experience, skills, or special requirements for this position..."
+                      ></textarea>
+                      <div class="textarea-icon">
+                        <i class="pi pi-pencil"></i>
+                      </div>
+                    </div>
+
+                    <!-- Footer with character counter and hint text side by side -->
+                    <div class="textarea-footer">
+                      <small class="textarea-hint">
+                        <i class="pi pi-lightbulb text-yellow-500 mr-2"></i>
+                        <span
+                          >Include specific qualifications or motivations
+                          related to this position</span
+                        >
+                      </small>
+
+                      <span
+                        class="textarea-counter"
+                        *ngIf="companyInfoForm.get('additionalInfo')?.value"
+                      >
+                        {{
+                          companyInfoForm.get("additionalInfo")?.value.length
+                        }}
+                        characters
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </form>
+
+              <div
+                class="bg-blue-50 p-4 rounded-lg mt-4 flex items-start border-l-4 border-blue-500 shadow-sm"
+              >
+                <i class="pi pi-info-circle text-blue-500 mr-3 text-xl"></i>
+                <div>
+                  <h4 class="text-blue-700 font-medium mb-1 text-sm">
+                    Why we need this information
+                  </h4>
+                  <p class="text-sm text-gray-600">
+                    This information helps us better understand the context of
+                    your application and identify appropriate assessment tests.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Navigation -->
+              <div class="flex pt-4 justify-between">
+                <p-button
+                  label="Back"
+                  icon="pi pi-arrow-left"
+                  (onClick)="activateCallback(3)"
+                  styleClass="p-button-outlined"
+                ></p-button>
+
+                <p-button
+                  label="Next"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  [disabled]="companyInfoForm.invalid"
+                  (onClick)="activateCallback(5)"
+                  styleClass="p-button-raised"
+                ></p-button>
+              </div>
+            </p-card>
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Step 5: Confirmation -->
+        <p-step-panel [value]="5">
           <ng-template #content let-activateCallback="activateCallback">
             <p-card styleClass="shadow-lg">
               <div class="mb-2">
@@ -349,7 +717,46 @@
                   application
                 </p>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <!-- Profile Picture Summary -->
+                  <div
+                    class="border rounded-lg p-4 bg-blue-50 flex flex-col items-center"
+                  >
+                    <h3 class="text-lg font-semibold mb-3 text-blue-700">
+                      <i class="pi pi-camera mr-2"></i>Profile Picture
+                    </h3>
+                    <p-divider></p-divider>
+
+                    <div
+                      class="w-32 h-32 rounded-full border-2 border-blue-200 overflow-hidden mb-3 bg-gray-100 flex items-center justify-center"
+                    >
+                      <img
+                        *ngIf="profilePicturePreview"
+                        [src]="profilePicturePreview"
+                        alt="Profile Preview"
+                        class="w-full h-full object-cover"
+                      />
+                      <i
+                        *ngIf="!profilePicturePreview"
+                        class="pi pi-user text-5xl text-gray-300"
+                      ></i>
+                    </div>
+
+                    <p
+                      *ngIf="profilePictureFile"
+                      class="text-sm text-gray-600 text-center"
+                    >
+                      {{ profilePictureFile.name }}<br />
+                      {{ formatSize(profilePictureFile.size) }}
+                    </p>
+                    <p
+                      *ngIf="!profilePictureFile"
+                      class="text-sm text-gray-600 text-center"
+                    >
+                      No profile picture uploaded
+                    </p>
+                  </div>
+
                   <!-- Personal Information Summary -->
                   <div class="border rounded-lg p-4 bg-blue-50">
                     <h3 class="text-lg font-semibold mb-3 text-blue-700">
@@ -385,7 +792,9 @@
                       </div>
                     </div>
                   </div>
+                </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <!-- Professional Information Summary -->
                   <div class="border rounded-lg p-4 bg-blue-50">
                     <h3 class="text-lg font-semibold mb-3 text-blue-700">
@@ -394,37 +803,65 @@
                     </h3>
                     <p-divider></p-divider>
 
+                    <div class="grid grid-cols-2 gap-y-2">
+                      <div class="font-semibold">Current Position:</div>
+                      <div>{{ jobInfoForm.get("currentPosition")?.value }}</div>
+
+                      <div class="font-semibold">Desired Position:</div>
+                      <div>{{ jobInfoForm.get("desiredPosition")?.value }}</div>
+
+                      <div class="font-semibold">Education Level:</div>
+                      <div>{{ educationLabel }}</div>
+
+                      <div class="font-semibold">Availability:</div>
+                      <div>{{ availabilityLabel }}</div>
+                    </div>
+                  </div>
+
+                  <!-- Company Information Summary -->
+                  <div class="border rounded-lg p-4 bg-blue-50">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-700">
+                      <i class="pi pi-building mr-2"></i>Company Information
+                    </h3>
+                    <p-divider></p-divider>
+
                     <div class="grid grid-cols-1 gap-2">
                       <div class="flex justify-between">
-                        <span class="font-medium">Current Position:</span>
+                        <span class="font-medium">Job Position:</span>
                         <span>{{
-                          jobInfoForm.get("currentPosition")?.value
+                          companyInfoForm.get("jobPosition")?.value
                         }}</span>
                       </div>
 
                       <div class="flex justify-between">
-                        <span class="font-medium">Desired Position:</span>
+                        <span class="font-medium">Company:</span>
+                        <span>{{ companyInfoForm.get("company")?.value }}</span>
+                      </div>
+
+                      <div class="flex justify-between">
+                        <span class="font-medium">Department:</span>
                         <span>{{
-                          jobInfoForm.get("desiredPosition")?.value
+                          companyInfoForm.get("department")?.value ||
+                            "Not specified"
                         }}</span>
                       </div>
+                    </div>
 
-                      <div class="flex justify-between">
-                        <span class="font-medium">Education:</span>
-                        <span>{{ educationLabel }}</span>
-                      </div>
-
-                      <div class="flex justify-between">
-                        <span class="font-medium">Availability:</span>
-                        <span>{{ availabilityLabel }}</span>
-                      </div>
+                    <div
+                      *ngIf="companyInfoForm.get('additionalInfo')?.value"
+                      class="mt-2"
+                    >
+                      <span class="font-medium">Additional Information:</span>
+                      <p class="text-sm mt-1 text-gray-600">
+                        {{ companyInfoForm.get("additionalInfo")?.value }}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <!-- Terms and Privacy -->
-                <div class="text-center mt-1">
-                  <p class="text-sm text-gray-500">
+                <div class="text-center mt-6 border-t pt-4 border-gray-200">
+                  <p class="text-sm text-gray-500 mb-4">
                     By clicking "Submit Application", you agree to our
                     <a href="#" class="text-blue-600 hover:underline"
                       >Terms of Service</a
@@ -434,6 +871,16 @@
                       >Privacy Policy</a
                     >
                   </p>
+
+                  <div
+                    class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-center max-w-lg mx-auto"
+                  >
+                    <i class="pi pi-info-circle text-blue-500 text-xl mb-2"></i>
+                    <p class="text-sm text-gray-700">
+                      Your test authorization request will be reviewed by our
+                      team. You will receive a notification once it's approved.
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -442,7 +889,7 @@
                 <p-button
                   label="Back"
                   icon="pi pi-arrow-left"
-                  (onClick)="activateCallback(2)"
+                  (onClick)="activateCallback(4)"
                   styleClass="p-button-outlined"
                 ></p-button>
 

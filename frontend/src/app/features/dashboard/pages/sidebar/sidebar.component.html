@@ -13,11 +13,12 @@
         <span class="brand-subtitle">Enterprise Portal</span>
       </div>
     </div>
-    <button 
+    <button
       (click)="toggleSidebar()"
       class="toggle-btn"
-      [ngClass]="{'rotate-180': collapsed}"
-      pRipple>
+      [ngClass]="{ 'rotate-180': collapsed }"
+      pRipple
+    >
       <i class="pi pi-angle-left"></i>
     </button>
   </div>
@@ -31,17 +32,24 @@
     <nav class="nav-menu">
       <!-- Main Menu Items -->
       <ng-container *ngFor="let item of menuItems">
-        <a [routerLink]="item.route" 
-           routerLinkActive="active-link"
-           [routerLinkActiveOptions]="{exact: true}"
-           class="menu-link"
-           pRipple>
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="menu-link"
+          pRipple
+        >
           <div class="menu-icon-container">
-            <i class="pi {{item.icon}}"></i>
+            <i class="pi {{ item.icon }}"></i>
           </div>
-          <span *ngIf="!collapsed" class="menu-text">{{item.label}}</span>
+          <span *ngIf="!collapsed" class="menu-text">{{ item.label }}</span>
           <span *ngIf="!collapsed" class="menu-indicator"></span>
-          <span *ngIf="collapsed" pTooltip="{{item.label}}" tooltipPosition="right" [tooltipOptions]="{ showDelay: 300, hideDelay: 50 }"></span>
+          <span
+            *ngIf="collapsed"
+            pTooltip="{{ item.label }}"
+            tooltipPosition="right"
+            [tooltipOptions]="{ showDelay: 300, hideDelay: 50 }"
+          ></span>
         </a>
       </ng-container>
     </nav>
@@ -56,57 +64,88 @@
         <!-- Each Test Category -->
         <div *ngFor="let test of tests; let i = index" class="nav-group">
           <!-- Group Header -->
-          <div 
+          <div
             (click)="toggleTest(test)"
             class="menu-link submenu-parent"
-            [ngClass]="{'active-parent': test.expanded || isChildActive(test)}"
-            pRipple>
+            [ngClass]="{
+              'active-parent': test.expanded || isChildActive(test)
+            }"
+            pRipple
+          >
             <div class="menu-icon-container">
-              <i class="pi {{test.icon}}"></i>
+              <i class="pi {{ test.icon }}"></i>
             </div>
-            
-            <div *ngIf="!collapsed" class="flex-1 flex justify-between items-center">
+
+            <div
+              *ngIf="!collapsed"
+              class="flex-1 flex justify-between items-center"
+            >
               <span class="menu-text">{{ test.name }}</span>
-              <i class="chevron-icon pi pi-chevron-right transition-transform duration-300"
-               [ngClass]="{'rotate-90': test.expanded}"></i>
+              <i
+                class="chevron-icon pi pi-chevron-right transition-transform duration-300"
+                [ngClass]="{ 'rotate-90': test.expanded }"
+              ></i>
             </div>
-            
-            <span *ngIf="collapsed" pTooltip="{{test.name}}" tooltipPosition="right" [tooltipOptions]="{ showDelay: 300, hideDelay: 50 }"></span>
+
+            <span
+              *ngIf="collapsed"
+              pTooltip="{{ test.name }}"
+              tooltipPosition="right"
+              [tooltipOptions]="{ showDelay: 300, hideDelay: 50 }"
+            ></span>
           </div>
-          
+
           <!-- Submenu Items -->
           <div *ngIf="!collapsed && test.expanded" class="submenu-container">
-            <a *ngFor="let sub of test.subsections"
-               [routerLink]="['/dashboard', test.route, sub.route]"
-               routerLinkActive="active-sublink"
-               class="submenu-link"
-               pRipple>
+            <a
+              *ngFor="let sub of test.subsections"
+              [routerLink]="['/dashboard', test.route, sub.route]"
+              routerLinkActive="active-sublink"
+              class="submenu-link"
+              pRipple
+            >
               <i class="submenu-dot pi pi-circle-fill"></i>
               <span>{{ sub.name }}</span>
             </a>
           </div>
-          
+
           <!-- Collapsed Submenu Items -->
           <div *ngIf="collapsed && test.expanded" class="collapsed-submenu">
-            <a *ngFor="let sub of test.subsections"
-               [routerLink]="['/dashboard', test.route, sub.route]"
-               routerLinkActive="active-sublink"
-               class="collapsed-submenu-link"
-               pRipple>
+            <a
+              *ngFor="let sub of test.subsections"
+              [routerLink]="['/dashboard', test.route, sub.route]"
+              routerLinkActive="active-sublink"
+              class="collapsed-submenu-link"
+              pRipple
+            >
               <i class="submenu-dot pi pi-circle-fill"></i>
-              <span pTooltip="{{sub.name}}" tooltipPosition="right" [tooltipOptions]="{ showDelay: 300, hideDelay: 50 }"></span>
+              <span
+                pTooltip="{{ sub.name }}"
+                tooltipPosition="right"
+                [tooltipOptions]="{ showDelay: 300, hideDelay: 50 }"
+              ></span>
             </a>
           </div>
         </div>
       </nav>
     </div>
   </div>
-  
+
   <!-- User Profile -->
   <div class="user-profile" [class.justify-center]="collapsed">
     <div class="user-container" [class.justify-center]="collapsed">
       <div class="relative">
-        <div class="user-avatar">
+        <img
+          *ngIf="avatarUrl"
+          [src]="avatarUrl"
+          alt="Profile"
+          class="rounded-full"
+          (error)="handleImageError()"
+        />
+        <div
+          *ngIf="!avatarUrl"
+          class="rounded-full bg-blue-500 flex items-center justify-center text-white font-medium"
+        >
           {{ userInitials }}
         </div>
         <div class="status-indicator"></div>
@@ -116,8 +155,12 @@
         <p class="user-role">{{ userRole }}</p>
       </div>
       <div *ngIf="!collapsed" class="ml-auto">
-        <button pButton pRipple icon="pi pi-ellipsis-v" 
-                class="p-button-text p-button-rounded p-button-sm"></button>
+        <button
+          pButton
+          pRipple
+          icon="pi pi-ellipsis-v"
+          class="p-button-text p-button-rounded p-button-sm"
+        ></button>
       </div>
     </div>
   </div>
