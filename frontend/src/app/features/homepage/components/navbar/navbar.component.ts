@@ -13,6 +13,8 @@ import { MenuItem } from 'primeng/api';
 // Auth Service
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { User } from '../../../../core/models/user.model';
+import { environment } from '../../../../../environments/environment';
+import { UserService } from '../../../../core/services/user.service';
 
 @Component({
   selector: 'app-homepage-navbar',
@@ -41,10 +43,16 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
   showUserDropdown = false;
   userMenuItems: MenuItem[] = [];
 
+  private _fetchingProfile = false;
+
   // Subscription
   private userSub: Subscription | null = null;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private userService: UserService
+  ) {}
 
   ngOnInit(): void {
     // Subscribe to auth state changes
@@ -54,7 +62,13 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
       if (user) {
         this.userFullName = `${user.firstName} ${user.lastName}`;
         this.userRole = this.formatRole(user.role);
-        this.generateAvatar(user);
+
+        // Set initial avatar using whatever is available
+        this.updateAvatar(user);
+
+        // Then fetch complete profile to get profile picture if available
+        this.fetchUserProfile(user.id);
+
         this.setupUserMenu();
       } else {
         this.userFullName = '';
@@ -73,6 +87,93 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
     // Clean up subscription
     if (this.userSub) {
       this.userSub.unsubscribe();
+    }
+  }
+
+  private updateAvatar(user: User): void {
+    if (user.profilePicture) {
+      this.avatarUrl = this.getFullProfilePictureUrl(user.profilePicture);
+      console.log('Using profile picture from user data:', this.avatarUrl);
+    } else {
+      this.generateFallbackAvatar(user);
+    }
+  }
+
+  // Generate fallback avatar based on initials
+  private generateFallbackAvatar(user: User): void {
+    if (!user.firstName && !user.lastName) {
+      this.avatarUrl =
+        'https://ui-avatars.com/api/?name=U&background=3b82f6&color=fff&bold=true';
+      return;
+    }
+
+    const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
+    this.avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      initials
+    )}&background=3b82f6&color=fff&bold=true`;
+
+    console.log('Generated fallback avatar:', this.avatarUrl);
+  }
+
+  // Helper method to convert relative URLs to full URLs
+  private getFullProfilePictureUrl(url: string | undefined): string {
+    if (!url) return '';
+
+    // If it's already a complete URL, return it
+    if (url.startsWith('http')) return url;
+
+    // If it's a relative URL, prepend the API base URL
+    if (url.startsWith('/uploads')) {
+      const baseUrl = environment.apiUrl.split('/api')[0];
+      return `${baseUrl}${url}`;
+    }
+
+    return url;
+  }
+
+  // Fetch user profile to get the profile picture
+  private fetchUserProfile(userId: string): void {
+    if (!userId || this._fetchingProfile) return;
+
+    // Skip if we already have a profile picture
+    if (this.currentUser?.profilePicture) {
+      console.log('User already has profile picture, skipping fetch');
+      return;
+    }
+
+    console.log('Fetching user profile to get profile picture');
+    this._fetchingProfile = true;
+
+    this.userService.getUserById(userId).subscribe({
+      next: (response) => {
+        this._fetchingProfile = false;
+
+        if (response.success && response.user?.profilePicture) {
+          console.log('Found profile picture in API response');
+          this.avatarUrl = this.getFullProfilePictureUrl(
+            response.user.profilePicture
+          );
+
+          // Update the user object's profilePicture field without triggering the subscription
+          if (this.currentUser) {
+            this.currentUser.profilePicture = response.user.profilePicture;
+          }
+        }
+      },
+      error: (error) => {
+        this._fetchingProfile = false;
+        console.error('Failed to fetch user profile:', error);
+      },
+    });
+  }
+
+  // Handle image error
+  handleImageError(): void {
+    console.log(
+      'Profile image failed to load, falling back to generated avatar'
+    );
+    if (this.currentUser) {
+      this.generateFallbackAvatar(this.currentUser);
     }
   }
 
@@ -119,16 +220,7 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
 
   // Generate avatar URL using user initials
   generateAvatar(user: User): void {
-    if (!user.firstName && !user.lastName) {
-      this.avatarUrl =
-        'https://ui-avatars.com/api/?name=U&background=3b82f6&color=fff&bold=true';
-      return;
-    }
-
-    const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
-    this.avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      initials
-    )}&background=3b82f6&color=fff&bold=true`;
+    this.updateAvatar(user);
   }
 
   // Setup user menu items
