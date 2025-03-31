@@ -1,0 +1,53 @@
+/* Footer hover animations */
+.hover-up {
+  transition: transform 0.2s ease-in-out;
+}
+
+.hover-up:hover {
+  transform: translateY(-3px);
+}
+
+/* Wave animations */
+@keyframes wave {
+  0% {
+    transform: translateX(0) translateZ(0) scaleY(1);
+  }
+  50% {
+    transform: translateX(-25%) translateZ(0) scaleY(0.95);
+  }
+  100% {
+    transform: translateX(-50%) translateZ(0) scaleY(1);
+  }
+}
+
+.wave-animation {
+  animation: wave 15s linear infinite;
+  animation-delay: 0s;
+  transform-origin: bottom center;
+  width: 200%;
+}
+
+/* Subtle hover effects for contact items */
+@keyframes pulse-subtle {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.footer-link:hover {
+  animation: pulse-subtle 1s ease infinite;
+  color: #8E181A;
+}
+
+/* Add a light shine effect to buttons */
+@keyframes shine {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}

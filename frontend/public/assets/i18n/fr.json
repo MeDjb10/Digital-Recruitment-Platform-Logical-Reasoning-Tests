@@ -7,7 +7,58 @@
       "PARAGRAPH1": "Nous sommes ravis de vous accueillir dans cet espace où nous évaluons et identifions les talents qui contribueront à façonner l'avenir de notre entreprise.",
       "PARAGRAPH2": "Chez notre groupe, l'excellence est notre norme, et nous croyons que chaque candidat a le potentiel de s'épanouir au sein de notre équipe dynamique.",
       "CTA_BUTTON": "Démarrer le test"
+    },
+    "ABOUT": {
+      "TITLE": "À Propos de nous",
+      "INTRO": "Nous sommes convaincus que cette étape de votre candidature vous permettra de démontrer votre potentiel et de faire valoir vos compétences uniques.",
+      "POINT1": "Vos résultats à ces tests revêtent une importance cruciale, car ils nous permettront de mieux faire correspondre le profil du poste avec votre propre profil.",
+      "POINT2": "Nous vous encourageons à aborder ces tests avec assurance, sachant que vos performances joueront un rôle clé dans le processus de recrutement.",
+      "POINT3": "Notre objectif est de créer des correspondances harmonieuses entre les profils des candidats et des postes, de manière à favoriser la réussite mutuelle.",
+      "STATS": {
+        "STAT1": "taux de réussite",
+        "STAT2": "ans d'expérience",
+        "STAT3": "entreprises"
+      }
+    },
+    "PROCESS": {
+      "TITLE": "Notre Processus de Sélection",
+      "STEP1": {
+        "TITLE": "Inscription",
+        "DESC": "Créez votre profil et accédez aux tests"
+      },
+      "STEP2": {
+        "TITLE": "Test psychotechniques",
+        "DESC": "Evaluez vos compétences et votre adequation avec le poste"
+      },
+      "STEP3": {
+        "TITLE": "Entretien",
+        "DESC": "Rencontre avec nos recruteurs"
+      },
+      "STEP4": {
+        "TITLE": "Analyse des résultats & Sélection",
+        "DESC": "Nos experts examinent vos performances"
+      }
     }
+  },
+  "FOOTER": {
+    "COMPANY_NAME": "COFAT Tunis",
+    "COMPANY_DESCRIPTION": "Votre partenaire de confiance pour le recrutement de talents exceptionnels qui stimulent la croissance et l'innovation",
+    "OUR_MISSION": "Notre Mission",
+    "MISSION_TEXT": "Nous aidons les organisations à trouver et développer les meilleurs talents grâce à nos outils d'évaluation innovants et notre processus de recrutement expert.",
+    "TAG1": "Innovation",
+    "TAG2": "Excellence",
+    "CONTACT": "Contact",
+    "ADDRESS": "123 Rue d'Affaires, Ville, Pays",
+    "EMAIL": "cofat@example.com",
+    "PHONE": "+123 456 789",
+    "CONNECT": "Connectez-Vous",
+    "CONNECT_TEXT": "Suivez-nous sur les réseaux sociaux pour rester informé des carrières et des insights de recrutement",
+    "FOLLOW_US": "Suivez-nous",
+    "JOIN_TEAM": "Rejoignez Notre Équipe",
+    "COPYRIGHT": "© 2025 COFAT Tunis. Tous droits réservés.",
+    "PRIVACY": "Politique de Confidentialité",
+    "TERMS": "Conditions d'Utilisation",
+    "COOKIES": "Politique des Cookies"
   },
   "BUTTONS": {
     "SUBMIT": "Soumettre",
