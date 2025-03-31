@@ -22,9 +22,13 @@
   >
     <!-- Two-column layout with proper alignment -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full">
-      
-      <!-- LEFT SIDE: Text content -->
-      <div class="lg:col-span-8" data-aos="fade-right" data-aos-duration="1000">
+      <!-- LEFT SIDE: Text content with fade animation -->
+      <div
+        class="lg:col-span-8 content-block"
+        [ngClass]="{ 'fade-out': !isContentVisible }"
+        data-aos="fade-right"
+        data-aos-duration="1000"
+      >
         <!-- Decorative elements -->
         <div class="flex items-center mb-8">
           <div class="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
@@ -34,12 +38,18 @@
         </div>
 
         <!-- Headline -->
-        <p class="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight text-gradient">
-          Bienvenue sur notre plateforme de test psychotechnique
+        <p
+          class="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight text-gradient"
+        >
+          {{ "HOME.HERO.HEADLINE" | translate }}
         </p>
 
         <!-- Separator -->
-        <div class="my-8 flex items-center space-x-3" data-aos="fade-right" data-aos-delay="100">
+        <div
+          class="my-8 flex items-center space-x-3"
+          data-aos="fade-right"
+          data-aos-delay="100"
+        >
           <div class="h-1 w-12 bg-red-500 rounded-full opacity-60"></div>
           <div class="h-1 w-24 bg-red-500 rounded-full"></div>
           <div class="h-1 w-8 bg-red-500 rounded-full opacity-60"></div>
@@ -52,9 +62,7 @@
             data-aos="fade-up"
             data-aos-delay="200"
           >
-            Nous sommes ravis de vous accueillir dans cet espace où nous
-            évaluons et identifions les talents qui contribueront à façonner
-            l'avenir de notre entreprise.
+            {{ "HOME.HERO.PARAGRAPH1" | translate }}
           </p>
 
           <p
@@ -62,28 +70,31 @@
             data-aos="fade-up"
             data-aos-delay="300"
           >
-            Chez notre groupe, l'excellence est notre norme, et nous croyons que
-            chaque candidat a le potentiel de s'épanouir au sein de notre équipe
-            dynamique.
+            {{ "HOME.HERO.PARAGRAPH2" | translate }}
           </p>
         </div>
       </div>
-      
-      <!-- RIGHT SIDE: Attention-grabbing button column -->
-      <div class="lg:col-span-4 flex justify-center items-center" data-aos="fade-left" data-aos-delay="400">
+
+      <!-- RIGHT SIDE: Attention-grabbing button column with fade animation -->
+      <div
+        class="lg:col-span-4 flex justify-center items-center content-block"
+        [ngClass]="{ 'fade-out': !isContentVisible }"
+        data-aos="fade-left"
+        data-aos-delay="400"
+      >
         <div class="spotlight-container">
           <!-- Visual spotlight effect for the button -->
           <div class="spotlight-effect"></div>
-          
+
           <!-- Attention-grabbing CTA button -->
           <button
-           [routerLink]="['/apply']"
+            [routerLink]="['/apply']"
             class="call-to-action-btn group px-10 py-5 rounded-full border-2 border-red-500 bg-transparent text-white font-bold text-xl hover:bg-red-500 hover:text-white transition-all duration-300 flex items-center gap-4 relative overflow-hidden hover:shadow-[0_0_40px_rgba(239,68,68,0.7)] transform hover:scale-105"
           >
             <!-- Button text -->
             <span
               class="relative z-10 transition-transform duration-300 group-hover:translate-x-2"
-              >Démarrer le test</span
+              >{{ "HOME.HERO.CTA_BUTTON" | translate }}</span
             >
 
             <!-- Right arrow with improved animation -->

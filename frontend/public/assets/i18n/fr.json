@@ -1,0 +1,40 @@
+{
+  "HOME": {
+    "TITLE": "Bienvenue à Cofat",
+    "DESCRIPTION": "Plateforme de recrutement numérique pour les tests de raisonnement logique",
+    "HERO": {
+      "HEADLINE": "Bienvenue sur notre plateforme de test psychotechnique",
+      "PARAGRAPH1": "Nous sommes ravis de vous accueillir dans cet espace où nous évaluons et identifions les talents qui contribueront à façonner l'avenir de notre entreprise.",
+      "PARAGRAPH2": "Chez notre groupe, l'excellence est notre norme, et nous croyons que chaque candidat a le potentiel de s'épanouir au sein de notre équipe dynamique.",
+      "CTA_BUTTON": "Démarrer le test"
+    }
+  },
+  "BUTTONS": {
+    "SUBMIT": "Soumettre",
+    "CANCEL": "Annuler",
+    "LOGIN": "Se connecter",
+    "REGISTER": "S'inscrire",
+    "LOGOUT": "Déconnexion"
+  },
+  "NAV": {
+    "HOME": "Accueil",
+    "ABOUT": "À propos",
+    "CONTACT": "Contact",
+    "TESTS": "Tests",
+    "MY_PROFILE": "Mon Profil",
+    "MY_TESTS": "Mes Tests",
+    "DASHBOARD": "Tableau de bord",
+    "BRAND_NAME": "COFAT Recrutement"
+  },
+  "USER": {
+    "PROFILE": "Mon Profil",
+    "TESTS": "Mes Tests",
+    "DASHBOARD": "Tableau de bord",
+    "EMAIL": "Email",
+    "ROLE": "Rôle"
+  },
+  "LANG": {
+    "EN": "Anglais",
+    "FR": "Français"
+  }
+}

@@ -11,13 +11,11 @@
       <div class="flex-shrink-0">
         <a routerLink="/" class="flex items-center gap-3 brand-logo">
           <!-- <img 
-            src="assets/cofat-logo.png" 
-            alt="COFAT Logo" 
             class="h-10 w-auto"
           > -->
-          <span class="brand-name text-lg hidden md:block"
-            >COFAT Recrutement</span
-          >
+          <span class="brand-name text-lg hidden md:block">
+            {{ "NAV.BRAND_NAME" | translate }}
+          </span>
         </a>
       </div>
 
@@ -29,21 +27,38 @@
           [routerLinkActiveOptions]="{ exact: true }"
           class="nav-link"
         >
-          Accueil
+          {{ "NAV.HOME" | translate }}
         </a>
         <a routerLink="/tests" routerLinkActive="nav-active" class="nav-link">
-          Tests
+          {{ "NAV.TESTS" | translate }}
         </a>
         <a routerLink="/about" routerLinkActive="nav-active" class="nav-link">
-          À propos
+          {{ "NAV.ABOUT" | translate }}
         </a>
         <a routerLink="/contact" routerLinkActive="nav-active" class="nav-link">
-          Contact
+          {{ "NAV.CONTACT" | translate }}
         </a>
       </div>
 
       <!-- Auth Actions - Desktop -->
       <div class="hidden md:flex items-center space-x-4">
+        <!-- Language Selector -->
+        <div class="language-selector mr-3">
+          <button
+            (click)="switchLanguage('en')"
+            [class.active]="currentLang === 'en'"
+            class="lang-btn"
+          >
+            EN
+          </button>
+          <button
+            (click)="switchLanguage('fr')"
+            [class.active]="currentLang === 'fr'"
+            class="lang-btn"
+          >
+            FR
+          </button>
+        </div>
         <!-- Show Login/Register buttons if not logged in -->
         <ng-container *ngIf="!currentUser">
           <button
@@ -51,11 +66,11 @@
             class="btn-signup"
             (click)="navigateToRegister()"
           >
-            S'inscrire
+            {{ "BUTTONS.REGISTER" | translate }}
           </button>
 
           <button type="button" class="btn-login" (click)="navigateToLogin()">
-            Se connecter
+            {{ "BUTTONS.LOGIN" | translate }}
           </button>
         </ng-container>
 
@@ -116,12 +131,12 @@
             <div class="dropdown-section">
               <a routerLink="/profile" class="user-dropdown-item">
                 <i class="pi pi-user"></i>
-                <span>Mon Profil</span>
+                <span>{{ "USER.PROFILE" | translate }}</span>
               </a>
 
               <a routerLink="/tests/my-tests" class="user-dropdown-item">
                 <i class="pi pi-list"></i>
-                <span>Mes Tests</span>
+                <span>{{ "USER.TESTS" | translate }}</span>
               </a>
             </div>
 
@@ -130,7 +145,7 @@
             <div class="dropdown-section" *ngIf="isStaffMember()">
               <a routerLink="/dashboard" class="user-dropdown-item">
                 <i class="pi pi-th-large"></i>
-                <span>Tableau de bord</span>
+                <span>{{ "USER.DASHBOARD" | translate }}</span>
               </a>
             </div>
 
@@ -142,7 +157,7 @@
                 class="user-dropdown-item danger w-full text-left"
               >
                 <i class="pi pi-sign-out"></i>
-                <span>Déconnexion</span>
+                <span>{{ "BUTTONS.LOGOUT" | translate }}</span>
               </button>
             </div>
           </div>
@@ -171,6 +186,25 @@
     [ngClass]="{ block: isMobileMenuOpen, hidden: !isMobileMenuOpen }"
     class="md:hidden bg-blue-900/95 backdrop-blur-lg mt-3 pb-4 rounded-b-xl"
   >
+    <!-- Language Selector for Mobile -->
+    <div class="px-4 pt-3 pb-2 flex justify-center">
+      <div class="language-selector">
+        <button
+          (click)="switchLanguage('en')"
+          [class.active]="currentLang === 'en'"
+          class="lang-btn"
+        >
+          {{ "LANG.EN" | translate }}
+        </button>
+        <button
+          (click)="switchLanguage('fr')"
+          [class.active]="currentLang === 'fr'"
+          class="lang-btn"
+        >
+          {{ "LANG.FR" | translate }}
+        </button>
+      </div>
+    </div>
     <div class="px-4 pt-3 pb-4 space-y-1">
       <a
         routerLink="/home"
@@ -178,28 +212,28 @@
         [routerLinkActiveOptions]="{ exact: true }"
         class="mobile-nav-link"
       >
-        <i class="pi pi-home"></i> Accueil
+        <i class="pi pi-home"></i> {{ "NAV.HOME" | translate }}
       </a>
       <a
         routerLink="/tests"
         routerLinkActive="mobile-nav-active"
         class="mobile-nav-link"
       >
-        <i class="pi pi-list"></i> Tests
+        <i class="pi pi-list"></i> {{ "NAV.TESTS" | translate }}
       </a>
       <a
         routerLink="/about"
         routerLinkActive="mobile-nav-active"
         class="mobile-nav-link"
       >
-        <i class="pi pi-info-circle"></i> À propos
+        <i class="pi pi-info-circle"></i> {{ "NAV.ABOUT" | translate }}
       </a>
       <a
         routerLink="/contact"
         routerLinkActive="mobile-nav-active"
         class="mobile-nav-link"
       >
-        <i class="pi pi-envelope"></i> Contact
+        <i class="pi pi-envelope"></i> {{ "NAV.CONTACT" | translate }}
       </a>
 
       <!-- Auth Buttons for Mobile -->
@@ -212,7 +246,7 @@
               (click)="navigateToLogin()"
             >
               <i class="pi pi-sign-in mr-2"></i>
-              Se connecter
+              {{ "BUTTONS.LOGIN" | translate }}
             </button>
             <button
               type="button"
@@ -220,7 +254,7 @@
               (click)="navigateToRegister()"
             >
               <i class="pi pi-user-plus mr-2"></i>
-              S'inscrire
+              {{ "BUTTONS.REGISTER" | translate }}
             </button>
           </div>
         </ng-container>
@@ -245,11 +279,11 @@
           </div>
 
           <a routerLink="/profile" class="mobile-nav-link">
-            <i class="pi pi-user"></i> Mon Profil
+            <i class="pi pi-user"></i> {{ "USER.PROFILE" | translate }}
           </a>
 
           <a routerLink="/tests/my-tests" class="mobile-nav-link">
-            <i class="pi pi-list"></i> Mes Tests
+            <i class="pi pi-list"></i> {{ "USER.TESTS" | translate }}
           </a>
 
           <a
@@ -257,14 +291,14 @@
             *ngIf="isStaffMember()"
             class="mobile-nav-link"
           >
-            <i class="pi pi-th-large"></i> Tableau de bord
+            <i class="pi pi-th-large"></i> {{ "USER.DASHBOARD" | translate }}
           </a>
 
           <button
             (click)="logout()"
             class="mobile-nav-link w-full text-left text-red-300 hover:text-red-100"
           >
-            <i class="pi pi-sign-out"></i> Déconnexion
+            <i class="pi pi-sign-out"></i> {{ "BUTTONS.LOGOUT" | translate }}
           </button>
         </div>
       </div>

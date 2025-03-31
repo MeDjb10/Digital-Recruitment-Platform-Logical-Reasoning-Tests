@@ -15,6 +15,7 @@ import { AuthService } from '../../../../core/auth/services/auth.service';
 import { User } from '../../../../core/models/user.model';
 import { environment } from '../../../../../environments/environment';
 import { UserService } from '../../../../core/services/user.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-homepage-navbar',
@@ -26,6 +27,7 @@ import { UserService } from '../../../../core/services/user.service';
     RippleModule,
     TooltipModule,
     MenuModule,
+    TranslateModule,
   ],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css'],
@@ -36,6 +38,9 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
   userFullName = '';
   userRole = '';
   avatarUrl = '';
+
+  // Language state
+  currentLang: string = 'en'; // Add this property
 
   // UI state
   isScrolled = false;
@@ -51,10 +56,18 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private userService: UserService
+    private userService: UserService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
+    const savedLang = localStorage.getItem('preferred-language');
+    if (savedLang && ['en', 'fr'].includes(savedLang)) {
+      this.currentLang = savedLang;
+      this.translate.use(savedLang);
+    } else {
+      this.currentLang = this.translate.currentLang || 'en';
+    }
     // Subscribe to auth state changes
     this.userSub = this.authService.currentUser$.subscribe((user) => {
       this.currentUser = user;
@@ -227,7 +240,7 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
   setupUserMenu(): void {
     this.userMenuItems = [
       {
-        label: 'Mon Profil',
+        label: this.translate.instant('USER.PROFILE'),
         icon: 'pi pi-user',
         command: () => {
           this.router.navigate(['/profile']);
@@ -235,7 +248,7 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
         },
       },
       {
-        label: 'Mes Tests',
+        label: this.translate.instant('USER.TESTS'),
         icon: 'pi pi-list',
         command: () => {
           this.router.navigate(['/tests/my-tests']);
@@ -246,7 +259,7 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
         separator: true,
       },
       {
-        label: 'Tableau de bord',
+        label: this.translate.instant('USER.DASHBOARD'),
         icon: 'pi pi-th-large',
         visible: this.isStaffMember(),
         command: () => {
@@ -259,7 +272,7 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
         visible: this.isStaffMember(),
       },
       {
-        label: 'Déconnexion',
+        label: this.translate.instant('BUTTONS.LOGOUT'),
         icon: 'pi pi-sign-out',
         command: () => {
           this.logout();
@@ -291,5 +304,18 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
   logout(): void {
     this.authService.logout();
     // The AuthService already handles navigation to login
+  }
+
+  switchLanguage(lang: string): void {
+    this.currentLang = lang;
+    this.translate.use(lang);
+
+    // Save language preference to localStorage
+    localStorage.setItem('preferred-language', lang);
+
+    // Update user menu translations if needed
+    if (this.currentUser) {
+      this.setupUserMenu();
+    }
   }
 }

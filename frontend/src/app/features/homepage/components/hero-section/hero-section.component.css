@@ -156,3 +156,21 @@ header .container {
     opacity: 0;
   }
 }
+
+/* Update the fade animation styles */
+.text-gradient {
+  transition: opacity 0.3s ease;
+}
+
+.content-block {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.content-block.fade-out {
+  opacity: 0;
+}
+/* Add a smoother transition for text elements */
+.lg-col-span-8 p, .lg-col-span-4 button {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}

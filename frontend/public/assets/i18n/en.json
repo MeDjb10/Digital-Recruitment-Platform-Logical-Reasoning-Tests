@@ -1,0 +1,40 @@
+{
+  "HOME": {
+    "TITLE": "Welcome to Cofat",
+    "DESCRIPTION": "Digital Recruitment Platform for Logical Reasoning Tests",
+    "HERO": {
+      "HEADLINE": "Welcome to our psychometric testing platform",
+      "PARAGRAPH1": "We are delighted to welcome you to this space where we assess and identify talents who will help shape the future of our company.",
+      "PARAGRAPH2": "At our group, excellence is our standard, and we believe that every candidate has the potential to thrive within our dynamic team.",
+      "CTA_BUTTON": "Start the test"
+    }
+  },
+  "BUTTONS": {
+    "SUBMIT": "Submit",
+    "CANCEL": "Cancel",
+    "LOGIN": "Login",
+    "REGISTER": "Register",
+    "LOGOUT": "Logout"
+  },
+  "NAV": {
+    "HOME": "Home",
+    "ABOUT": "About",
+    "CONTACT": "Contact",
+    "TESTS": "Tests",
+    "MY_PROFILE": "My Profile",
+    "MY_TESTS": "My Tests",
+    "DASHBOARD": "Dashboard",
+    "BRAND_NAME": "COFAT Recruitment"
+  },
+  "USER": {
+    "PROFILE": "My Profile",
+    "TESTS": "My Tests",
+    "DASHBOARD": "Dashboard",
+    "EMAIL": "Email",
+    "ROLE": "Role"
+  },
+  "LANG": {
+    "EN": "English",
+    "FR": "French"
+  }
+}
