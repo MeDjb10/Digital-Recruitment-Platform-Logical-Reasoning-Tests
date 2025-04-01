@@ -1,83 +1,26 @@
-<section class="py-16 md:py-24 px-4 sm:px-6 lg:px-8 container mx-auto">
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-    <!-- Image Column -->
-    <div class="relative mx-auto md:mx-0 w-full max-w-md" data-aos="fade-right">
-      <div class="rounded-lg overflow-hidden shadow-xl">
-        <img src="assets/wom.png" alt="Woman" class="w-full object-cover">
-      </div>
-      
-      <!-- Stats Cards - Responsive on mobile -->
-      <div class="absolute -bottom-6 left-0 right-0 transform px-4 flex" data-aos="fade-up" data-aos-delay="200">
-        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-xl shadow-xl flex justify-between w-full">
-          <!-- First Stat -->
-          <div class="text-center text-white py-3 px-2 w-1/3">
-            <p class="text-3xl md:text-4xl lg:text-5xl font-bold animate-pulse">84%</p>
-            <p class="text-xs md:text-sm">{{ 'HOME.ABOUT.STATS.STAT1' | translate }}</p>
-          </div>
-          
-          <!-- Center Stat - Highlighted -->
-          <div class="text-center w-1/3 p-2">
-            <div class="bg-white rounded-lg h-full flex flex-col justify-center p-1">
-              <p class="text-3xl md:text-4xl lg:text-5xl font-bold text-red-500">10+</p>
-              <p class="text-xs md:text-sm text-red-500">{{ 'HOME.ABOUT.STATS.STAT2' | translate }}</p>
-            </div>
-          </div>
-          
-          <!-- Third Stat -->
-          <div class="text-center text-white py-3 px-2 w-1/3">
-            <p class="text-3xl md:text-4xl lg:text-5xl font-bold">64</p>
-            <p class="text-xs md:text-sm">{{ 'HOME.ABOUT.STATS.STAT3' | translate }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    
+<section class="py-8 md:py-8 px-4 sm:px-6 lg:px-8 container mx-auto relative">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
     <!-- Text Content -->
-    <div class="col-span-1 md:col-span-2 text-left mt-12 md:mt-0" data-aos="fade-left">
+    <div class="text-left mt-12 md:mt-0 z-10" data-aos="fade-left">
       <h2 class="text-4xl md:text-5xl lg:text-7xl font-bold text-blue-800 mb-6">
         {{ 'HOME.ABOUT.TITLE' | translate }}
       </h2>
-      
-      <p class="my-4 text-lg md:text-xl font-medium text-gray-800" data-aos="fade-up" data-aos-delay="100">
-        {{ 'HOME.ABOUT.INTRO' | translate }}
+      <p class="text-lg font-bold">
+        {{ 'HOME.ABOUT.TEXT1' | translate }}
       </p>
-      
-      <div class="space-y-4 mt-6">
-        <!-- Feature points with icons -->
-        <div class="flex items-start gap-3" data-aos="fade-up" data-aos-delay="200">
-          <div class="mt-1 text-red-500">
-            <!-- Checkmark icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p class="text-lg md:text-xl text-gray-700">
-            {{ 'HOME.ABOUT.POINT1' | translate }}
-          </p>
-        </div>
-        
-        <div class="flex items-start gap-3" data-aos="fade-up" data-aos-delay="300">
-          <div class="mt-1 text-red-500">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p class="text-lg md:text-xl text-gray-700">
-            {{ 'HOME.ABOUT.POINT2' | translate }}
-          </p>
-        </div>
-        
-        <div class="flex items-start gap-3" data-aos="fade-up" data-aos-delay="400">
-          <div class="mt-1 text-red-500">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <p class="text-lg md:text-xl text-gray-700">
-            {{ 'HOME.ABOUT.POINT3' | translate }}
-          </p>
-        </div>
-      </div>
+      <br>
+      <p>
+        {{ 'HOME.ABOUT.TEXT2' | translate }}
+      </p>
+      <br>
+      <p>
+        {{ 'HOME.ABOUT.TEXT3' | translate }}
+      </p>
+    </div>
+
+    <!-- Image Content -->
+    <div class="relative flex justify-center items-center">
+      <img src="/assets/images/carncable.png" alt="Car" class="md:w-3/4 lg:w-4/5">
     </div>
   </div>
 </section>

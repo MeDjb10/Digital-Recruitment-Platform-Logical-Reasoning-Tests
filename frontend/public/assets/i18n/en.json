@@ -10,15 +10,14 @@
     },
     "ABOUT": {
       "TITLE": "About Us",
-      "INTRO": "We are confident that this stage of your application will allow you to demonstrate your potential and showcase your unique skills.",
-      "POINT1": "Your results in these tests are crucially important as they will help us better match the job profile with your own profile.",
-      "POINT2": "We encourage you to approach these tests with confidence, knowing that your performance will play a key role in the recruitment process.",
-      "POINT3": "Our goal is to create harmonious matches between candidate and job profiles, fostering mutual success.",
-      "STATS": {
-        "STAT1": "success rate",
-        "STAT2": "years experience",
-        "STAT3": "companies"
-      }
+      "TEXT1": "At COFAT, excellence is our standard. We are a dynamic group specializing in the manufacturing of wiring and electrical harnesses for the automotive industry, deeply believing in the potential of every candidate.",
+      "TEXT2": "Our recruitment process aims to identify talents who will thrive within our team and contribute to our collective success.",
+      "TEXT3": "We value the harmonious match between candidate profiles and job positions, creating opportunities for mutual growth."
+    },
+    "ABOUT3": {
+      "INFO": "We encourage you to approach these tests with confidence, knowing that your performance will play a key role in the recruitment process.",
+      "DESCRIPTION": "Your participation is highly valued, and we are committed to ensuring a smooth and secure evaluation process.",
+      "THANK_YOU": "We thank you for your participation and wish you the best of luck in these evaluations."
     },
     "PROCESS": {
       "TITLE": "Our Selection Process",
@@ -38,6 +37,32 @@
         "TITLE": "Results Analysis & Selection",
         "DESC": "Our experts review your performance"
       }
+    },
+    "NUMBERS": {
+      "TITLE": "Some numbers about us...",
+      "TOTAL_POSTS": "Total number of positions",
+      "SITES": "Sites",
+      "EMPLOYEES": "Number of employees",
+      "NEW_POSTS": "New positions available"
+    },
+    "STATISTICS": {
+      "CANDIDATES_COUNT": "1,000+ candidates",
+      "EVALUATED": "evaluated through our platform",
+      "PER_YEAR": "per year",
+      "SECURITY_NOTE": "with easy access and secure data confidentiality."
+    },
+    "MAP_SECTION": {
+      "TITLE": "Find Us Easily",
+      "DESCRIPTION": "To facilitate your visit on the day of the interview, consult the interactive map below which will guide you directly to our premises.",
+      "BUTTON": "Get Directions"
+    },
+    "CONTACT": {
+      "TITLE": "Contact Us",
+      "DESCRIPTION": "For any questions or information, you can contact us through this form or directly at: ",
+      "NAME_PLACEHOLDER": "Your name",
+      "EMAIL_PLACEHOLDER": "Your email address",
+      "MESSAGE_PLACEHOLDER": "Your message",
+      "SEND_BUTTON": "Send"
     }
   },
   "FOOTER": {

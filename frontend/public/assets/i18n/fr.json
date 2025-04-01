@@ -14,11 +14,19 @@
       "POINT1": "Vos résultats à ces tests revêtent une importance cruciale, car ils nous permettront de mieux faire correspondre le profil du poste avec votre propre profil.",
       "POINT2": "Nous vous encourageons à aborder ces tests avec assurance, sachant que vos performances joueront un rôle clé dans le processus de recrutement.",
       "POINT3": "Notre objectif est de créer des correspondances harmonieuses entre les profils des candidats et des postes, de manière à favoriser la réussite mutuelle.",
+      "TEXT1": "Chez COFAT, l'excellence est notre norme. Nous sommes un groupe dynamique, spécialisé dans la fabrication de câblages et de faisceaux électriques pour l'industrie automobile, qui croit profondément au potentiel de chaque candidat.",
+      "TEXT2": "Notre processus de recrutement vise à identifier les talents qui s'épanouiront au sein de notre équipe et contribueront à notre réussite collective.",
+      "TEXT3": "Nous valorisons la correspondance harmonieuse entre les profils des candidats et les postes à pourvoir, créant ainsi des opportunités de développement mutuel.",
       "STATS": {
         "STAT1": "taux de réussite",
         "STAT2": "ans d'expérience",
         "STAT3": "entreprises"
       }
+    },
+    "ABOUT3": {
+      "INFO": "Nous vous encourageons à aborder ces tests avec assurance, sachant que vos performances joueront un rôle clé dans le processus de recrutement.",
+      "DESCRIPTION": "Votre participation est très appréciée et nous nous engageons à garantir un processus d'évaluation fluide et sécurisé.",
+      "THANK_YOU": "Nous vous remercions de votre participation et vous souhaitons bonne chance dans ces évaluations."
     },
     "PROCESS": {
       "TITLE": "Notre Processus de Sélection",
@@ -38,6 +46,32 @@
         "TITLE": "Analyse des résultats & Sélection",
         "DESC": "Nos experts examinent vos performances"
       }
+    },
+    "NUMBERS": {
+      "TITLE": "Quelques chiffres sur nous...",
+      "TOTAL_POSTS": "Nombre total des postes",
+      "SITES": "Sites",
+      "EMPLOYEES": "Nombre des employés",
+      "NEW_POSTS": "Nouveaux postes disponibles"
+    },
+    "STATISTICS": {
+      "CANDIDATES_COUNT": "1 000+ candidats",
+      "EVALUATED": "évalués via notre plateforme",
+      "PER_YEAR": "par an",
+      "SECURITY_NOTE": "grâce à une facilité d'utilisation accessible en toute sécurité et confidentialité des données."
+    },
+    "MAP_SECTION": {
+      "TITLE": "Trouver nous facilement",
+      "BUTTON": "Obtenir l'itinéraire",
+      "DESCRIPTION": "Pour faciliter votre visite le jour d'entretien, consultez la carte interactive ci-dessous qui vous guidera directement jusqu'à nos locaux."
+    },
+    "CONTACT": {
+      "TITLE": "Contactez-nous",
+      "DESCRIPTION": "Pour toute question ou information, vous pouvez nous contacter via ce formulaire ou directement à l'adresse : ",
+      "NAME_PLACEHOLDER": "Votre nom",
+      "EMAIL_PLACEHOLDER": "Votre adresse email",
+      "MESSAGE_PLACEHOLDER": "Votre message",
+      "SEND_BUTTON": "Envoyer"
     }
   },
   "FOOTER": {

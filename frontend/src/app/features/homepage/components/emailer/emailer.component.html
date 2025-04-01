@@ -1,0 +1,34 @@
+<div class=" mx-auto p-6 flex flex-col items-center bg-white rounded-lg shadow-lg">
+    <h2 class="text-4xl font-bold text-center mb-6" translate>HOME.CONTACT.TITLE</h2>
+    <p class="text-lg text-center mb-6">
+        <span translate class="text-xl">HOME.CONTACT.DESCRIPTION</span>
+        <span class="text-red-600 font-medium">recrutementcentral&#64;cofat.com</span>
+    </p>
+    <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="space-y-4 max-w-2xl">
+        <div class="flex w-full gap-4 justify-evenly">
+            <div>
+                <input type="text" 
+                       formControlName="name"
+                       [placeholder]="'HOME.CONTACT.NAME_PLACEHOLDER' | translate"
+                       class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <input type="email" 
+                       formControlName="email"
+                       [placeholder]="'HOME.CONTACT.EMAIL_PLACEHOLDER' | translate"
+                       class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+        <div>
+            <textarea formControlName="message"
+                      [placeholder]="'HOME.CONTACT.MESSAGE_PLACEHOLDER' | translate"
+                      rows="4"
+                      class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+        <button type="submit" 
+                [disabled]="!contactForm.valid"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400">
+            {{ 'HOME.CONTACT.SEND_BUTTON' | translate }}
+        </button>
+    </form>
+</div>
