@@ -1,64 +1,137 @@
-<header class="relative text-white text-left overflow-hidden h-screen">
-  <!-- Background gradient overlay -->
-  <div
-    class="absolute inset-0 bg-gradient-to-r from-blue-800/95 via-blue-700/85 to-blue-700/75 z-10"
-  ></div>
+<header class="relative bg-[#1090CB1A] text-left overflow-hidden h-screen">
+  <!-- Enhanced background patterns with parallax effect -->
+  <div class="absolute inset-0 z-0 opacity-10 overflow-hidden">
+    <!-- Abstract pattern with parallax movement -->
+    <div
+      class="absolute top-0 right-0 w-1/2 h-1/2 opacity-20"
+      data-aos="fade-down-left"
+      data-aos-duration="1500"
+    >
+      <svg
+        viewBox="0 0 200 200"
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-full h-full text-[#00329B]"
+      >
+        <path
+          fill="currentColor"
+          d="M42.8,-72.1C54.9,-62.9,63.6,-49.2,69.7,-35C75.8,-20.7,79.3,-5.9,76.2,7.4C73,20.7,63.2,32.5,52.9,43.9C42.6,55.3,31.7,66.3,18.3,71.2C4.9,76.1,-11,74.9,-25.7,69.8C-40.4,64.8,-53.8,55.9,-63.1,43.5C-72.4,31.1,-77.4,15.6,-77.4,0C-77.3,-15.6,-72,-31.1,-62.5,-42.5C-53,-53.8,-39.3,-61,-25.9,-70.4C-12.6,-79.8,0.4,-91.5,14.5,-90C28.6,-88.6,43.8,-74,55.9,-59.5C68,-45,73.5,-30.7,70.8,-17.7C68.1,-4.7,57.3,7,46.4,18.7C35.6,30.4,24.8,42,12,51.9C-0.8,61.8,-15.6,70,-32.8,72.3C-50,74.6,-69.5,70.9,-81.1,59.4C-92.8,47.8,-96.4,28.4,-93.2,11.4C-90.1,-5.6,-80.1,-20.3,-70.5,-35C-60.9,-49.7,-51.8,-64.4,-39.2,-73.6C-26.6,-82.8,-10.5,-86.5,3.4,-82C17.2,-77.4,31,-81.6,42.8,-72.1Z"
+          transform="translate(100 100)"
+        />
+      </svg>
+    </div>
 
-  <!-- Background animations/patterns -->
-  <div class="absolute inset-0 z-0 opacity-20 overflow-hidden">
-    <!-- Your existing animated background elements -->
+    <div
+      class="absolute bottom-0 left-0 w-1/3 h-1/3 opacity-20 transform rotate-45"
+      data-aos="fade-up-right"
+      data-aos-duration="1500"
+      data-aos-delay="200"
+    >
+      <svg
+        viewBox="0 0 200 200"
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-full h-full text-[#A80C0A]"
+      >
+        <path
+          fill="currentColor"
+          d="M44.9,-76.5C59.5,-69.7,73.7,-60.6,81.9,-47.3C90.1,-34,92.3,-16.5,88.7,-1.3C85.1,13.9,75.7,27.8,65.4,39.7C55.2,51.6,44.1,61.5,31.1,70.5C18.1,79.5,3.1,87.5,-13.3,90.2C-29.7,92.9,-47.5,90.3,-59.4,80.1C-71.3,69.9,-77.3,52.1,-80.6,34.9C-83.8,17.7,-84.3,1,-80.4,-13.7C-76.5,-28.4,-68.2,-41.1,-57,-50.7C-45.8,-60.3,-31.7,-66.8,-17.4,-74.1C-3.1,-81.4,11.5,-89.4,25.3,-86.8C39.2,-84.2,52.2,-70.9,66.4,-58.6C80.5,-46.4,95.9,-35.1,97.4,-22.1C98.9,-9.1,86.4,5.6,80.2,22.8C74,40,74,59.7,64.9,71.4C55.8,83.1,37.7,86.9,19.8,90.2C2,93.5,-15.5,96.3,-31.6,92.2C-47.6,88.2,-62.2,77.3,-72.1,63.1C-82,48.9,-87.3,31.5,-91.2,13.4C-95.1,-4.7,-97.7,-23.5,-92.5,-40.2C-87.3,-56.9,-74.2,-71.4,-58.3,-78.2C-42.4,-85,-23.7,-84.1,-5.9,-75.4C11.9,-66.7,28.6,-50.2,36.5,-37.7C44.4,-25.2,43.5,-16.9,47.1,-6.3C50.8,4.2,59,16.9,57.4,26.3C55.8,35.7,44.5,41.7,33.8,48.8C23.1,55.9,13,64,0.8,62.9C-11.5,61.9,-25.1,51.6,-32.8,40.1C-40.6,28.5,-42.5,15.8,-47.1,2.5C-51.7,-10.7,-59,-24.5,-59.4,-39C-59.8,-53.5,-53.2,-68.7,-42,-76.2C-30.8,-83.7,-15.4,-83.5,0.2,-83.9C15.8,-84.3,31.7,-85.3,44.9,-76.5Z"
+          transform="translate(100 100)"
+        />
+      </svg>
+    </div>
+
+    <!-- Enhanced background grid pattern -->
+    <div class="absolute inset-0 grid grid-cols-10 grid-rows-10 opacity-5">
+      <ng-container *ngFor="let i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]">
+        <div
+          *ngFor="let j of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
+          class="border border-[#00329B] opacity-20"
+        ></div>
+      </ng-container>
+    </div>
+
+    <!-- Subtle animated dots background -->
+    <div class="absolute inset-0">
+      <div
+        *ngFor="let i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
+        class="absolute rounded-full bg-[#00329B]"
+        [ngStyle]="{
+          width: '4px',
+          height: '4px',
+          top: i * 10 + '%',
+          left: i * 8 + '%',
+          opacity: '0.1',
+          animation: 'float ' + (5 + i) + 's ease-in-out infinite'
+        }"
+      ></div>
+    </div>
   </div>
 
-  <!-- Background image -->
-  <img
-    src="assets/business-women-working111.jpg"
-    alt="Hero Image"
-    class="absolute inset-0 w-full h-full object-cover opacity-80 animate-slow-zoom"
-  />
-
-  <!-- Content container - adjusted to account for navbar -->
+  <!-- Content container with enhanced accessibility -->
   <div
-    class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-20 h-full flex items-center pt-20"
+    class="container mx-auto px-6 lg:px-12 relative z-20 h-full flex items-center pt-20"
   >
     <!-- Two-column layout with proper alignment -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full">
-      <!-- LEFT SIDE: Text content with fade animation -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center w-full">
+      <!-- LEFT SIDE: Enhanced text content -->
       <div
-        class="lg:col-span-8 content-block"
+        class="content-block relative"
         [ngClass]="{ 'fade-out': !isContentVisible }"
         data-aos="fade-right"
         data-aos-duration="1000"
       >
-        <!-- Decorative elements -->
+        <!-- New corner decorative element -->
+        <div class="absolute -top-8 -left-8 w-20 h-20 opacity-10">
+          <svg
+            viewBox="0 0 200 200"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-full h-full text-[#00329B]"
+          >
+            <circle cx="100" cy="100" r="80" fill="currentColor" />
+          </svg>
+        </div>
+
+        <!-- Add subtle ambient glow effect -->
+        <div
+          class="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-[#00329B] opacity-5 blur-3xl"
+        ></div>
+
+        <!-- Enhanced decorative elements with animation -->
         <div class="flex items-center mb-8">
-          <div class="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
+          <div class="h-3 w-3 bg-[#A80C0A] rounded-full animate-pulse"></div>
           <div
-            class="h-2 w-32 bg-red-500 rounded-full ml-2 animate-width"
+            class="h-2 w-32 bg-gradient-to-r from-[#A80C0A] to-[#00329B] rounded-full ml-2 animate-width"
           ></div>
         </div>
 
-        <!-- Headline -->
-        <p
-          class="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight text-gradient"
+        <!-- Enhanced headline with gradient text and accessibility -->
+        <h1
+          class="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight"
         >
-          {{ "HOME.HERO.HEADLINE" | translate }}
-        </p>
+          <span class="text-gradient">{{
+            "HOME.HERO.HEADLINE" | translate
+          }}</span>
+          <span class="sr-only"
+            >Welcome to our psychometric testing platform</span
+          >
+        </h1>
 
-        <!-- Separator -->
+        <!-- Enhanced separator with animation -->
         <div
           class="my-8 flex items-center space-x-3"
           data-aos="fade-right"
           data-aos-delay="100"
         >
-          <div class="h-1 w-12 bg-red-500 rounded-full opacity-60"></div>
-          <div class="h-1 w-24 bg-red-500 rounded-full"></div>
-          <div class="h-1 w-8 bg-red-500 rounded-full opacity-60"></div>
+          <div class="h-1 w-12 bg-[#A80C0A] rounded-full opacity-60"></div>
+          <div
+            class="h-1 w-24 bg-gradient-to-r from-[#A80C0A] to-[#00329B] rounded-full animate-highlight"
+          ></div>
+          <div class="h-1 w-8 bg-[#A80C0A] rounded-full opacity-60"></div>
         </div>
 
-        <!-- Paragraphs -->
+        <!-- Enhanced paragraphs with subtle hover effect -->
         <div class="space-y-6">
           <p
-            class="text-lg md:text-xl lg:text-2xl opacity-95 border-l-4 border-red-500 pl-6 py-2 backdrop-blur-sm bg-white/5 rounded-r-lg"
+            class="text-lg md:text-xl lg:text-2xl text-gray-700 border-l-4 border-[#A80C0A] pl-6 py-2 rounded-r-lg hover:bg-white hover:bg-opacity-30 transition-all duration-300"
             data-aos="fade-up"
             data-aos-delay="200"
           >
@@ -66,79 +139,196 @@
           </p>
 
           <p
-            class="text-lg md:text-xl lg:text-2xl opacity-95"
+            class="text-lg md:text-xl lg:text-2xl text-gray-700 hover:bg-white hover:bg-opacity-30 transition-all duration-300 rounded-lg p-2"
             data-aos="fade-up"
             data-aos-delay="300"
           >
             {{ "HOME.HERO.PARAGRAPH2" | translate }}
           </p>
         </div>
-      </div>
 
-      <!-- RIGHT SIDE: Attention-grabbing button column with fade animation -->
-      <div
-        class="lg:col-span-4 flex justify-center items-center content-block"
-        [ngClass]="{ 'fade-out': !isContentVisible }"
-        data-aos="fade-left"
-        data-aos-delay="400"
-      >
-        <div class="spotlight-container">
-          <!-- Visual spotlight effect for the button -->
-          <div class="spotlight-effect"></div>
+        <!-- Enhanced buttons section with modern effects -->
+        <div
+          class="flex flex-wrap gap-4 mt-8"
+          data-aos="fade-up"
+          data-aos-delay="400"
+        >
+          <!-- Demo Button with enhanced hover effect -->
+          <button
+            class="professional-button px-6 py-3 bg-transparent border-2 border-[#A80C0A] text-[#A80C0A] font-bold rounded-full hover:bg-[#A80C0A] hover:text-white transition-all duration-300 mb-4 sm:mb-0 relative custom-cursor"
+            aria-label="Start a demonstration"
+          >
+            <span>{{ "HOME.HERO.DEMO_BUTTON" | translate }}</span>
+          </button>
 
-          <!-- Attention-grabbing CTA button -->
+          <!-- CTA Button with enhanced visual appeal -->
           <button
             [routerLink]="['/apply']"
-            class="call-to-action-btn group px-10 py-5 rounded-full border-2 border-red-500 bg-transparent text-white font-bold text-xl hover:bg-red-500 hover:text-white transition-all duration-300 flex items-center gap-4 relative overflow-hidden hover:shadow-[0_0_40px_rgba(239,68,68,0.7)] transform hover:scale-105"
+            class="call-to-action-btn professional-button px-6 py-3 bg-[#A80C0A] text-white font-bold rounded-full hover:bg-[#A80C0A]/90 transition-all duration-300 flex items-center gap-2 group custom-cursor animate-highlight"
+            aria-label="Start the test"
           >
-            <!-- Button text -->
-            <span
-              class="relative z-10 transition-transform duration-300 group-hover:translate-x-2"
-              >{{ "HOME.HERO.CTA_BUTTON" | translate }}</span
-            >
+            <span class="relative z-10">{{
+              "HOME.HERO.CTA_BUTTON" | translate
+            }}</span>
 
-            <!-- Right arrow with improved animation -->
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-7 w-7 transform group-hover:translate-x-4 transition-all duration-300 ease-in-out"
+              class="h-5 w-5 transform group-hover:translate-x-1 transition-all duration-300 ease-in-out"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              aria-hidden="true"
             >
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                stroke-width="2.5"
+                stroke-width="2"
                 d="M13 7l5 5m0 0l-5 5m5-5H6"
               />
             </svg>
-
-            <!-- Enhanced pulse effect on hover -->
-            <span
-              class="absolute -right-3 -top-3 w-16 h-16 rounded-full bg-red-500 opacity-0 group-hover:opacity-40 group-hover:animate-ping-slow"
-            ></span>
-
-            <!-- Multiple layered hover effects -->
-            <span
-              class="absolute bottom-0 left-0 w-0 h-full bg-gradient-to-r from-red-500 to-red-600 transition-all duration-500 ease-in-out -z-10 group-hover:w-full"
-            ></span>
-            <span
-              class="absolute inset-0 w-full h-full bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300 z-5 group-hover:animate-pulse"
-            ></span>
           </button>
+        </div>
+
+        <!-- Add a trust indicator for better conversion -->
+        <div
+          class="mt-6 flex items-center text-sm text-gray-600"
+          data-aos="fade-up"
+          data-aos-delay="500"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-green-500 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+            />
+          </svg>
+          <span>100% Confidential & Secure Assessment</span>
+        </div>
+
+        <!-- Bottom corner decorative element -->
+        <div class="absolute -bottom-16 -left-16 w-32 h-32 opacity-10">
+          <svg
+            viewBox="0 0 200 200"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-full h-full text-[#00329B]"
+          >
+            <path
+              fill="currentColor"
+              d="M44.1,-76.8C58.4,-69.3,72,-59.6,79.5,-46.1C87,-32.5,88.4,-16.3,87.4,-0.6C86.4,15.1,83,30.1,74.3,41.6C65.7,53.1,51.8,61.1,37.8,68.5C23.8,76,11.9,83,-0.9,84.5C-13.7,86,-27.4,82,-39.2,74.8C-51,67.6,-60.8,57.2,-69.3,45C-77.8,32.8,-85,17.9,-86.4,2.1C-87.7,-13.7,-83.3,-30.3,-74.4,-43.7C-65.6,-57.1,-52.3,-67.3,-38.1,-74.9C-23.9,-82.5,-8.9,-87.5,3.7,-83.8C16.2,-80.1,29.9,-84.3,44.1,-76.8Z"
+              transform="translate(100 100)"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE: Enhanced illustration with 3D effect -->
+      
+      <div
+        class="relative content-block perspective-card"
+        [ngClass]="{ 'fade-out': !isContentVisible }"
+        data-aos="fade-left"
+        data-aos-delay="400"
+      >
+        <!-- Enhanced container with better visuals -->
+        <div class="relative mx-auto max-w-xl card-inner">
+          <!-- Changed from max-w-lg to max-w-xl for larger container -->
+          <!-- Enhanced border decoration with animation -->
+          <div
+            class="absolute -top-8 -right-8 w-64 h-64 border-4 border-[#00329B] border-opacity-20 rounded-full animate-border-pulse"
+          ></div>
+          <div
+            class="absolute -bottom-8 -left-8 w-48 h-48 border-4 border-[#00329B] border-opacity-10 rounded-full animate-float-delayed"
+          ></div>
+
+          <!-- Add ambient glow behind the image container -->
+          <div
+            class="absolute inset-4 bg-[#00329B] opacity-5 blur-3xl rounded-full"
+          ></div>
+
+          <!-- Image container with enhanced glass effect - no hover transform -->
+          <div
+            class="relative z-10 image-glass-effect p-4 shadow-xl transition-all duration-300 image-container"
+          >
+            <!-- Ambient glow within the container -->
+            <div class="image-glow"></div>
+
+            <!-- Main illustration with enhanced size and fixed position -->
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[#00329B] opacity-10 rounded-2xl"
+            ></div>
+
+            <img
+              src="assets/images/candidate-removebg-preview.png"
+              alt="Candidate Illustration"
+              class="w-full object-contain mx-auto"
+            />
+
+            <!-- Add a subtle badge to increase credibility -->
+           
+          </div>
+        </div>
+
+        <!-- Keep the decorative floating shapes as they were -->
+        <div
+          class="absolute top-0 left-0 w-16 h-16 bg-[#A80C0A] rounded-full opacity-80 animate-float"
+        ></div>
+        <div
+          class="absolute bottom-0 right-0 w-20 h-20 bg-[#00329B] rounded-full opacity-80 animate-float-delayed"
+        ></div>
+        <div
+          class="absolute top-1/4 right-0 w-12 h-12 bg-[#00329B] rounded-full opacity-60 animate-float-delayed"
+        ></div>
+        <div
+          class="absolute bottom-1/3 left-1/4 w-8 h-8 bg-[#00329B] rounded-full opacity-40 animate-float"
+        ></div>
+
+        <!-- Star decoration with pulse effect -->
+        <div class="absolute top-1/2 right-1/4 w-10 h-10 animate-spin-slow">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-full h-full text-[#00329B] opacity-70 animate-pulse"
+          >
+            <path
+              d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+
+        <!-- Company logo or trust badge -->
+        <div
+          class="absolute bottom-4 right-4 bg-white rounded-full p-2 shadow-md animate-float"
+        >
+          <div
+            class="h-8 w-8 bg-[#00329B] rounded-full flex items-center justify-center text-white font-bold"
+          >
+            C
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Wave separator -->
+  <!-- Wave separator with enhanced visual effect -->
   <div class="absolute -bottom-1 left-0 right-0 z-10 overflow-hidden">
+    <div
+      class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#f9fafb] to-transparent opacity-30"
+    ></div>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 1440 140"
       fill="#f9fafb"
       preserveAspectRatio="none"
-      class="w-full"
+      class="w-full transform hover:scale-105 transition-transform duration-1000"
     >
       <path
         d="M0,32L60,53.3C120,75,240,117,360,117.3C480,117,600,75,720,64C840,53,960,75,1080,80C1200,85,1320,75,1380,69.3L1440,64L1440,140L1380,140C1320,140,1200,140,1080,140C960,140,840,140,720,140C600,140,480,140,360,140C240,140,120,140,60,140L0,140Z"

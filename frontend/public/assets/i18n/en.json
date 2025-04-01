@@ -6,7 +6,8 @@
       "HEADLINE": "Welcome to our psychometric testing platform",
       "PARAGRAPH1": "We are delighted to welcome you to this space where we assess and identify talents who will help shape the future of our company.",
       "PARAGRAPH2": "At our group, excellence is our standard, and we believe that every candidate has the potential to thrive within our dynamic team.",
-      "CTA_BUTTON": "Start the test"
+      "CTA_BUTTON": "Start the test",
+      "DEMO_BUTTON": "Start a demo"
     },
     "ABOUT": {
       "TITLE": "About Us",
@@ -59,10 +60,22 @@
     "CONTACT": {
       "TITLE": "Contact Us",
       "DESCRIPTION": "For any questions or information, you can contact us through this form or directly at: ",
+      "NAME_LABEL": "Name",
       "NAME_PLACEHOLDER": "Your name",
+      "NAME_REQUIRED": "Name is required",
+      "NAME_MIN_LENGTH": "Name must be at least 2 characters",
+      "EMAIL_LABEL": "Email",
       "EMAIL_PLACEHOLDER": "Your email address",
+      "EMAIL_REQUIRED": "Email is required",
+      "EMAIL_INVALID": "Please enter a valid email address",
+      "MESSAGE_LABEL": "Message",
       "MESSAGE_PLACEHOLDER": "Your message",
-      "SEND_BUTTON": "Send"
+      "MESSAGE_REQUIRED": "Message is required",
+      "MESSAGE_MIN_LENGTH": "Message must be at least 10 characters",
+      "SEND_BUTTON": "Send",
+      "SENDING": "Sending...",
+      "SUCCESS_MESSAGE": "Your message has been sent successfully. We'll get back to you soon.",
+      "PRIVACY_NOTE": "Your information is secure and will only be used to respond to your inquiry."
     }
   },
   "FOOTER": {

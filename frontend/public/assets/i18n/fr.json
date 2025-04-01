@@ -6,7 +6,8 @@
       "HEADLINE": "Bienvenue sur notre plateforme de test psychotechnique",
       "PARAGRAPH1": "Nous sommes ravis de vous accueillir dans cet espace où nous évaluons et identifions les talents qui contribueront à façonner l'avenir de notre entreprise.",
       "PARAGRAPH2": "Chez notre groupe, l'excellence est notre norme, et nous croyons que chaque candidat a le potentiel de s'épanouir au sein de notre équipe dynamique.",
-      "CTA_BUTTON": "Démarrer le test"
+      "CTA_BUTTON": "Démarrer le test",
+      "DEMO_BUTTON": "Démarrer une démonstration"
     },
     "ABOUT": {
       "TITLE": "À Propos de nous",
@@ -68,10 +69,22 @@
     "CONTACT": {
       "TITLE": "Contactez-nous",
       "DESCRIPTION": "Pour toute question ou information, vous pouvez nous contacter via ce formulaire ou directement à l'adresse : ",
+      "NAME_LABEL": "Nom",
       "NAME_PLACEHOLDER": "Votre nom",
+      "NAME_REQUIRED": "Le nom est requis",
+      "NAME_MIN_LENGTH": "Le nom doit comporter au moins 2 caractères",
+      "EMAIL_LABEL": "Email",
       "EMAIL_PLACEHOLDER": "Votre adresse email",
+      "EMAIL_REQUIRED": "L'email est requis",
+      "EMAIL_INVALID": "Veuillez entrer une adresse email valide",
+      "MESSAGE_LABEL": "Message",
       "MESSAGE_PLACEHOLDER": "Votre message",
-      "SEND_BUTTON": "Envoyer"
+      "MESSAGE_REQUIRED": "Le message est requis",
+      "MESSAGE_MIN_LENGTH": "Le message doit comporter au moins 10 caractères",
+      "SEND_BUTTON": "Envoyer",
+      "SENDING": "Envoi en cours...",
+      "SUCCESS_MESSAGE": "Votre message a été envoyé avec succès. Nous vous répondrons bientôt.",
+      "PRIVACY_NOTE": "Vos informations sont sécurisées et ne seront utilisées que pour répondre à votre demande."
     }
   },
   "FOOTER": {
