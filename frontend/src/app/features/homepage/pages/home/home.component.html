@@ -1,34 +1,31 @@
+<!-- Update the wrapper div to prevent horizontal scrolling -->
 <div class="bg-gradient-to-b from-blue-50 to-white min-h-screen overflow-x-hidden">
-  <!-- Navbar would go here -->
-<app-homepage-navbar></app-homepage-navbar>
+  <!-- Navbar -->
+  <app-homepage-navbar></app-homepage-navbar>
+  
   <!-- Hero Section -->
   <app-hero-section></app-hero-section>
   
-  <!-- Small divider with enhanced styling -->
-  <div class="container mx-auto px-4 py-8">
-    <div class="flex justify-center items-center" data-aos="fade-up">
-      <div class="h-1 w-24 bg-gradient-to-r from-blue-500 to-red-500 rounded-full"></div>
-    </div>
-  </div>
- <app-numbers></app-numbers>
-
-
-<app-processus></app-processus>
-  
-  <!-- About Us -->
-  <app-about-us></app-about-us>
-  <app-about-us2></app-about-us2>
-  <app-about-us3></app-about-us3>
-  <app-map-section></app-map-section>
-  <!-- Divider with animation -->
-  <div class="container mx-auto px-4 my-12">
-    <div class="flex justify-center items-center" data-aos="fade-up">
-      <hr class="rounded-full border-red-500 border-2 w-1/2 max-w-md">
+  <!-- Add a proper spacing div between sections -->
+  <div class="relative w-full py-8 mt-4">
+    <div class="container mx-auto px-4">
+      <div class="flex justify-center items-center">
+        <div class="h-1 w-24 bg-gradient-to-r from-blue-500 to-red-500 rounded-full"></div>
+      </div>
     </div>
   </div>
   
-  <!-- Recruitment Process -->
-  <app-emailer></app-emailer>
-  <!-- Footer -->
-  <app-footer></app-footer>
+  <!-- Rest of your sections -->
+  <div class="relative z-10 overflow-hidden w-full"> <!-- Added overflow-hidden and w-full -->
+    <app-numbers></app-numbers>
+    <app-processus></app-processus>
+    <app-about-us></app-about-us>
+    <app-about-us2></app-about-us2>
+    <app-about-us3></app-about-us3>
+    <app-map-section></app-map-section>
+    
+    <!-- Remove extra dividers that might cause scroll issues -->
+    <app-emailer></app-emailer>
+    <app-footer></app-footer>
+  </div>
 </div>
