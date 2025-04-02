@@ -6,9 +6,6 @@ import { isPlatformBrowser } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import AOS from 'aos';
 
-
-
-
 @Component({
   selector: 'app-root',
   standalone: true,
