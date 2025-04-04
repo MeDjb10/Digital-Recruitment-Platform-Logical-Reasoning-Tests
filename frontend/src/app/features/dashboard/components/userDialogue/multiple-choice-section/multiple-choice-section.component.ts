@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from 'ng-apexcharts';
+import { trigger, transition, style, animate, stagger, query } from '@angular/animations';
 
 interface AIComment {
   text: string;
@@ -14,7 +15,25 @@ interface AIComment {
   standalone: true,
   imports: [CommonModule, FormsModule, NgApexchartsModule],
   templateUrl: './multiple-choice-section.component.html',
-  styleUrl: './multiple-choice-section.component.css'
+  styleUrl: './multiple-choice-section.component.css',
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(20px)' }),
+        animate('0.4s ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ]),
+    trigger('staggeredFadeIn', [
+      transition(':enter', [
+        query(':enter', [
+          style({ opacity: 0, transform: 'translateY(20px)' }),
+          stagger('100ms', [
+            animate('0.4s ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+          ])
+        ], { optional: true })
+      ])
+    ])
+  ]
 })
 export class MultipleChoiceSectionComponent implements OnInit {
   testType: string = 'Multiple Choice Test';
@@ -23,6 +42,7 @@ export class MultipleChoiceSectionComponent implements OnInit {
   correctAnswers: number = 32;
   wrongAnswers: number = 8;
   psychologistComment: string = '';
+  isLoading = true;
 
   aiComments: AIComment[] = [
     { text: 'The candidate shows strong analytical skills in comprehension questions.' },
@@ -55,7 +75,10 @@ export class MultipleChoiceSectionComponent implements OnInit {
   constructor() { }
 
   ngOnInit(): void {
-    // Initialize any data or fetch from service
+    // Simulate loading time
+    setTimeout(() => {
+      this.isLoading = false;
+    }, 1500);
   }
 
   handleReaction(index: number, isPositive: boolean): void {

@@ -1,7 +1,8 @@
-<h2 class="text-3xl font-bold text-center mb-8 text-gray-800">{{ testType }}</h2>
+<div [@fadeIn]>
+  <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">{{ testType }}</h2>
 
-<!-- Summary Section -->
-<div class="grid grid-cols-4 gap-6 mb-8 text-center">
+  <!-- Summary Section -->
+  <div class="grid grid-cols-4 gap-6 mb-8 text-center" [@staggeredFadeIn]>
     <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-md transform hover:scale-105 transition-transform duration-300">
         <h3 class="font-semibold text-lg text-gray-700 mb-2">Time Spent</h3>
         <p class="text-2xl font-bold text-blue-600">{{ timeSpent }}</p>
@@ -18,45 +19,57 @@
         <h3 class="font-semibold text-lg text-gray-700 mb-2">Wrong Answers</h3>
         <p class="text-2xl font-bold text-red-600">{{ wrongAnswers }}</p>
     </div>
-</div>
+  </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Stats for each question -->
-    
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Stats section -->
+    <div [@fadeIn]>
+      <!-- Stats for each question -->
+    </div>
+
     <!-- AI Comments Section -->
     <div>
-        <div class="mb-8">
-            <h3 class="font-bold text-xl mb-4 text-gray-800">AI Analysis</h3>
-            <div class="">
-                <div *ngFor="let comment of aiComments; let i = index"
-                    class="bg-white hover:p-4 hover:rounded-xl hover:shadow-lg transition-all duration-300">
-                    <p class="text-gray-700 italic mb-4">"{{ comment.text }}"</p>
-                    <div class="flex items-center gap-4">
-                        <button (click)="handleReaction(i, true)"
-                            [class]="comment.reaction === true ? 'text-green-500' : 'text-green-500'"
-                            class="rounded-full transition-colors duration-300 hover:text-green-600 hover:scale-110 hover:shadow-lg">
-                            <i [class]="comment.reaction === true ? 'pi pi-thumbs-up-fill' : 'pi pi-thumbs-up'"></i>
-                        </button>
-                        <button (click)="handleReaction(i, false)"
-                            [class]="comment.reaction === false ? 'text-red-500' : 'text-red-500'"
-                            class="rounded-full transition-all duration-300 hover:text-red-600 hover:scale-110 hover:shadow-lg">
-                            <i [class]="comment.reaction === false ? 'pi pi-thumbs-down-fill' : 'pi pi-thumbs-down'"></i>
-                        </button>
-                        <input [(ngModel)]="comment.feedback" type="text" placeholder="Your feedback"
-                            class="p-2 border rounded-lg flex-1 focus:ring-2 focus:ring-blue-300 focus:outline-none" />
-                    </div>
-                </div>
-            </div>
+      <div class="mb-8">
+        <h3 class="font-bold text-xl mb-4 text-gray-800">AI Analysis</h3>
+        
+        <!-- Loading Animation -->
+        <div *ngIf="isLoading" class="flex flex-col items-center space-y-4 p-8">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p class="text-gray-600 animate-pulse">Analyzing results...</p>
         </div>
 
-        <hr class="my-8 border-t border-gray-200 w-full">
+        <!-- AI Comments -->
+        <div *ngIf="!isLoading" [@staggeredFadeIn]>
+          <div *ngFor="let comment of aiComments; let i = index"
+               class="bg-white mb-4 p-4 rounded-xl shadow-md transform transition-all duration-300 hover:scale-102 hover:shadow-lg"
+               [@fadeIn]>
+            <p class="text-gray-700 italic mb-4">"{{ comment.text }}"</p>
+            <div class="flex items-center gap-4">
+                <button (click)="handleReaction(i, true)"
+                    [class]="comment.reaction === true ? 'text-green-500' : 'text-green-500'"
+                    class="rounded-full transition-colors duration-300 hover:text-green-600 hover:scale-110 hover:shadow-lg">
+                    <i [class]="comment.reaction === true ? 'pi pi-thumbs-up-fill' : 'pi pi-thumbs-up'"></i>
+                </button>
+                <button (click)="handleReaction(i, false)"
+                    [class]="comment.reaction === false ? 'text-red-500' : 'text-red-500'"
+                    class="rounded-full transition-all duration-300 hover:text-red-600 hover:scale-110 hover:shadow-lg">
+                    <i [class]="comment.reaction === false ? 'pi pi-thumbs-down-fill' : 'pi pi-thumbs-down'"></i>
+                </button>
+                <input [(ngModel)]="comment.feedback" type="text" placeholder="Your feedback"
+                    class="p-2 border rounded-lg flex-1 focus:ring-2 focus:ring-blue-300 focus:outline-none" />
+            </div>
+          </div>
+        </div>
+      </div>
 
-        
-    </div>
-    <!-- Psychologist Comment Section -->
-    <div class="bg-white">
+      <hr class="my-8 border-t border-gray-200 w-full">
+
+      <!-- Psychologist Comment Section -->
+      <div class="bg-white" [@fadeIn]>
         <h3 class="font-bold text-xl mb-4 text-gray-800">Psychologist's Analysis</h3>
         <textarea [(ngModel)]="psychologistComment" placeholder="Enter your professional analysis here..."
             class="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none min-h-[150px]"></textarea>
+      </div>
     </div>
+  </div>
 </div>
