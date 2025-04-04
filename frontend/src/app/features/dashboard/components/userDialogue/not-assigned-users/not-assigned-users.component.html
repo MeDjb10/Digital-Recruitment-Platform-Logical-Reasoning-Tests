@@ -29,4 +29,12 @@
             <label class="ml-2">D-2000 Test</label>
         </div>
     </div>
+    
+    <div *ngIf="existingAssignment" class="flex justify-end mt-4">
+        <button pButton type="button" label="Save Changes" 
+            icon="pi pi-save" 
+            (click)="saveChanges()"
+            class="p-button-success">
+        </button>
+    </div>
 </div>
