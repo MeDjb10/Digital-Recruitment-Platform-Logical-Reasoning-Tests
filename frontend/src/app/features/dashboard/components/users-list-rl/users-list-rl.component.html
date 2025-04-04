@@ -1,3 +1,124 @@
-<div class="">
-
+<div class="card p-4">
+    <p-table #dt [value]="candidates" [rows]="10" [paginator]="true" 
+        [globalFilterFields]="['name', 'email', 'testDate', 'status']"
+        [tableStyle]="{ 'min-width': '75rem' }" [loading]="loading"
+        styleClass="p-datatable-striped">
+        <ng-template pTemplate="caption">
+            <div class="flex justify-between items-center">
+                <h5 class="text-xl font-semibold">Candidates List</h5>
+                <span class="p-input-icon-left">
+                    <i class="pi pi-search"></i>
+                    <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
+                        placeholder="Search candidate..." class="p-inputtext-sm" />
+                </span>
+            </div>
+        </ng-template>
+        <ng-template pTemplate="header">
+            <tr>
+                <th pTooltip="Candidate's full name" tooltipPosition="top" style="width:25%">Name</th>
+                <th pTooltip="Candidate's email address" tooltipPosition="top" style="width:25%">Email</th>
+                <th pTooltip="Test date and time" tooltipPosition="top" style="width:20%">Test Date</th>
+                <th pTooltip="Current test status" tooltipPosition="top" style="width:15%">Status</th>
+                <th style="width:15%">Actions</th>
+            </tr>
+            <tr>
+                <th>
+                    <p-columnFilter type="text" field="name" placeholder="Search by name"></p-columnFilter>
+                </th>
+                <th>
+                    <p-columnFilter type="text" field="email" placeholder="Search by email"></p-columnFilter>
+                </th>
+                <th>
+                    <p-columnFilter type="date" field="testDate" placeholder="Search by date"></p-columnFilter>
+                </th>
+                <th>
+                    <p-columnFilter field="status" matchMode="equals" [showMenu]="false">
+                        <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                            <p-dropdown [ngModel]="value" [options]="statuses" (onChange)="filter($event.value)" 
+                                placeholder="Select Status" [showClear]="true"
+                                styleClass="w-full"
+                                [style]="{'min-width': '140px'}"
+                                optionLabel="label">
+                                <ng-template pTemplate="item" let-option>
+                                    <p-tag [value]="option.label" [severity]="option.severity"></p-tag>
+                                </ng-template>
+                            </p-dropdown>
+                        </ng-template>
+                    </p-columnFilter>
+                </th>
+                <th></th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-candidate>
+            <tr>
+                <td>{{candidate.name}}</td>
+                <td>{{candidate.email}}</td>
+                <td>{{candidate.testDate}}</td>
+                <td>
+                    <p-tag [value]="candidate.status" [severity]="getSeverity(candidate.status)"></p-tag>
+                </td>
+                <td class="text-center">
+                    <button pButton type="button" icon="pi pi-eye" 
+                        class="p-button-rounded p-button-text"
+                        (click)="showDetails(candidate)"
+                        pTooltip="View Details" tooltipPosition="left">
+                    </button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="5" class="text-center p-4">No candidates found.</td>
+            </tr>
+        </ng-template>
+    </p-table>
 </div>
+
+<p-dialog [(visible)]="visible" [header]="dialogHeader" [modal]="true" [style]="{ width: '50vw' }" [draggable]="false" [resizable]="false">
+    <ng-container [ngSwitch]="selectedCandidate?.status.toLowerCase()">
+        <!-- Completed Test Dialog -->
+        <div *ngSwitchCase="'completed'">
+            <app-completed-users></app-completed-users>
+        </div>
+
+        <!-- In Progress Dialog -->
+        <div *ngSwitchCase="'in progress'" class="p-4">
+            <h3 class="text-xl mb-4">Current Progress for {{selectedCandidate?.name}}</h3>
+            <div class="grid gap-4">
+                <div class="col-6">
+                    <label class="font-bold">Time Elapsed:</label>
+                    <p>25 minutes</p>
+                </div>
+                <div class="col-6">
+                    <label class="font-bold">Questions Completed:</label>
+                    <p>15/30</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Not Started Dialog -->
+        <div *ngSwitchCase="'not started'" class="p-4">
+            <h3 class="text-xl mb-4">Test Information for {{selectedCandidate?.name}}</h3>
+            <app-not-assigned-users></app-not-assigned-users>
+        </div>
+
+        <!-- Assigned Dialog -->
+        <div *ngSwitchCase="'assigned'" class="p-4">
+            <h3 class="text-xl mb-4">Assignment Details for {{selectedCandidate?.name}}</h3>
+            <div class="grid gap-4">
+                <div class="col-12">
+                    <label class="font-bold">Assignment Date:</label>
+                    <p>{{selectedCandidate?.testDate}}</p>
+                </div>
+                <div class="col-12">
+                    <label class="font-bold">Instructions:</label>
+                    <p>Please complete the test within 24 hours of the scheduled time.</p>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <ng-template pTemplate="footer">
+        <button pButton label="Close" icon="pi pi-times" (click)="visible = false" class="p-button-text"></button>
+    </ng-template>
+</p-dialog>

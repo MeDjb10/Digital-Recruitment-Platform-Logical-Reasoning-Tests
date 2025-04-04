@@ -1,0 +1,32 @@
+<div class="p-4 space-y-4">
+    <div class="flex items-center space-x-4">
+        <p-dropdown 
+            [options]="psychologists" 
+            [(ngModel)]="selectedPsychologist" 
+            optionLabel="name"
+            placeholder="Select Psychologist"
+            class="w-64">
+        </p-dropdown>
+        
+        <div class="flex items-center">
+            <p-checkbox 
+                [(ngModel)]="isPropositionSelected" 
+                [binary]="true"
+                inputId="proposition">
+            </p-checkbox>
+            <label for="proposition" class="ml-2">Choix Proposition</label>
+        </div>
+    </div>
+
+    <div class="flex items-center space-x-8">
+        <div class="flex items-center">
+            <p-inputSwitch [(ngModel)]="d70Enabled" (onChange)="onTestToggle('d70')"></p-inputSwitch>
+            <label class="ml-2">D-70 Test</label>
+        </div>
+
+        <div class="flex items-center">
+            <p-inputSwitch [(ngModel)]="d2000Enabled" (onChange)="onTestToggle('d2000')"></p-inputSwitch>
+            <label class="ml-2">D-2000 Test</label>
+        </div>
+    </div>
+</div>

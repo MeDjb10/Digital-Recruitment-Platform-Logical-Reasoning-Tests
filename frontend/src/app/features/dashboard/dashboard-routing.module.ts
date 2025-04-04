@@ -74,7 +74,7 @@ const routes: Routes = [
 
           // Users route
           {
-            path: 'Utilisateurs',
+            path: 'Users',
             component: UsersListRLComponent,
             title: 'Test Users',
           },
