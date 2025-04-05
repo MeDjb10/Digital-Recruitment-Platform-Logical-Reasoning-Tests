@@ -1,0 +1,447 @@
+<div class="auth-form w-full">
+  <h1 class="text-2xl sm:text-3xl font-bold mb-1">Create an account</h1>
+  <p class="text-gray-600 text-sm sm:text-base mb-4 sm:mb-6">
+    Join our platform to start hiring the best talent
+  </p>
+
+  <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+    <!-- Name Fields (responsive grid) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+      <div class="flex flex-col">
+        <label
+          for="firstName"
+          class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
+          >First name</label
+        >
+        <input
+          type="text"
+          formControlName="firstName"
+          id="firstName"
+          class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
+        />
+        <div class="error-container min-h-[20px]">
+          <p
+            *ngIf="
+              signupForm.controls['firstName'].hasError('required') &&
+              signupForm.controls['firstName'].touched
+            "
+            class="text-red-500 text-xs sm:text-sm mt-1"
+          >
+            <i class="fa-solid fa-triangle-exclamation"></i> First name is
+            required
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label
+          for="lastName"
+          class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
+          >Last name</label
+        >
+        <input
+          type="text"
+          formControlName="lastName"
+          id="lastName"
+          class="border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
+        />
+        <div class="error-container min-h-[20px]">
+          <p
+            *ngIf="
+              signupForm.controls['lastName'].hasError('required') &&
+              signupForm.controls['lastName'].touched
+            "
+            class="text-red-500 text-xs sm:text-sm mt-1"
+          >
+            <i class="fa-solid fa-triangle-exclamation"></i> Last name is
+            required
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email Field -->
+    <div class="flex flex-col mb-4">
+      <label
+        for="email"
+        class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
+        >Email</label
+      >
+      <div class="relative input-icon-container">
+        <div class="input-icon">
+          <i class="fa-regular fa-envelope"></i>
+        </div>
+        <input
+          type="email"
+          formControlName="email"
+          id="email"
+          class="input-with-icon border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
+          placeholder="your.email@example.com"
+        />
+      </div>
+      <div class="error-container min-h-[20px]">
+        <p
+          *ngIf="
+            signupForm.controls['email'].hasError('required') &&
+            signupForm.controls['email'].touched
+          "
+          class="text-red-500 text-xs sm:text-sm mt-1"
+        >
+          <i class="fa-solid fa-triangle-exclamation"></i> Email is required
+        </p>
+        <p
+          *ngIf="
+            signupForm.controls['email'].hasError('email') &&
+            signupForm.controls['email'].touched
+          "
+          class="text-yellow-500 text-xs sm:text-sm mt-1"
+        >
+          <i class="fa-solid fa-circle-exclamation"></i> Please enter a valid
+          email address
+        </p>
+      </div>
+    </div>
+
+    <!-- Password Field -->
+    <div class="flex flex-col mb-4">
+      <label
+        for="password"
+        class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
+        >Password</label
+      >
+      <div class="relative input-icon-container">
+        <div class="input-icon">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <input
+          [type]="hidePassword ? 'password' : 'text'"
+          formControlName="password"
+          id="password"
+          class="input-with-icon border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
+        />
+        <button
+          type="button"
+          (click)="hidePassword = !hidePassword"
+          class="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700"
+          aria-label="Toggle password visibility"
+        >
+          <i *ngIf="hidePassword" class="fa-regular fa-eye"></i>
+          <i *ngIf="!hidePassword" class="fa-regular fa-eye-slash"></i>
+        </button>
+      </div>
+      <div class="mt-2">
+        <div class="flex space-x-1 mb-1">
+          <div
+            *ngFor="let level of [1, 2, 3, 4]"
+            [ngClass]="{
+              'bg-red-500': passwordStrength >= 1 && level === 1,
+              'bg-orange-500': passwordStrength >= 2 && level === 2,
+              'bg-yellow-500': passwordStrength >= 3 && level === 3,
+              'bg-green-600': passwordStrength >= 4 && level === 4,
+              'bg-gray-300': passwordStrength < level
+            }"
+            class="h-1.5 w-1/4 rounded-full transition-colors duration-300"
+          ></div>
+        </div>
+        <p
+          class="text-xs"
+          [ngClass]="{
+            'text-red-500': passwordStrength === 1,
+            'text-orange-500': passwordStrength === 2,
+            'text-yellow-500': passwordStrength === 3,
+            'text-green-600': passwordStrength === 4,
+            'text-gray-500': passwordStrength === 0
+          }"
+        >
+          {{ passwordStrengthText }}
+        </p>
+      </div>
+      <div class="error-container min-h-[20px]">
+        <p
+          *ngIf="
+            signupForm.controls['password'].hasError('required') &&
+            signupForm.controls['password'].touched
+          "
+          class="text-red-500 text-xs sm:text-sm mt-1"
+        >
+          <i class="fa-solid fa-triangle-exclamation"></i> Password is required
+        </p>
+        <p
+          *ngIf="
+            signupForm.controls['password'].hasError('minlength') &&
+            signupForm.controls['password'].touched
+          "
+          class="text-yellow-500 text-xs sm:text-sm mt-1"
+        >
+          <i class="fa-solid fa-circle-exclamation"></i> Password must be at
+          least 8 characters
+        </p>
+      </div>
+    </div>
+
+    <!-- Confirm Password Field -->
+    <div class="flex flex-col mb-4">
+      <label
+        for="confirmPassword"
+        class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
+        >Confirm Password</label
+      >
+      <div class="relative input-icon-container">
+        <div
+          class="input-icon"
+        >
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <input
+          [type]="hideConfirmPassword ? 'password' : 'text'"
+          formControlName="confirmPassword"
+          id="confirmPassword"
+          class="input-with-icon border border-blue-300 hover:border-blue-700 hover:shadow-xs focus:shadow-lg p-2 sm:p-3 pl-10 rounded-lg text-sm sm:text-base ease-in-out transition-colors duration-150 w-full"
+        />
+        <button
+          type="button"
+          (click)="hideConfirmPassword = !hideConfirmPassword"
+          class="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-gray-700"
+          aria-label="Toggle password visibility"
+        >
+          <i *ngIf="hideConfirmPassword" class="fa-regular fa-eye"></i>
+          <i *ngIf="!hideConfirmPassword" class="fa-regular fa-eye-slash"></i>
+        </button>
+      </div>
+      <div class="error-container min-h-[20px]">
+        <p
+          *ngIf="
+            signupForm.controls['confirmPassword'].hasError('required') &&
+            signupForm.controls['confirmPassword'].touched
+          "
+          class="text-red-500 text-xs sm:text-sm mt-1"
+        >
+          <i class="fa-solid fa-triangle-exclamation"></i> Please confirm your
+          password
+        </p>
+        <p
+          *ngIf="
+            signupForm.hasError('mismatch') &&
+            signupForm.controls['confirmPassword'].touched
+          "
+          class="text-red-500 text-xs sm:text-sm mt-1"
+        >
+          <i class="fa-solid fa-triangle-exclamation"></i> Passwords do not
+          match
+        </p>
+      </div>
+    </div>
+
+    <!-- Terms & Conditions -->
+    <div class="mb-4 sm:mb-6 flex items-start">
+      <input
+        type="checkbox"
+        formControlName="acceptTerms"
+        id="acceptTerms"
+        class="mt-1 mr-2"
+      />
+      <label for="acceptTerms" class="text-gray-700 text-sm sm:text-base">
+        I agree to the
+        <a href="#" class="text-primary-main hover:underline"
+          >Terms of Service</a
+        >
+        and
+        <a href="#" class="text-primary-main hover:underline">Privacy Policy</a>
+      </label>
+    </div>
+
+    <!-- Submit Button -->
+    <button
+      type="submit"
+      class="w-full border-2 transition-all ease-in-out duration-150 p-2 sm:p-3 rounded-3xl text-sm sm:text-base cursor-pointer"
+      [class.border-blue-700]="!signupForm.invalid"
+      [class.text-blue-900]="!signupForm.invalid"
+      [class.hover:bg-blue-700]="!signupForm.invalid"
+      [class.hover:text-white]="!signupForm.invalid"
+      [class.hover:shadow-lg]="!signupForm.invalid"
+      [class.border-gray-300]="signupForm.invalid"
+      [class.text-gray-400]="signupForm.invalid"
+      [disabled]="signupForm.invalid || isLoading"
+    >
+      <span *ngIf="!isLoading">Create Account</span>
+      <mat-spinner
+        diameter="24"
+        *ngIf="isLoading"
+        class="mx-auto"
+      ></mat-spinner>
+    </button>
+
+    <!-- Login Link -->
+    <div class="mt-6 text-center">
+      <span class="text-gray-600 text-sm sm:text-base"
+        >Already have an account?</span
+      >
+      <a
+        routerLink="/auth/login"
+        class="text-primary-main hover:underline ml-1 text-sm sm:text-base"
+        >Sign in</a
+      >
+    </div>
+  </form>
+</div>
+
+<!-- Verification Dialog -->
+<p-dialog
+  [(visible)]="showVerificationDialog"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '500px' }"
+  styleClass="verification-dialog"
+>
+  <div class="p-6">
+    <div class="text-center mb-6">
+      <div
+        class="inline-block p-4 rounded-full bg-blue-50 mb-5 relative verification-icon-container"
+      >
+        <div
+          class="absolute inset-0 rounded-full animate-ping-slow bg-blue-100 opacity-75"
+        ></div>
+        <i
+          class="fa-solid fa-envelope-circle-check text-blue-600 text-3xl relative z-10"
+        ></i>
+        <div
+          class="absolute top-0 right-0 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-white"
+        >
+          <i class="fa-solid fa-check text-white text-xs"></i>
+        </div>
+      </div>
+      <h2 class="text-xl font-semibold text-gray-800 mb-2">
+        Verification Code Sent
+      </h2>
+      <div class="text-sm text-gray-600 mt-2 mx-auto max-w-[320px] space-y-1">
+        <p>We've sent a 6-digit verification code to:</p>
+        <p
+          class="font-medium text-blue-600 py-1 px-3 bg-blue-50 rounded-md inline-block"
+        >
+          {{ signupForm.get("email")?.value }}
+        </p>
+        <p class="mt-2">Please enter the code below to continue.</p>
+      </div>
+    </div>
+
+    <div class="flex flex-col">
+      <div class="flex justify-between items-center mb-1">
+        <label class="text-gray-700 font-medium">Verification Code</label>
+        <button
+          type="button"
+          (click)="resendCode()"
+          [disabled]="cooldownTimeLeft > 0"
+          class="text-sm text-blue-600 hover:text-blue-800 transition-colors focus:outline-none"
+        >
+          <span *ngIf="cooldownTimeLeft > 0"
+            >Resend in {{ cooldownTimeLeft }}s</span
+          >
+          <span *ngIf="cooldownTimeLeft === 0">Resend Code</span>
+        </button>
+      </div>
+
+      <div
+        class="flex justify-between gap-2 mb-2"
+        [class.border-red-500]="codeSubmitted && verificationError"
+      >
+        <ng-container *ngFor="let digit of [0, 1, 2, 3, 4, 5]; let i = index">
+          <input
+            type="text"
+            maxlength="1"
+            [id]="'digit-' + i"
+            (keyup)="onCodeDigitChange($event, i)"
+            (paste)="onCodePaste($event)"
+            [(ngModel)]="verificationCode[i]"
+            [ngModelOptions]="{ standalone: true }"
+            class="verification-digit w-11 h-12 border border-gray-300 rounded-md text-center text-lg font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+            [class.border-red-500]="codeSubmitted && verificationError"
+          />
+        </ng-container>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-4 mt-6">
+      <!-- Primary action button with improved visual feedback -->
+      <button
+        type="button"
+        pButton
+        [disabled]="verificationCode.join('').length !== 6 || isProcessing"
+        (click)="verifyCode()"
+        class="p-button-primary h-12 rounded-lg shadow-md transition-all duration-200 hover:shadow-lg"
+        [ngClass]="{
+          'opacity-70 cursor-not-allowed':
+            verificationCode.join('').length !== 6 || isProcessing,
+          'transform hover:-translate-y-0.5 active:translate-y-0':
+            verificationCode.join('').length === 6 && !isProcessing
+        }"
+      >
+        <div class="flex items-center justify-center w-full">
+          <i *ngIf="isProcessing" class="pi pi-spin pi-spinner mr-2"></i>
+          <i
+            *ngIf="!isProcessing && verificationCode.join('').length === 6"
+            class="pi pi-check-circle mr-2"
+          ></i>
+          <span>{{
+            isProcessing ? "Verifying..." : "Verify Email & Continue"
+          }}</span>
+        </div>
+      </button>
+
+      <!-- Secondary options in a more subdued style -->
+      <div class="flex items-center justify-center text-center">
+        <button
+          type="button"
+          class="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors duration-150 focus:outline-none"
+          (click)="showVerificationDialog = false"
+        >
+          <span class="border-b border-gray-300 hover:border-gray-500 pb-0.5"
+            >Back to Sign Up</span
+          >
+        </button>
+
+        <span class="mx-3 text-gray-400">|</span>
+
+        <button
+          type="button"
+          class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-150 focus:outline-none"
+          [disabled]="cooldownTimeLeft > 0"
+          (click)="resendCode()"
+        >
+          <span
+            *ngIf="cooldownTimeLeft === 0"
+            class="border-b border-blue-300 hover:border-blue-600 pb-0.5"
+          >
+            Resend Code
+          </span>
+          <span *ngIf="cooldownTimeLeft > 0" class="text-gray-400">
+            Resend Available in {{ cooldownTimeLeft }}s
+          </span>
+        </button>
+      </div>
+    </div>
+    <div
+      *ngIf="verificationError"
+      class="mt-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-md"
+    >
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <i class="pi pi-exclamation-circle text-red-500"></i>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-red-700">{{ verificationError }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add helpful user guidance -->
+    <div
+      *ngIf="!verificationError"
+      class="mt-4 text-xs text-gray-500 text-center px-2"
+    >
+      <p>
+        Having trouble? Check your spam folder or contact support if you didn't
+        receive the code.
+      </p>
+    </div>
+  </div>
+</p-dialog>

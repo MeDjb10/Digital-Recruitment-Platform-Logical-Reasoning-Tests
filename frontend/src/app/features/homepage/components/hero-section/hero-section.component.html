@@ -1,0 +1,136 @@
+<header class="relative text-white text-left overflow-hidden h-screen">
+  <!-- Background gradient overlay -->
+  <div
+    class="absolute inset-0 bg-gradient-to-r from-blue-800/95 via-blue-700/85 to-blue-700/75 z-10"
+  ></div>
+
+  <!-- Background animations/patterns -->
+  <div class="absolute inset-0 z-0 opacity-20 overflow-hidden">
+    <!-- Your existing animated background elements -->
+  </div>
+
+  <!-- Background image -->
+  <img
+    src="assets/business-women-working111.jpg"
+    alt="Hero Image"
+    class="absolute inset-0 w-full h-full object-cover opacity-80 animate-slow-zoom"
+  />
+
+  <!-- Content container - adjusted to account for navbar -->
+  <div
+    class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-20 h-full flex items-center pt-20"
+  >
+    <!-- Two-column layout with proper alignment -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full">
+      
+      <!-- LEFT SIDE: Text content -->
+      <div class="lg:col-span-8" data-aos="fade-right" data-aos-duration="1000">
+        <!-- Decorative elements -->
+        <div class="flex items-center mb-8">
+          <div class="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
+          <div
+            class="h-2 w-32 bg-red-500 rounded-full ml-2 animate-width"
+          ></div>
+        </div>
+
+        <!-- Headline -->
+        <p class="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight text-gradient">
+          Bienvenue sur notre plateforme de test psychotechnique
+        </p>
+
+        <!-- Separator -->
+        <div class="my-8 flex items-center space-x-3" data-aos="fade-right" data-aos-delay="100">
+          <div class="h-1 w-12 bg-red-500 rounded-full opacity-60"></div>
+          <div class="h-1 w-24 bg-red-500 rounded-full"></div>
+          <div class="h-1 w-8 bg-red-500 rounded-full opacity-60"></div>
+        </div>
+
+        <!-- Paragraphs -->
+        <div class="space-y-6">
+          <p
+            class="text-lg md:text-xl lg:text-2xl opacity-95 border-l-4 border-red-500 pl-6 py-2 backdrop-blur-sm bg-white/5 rounded-r-lg"
+            data-aos="fade-up"
+            data-aos-delay="200"
+          >
+            Nous sommes ravis de vous accueillir dans cet espace où nous
+            évaluons et identifions les talents qui contribueront à façonner
+            l'avenir de notre entreprise.
+          </p>
+
+          <p
+            class="text-lg md:text-xl lg:text-2xl opacity-95"
+            data-aos="fade-up"
+            data-aos-delay="300"
+          >
+            Chez notre groupe, l'excellence est notre norme, et nous croyons que
+            chaque candidat a le potentiel de s'épanouir au sein de notre équipe
+            dynamique.
+          </p>
+        </div>
+      </div>
+      
+      <!-- RIGHT SIDE: Attention-grabbing button column -->
+      <div class="lg:col-span-4 flex justify-center items-center" data-aos="fade-left" data-aos-delay="400">
+        <div class="spotlight-container">
+          <!-- Visual spotlight effect for the button -->
+          <div class="spotlight-effect"></div>
+          
+          <!-- Attention-grabbing CTA button -->
+          <button
+            class="call-to-action-btn group px-10 py-5 rounded-full border-2 border-red-500 bg-transparent text-white font-bold text-xl hover:bg-red-500 hover:text-white transition-all duration-300 flex items-center gap-4 relative overflow-hidden hover:shadow-[0_0_40px_rgba(239,68,68,0.7)] transform hover:scale-105"
+          >
+            <!-- Button text -->
+            <span
+              class="relative z-10 transition-transform duration-300 group-hover:translate-x-2"
+              >Démarrer le test</span
+            >
+
+            <!-- Right arrow with improved animation -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-7 w-7 transform group-hover:translate-x-4 transition-all duration-300 ease-in-out"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.5"
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
+            </svg>
+
+            <!-- Enhanced pulse effect on hover -->
+            <span
+              class="absolute -right-3 -top-3 w-16 h-16 rounded-full bg-red-500 opacity-0 group-hover:opacity-40 group-hover:animate-ping-slow"
+            ></span>
+
+            <!-- Multiple layered hover effects -->
+            <span
+              class="absolute bottom-0 left-0 w-0 h-full bg-gradient-to-r from-red-500 to-red-600 transition-all duration-500 ease-in-out -z-10 group-hover:w-full"
+            ></span>
+            <span
+              class="absolute inset-0 w-full h-full bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300 z-5 group-hover:animate-pulse"
+            ></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wave separator -->
+  <div class="absolute -bottom-1 left-0 right-0 z-10 overflow-hidden">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 1440 140"
+      fill="#f9fafb"
+      preserveAspectRatio="none"
+      class="w-full transform scale-105"
+    >
+      <path
+        d="M0,32L60,53.3C120,75,240,117,360,117.3C480,117,600,75,720,64C840,53,960,75,1080,80C1200,85,1320,75,1380,69.3L1440,64L1440,140L1380,140C1320,140,1200,140,1080,140C960,140,840,140,720,140C600,140,480,140,360,140C240,140,120,140,60,140L0,140Z"
+      ></path>
+    </svg>
+  </div>
+</header>

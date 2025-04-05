@@ -1,0 +1,87 @@
+/* Form-specific styling */
+.auth-form {
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Error messages slide-in animation */
+p.text-red-500, p.text-yellow-500 {
+  animation: fadeInError 0.3s ease-out;
+}
+
+@keyframes fadeInError {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fixed-height error containers to prevent layout shifts */
+.error-container {
+  min-height: 20px;
+  transition: all 0.3s ease;
+}
+
+/* Improve button styles for touch */
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fix for checkbox alignment */
+mat-checkbox {
+  display: block;
+}
+
+/* Add animate shake for form validation errors */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+
+/* For component.css or styles.css */
+.input-icon-container {
+  position: relative;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 48px; /* Fixed width for icon area */
+  color: #6b7280; /* text-gray-500 */
+  pointer-events: none;
+}
+
+.input-with-icon {
+  width: 100%;
+  padding-left: 48px !important; /* Force left padding */
+}
+
+.input-with-icon-right {
+  padding-right: 48px !important; /* For right icon like password toggle */
+}

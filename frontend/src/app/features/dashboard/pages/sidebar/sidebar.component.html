@@ -1,0 +1,124 @@
+<aside class="h-full flex flex-col transition-all duration-300 sidebar">
+  <!-- Brand Header -->
+  <div class="brand-header">
+    <div class="flex items-center gap-3" [class.justify-center]="collapsed">
+      <div class="brand-logo">
+        <div class="logo-shine"></div>
+        <i class="pi pi-chart-bar text-xl"></i>
+      </div>
+      <div *ngIf="!collapsed" class="flex flex-col">
+        <h1 class="brand-title">
+          <span class="text-primary">Cofat</span>
+        </h1>
+        <span class="brand-subtitle">Enterprise Portal</span>
+      </div>
+    </div>
+    <button 
+      (click)="toggleSidebar()"
+      class="toggle-btn"
+      [ngClass]="{'rotate-180': collapsed}"
+      pRipple>
+      <i class="pi pi-angle-left"></i>
+    </button>
+  </div>
+
+  <!-- Navigation Menu -->
+  <div class="nav-container" cdkScrollable>
+    <!-- Primary Navigation -->
+    <div class="section-title" *ngIf="!collapsed">
+      <h2>Dashboard</h2>
+    </div>
+    <nav class="nav-menu">
+      <!-- Main Menu Items -->
+      <ng-container *ngFor="let item of menuItems">
+        <a [routerLink]="item.route" 
+           routerLinkActive="active-link"
+           [routerLinkActiveOptions]="{exact: true}"
+           class="menu-link"
+           pRipple>
+          <div class="menu-icon-container">
+            <i class="pi {{item.icon}}"></i>
+          </div>
+          <span *ngIf="!collapsed" class="menu-text">{{item.label}}</span>
+          <span *ngIf="!collapsed" class="menu-indicator"></span>
+          <span *ngIf="collapsed" pTooltip="{{item.label}}" tooltipPosition="right" [tooltipOptions]="{ showDelay: 300, hideDelay: 50 }"></span>
+        </a>
+      </ng-container>
+    </nav>
+
+    <!-- Test Modules Section -->
+    <div class="mt-8">
+      <div class="section-title" *ngIf="!collapsed">
+        <h2>Test Modules</h2>
+      </div>
+
+      <nav class="nav-menu">
+        <!-- Each Test Category -->
+        <div *ngFor="let test of tests; let i = index" class="nav-group">
+          <!-- Group Header -->
+          <div 
+            (click)="toggleTest(test)"
+            class="menu-link submenu-parent"
+            [ngClass]="{'active-parent': test.expanded || isChildActive(test)}"
+            pRipple>
+            <div class="menu-icon-container">
+              <i class="pi {{test.icon}}"></i>
+            </div>
+            
+            <div *ngIf="!collapsed" class="flex-1 flex justify-between items-center">
+              <span class="menu-text">{{ test.name }}</span>
+              <i class="chevron-icon pi pi-chevron-right transition-transform duration-300"
+               [ngClass]="{'rotate-90': test.expanded}"></i>
+            </div>
+            
+            <span *ngIf="collapsed" pTooltip="{{test.name}}" tooltipPosition="right" [tooltipOptions]="{ showDelay: 300, hideDelay: 50 }"></span>
+          </div>
+          
+          <!-- Submenu Items -->
+          <div *ngIf="!collapsed && test.expanded" class="submenu-container">
+            <a *ngFor="let sub of test.subsections"
+               [routerLink]="['/dashboard', test.route, sub.route]"
+               routerLinkActive="active-sublink"
+               class="submenu-link"
+               pRipple>
+              <i class="submenu-dot pi pi-circle-fill"></i>
+              <span>{{ sub.name }}</span>
+            </a>
+          </div>
+          
+          <!-- Collapsed Submenu Items -->
+          <div *ngIf="collapsed && test.expanded" class="collapsed-submenu">
+            <a *ngFor="let sub of test.subsections"
+               [routerLink]="['/dashboard', test.route, sub.route]"
+               routerLinkActive="active-sublink"
+               class="collapsed-submenu-link"
+               pRipple>
+              <i class="submenu-dot pi pi-circle-fill"></i>
+              <span pTooltip="{{sub.name}}" tooltipPosition="right" [tooltipOptions]="{ showDelay: 300, hideDelay: 50 }"></span>
+            </a>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </div>
+  
+  <!-- User Profile -->
+  <div class="user-profile" [class.justify-center]="collapsed">
+    <div class="user-container" [class.justify-center]="collapsed">
+      <div class="relative">
+        <div class="user-avatar">
+          {{ userInitials }}
+        </div>
+        <div class="status-indicator"></div>
+      </div>
+      <div *ngIf="!collapsed" class="user-info">
+        <p class="user-name">{{ userName }}</p>
+        <p class="user-role">{{ userRole }}</p>
+      </div>
+      <div *ngIf="!collapsed" class="ml-auto">
+        <button pButton pRipple icon="pi pi-ellipsis-v" 
+                class="p-button-text p-button-rounded p-button-sm"></button>
+      </div>
+    </div>
+  </div>
+</aside>

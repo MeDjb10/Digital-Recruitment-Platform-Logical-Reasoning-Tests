@@ -1,0 +1,367 @@
+/* ===== Animation Keyframes ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Particle animations */
+@keyframes particle-move-1 {
+  0% { transform: translate(0, 0); opacity: 0.5; }
+  25% { transform: translate(100px, 50px); opacity: 0.7; }
+  50% { transform: translate(150px, -30px); opacity: 0.5; }
+  75% { transform: translate(80px, -80px); opacity: 0.7; }
+  100% { transform: translate(0, 0); opacity: 0.5; }
+}
+
+@keyframes particle-move-2 {
+  0% { transform: translate(0, 0); opacity: 0.6; }
+  33% { transform: translate(-120px, 100px); opacity: 0.4; }
+  66% { transform: translate(-50px, -80px); opacity: 0.6; }
+  100% { transform: translate(0, 0); opacity: 0.6; }
+}
+
+@keyframes slow-zoom {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* ===== Animation Classes ===== */
+.animate-fadeIn {
+  animation: fadeIn 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-slideInRight-delayed {
+  animation: slideInRight 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+  animation-delay: 0.2s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float 8s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.animate-float-slow {
+  animation: float 10s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.animate-fadeIn-delayed {
+  animation: fadeIn 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+  animation-delay: 0.5s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+.animate-pulse {
+  animation: pulse 4s ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.animate-slow-zoom {
+  animation: slow-zoom 20s ease-in-out infinite;
+}
+
+/* ===== Layout & Containers ===== */
+/* Fix scrolling issues */
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Container layout - ensure proper scrolling */
+.auth-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* ===== Visual Effects ===== */
+/* Text shadow for better contrast */
+.text-shadow-sm {
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.text-shadow-md {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Glass morphism effects */
+.glassmorphism-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1.5rem;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  transition: all 0.3s ease;
+}
+
+.glassmorphism-card:hover {
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glassmorphism-badge {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.glassmorphism-badge:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.glass-effect {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== UI Components ===== */
+/* Feature cards */
+.feature-card {
+  text-align: center;
+  padding: 0.75rem;
+  transition: all 0.3s ease;
+  transform: translateY(0);
+  border-radius: 0.75rem;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.feature-icon-container {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.feature-card:hover .feature-icon-container {
+  background-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Mobile feature pills */
+.feature-pill {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.15);
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+}
+
+.feature-pill mat-icon {
+  margin-right: 0.25rem;
+  font-size: 0.875rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  line-height: 0.875rem;
+}
+
+/* Particle styling */
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.particle-1 {
+  width: 15px;
+  height: 15px;
+  top: 20%;
+  left: 10%;
+  animation: particle-move-1 20s infinite alternate;
+}
+
+.particle-2 {
+  width: 10px;
+  height: 10px;
+  top: 40%;
+  right: 20%;
+  animation: particle-move-2 15s infinite alternate;
+}
+
+.particle-3 {
+  width: 8px;
+  height: 8px;
+  bottom: 30%;
+  left: 15%;
+  animation: particle-move-1 18s infinite alternate;
+}
+
+.particle-4 {
+  width: 12px;
+  height: 12px;
+  top: 70%;
+  right: 15%;
+  animation: particle-move-2 22s infinite alternate;
+}
+
+.particle-5 {
+  width: 18px;
+  height: 18px;
+  bottom: 15%;
+  left: 40%;
+  animation: particle-move-1 24s infinite alternate;
+}
+
+/* Subtle background pattern for mobile view */
+.bg-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+/* ===== Form-specific styles ===== */
+/* Make form elements more accessible */
+::ng-deep .mat-mdc-form-field {
+  width: 100%;
+}
+
+/* Consistent error container height to prevent layout shifts */
+.error-container {
+  min-height: 20px;
+}
+
+/* Ensure fixed height for form error messages to prevent layout shifts */
+.error-container p {
+  line-height: 1.2;
+  margin: 0;
+  padding: 0;
+}
+
+/* Animation for validation errors */
+p.text-red-500, p.text-yellow-500 {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* ===== Responsive adjustments ===== */
+@media (max-width: 768px) {
+  .feature-card {
+    padding: 0.5rem;
+  }
+  
+  .feature-icon-container {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .glassmorphism-card {
+    padding: 1rem;
+  }
+  
+  /* Fix for touch devices */
+  input, button {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+}
+
+/* Add a custom breakpoint for very small devices */
+@media screen and (min-width: 400px) {
+  .xs\:flex-row {
+    flex-direction: row;
+  }
+  .xs\:items-center {
+    align-items: center;
+  }
+  .xs\:gap-0 {
+    gap: 0px;
+  }
+}
+
+/* Fix for layout on very tall screens */
+@media (min-height: 1000px) {
+  .auth-container {
+    justify-content: center;
+  }
+}
+
+/* Improve focus visibility for accessibility */
+:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-delayed,
+  .animate-float-slow,
+  .animate-fadeIn,
+  .animate-fadeIn-delayed,
+  .animate-slideInRight,
+  .animate-slideInRight-delayed,
+  .particle {
+    animation: none;
+  }
+}

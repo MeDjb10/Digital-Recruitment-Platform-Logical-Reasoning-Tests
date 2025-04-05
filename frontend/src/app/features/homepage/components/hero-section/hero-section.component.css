@@ -1,0 +1,158 @@
+/* Hero section - full height with navbar consideration */
+header {
+  position: relative;
+  text-align: left;
+  overflow: hidden;
+  height: 100vh; /* Full viewport height */
+  display: flex;
+  align-items: center;
+  margin-top: 0; /* No margin, account for navbar in content padding */
+}
+
+/* Content container adjustment for navbar */
+header .container {
+  padding-top: 1rem; /* Space for navbar - adjust based on your navbar height */
+}
+
+/* Enhanced button styling */
+.call-to-action-btn {
+  position: relative;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); 
+  animation: float-attention 6s ease-in-out infinite;
+  min-width: 250px;
+}
+
+/* Make the button larger to draw more attention */
+@media (min-width: 1024px) {
+  .call-to-action-btn {
+    font-size: 1.5rem;
+    padding: 1.5rem 3rem;
+  }
+}
+
+/* Spotlight container for visual focus */
+.spotlight-container {
+  position: relative;
+  padding: 3rem;
+  border-radius: 50%;
+  z-index: 5;
+}
+
+/* Creating a spotlight effect around the button */
+.spotlight-effect {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(239, 68, 68, 0.3) 0%,
+    rgba(239, 68, 68, 0.1) 30%,
+    rgba(239, 68, 68, 0) 70%
+  );
+  animation: pulse-spotlight 3s ease-in-out infinite;
+  z-index: -1;
+}
+
+/* Button floating animation */
+@keyframes float-attention {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-10px) scale(1.03);
+  }
+  60% {
+    transform: translateY(-5px) scale(1.02);
+  }
+}
+
+/* Spotlight pulsing animation */
+@keyframes pulse-spotlight {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Visual indicator to direct attention to the button */
+.call-to-action-btn::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  bottom: -15px;
+  left: -15px;
+  border: 2px dashed rgba(239, 68, 68, 0.7);
+  border-radius: 9999px;
+  animation: rotate-border 15s linear infinite;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Rotating border animation */
+@keyframes rotate-border {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Enhanced hover state */
+.call-to-action-btn:hover {
+  box-shadow: 0 0 50px rgba(239, 68, 68, 0.8), 0 0 100px rgba(239, 68, 68, 0.3);
+  transform: scale(1.05) translateY(-3px);
+}
+
+/* Responsive adjustments with navbar consideration */
+@media (max-width: 1023px) {
+  header .container {
+    padding-top: 4rem; /* Slightly less padding on smaller screens */
+  }
+  
+  .spotlight-container {
+    margin-top: 2rem;
+    padding: 2rem;
+  }
+  
+  .call-to-action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* For very tall mobile screens, ensure content remains visible */
+@media (max-height: 700px) and (max-width: 768px) {
+  header {
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  header .container {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+}
+
+/* Accessibility focus state */
+.call-to-action-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.5), 0 0 30px rgba(239, 68, 68, 0.6);
+}
+
+/* Animation for ping effect */
+@keyframes ping-slow {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}

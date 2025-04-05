@@ -1,0 +1,83 @@
+/* Form-specific styling */
+.auth-form {
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Error messages slide-in animation */
+p.text-red-500, p.text-yellow-500 {
+  animation: fadeInError 0.3s ease-out;
+}
+
+@keyframes fadeInError {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fixed-height error containers to prevent layout shifts */
+.error-container {
+  min-height: 20px;
+  transition: all 0.3s ease;
+}
+
+/* Improve button styles for touch */
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fix for checkbox alignment */
+input[type="checkbox"] {
+  min-width: 1rem;
+  min-height: 1rem;
+}
+
+/* Fix scrolling on mobile */
+@media (max-width: 768px) {
+  .auth-form {
+    /* Add padding at the bottom for mobile to ensure content can be scrolled to */
+    padding-bottom: 1rem;
+  }
+}
+
+.input-icon-container {
+  position: relative;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 48px; /* Fixed width for icon area */
+  color: #6b7280; /* text-gray-500 */
+  pointer-events: none;
+}
+
+.input-with-icon {
+  width: 100%;
+  padding-left: 48px !important; /* Force left padding */
+}
+
+.input-with-icon-right {
+  padding-right: 48px !important; /* For right icon like password toggle */
+}
