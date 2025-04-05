@@ -137,6 +137,45 @@ html, body {
   text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
+/* ===== Logo Interaction Styles ===== */
+/* Logo hover effect */
+.logo-container img {
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+/* Subtle scale and shadow effect on hover */
+.logo-container img:hover {
+  border-radius: 0.5rem;
+  transform: scale(1.05);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+/* Active/click state */
+.logo-container img:active {
+  transform: scale(0.98);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.1));
+}
+
+/* Focus state for accessibility */
+.logo-container a:focus img {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 0 2px rgba(59, 130, 246, 0.5));
+}
+
+/* Apply these styles to the existing markup */
+.flex-shrink-0 .flex.items-start a {
+  display: inline-block;
+  outline: none;
+}
+
+.flex-shrink-0 .flex.items-start {
+  position: relative;
+}
+
+.flex-shrink-0 .flex.items-start a img {
+  transition: all 0.2s ease-in-out;
+}
+
 /* Glass morphism effects */
 .glassmorphism-card {
   background: rgba(255, 255, 255, 0.1);

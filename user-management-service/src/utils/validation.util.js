@@ -153,3 +153,63 @@ exports.validateUserStatus = (req, res, next) => {
 
   next();
 };
+
+exports.validateTestAuthRequest = (req, res, next) => {
+  const { jobPosition, company } = req.body;
+
+  if (!jobPosition || !company) {
+    return res.status(400).json({
+      success: false,
+      message: "Job position and company are required fields",
+    });
+  }
+
+  next();
+};
+
+// Validate test authorization status update
+exports.validateTestAuthStatusUpdate = (req, res, next) => {
+  const { status } = req.body;
+
+  if (!status || !["approved", "rejected"].includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: "Status must be either 'approved' or 'rejected'",
+    });
+  }
+
+  next();
+};
+
+
+// Validate bulk test authorization status update
+exports.validateBulkTestAuthStatusUpdate = (req, res, next) => {
+  const { userIds, status } = req.body;
+  const errors = [];
+
+  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    errors.push("User IDs array is required and cannot be empty");
+  } else {
+    // Check if all user IDs are valid
+    for (const userId of userIds) {
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        errors.push(`Invalid user ID format: ${userId}`);
+        break; // Stop after first invalid ID to avoid flooding errors
+      }
+    }
+  }
+
+  if (!status || !["approved", "rejected"].includes(status)) {
+    errors.push("Status must be either 'approved' or 'rejected'");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation error",
+      errors,
+    });
+  }
+
+  next();
+};

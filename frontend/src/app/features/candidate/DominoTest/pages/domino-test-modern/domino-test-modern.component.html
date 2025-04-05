@@ -1,0 +1,108 @@
+<div class="test-container">
+  <!-- Compact Header Component -->
+  <app-test-header
+    [testName]="testName"
+    [formattedTime]="formattedTime"
+    [isTimerWarning]="isTimerWarning"
+    [isTimerCritical]="isTimerCritical"
+    [currentQuestionIndex]="currentQuestionIndex"
+    [totalQuestions]="questions.length"
+    [answeredCount]="answeredCount"
+    [flaggedCount]="flaggedCount"
+    [progressPercentage]="progressPercentage"
+    [progressMarkers]="getProgressMarkers()"
+    [animate]="true"
+  >
+  </app-test-header>
+
+  <!-- Help tooltip -->
+  <div class="tooltip-container">
+    <app-help-tooltip
+      [show]="showTooltip && hasEditableDominos"
+      [animate]="animateTooltip"
+      [title]="'How to Answer'"
+      [description]="'Click on the highlighted domino to edit its values.'"
+      [instructions]="tooltipInstructions"
+      (close)="dismissTooltip()"
+    >
+    </app-help-tooltip>
+  </div>
+
+  <main class="test-body">
+    <!-- Sidebar Component with navigation & Submit Button -->
+    <app-test-sidebar
+      [questions]="questions"
+      [currentQuestion]="currentQuestionIndex"
+      [isCollapsed]="sidebarCollapsed"
+      [answeredCount]="answeredCount"
+      [showReset]="true"
+      (questionSelected)="goToQuestion($event)"
+      (toggleCollapse)="toggleSidebar()"
+      (finishTest)="finishTest()"
+      (resetTest)="resetTest()"
+    >
+    </app-test-sidebar>
+
+    <section class="question-area">
+      <!-- Compact Question Info Bar -->
+      <div class="question-info-bar">
+        <div class="question-title">
+          <h2>Question {{ currentQuestionIndex + 1 }}</h2>
+          <p class="instruction-text">{{ currentQuestion?.instruction || '' }}</p>
+        </div>
+        <button
+          class="flag-button"
+          [class.flagged]="currentQuestion?.flaggedForReview || false"
+          (click)="toggleFlag()"
+          [attr.title]="(currentQuestion?.flaggedForReview || false) ? 'Remove flag' : 'Flag for review'"
+        >
+          <i class="pi" [ngClass]="(currentQuestion?.flaggedForReview || false) ? 'pi-flag-fill' : 'pi-flag'"></i>
+          <span>{{ (currentQuestion?.flaggedForReview || false) ? 'Flagged' : 'Flag' }}</span>
+        </button>
+      </div>
+
+      <!-- Domino Grid - Main Content Area -->
+      <div class="domino-viewport">
+        <app-simple-domino-grid
+          *ngIf="currentQuestion"
+          [dominos]="currentQuestion.dominos"
+          [arrows]="currentQuestion.arrows || []"
+          [gridLayout]="
+            currentQuestion.gridLayout || {
+              rows: getAutoGridRows(currentQuestion.dominos),
+              cols: getAutoGridCols(currentQuestion.dominos)
+            }
+          "
+          [animate]="animateDominoGrid"
+          [showGridInfo]="true"
+          (dominoChanged)="onDominoChanged($event)"
+          (dominoSelected)="onDominoSelected($event)"
+          (hasEditableDominosChanged)="onHasEditableDominosChanged($event)"
+        >
+        </app-simple-domino-grid>
+
+        <div class="loading-container" *ngIf="!currentQuestion">
+          <div class="loading-spinner"></div>
+          <span>Loading domino puzzle...</span>
+        </div>
+      </div>
+
+      <!-- Navigation Controls - Keep these for question navigation -->
+      <app-navigation-controls
+        [isFirstQuestion]="currentQuestionIndex === 0"
+        [isLastQuestion]="currentQuestionIndex === questions.length - 1"
+        [isFlagged]="currentQuestion?.flaggedForReview || false"
+        [animate]="animateQuestionControls"
+        [shouldPulse]="false"
+        [canFinish]="true"
+        [currentQuestion]="currentQuestionIndex + 1"
+        [totalQuestions]="questions.length"
+        [showKeyboardHints]="true"
+        (prevClicked)="previousQuestion()"
+        (nextClicked)="nextQuestion()"
+        (flagClicked)="toggleFlag()"
+      >
+      </app-navigation-controls>
+    </section>
+  </main>
+</div>

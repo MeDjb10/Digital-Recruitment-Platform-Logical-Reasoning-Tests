@@ -1,0 +1,30 @@
+<div class="builder-header">
+  <div class="header-title">
+    <div class="title-with-icon">
+      <i class="fa-solid fa-puzzle-piece header-icon"></i>
+      <h2>
+        {{ mode === "create" ? "Create Domino Question" : "Edit Domino Question" }}
+      </h2>
+    </div>
+    <span class="test-name" *ngIf="testId">Test ID: {{ testId }}</span>
+  </div>
+  <div class="header-actions">
+    <button class="action-btn cancel-btn" (click)="onCancel()">
+      <i class="pi pi-times"></i> Cancel
+    </button>
+    <button
+      class="action-btn save-btn"
+      (click)="onSave()"
+      [disabled]="isSaving"
+    >
+      <i
+        class="pi"
+        [ngClass]="{ 'pi-spin pi-spinner': isSaving, 'pi-check': !isSaving }"
+      ></i>
+      <span *ngIf="!isSaving">{{
+        mode === "create" ? "Save Question" : "Update Question"
+      }}</span>
+      <span *ngIf="isSaving">Saving...</span>
+    </button>
+  </div>
+</div>

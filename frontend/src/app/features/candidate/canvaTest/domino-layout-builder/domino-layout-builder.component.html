@@ -1,0 +1,207 @@
+<div class="layout-builder-container">
+  <!-- Header with title and primary actions -->
+  
+  <app-builder-header 
+  [mode]="mode" 
+  [testId]="testId" 
+  [isSaving]="isSaving"
+  (save)="saveQuestion()"
+  (cancel)="confirmCancel()">
+</app-builder-header>
+
+  <!-- Enhanced Question Details Form -->
+ <!-- In domino-layout-builder.component.html -->
+<app-question-form
+  [title]="questionTitle"
+  [difficulty]="questionDifficulty"
+  [instruction]="questionInstruction"
+  [pattern]="questionPattern"
+  [timeLimit]="timeLimit"
+  [scoreWeight]="scoreWeight"
+  (titleChange)="questionTitle = $event; hasUnsavedChanges = true"
+  (difficultyChange)="onDifficultyChange($event)"
+  (instructionChange)="questionInstruction = $event; hasUnsavedChanges = true"
+  (patternChange)="questionPattern = $event; hasUnsavedChanges = true"
+  (timeLimitChange)="timeLimit = $event; hasUnsavedChanges = true"
+  (scoreWeightChange)="scoreWeight = $event; hasUnsavedChanges = true"
+></app-question-form>
+
+  <!-- In domino-layout-builder.component.html, replace the toolbar-container div with this: -->
+<app-layout-toolbar
+  [layoutType]="layoutType"
+  [gridRows]="gridRows"
+  [gridCols]="gridCols"
+  [snapToGrid]="snapToGrid"
+  [showGrid]="showGrid"
+  [gridSize]="gridSize"
+  [customTemplates]="customTemplates"
+  [isGridBasedLayout]="isGridBasedLayout()"
+  [dominoCount]="dominos.length"
+  [creationMode]="creationMode"
+  (layoutTypeChange)="setLayoutType($event)"
+  (gridDimensionsChange)="onToolbarGridDimensionsChange($event)"
+  (displayOptionsChange)="onToolbarDisplayOptionsChange($event)"
+  (applyGrid)="applyGridToPositions()"
+  (addDomino)="addDominoToCenter()" 
+  (addArrow)="addArrowAt(0, 0)"
+  (clearCanvas)="clearCanvas()"
+  (generateAutoLayout)="generateAutoLayout()"
+  (generatePreview)="generatePreview()"
+  (importJson)="importLayoutFromJson($event)"
+  (exportJson)="exportLayoutAsJson()"
+  (openSaveTemplateDialog)="openSaveTemplateDialog()"
+  (applyTemplate)="applyTemplate($event)"
+  (deleteTemplate)="deleteTemplate($event)"
+></app-layout-toolbar>
+
+  <app-status-bar
+  [dominosCount]="dominos.length"
+  [hasEditableDomino]="hasEditableDominosInMain()"
+  [hasCorrectAnswer]="!!correctAnswer"
+  [canvasWidth]="canvasWidth"
+  [canvasHeight]="canvasHeight"
+  [hasUnsavedChanges]="hasUnsavedChanges"
+></app-status-bar>
+
+  <!-- Main editor area with canvas and properties panel -->
+  <!-- Replace your current canvas implementation with this -->
+<app-editor-layout
+  [dominos]="dominos"
+  [arrows]="arrows"
+  [canvasWidth]="canvasWidth"
+  [canvasHeight]="canvasHeight"
+  [showGrid]="showGrid"
+  [gridSize]="gridSize"
+  [snapToGrid]="snapToGrid"
+  [correctAnswer]="correctAnswer"
+  [creationMode]="creationMode"
+  (dominoAdded)="onDominoAdded($event)"
+  (dominoUpdated)="onDominoUpdated($event)"
+  (dominoDeleted)="onDominoDeleted($event)"
+  (dominoDuplicated)="onDominoDuplicated($event)"
+  (dominoValueChanged)="onDominoValueChanged($event)"
+  (dominoRoleChanged)="onDominoRoleChanged($event)"
+  (correctAnswerChanged)="onCorrectAnswerChanged($event)"
+  (arrowAdded)="onArrowAdded($event)"
+  (arrowUpdated)="onArrowUpdated($event)"
+  (arrowDeleted)="onArrowDeleted($event)"
+  (arrowDuplicated)="onArrowDuplicated($event)"
+  (creationModeChanged)="onCreationModeChanged($event)"
+></app-editor-layout>
+
+  <!-- Preview overlay -->
+<div class="preview-overlay" *ngIf="previewMode">
+  <div class="preview-header">
+    <h2>Question Preview</h2>
+    <p class="preview-instruction">{{ questionInstruction }}</p>
+  </div>
+
+  <div class="preview-canvas-container">
+    <div
+      class="preview-canvas"
+      [style.width.px]="canvasWidth"
+      [style.height.px]="canvasHeight"
+    >
+      <!-- Show grid lines if enabled -->
+      <div class="grid-lines" *ngIf="showGrid">
+        <!-- Grid lines implementation -->
+      </div>
+
+      <!-- Render preview dominos -->
+      <div
+        *ngFor="let domino of previewDominos"
+        class="domino-preview"
+        [class.editable-domino]="domino.isEditable"
+        [style.transform]="dominoPropertiesService.getDominoTransform(domino)"
+      >
+        <app-interactive-domino
+          [id]="domino.id"
+          [initialTopValue]="domino.topValue"
+          [initialBottomValue]="domino.bottomValue"
+          [isEditable]="domino.isEditable"
+          [scale]="domino.scale || 1.0"
+          [isVertical]="domino.isVertical || false"
+          (valueChanged)="onDominoValueChanged($event)"
+        ></app-interactive-domino>
+      </div>
+
+      <!-- Render preview arrows -->
+      <div
+        *ngFor="let arrow of previewArrows"
+        class="arrow-preview"
+        [style.transform]="arrowPropertiesService.getArrowTransform(arrow)"
+      >
+        <app-interactive-arrow
+          [id]="arrow.id"
+          [length]="arrow.length"
+          [angle]="0"
+          [scale]="arrow.scale || 1.0"
+          [arrowColor]="arrow.arrowColor"
+          [headSize]="arrow.headSize"
+          [curved]="arrow.curved"
+          [curvature]="arrow.curvature"
+        ></app-interactive-arrow>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-footer">
+    <p class="preview-hint" *ngIf="hasEditableDominos()">
+      This is how the question will appear to candidates. The highlighted
+      domino needs to be filled in.
+    </p>
+    <button (click)="exitPreviewMode()" class="exit-preview-button">
+      <i class="pi pi-arrow-left"></i> Back to Editor
+    </button>
+  </div>
+</div>
+
+  <!-- Validation warnings -->
+  <div class="validation-warnings" *ngIf="validationErrors.length > 0">
+    <h4>Please fix the following issues before saving:</h4>
+    <ul>
+      <li *ngFor="let error of validationErrors">{{ error }}</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Add at the end of the file before closing div.layout-builder-container -->
+
+<!-- Template Save Dialog -->
+<div class="modal-overlay" *ngIf="showSaveTemplateDialog">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Save Layout as Template</h3>
+      <button class="close-btn" (click)="showSaveTemplateDialog = false">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    <div class="modal-content">
+      <div class="form-field">
+        <label for="templateName">Template Name</label>
+        <input
+          type="text"
+          id="templateName"
+          [(ngModel)]="newTemplateName"
+          placeholder="Enter template name"
+          autofocus
+        />
+      </div>
+      <p class="template-info">
+        This will save your current domino layout as a reusable template. The
+        template will include domino positions, values, rotation, and scale.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button
+        class="action-btn cancel-btn"
+        (click)="showSaveTemplateDialog = false"
+      >
+        Cancel
+      </button>
+      <button class="action-btn save-btn" (click)="saveAsTemplate()">
+        <i class="pi pi-save"></i> Save Template
+      </button>
+    </div>
+  </div>
+</div>

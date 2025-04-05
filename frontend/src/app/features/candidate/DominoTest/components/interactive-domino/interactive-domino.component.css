@@ -1,0 +1,341 @@
+/* Add these styles to your interactive-domino.component.css while keeping existing styles */
+
+/* Make the domino clickable */
+/* Make domino more 3D with better shadow */
+.domino {
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  pointer-events: auto;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
+}
+
+.domino:hover:not(.selected) {
+  transform: translateY(-3px);
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.4));
+}
+
+.domino.selected {
+  transform: translateY(-4px);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+}
+.domino rect, .domino circle {
+  transition: all 0.3s ease;
+}
+
+/* Force reset class to help break CSS cache */
+.domino.force-reset {
+  filter: none !important;
+  transition: none !important;
+}
+
+.domino.editable:hover:not(.selected) {
+  filter: drop-shadow(0px 0px 3px rgba(59, 130, 246, 0.3));
+}
+
+.top-half-click:hover,
+.bottom-half-click:hover {
+  fill: rgba(59, 130, 246, 0.2);
+  cursor: pointer;
+}
+
+/* Interactive areas */
+.top-half-click:hover,
+.bottom-half-click:hover {
+  fill: rgba(59, 130, 246, 0.3);
+  cursor: pointer;
+}
+
+.interactive-area {
+  pointer-events: all;
+  cursor: pointer;
+  transition: fill 0.2s ease;
+}
+
+/* Enhanced dot appearance animation */
+.dot-appear {
+  animation: appearDot 0.4s forwards;
+}
+
+@keyframes appearDot {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.click-hint {
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+}
+
+/* Make SVG properly handle events */
+svg.domino {
+  pointer-events: auto;
+}
+
+.domino-container {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border: 2px solid #333;
+  border-radius: 8px;
+  width: 60px;
+  height: 120px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.domino-vertical {
+  flex-direction: row;
+  width: 120px;
+  height: 60px;
+}
+
+
+
+.domino-half {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.domino-divider {
+  background-color: #333;
+  height: 2px;
+  width: 100%;
+}
+
+.domino-vertical .domino-divider {
+  height: 100%;
+  width: 2px;
+}
+
+.domino-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  align-items: center;
+  width: 80%;
+  height: 80%;
+  position: relative;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background-color: #333;
+  border-radius: 50%;
+  margin: 2px;
+}
+
+.domino-question-mark {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 24px;
+  color: #4f46e5;
+  font-weight: bold;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.domino-editable {
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4);
+}
+
+.domino-editable:hover {
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.6);
+}
+
+.domino-selected {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.6);
+}
+
+.domino-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px dashed #4f46e5;
+  pointer-events: none;
+  border-radius: 6px;
+}
+
+/* Dynamic dot positioning */
+.domino-dots[data-value="1"] .dot:nth-child(1) {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.domino-dots[data-value="2"] .dot:nth-child(1) {
+  position: absolute;
+  top: 25%;
+  left: 25%;
+}
+
+.domino-dots[data-value="2"] .dot:nth-child(2) {
+  position: absolute;
+  bottom: 25%;
+  right: 25%;
+}
+
+.domino-dots[data-value="3"] .dot:nth-child(1) {
+  position: absolute;
+  top: 25%;
+  left: 25%;
+}
+
+.domino-dots[data-value="3"] .dot:nth-child(2) {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.domino-dots[data-value="3"] .dot:nth-child(3) {
+  position: absolute;
+  bottom: 25%;
+  right: 25%;
+}
+
+.domino-dots[data-value="4"] .dot:nth-child(1) {
+  position: absolute;
+  top: 25%;
+  left: 25%;
+}
+
+.domino-dots[data-value="4"] .dot:nth-child(2) {
+  position: absolute;
+  top: 25%;
+  right: 25%;
+}
+
+.domino-dots[data-value="4"] .dot:nth-child(3) {
+  position: absolute;
+  bottom: 25%;
+  left: 25%;
+}
+
+.domino-dots[data-value="4"] .dot:nth-child(4) {
+  position: absolute;
+  bottom: 25%;
+  right: 25%;
+}
+
+.domino-dots[data-value="5"] .dot:nth-child(1) {
+  position: absolute;
+  top: 25%;
+  left: 25%;
+}
+
+.domino-dots[data-value="5"] .dot:nth-child(2) {
+  position: absolute;
+  top: 25%;
+  right: 25%;
+}
+
+.domino-dots[data-value="5"] .dot:nth-child(3) {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.domino-dots[data-value="5"] .dot:nth-child(4) {
+  position: absolute;
+  bottom: 25%;
+  left: 25%;
+}
+
+.domino-dots[data-value="5"] .dot:nth-child(5) {
+  position: absolute;
+  bottom: 25%;
+  right: 25%;
+}
+
+.domino-dots[data-value="6"] .dot:nth-child(1) {
+  position: absolute;
+  top: 25%;
+  left: 25%;
+}
+
+.domino-dots[data-value="6"] .dot:nth-child(2) {
+  position: absolute;
+  top: 25%;
+  right: 25%;
+}
+
+.domino-dots[data-value="6"] .dot:nth-child(3) {
+  position: absolute;
+  top: 50%;
+  left: 25%;
+}
+
+.domino-dots[data-value="6"] .dot:nth-child(4) {
+  position: absolute;
+  top: 50%;
+  right: 25%;
+}
+
+.domino-dots[data-value="6"] .dot:nth-child(5) {
+  position: absolute;
+  bottom: 25%;
+  left: 25%;
+}
+
+.domino-dots[data-value="6"] .dot:nth-child(6) {
+  position: absolute;
+  bottom: 25%;
+  right: 25%;
+}
+
+.interactive-area {
+  pointer-events: auto !important;
+  cursor: pointer;
+  opacity: 0.4;
+}
+
+.interactive-area:hover {
+  opacity: 0.6;
+}
+
+/* Make SVG properly handle events */
+svg.domino {
+  pointer-events: auto;
+}

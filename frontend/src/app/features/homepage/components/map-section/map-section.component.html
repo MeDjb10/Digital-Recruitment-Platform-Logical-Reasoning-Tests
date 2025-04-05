@@ -1,0 +1,23 @@
+<div class="text-center flex justify-evenly flex-col lg:flex-row py-16 bg-gradient-to-r from-blue-100 via-blue-200 to-blue-300 rounded-lg shadow-lg mx-6 px-8 gap-12">
+  <div class="flex flex-col items-center gap-8" data-aos="fade-up">
+    <iframe 
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3196.36063106563!2d10.113905411878454!3d36.76191516974022!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12fd31c0bb85310d%3A0xa0d53e1ac4fa3eca!2sCOFAT%20TUNIS!5e0!3m2!1sen!2stn!4v1743526710462!5m2!1sen!2stn" 
+      width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+      class="rounded-lg shadow-lg">
+    </iframe>
+  </div>
+  <div class="text-left flex flex-col justify-center gap-6">
+    <h2 class="text-4xl font-bold text-gray-800">
+      {{ 'HOME.MAP_SECTION.TITLE' | translate }}
+    </h2>
+    <p class="text-lg text-gray-700 max-w-3xl">
+      {{ 'HOME.MAP_SECTION.DESCRIPTION' | translate }}
+    </p>
+    <a 
+      href="https://www.google.com/maps/dir//COFAT+TUNIS" 
+      target="_blank" 
+      class="border-2 font-medium border-blue-600 hover:bg-blue-600 text-blue-600 hover:text-white px-8 py-4 rounded-xl shadow  transition duration-300 text-center">
+      {{ 'HOME.MAP_SECTION.BUTTON' | translate }} <i class="fa-solid fa-arrow-right"></i>
+    </a>
+  </div>
+</div>

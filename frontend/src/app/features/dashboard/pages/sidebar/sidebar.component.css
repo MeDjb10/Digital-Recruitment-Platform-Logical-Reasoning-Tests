@@ -310,7 +310,7 @@
   color: #1e40af;
 }
 
-/* User Profile */
+/* Add or update these styles */
 .user-profile {
   border-top: 1px solid rgba(241, 245, 249, 0.9);
   padding: 0.75rem;
@@ -332,19 +332,42 @@
   background-color: #f8fafc;
 }
 
-.user-avatar {
-  width: 2.25rem;
-  height: 2.25rem;
+/* Update these styles to fix the profile picture size */
+.user-container .relative {
+  width: 38px;  /* Set a fixed width */
+  height: 38px; /* Set a fixed height */
+  position: relative;
   border-radius: 50%;
+  overflow: hidden; /* Ensure content doesn't overflow */
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.user-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid rgba(203, 213, 225, 0.5);
+}
+
+.user-container .rounded-full {
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: white;
-  font-weight: 600;
-  font-size: 0.875rem;
-  position: relative;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.status-indicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 2px solid white;
 }
 
 .status-indicator {

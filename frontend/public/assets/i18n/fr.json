@@ -1,0 +1,138 @@
+{
+  "HOME": {
+    "TITLE": "Bienvenue à Cofat",
+    "DESCRIPTION": "Plateforme de recrutement numérique pour les tests de raisonnement logique",
+    "HERO": {
+      "HEADLINE": "Bienvenue sur notre plateforme de test psychotechnique",
+      "PARAGRAPH1": "Nous sommes ravis de vous accueillir dans cet espace où nous évaluons et identifions les talents qui contribueront à façonner l'avenir de notre entreprise.",
+      "PARAGRAPH2": "Chez notre groupe, l'excellence est notre norme, et nous croyons que chaque candidat a le potentiel de s'épanouir au sein de notre équipe dynamique.",
+      "CTA_BUTTON": "Démarrer le test",
+      "DEMO_BUTTON": "Démarrer une démonstration"
+    },
+    "ABOUT": {
+      "TITLE": "À Propos de nous",
+      "INTRO": "Nous sommes convaincus que cette étape de votre candidature vous permettra de démontrer votre potentiel et de faire valoir vos compétences uniques.",
+      "POINT1": "Vos résultats à ces tests revêtent une importance cruciale, car ils nous permettront de mieux faire correspondre le profil du poste avec votre propre profil.",
+      "POINT2": "Nous vous encourageons à aborder ces tests avec assurance, sachant que vos performances joueront un rôle clé dans le processus de recrutement.",
+      "POINT3": "Notre objectif est de créer des correspondances harmonieuses entre les profils des candidats et des postes, de manière à favoriser la réussite mutuelle.",
+      "TEXT1": "Chez COFAT, l'excellence est notre norme. Nous sommes un groupe dynamique, spécialisé dans la fabrication de câblages et de faisceaux électriques pour l'industrie automobile, qui croit profondément au potentiel de chaque candidat.",
+      "TEXT2": "Notre processus de recrutement vise à identifier les talents qui s'épanouiront au sein de notre équipe et contribueront à notre réussite collective.",
+      "TEXT3": "Nous valorisons la correspondance harmonieuse entre les profils des candidats et les postes à pourvoir, créant ainsi des opportunités de développement mutuel.",
+      "STATS": {
+        "STAT1": "taux de réussite",
+        "STAT2": "ans d'expérience",
+        "STAT3": "entreprises"
+      }
+    },
+    "ABOUT3": {
+      "INFO": "Nous vous encourageons à aborder ces tests avec assurance, sachant que vos performances joueront un rôle clé dans le processus de recrutement.",
+      "DESCRIPTION": "Votre participation est très appréciée et nous nous engageons à garantir un processus d'évaluation fluide et sécurisé.",
+      "THANK_YOU": "Nous vous remercions de votre participation et vous souhaitons bonne chance dans ces évaluations."
+    },
+    "PROCESS": {
+      "TITLE": "Notre Processus de Sélection",
+      "STEP1": {
+        "TITLE": "Inscription",
+        "DESC": "Créez votre profil et accédez aux tests"
+      },
+      "STEP2": {
+        "TITLE": "Test psychotechniques",
+        "DESC": "Evaluez vos compétences et votre adequation avec le poste"
+      },
+      "STEP3": {
+        "TITLE": "Entretien",
+        "DESC": "Rencontre avec nos recruteurs"
+      },
+      "STEP4": {
+        "TITLE": "Analyse des résultats & Sélection",
+        "DESC": "Nos experts examinent vos performances"
+      }
+    },
+    "NUMBERS": {
+      "TITLE": "Quelques chiffres sur nous...",
+      "TOTAL_POSTS": "Nombre total des postes",
+      "SITES": "Sites",
+      "EMPLOYEES": "Nombre des employés",
+      "NEW_POSTS": "Nouveaux postes disponibles"
+    },
+    "STATISTICS": {
+      "CANDIDATES_COUNT": "1 000+ candidats",
+      "EVALUATED": "évalués via notre plateforme",
+      "PER_YEAR": "par an",
+      "SECURITY_NOTE": "grâce à une facilité d'utilisation accessible en toute sécurité et confidentialité des données."
+    },
+    "MAP_SECTION": {
+      "TITLE": "Trouver nous facilement",
+      "BUTTON": "Obtenir l'itinéraire",
+      "DESCRIPTION": "Pour faciliter votre visite le jour d'entretien, consultez la carte interactive ci-dessous qui vous guidera directement jusqu'à nos locaux."
+    },
+    "CONTACT": {
+      "TITLE": "Contactez-nous",
+      "DESCRIPTION": "Pour toute question ou information, vous pouvez nous contacter via ce formulaire ou directement à l'adresse : ",
+      "NAME_LABEL": "Nom",
+      "NAME_PLACEHOLDER": "Votre nom",
+      "NAME_REQUIRED": "Le nom est requis",
+      "NAME_MIN_LENGTH": "Le nom doit comporter au moins 2 caractères",
+      "EMAIL_LABEL": "Email",
+      "EMAIL_PLACEHOLDER": "Votre adresse email",
+      "EMAIL_REQUIRED": "L'email est requis",
+      "EMAIL_INVALID": "Veuillez entrer une adresse email valide",
+      "MESSAGE_LABEL": "Message",
+      "MESSAGE_PLACEHOLDER": "Votre message",
+      "MESSAGE_REQUIRED": "Le message est requis",
+      "MESSAGE_MIN_LENGTH": "Le message doit comporter au moins 10 caractères",
+      "SEND_BUTTON": "Envoyer",
+      "SENDING": "Envoi en cours...",
+      "SUCCESS_MESSAGE": "Votre message a été envoyé avec succès. Nous vous répondrons bientôt.",
+      "PRIVACY_NOTE": "Vos informations sont sécurisées et ne seront utilisées que pour répondre à votre demande."
+    }
+  },
+  "FOOTER": {
+    "COMPANY_NAME": "COFAT Tunis",
+    "COMPANY_DESCRIPTION": "Votre partenaire de confiance pour le recrutement de talents exceptionnels qui stimulent la croissance et l'innovation",
+    "OUR_MISSION": "Notre Mission",
+    "MISSION_TEXT": "Nous aidons les organisations à trouver et développer les meilleurs talents grâce à nos outils d'évaluation innovants et notre processus de recrutement expert.",
+    "TAG1": "Innovation",
+    "TAG2": "Excellence",
+    "CONTACT": "Contact",
+    "ADDRESS": "123 Rue d'Affaires, Ville, Pays",
+    "EMAIL": "cofat@example.com",
+    "PHONE": "+123 456 789",
+    "CONNECT": "Connectez-Vous",
+    "CONNECT_TEXT": "Suivez-nous sur les réseaux sociaux pour rester informé des carrières et des insights de recrutement",
+    "FOLLOW_US": "Suivez-nous",
+    "JOIN_TEAM": "Rejoignez Notre Équipe",
+    "COPYRIGHT": "© 2025 COFAT Tunis. Tous droits réservés.",
+    "PRIVACY": "Politique de Confidentialité",
+    "TERMS": "Conditions d'Utilisation",
+    "COOKIES": "Politique des Cookies"
+  },
+  "BUTTONS": {
+    "SUBMIT": "Soumettre",
+    "CANCEL": "Annuler",
+    "LOGIN": "Se connecter",
+    "REGISTER": "S'inscrire",
+    "LOGOUT": "Déconnexion"
+  },
+  "NAV": {
+    "HOME": "Accueil",
+    "ABOUT": "À propos",
+    "CONTACT": "Contact",
+    "TESTS": "Tests",
+    "MY_PROFILE": "Mon Profil",
+    "MY_TESTS": "Mes Tests",
+    "DASHBOARD": "Tableau de bord",
+    "BRAND_NAME": "COFAT Recrutement"
+  },
+  "USER": {
+    "PROFILE": "Mon Profil",
+    "TESTS": "Mes Tests",
+    "DASHBOARD": "Tableau de bord",
+    "EMAIL": "Email",
+    "ROLE": "Rôle"
+  },
+  "LANG": {
+    "EN": "Anglais",
+    "FR": "Français"
+  }
+}

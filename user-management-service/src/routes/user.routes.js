@@ -2,12 +2,16 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user.controller");
 const verifyToken = require("../middleware/auth.middleware");
+const { uploadMiddleware } = require("../utils/file-upload.util");
 const {
   validateUserFilters,
   validateUserId,
   validateUserUpdate,
   validateRoleAssignment,
   validateUserStatus,
+  validateTestAuthRequest,
+  validateTestAuthStatusUpdate,
+  validateBulkTestAuthStatusUpdate,
 } = require("../utils/validation.util");
 const verifyServiceToken = require("../middleware/service-auth.middleware");
 
@@ -42,6 +46,86 @@ router.get(
   userController.getUserRole
 );
 
+/**
+ * @swagger
+ * /api/users/test-authorization:
+ *   post:
+ *     summary: Submit test authorization request
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - jobPosition
+ *               - company
+ *             properties:
+ *               jobPosition:
+ *                 type: string
+ *               company:
+ *                 type: string
+ *               department:
+ *                 type: string
+ *               additionalInfo:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Test authorization request submitted successfully
+ *       400:
+ *         description: Invalid input data
+ *       403:
+ *         description: Only candidates can submit requests
+ */
+router.post(
+  "/test-authorization",
+  verifyToken(["candidate"]),
+  uploadMiddleware,
+  validateTestAuthRequest,
+  userController.submitTestAuthorizationRequest
+);
+
+/**
+ * @swagger
+ * /api/users/test-authorization-requests:
+ *   get:
+ *     summary: Get all test authorization requests
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, approved, rejected]
+ *           default: pending
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of test authorization requests
+ *       403:
+ *         description: Forbidden - insufficient permissions
+ */
+router.get(
+  "/test-authorization-requests",
+  verifyToken(["admin", "moderator", "psychologist"]),
+  userController.getTestAuthorizationRequests
+);
 
 /**
  * @swagger
@@ -216,8 +300,77 @@ router.put(
   "/:userId",
   verifyToken(),
   validateUserId,
+  uploadMiddleware,
   validateUserUpdate,
   userController.updateUser
+);
+
+/**
+ * @swagger
+ * /api/users/{userId}/profile-picture:
+ *   post:
+ *     summary: Upload or update profile picture
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profilePicture:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Profile picture updated successfully
+ *       400:
+ *         description: No file uploaded
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
+router.post(
+  "/:userId/profile-picture",
+  verifyToken(),
+  validateUserId,
+  uploadMiddleware,
+  userController.updateProfilePicture
+);
+
+/**
+ * @swagger
+ * /api/users/{userId}/profile-picture:
+ *   delete:
+ *     summary: Delete profile picture
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Profile picture deleted successfully
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
+router.delete(
+  "/:userId/profile-picture",
+  verifyToken(),
+  validateUserId,
+  userController.deleteProfilePicture
 );
 
 /**
@@ -338,4 +491,88 @@ router.post(
 );
 
 
+/**
+ * @swagger
+ * /api/users/{userId}/test-authorization:
+ *   put:
+ *     summary: Update test authorization status
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [approved, rejected]
+ *     responses:
+ *       200:
+ *         description: Test authorization status updated successfully
+ *       400:
+ *         description: Invalid status value
+ *       403:
+ *         description: Forbidden - insufficient permissions
+ *       404:
+ *         description: User not found
+ */
+router.put(
+  "/:userId/test-authorization",
+  verifyToken(["admin", "moderator", "psychologist"]),
+  validateUserId,
+  validateTestAuthStatusUpdate,
+  userController.updateTestAuthorizationStatus
+);
+
+
 module.exports = router;
+
+
+/**
+ * @swagger
+ * /api/users/test-authorization/bulk:
+ *   put:
+ *     summary: Bulk update test authorization statuses
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userIds
+ *               - status
+ *             properties:
+ *               userIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               status:
+ *                 type: string
+ *                 enum: [approved, rejected]
+ *     responses:
+ *       200:
+ *         description: Test authorization statuses updated successfully
+ *       400:
+ *         description: Invalid input
+ *       403:
+ *         description: Forbidden - insufficient permissions
+ */
+router.put(
+  "/test-authorization/bulk",
+  verifyToken(["admin", "moderator", "psychologist"]),
+  validateBulkTestAuthStatusUpdate,
+  userController.bulkUpdateTestAuthorizationStatus
+);

@@ -1,0 +1,60 @@
+<svg
+  [attr.width]="width"
+  [attr.height]="height"
+  class="interactive-arrow"
+  [class.selected]="isSelected"
+  [attr.viewBox]="'0 0 ' + width + ' ' + height"
+  (click)="onArrowClick()"
+>
+  <!-- Define drop shadow filter for 3D effect -->
+  <defs>
+    <filter id="arrowShadow" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+      <feOffset dx="2" dy="2" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.5" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Main arrow path -->
+  <path
+    [attr.d]="arrowPath"
+    [attr.stroke]="arrowColor"
+    stroke-width="2"
+    fill="none"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#arrowShadow)"
+    class="arrow-line"
+  ></path>
+
+  <!-- Invisible wider path for easier selection/clicking -->
+  <path
+    [attr.d]="arrowPath"
+    stroke="transparent"
+    stroke-width="10"
+    fill="none"
+    style="cursor: pointer"
+    (click)="onArrowClick()"
+  ></path>
+
+  <!-- Selection indicator when arrow is selected -->
+  <rect
+    *ngIf="isSelected"
+    x="0"
+    y="0"
+    [attr.width]="width"
+    [attr.height]="height"
+    fill="none"
+    stroke="#4f46e5"
+    stroke-width="1"
+    stroke-dasharray="3,3"
+    rx="4"
+    class="selection-indicator"
+  ></rect>
+</svg>
