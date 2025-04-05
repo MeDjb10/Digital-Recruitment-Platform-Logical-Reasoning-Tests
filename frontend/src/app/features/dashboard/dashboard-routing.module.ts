@@ -11,6 +11,7 @@ import { EditQuestionComponent } from './components/Raisonnement logic/edit-ques
 import { TestDetailsComponent } from './components/Raisonnement logic/test-details/test-details.component';
 import { TestsListRLComponent } from './components/Raisonnement logic/tests-list-rl/tests-list-rl.component';
 import { CreateQuestionComponent } from './components/Raisonnement logic/create-question/create-question.component';
+import { CompletedUsersComponent } from './components/userDialogue/completed-users/completed-users.component';
 
 const routes: Routes = [
   {
@@ -74,9 +75,16 @@ const routes: Routes = [
 
           // Users route
           {
-            path: 'Utilisateurs',
+            path: 'Users',
             component: UsersListRLComponent,
             title: 'Test Users',
+          },
+
+          // Completed Users route
+          {
+            path: 'Users/completed/:id',
+            component: CompletedUsersComponent,
+            title: 'Test Results',
           },
         ],
       },
