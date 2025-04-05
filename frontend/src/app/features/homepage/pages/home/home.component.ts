@@ -6,6 +6,11 @@ import { HeroSectionComponent } from '../../components/hero-section/hero-section
 import { ProcessusComponent } from '../../components/processus/processus.component';
 import { AosService } from '../../../../core/services/aos.service';
 import { HomepageNavbarComponent } from '../../components/navbar/navbar.component';
+import { NumbersComponent } from "../../components/numbers/numbers.component";
+import { AboutUs2Component } from "../../components/about-us2/about-us2.component";
+import { AboutUs3Component } from "../../components/about-us3/about-us3.component";
+import { MapSectionComponent } from "../../components/map-section/map-section.component";
+import { EmailerComponent } from "../../components/emailer/emailer.component";
 
 @Component({
   selector: 'app-home',
@@ -16,8 +21,13 @@ import { HomepageNavbarComponent } from '../../components/navbar/navbar.componen
     AboutUsComponent,
     ProcessusComponent,
     FooterComponent,
-    HomepageNavbarComponent
-  ],
+    HomepageNavbarComponent,
+    NumbersComponent,
+    AboutUs2Component,
+    AboutUs3Component,
+    MapSectionComponent,
+    EmailerComponent
+],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
