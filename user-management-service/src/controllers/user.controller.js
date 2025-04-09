@@ -240,36 +240,61 @@ exports.getTestAuthorizationRequests = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Update test authorization status (approve/reject)
+ * @desc    Update test authorization status (approve/reject) with test assignment
  * @route   PUT /api/users/:userId/test-authorization
  * @access  Private (Admin, Moderator, Psychologist)
  */
 exports.updateTestAuthorizationStatus = asyncHandler(async (req, res) => {
+  const { status, examDate } = req.body;
+
   const updatedUser = await userService.updateTestAuthorizationStatus(
     req.params.userId,
-    req.body.status,
-    req.userId
+    status,
+    req.userId,
+    examDate
   );
 
   res.status(200).json({
     success: true,
-    message: `Test authorization request ${req.body.status}`,
+    message: `Test authorization request ${status}`,
     user: updatedUser,
   });
 });
 
 /**
- * @desc    Bulk update test authorization statuses
+ * @desc    Manually assign tests to an approved candidate
+ * @route   PUT /api/users/:userId/test-assignment
+ * @access  Private (Psychologist only)
+ */
+exports.manualTestAssignment = asyncHandler(async (req, res) => {
+  const { assignedTest, additionalTests, examDate } = req.body;
+
+  const updatedUser = await userService.manualTestAssignment(
+    req.params.userId,
+    { assignedTest, additionalTests, examDate },
+    req.userId
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Test assignment updated successfully",
+    user: updatedUser,
+  });
+});
+
+/**
+ * @desc    Bulk update test authorization statuses with optional exam date
  * @route   PUT /api/users/test-authorization/bulk
  * @access  Private (Admin, Moderator, Psychologist)
  */
 exports.bulkUpdateTestAuthorizationStatus = asyncHandler(async (req, res) => {
-  const { userIds, status } = req.body;
+  const { userIds, status, examDate } = req.body;
 
   const result = await userService.bulkUpdateTestAuthorizationStatus(
     userIds,
     status,
-    req.userId
+    req.userId,
+    examDate
   );
 
   res.status(200).json({
@@ -278,4 +303,33 @@ exports.bulkUpdateTestAuthorizationStatus = asyncHandler(async (req, res) => {
     updatedCount: result.modifiedCount,
     totalRequested: userIds.length,
   });
+});
+
+/**
+ * @desc    Test email sending functionality
+ * @route   POST /api/users/test-email
+ * @access  Private (Admin only)
+ */
+exports.testEmailSending = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ErrorResponse("Email address is required", 400);
+  }
+
+  try {
+    const result = await emailUtil.sendTestEmail(email);
+
+    res.status(200).json({
+      success: true,
+      message: "Test email sent successfully",
+      result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to send test email",
+      error: error.message,
+    });
+  }
 });

@@ -169,22 +169,89 @@ exports.validateTestAuthRequest = (req, res, next) => {
 
 // Validate test authorization status update
 exports.validateTestAuthStatusUpdate = (req, res, next) => {
-  const { status } = req.body;
+  const { status, examDate } = req.body;
+  const errors = [];
 
   if (!status || !["approved", "rejected"].includes(status)) {
+    errors.push("Status must be either 'approved' or 'rejected'");
+  }
+
+  // Validate exam date if provided
+  if (examDate) {
+    const isValidDate = !isNaN(Date.parse(examDate));
+    if (!isValidDate) {
+      errors.push("Invalid exam date format");
+    }
+
+    // Verify exam date is in the future
+    const examDateObj = new Date(examDate);
+    if (examDateObj <= new Date()) {
+      errors.push("Exam date must be in the future");
+    }
+  }
+
+  if (errors.length > 0) {
     return res.status(400).json({
       success: false,
-      message: "Status must be either 'approved' or 'rejected'",
+      message: "Validation error",
+      errors,
     });
   }
 
   next();
 };
 
+// Validate manual test assignment
+exports.validateManualTestAssignment = (req, res, next) => {
+  const { assignedTest, additionalTests, examDate } = req.body;
+  const errors = [];
+
+  // Check if assignedTest is valid
+  if (!assignedTest || !["D-70", "D-2000"].includes(assignedTest)) {
+    errors.push("Assigned test must be either 'D-70' or 'D-2000'");
+  }
+
+  // Check if additionalTests is valid
+  if (additionalTests) {
+    if (!Array.isArray(additionalTests)) {
+      errors.push("Additional tests must be an array");
+    } else {
+      for (const test of additionalTests) {
+        if (test !== "logique_des_propositions") {
+          errors.push(`Invalid additional test: ${test}`);
+        }
+      }
+    }
+  }
+
+  // Validate exam date if provided
+  if (examDate) {
+    const isValidDate = !isNaN(Date.parse(examDate));
+    if (!isValidDate) {
+      errors.push("Invalid exam date format");
+    }
+
+    // Verify exam date is in the future
+    const examDateObj = new Date(examDate);
+    if (examDateObj <= new Date()) {
+      errors.push("Exam date must be in the future");
+    }
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation error",
+      errors,
+    });
+  }
+
+  next();
+};
 
 // Validate bulk test authorization status update
 exports.validateBulkTestAuthStatusUpdate = (req, res, next) => {
-  const { userIds, status } = req.body;
+  const { userIds, status, examDate } = req.body;
   const errors = [];
 
   if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
@@ -201,6 +268,20 @@ exports.validateBulkTestAuthStatusUpdate = (req, res, next) => {
 
   if (!status || !["approved", "rejected"].includes(status)) {
     errors.push("Status must be either 'approved' or 'rejected'");
+  }
+
+  // Validate exam date if provided
+  if (examDate) {
+    const isValidDate = !isNaN(Date.parse(examDate));
+    if (!isValidDate) {
+      errors.push("Invalid exam date format");
+    }
+
+    // Verify exam date is in the future
+    const examDateObj = new Date(examDate);
+    if (examDateObj <= new Date()) {
+      errors.push("Exam date must be in the future");
+    }
   }
 
   if (errors.length > 0) {
