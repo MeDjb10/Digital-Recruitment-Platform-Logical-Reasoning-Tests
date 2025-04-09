@@ -9,25 +9,21 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
 function isMultipartFormData(req) {
   const contentType = req.headers["content-type"] || "";
   return contentType.startsWith("multipart/form-data");
 }
 
-// Enable CORS
-app.use(cors());
+// CORS configuration
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || [
-      "http://localhost:4200",
-      "https://your-production-frontend.com",
-    ],
+    origin: process.env.CORS_ORIGIN || "*",
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
     optionsSuccessStatus: 204,
   })
 );
+
 // Parse JSON bodies
 app.use(express.json());
 
@@ -74,7 +70,7 @@ app.get("/", (req, res) => {
       health: "/health",
       auth: "/api/auth/*",
       users: "/api/users/*",
-      tests: "/api/tests/*", // Add this line
+      tests: "/api/tests/*",
     },
   });
 });
@@ -111,6 +107,7 @@ app.use(
   })
 );
 
+// Special handling for file upload routes
 app.use(
   ["/api/users/:userId/profile-picture", "/api/users/test-authorization"],
   (req, res, next) => {
@@ -146,7 +143,7 @@ app.use(
   }
 );
 
-// 3. Then modify the general users proxy to skip file upload requests
+// General users proxy (skip file upload requests)
 app.use(
   "/api/users",
   (req, res, next) => {
@@ -162,18 +159,45 @@ app.use(
       console.log(`Proxying to user service: ${req.originalUrl}`);
       return req.originalUrl;
     },
-    // Keep existing error handling
+    proxyErrorHandler: (err, res, next) => {
+      console.error("User service proxy error:", err.message);
+      res.status(500).json({
+        status: "error",
+        message: "Error connecting to user service",
+        error: process.env.NODE_ENV === "development" ? err.message : undefined,
+      });
+    },
   })
 );
 
-// Static file serving
+// Static file serving with CORS headers
 app.use(
   "/uploads",
+  (req, res, next) => {
+    // Add proper CORS headers before proxying
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader(
+      "Access-Control-Allow-Origin",
+      process.env.CORS_ORIGIN || "*"
+    );
+    res.setHeader("Access-Control-Allow-Methods", "GET");
+    next();
+  },
   proxy("http://localhost:3001", {
     timeout: 10000,
     proxyReqPathResolver: (req) => {
       console.log(`Proxying static file: ${req.originalUrl}`);
       return req.originalUrl;
+    },
+    userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+      // Ensure CORS headers are preserved in the response
+      userRes.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      userRes.setHeader(
+        "Access-Control-Allow-Origin",
+        process.env.CORS_ORIGIN || "*"
+      );
+      userRes.setHeader("Access-Control-Allow-Methods", "GET");
+      return proxyResData;
     },
   })
 );
@@ -184,13 +208,17 @@ app.use(
   proxy("http://localhost:3002", {
     timeout: 5000,
     proxyReqPathResolver: (req) => {
-      const newPath = req.originalUrl.replace(/^\/api\/tests/, '/api/v1/tests');
+      const newPath = req.originalUrl.replace(/^\/api\/tests/, "/api/v1/tests");
       console.log(`Proxying to test service: ${req.originalUrl} -> ${newPath}`);
       return newPath;
     },
     proxyErrorHandler: (err, res, next) => {
       console.error("Test proxy error:", err.message);
-      // Error handling code...
+      res.status(500).json({
+        status: "error",
+        message: "Error connecting to test service",
+        error: process.env.NODE_ENV === "development" ? err.message : undefined,
+      });
     },
   })
 );
@@ -201,13 +229,22 @@ app.use(
   proxy("http://localhost:3002", {
     timeout: 5000,
     proxyReqPathResolver: (req) => {
-      const newPath = req.originalUrl.replace(/^\/api\/questions/, '/api/v1/questions');
-      console.log(`Proxying to test service (questions): ${req.originalUrl} -> ${newPath}`);
+      const newPath = req.originalUrl.replace(
+        /^\/api\/questions/,
+        "/api/v1/questions"
+      );
+      console.log(
+        `Proxying to test service (questions): ${req.originalUrl} -> ${newPath}`
+      );
       return newPath;
     },
     proxyErrorHandler: (err, res, next) => {
       console.error("Question proxy error:", err.message);
-      // Error handling code...
+      res.status(500).json({
+        status: "error",
+        message: "Error connecting to test service (questions)",
+        error: process.env.NODE_ENV === "development" ? err.message : undefined,
+      });
     },
   })
 );
@@ -218,30 +255,48 @@ app.use(
   proxy("http://localhost:3002", {
     timeout: 5000,
     proxyReqPathResolver: (req) => {
-      const newPath = req.originalUrl.replace(/^\/api\/attempts/, '/api/v1/attempts');
-      console.log(`Proxying to test service (attempts): ${req.originalUrl} -> ${newPath}`);
+      const newPath = req.originalUrl.replace(
+        /^\/api\/attempts/,
+        "/api/v1/attempts"
+      );
+      console.log(
+        `Proxying to test service (attempts): ${req.originalUrl} -> ${newPath}`
+      );
       return newPath;
     },
     proxyErrorHandler: (err, res, next) => {
       console.error("Attempt proxy error:", err.message);
-      // Error handling code...
+      res.status(500).json({
+        status: "error",
+        message: "Error connecting to test service (attempts)",
+        error: process.env.NODE_ENV === "development" ? err.message : undefined,
+      });
     },
   })
 );
 
-// Proxy for analytics-related routes 
+// Proxy for analytics-related routes
 app.use(
   "/api/analytics",
   proxy("http://localhost:3002", {
     timeout: 5000,
     proxyReqPathResolver: (req) => {
-      const newPath = req.originalUrl.replace(/^\/api\/analytics/, '/api/v1/analytics');
-      console.log(`Proxying to test service (analytics): ${req.originalUrl} -> ${newPath}`);
+      const newPath = req.originalUrl.replace(
+        /^\/api\/analytics/,
+        "/api/v1/analytics"
+      );
+      console.log(
+        `Proxying to test service (analytics): ${req.originalUrl} -> ${newPath}`
+      );
       return newPath;
     },
     proxyErrorHandler: (err, res, next) => {
       console.error("Analytics proxy error:", err.message);
-      // Error handling code...
+      res.status(500).json({
+        status: "error",
+        message: "Error connecting to test service (analytics)",
+        error: process.env.NODE_ENV === "development" ? err.message : undefined,
+      });
     },
   })
 );
@@ -257,14 +312,13 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-// Update this section (around line 112):
 app.listen(PORT, () => {
   console.log(`⚡️ API Gateway running on port ${PORT}`);
   console.log("Available routes:");
   console.log(`🔍 Health: http://localhost:${PORT}/health`);
   console.log(`🔐 Auth Service: http://localhost:${PORT}/api/auth/*`);
   console.log(`👤 User Service: http://localhost:${PORT}/api/users/*`);
-  console.log(`📝 Test Service: http://localhost:${PORT}/api/tests/*`);  // Add this line
+  console.log(`📝 Test Service: http://localhost:${PORT}/api/tests/*`);
 });
 
 // Handle unhandled promise rejections

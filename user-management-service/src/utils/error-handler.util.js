@@ -1,4 +1,8 @@
-// Custom error class
+const logger = require("./logger.util");
+
+/**
+ * Custom Error Response Class
+ */
 class ErrorResponse extends Error {
   constructor(message, statusCode) {
     super(message);
@@ -6,44 +10,56 @@ class ErrorResponse extends Error {
   }
 }
 
-// Async handler wrapper
-const asyncHandler = (fn) => (req, res, next) =>
-  Promise.resolve(fn(req, res, next)).catch((err) => {
-    console.error("Error:", err);
-
-    // Handle mongoose validation errors
-    if (err.name === "ValidationError") {
-      const messages = Object.values(err.errors).map((val) => val.message);
-      return res.status(400).json({
-        success: false,
-        message: "Validation error",
-        errors: messages,
-      });
-    }
-
-    // Handle mongoose duplicate key errors
-    if (err.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: "Duplicate field value entered",
-        field: Object.keys(err.keyValue)[0],
-      });
-    }
-
-    // Handle custom ErrorResponse instances
-    if (err instanceof ErrorResponse) {
-      return res.status(err.statusCode).json({
-        success: false,
-        message: err.message,
-      });
-    }
-
-    // Default error response
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-      error: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
+/**
+ * Async handler to avoid try-catch in controllers
+ */
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch((error) => {
+    next(error);
   });
+};
 
-module.exports = { ErrorResponse, asyncHandler };
+/**
+ * Global error handler middleware
+ */
+const errorHandler = (err, req, res, next) => {
+  let error = { ...err };
+  error.message = err.message;
+
+  // Log error
+  logger.error(
+    `${err.statusCode || 500} - ${err.message} - ${req.originalUrl} - ${
+      req.method
+    } - ${req.ip}`
+  );
+
+  // Mongoose bad ObjectId
+  if (err.name === "CastError") {
+    const message = `Resource not found`;
+    error = new ErrorResponse(message, 404);
+  }
+
+  // Mongoose duplicate key
+  if (err.code === 11000) {
+    const message = `Duplicate field value entered`;
+    error = new ErrorResponse(message, 400);
+  }
+
+  // Mongoose validation error
+  if (err.name === "ValidationError") {
+    const message = Object.values(err.errors).map((val) => val.message);
+    error = new ErrorResponse(message, 400);
+  }
+
+  res.status(error.statusCode || 500).json({
+    success: false,
+    error: error.message || "Server Error",
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+  });
+};
+
+module.exports = {
+  ErrorResponse,
+  asyncHandler,
+  errorHandler,
+};
