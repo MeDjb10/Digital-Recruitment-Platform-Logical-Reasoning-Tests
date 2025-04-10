@@ -1,128 +1,654 @@
-<div class="card p-4">
-    <p-table #dt [value]="candidates" [rows]="10" [paginator]="true" 
-        [globalFilterFields]="['name', 'email', 'testDate', 'status', 'niveau']"
-        [tableStyle]="{ 'min-width': '75rem' }" [loading]="loading"
-        styleClass="p-datatable-striped">
-        <ng-template pTemplate="caption">
-            <div class="flex justify-between items-center">
-                <h5 class="text-xl font-semibold">Candidates List</h5>
-                <span class="p-input-icon-left">
-                    <i class="pi pi-search"></i>
-                    <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
-                        placeholder="Search candidate..." class="p-inputtext-sm" />
-                </span>
-            </div>
-        </ng-template>
-        <ng-template pTemplate="header">
-            <tr>
-                <th pTooltip="Candidate's full name" tooltipPosition="top" style="width:20%">Name</th>
-                <th pTooltip="Education level" tooltipPosition="top" style="width:15%">Niveau</th>
-                <th pTooltip="Candidate's email address" tooltipPosition="top" style="width:20%">Email</th>
-                <th pTooltip="Test date and time" tooltipPosition="top" style="width:15%">Test Date</th>
-                <th pTooltip="Current test status" tooltipPosition="top" style="width:15%">Status</th>
-                
-                <th style="width:15%">Actions</th>
-            </tr>
-            <tr>
-                <th>
-                    <p-columnFilter type="text" field="name" placeholder="Search by name"></p-columnFilter>
-                </th>
-                <th>
-                    <p-columnFilter type="text" field="niveau" placeholder="Search by niveau"></p-columnFilter>
-                </th>
-                <th>
-                    <p-columnFilter type="text" field="email" placeholder="Search by email"></p-columnFilter>
-                </th>
-                <th>
-                    <p-columnFilter type="date" field="testDate" placeholder="Search by date"></p-columnFilter>
-                </th>
-                <th>
-                    <p-columnFilter field="status" matchMode="equals" [showMenu]="false">
-                        <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                            <p-dropdown [ngModel]="value" [options]="statuses" 
-                                (onChange)="filter($event.value.value)" 
-                                placeholder="Select Status" 
-                                [showClear]="true"
-                                styleClass="w-full"
-                                [style]="{'min-width': '140px'}"
-                                optionLabel="label">
-                                <ng-template pTemplate="item" let-option>
-                                    <p-tag [value]="option.label" [severity]="option.severity"></p-tag>
-                                </ng-template>
-                            </p-dropdown>
-                        </ng-template>
-                    </p-columnFilter>
-                </th>
-                
-                <th></th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-candidate>
-            <tr>
-                <td>{{candidate.name}}</td>
-                <td>{{candidate.niveau}}</td>
-                <td>{{candidate.email}}</td>
-                <td>{{candidate.testDate}}</td>
-                <td>
-                    <p-tag [value]="candidate.status" [severity]="getSeverity(candidate.status)"></p-tag>
-                </td>
-                
-                <td class="text-center">
-                    <button pButton type="button" icon="pi pi-eye" 
-                        class="p-button-rounded p-button-text"
-                        (click)="showDetails(candidate)"
-                        pTooltip="View Details" tooltipPosition="left">
-                    </button>
-                </td>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-            <tr>
-                <td colspan="6" class="text-center p-4">No candidates found.</td>
-            </tr>
-        </ng-template>
-    </p-table>
+<div class="card shadow-lg rounded-lg overflow-hidden p-4">
+  <div class="flex flex-wrap justify-between items-center mb-4">
+    <div class="flex items-center gap-2">
+      <h2 class="text-2xl font-bold text-gray-800">Candidate Management</h2>
+      <p-badge
+        [value]="totalRecords.toString()"
+        severity="info"
+        styleClass="ml-2"
+      ></p-badge>
+    </div>
+
+    <div class="flex gap-2">
+      <button
+        pButton
+        icon="pi pi-filter"
+        label="Test Requests"
+        (click)="loadTestAuthRequests()"
+        class="p-button-outlined"
+      ></button>
+      <button
+        pButton
+        icon="pi pi-users"
+        label="All Candidates"
+        (click)="loadCandidates()"
+        class="p-button-outlined"
+      ></button>
+      <button
+        pButton
+        icon="pi pi-check"
+        label="Bulk Actions"
+        [disabled]="selectedCandidates.length === 0"
+        (click)="showBulkActionDialog()"
+        class="p-button-success"
+      ></button>
+    </div>
+  </div>
+
+  <p-toast></p-toast>
+  <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+
+  <!-- Data Table -->
+  <p-table
+    #dt
+    [value]="candidates"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[5, 10, 25, 50]"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} candidates"
+    [globalFilterFields]="[
+      'firstName',
+      'lastName',
+      'email',
+      'educationLevel',
+      'testAuthorizationStatus'
+    ]"
+    [tableStyle]="{ 'min-width': '75rem' }"
+    [loading]="loading"
+    styleClass="p-datatable-striped p-datatable-gridlines p-datatable-sm"
+    [rowHover]="true"
+    selectionMode="multiple"
+    [(selection)]="selectedCandidates"
+    dataKey="_id"
+    (onLazyLoad)="loadCandidates($event)"
+    [lazy]="true"
+    [totalRecords]="totalRecords"
+  >
+    <ng-template pTemplate="caption">
+      <div class="flex justify-between items-center">
+        <h5 class="text-xl font-semibold">Candidates List</h5>
+        <span class="p-input-icon-left ml-auto">
+          <i class="pi pi-search"></i>
+          <input
+            pInputText
+            type="text"
+            (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+            placeholder="Search candidate..."
+            class="p-inputtext-sm"
+          />
+        </span>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 3rem">
+          <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+        </th>
+        <th pSortableColumn="firstName" style="width: 15%">
+          Name <p-sortIcon field="firstName"></p-sortIcon>
+        </th>
+        <th pSortableColumn="educationLevel" style="width: 15%">
+          Education <p-sortIcon field="educationLevel"></p-sortIcon>
+        </th>
+        <th pSortableColumn="email" style="width: 20%">
+          Email <p-sortIcon field="email"></p-sortIcon>
+        </th>
+        <th pSortableColumn="testAuthorizationStatus" style="width: 15%">
+          Status <p-sortIcon field="testAuthorizationStatus"></p-sortIcon>
+        </th>
+        <th pSortableColumn="testAuthorizationDate" style="width: 15%">
+          Request Date <p-sortIcon field="testAuthorizationDate"></p-sortIcon>
+        </th>
+        <th style="width: 20%">Actions</th>
+      </tr>
+
+      <tr>
+        <th></th>
+        <th>
+          <p-columnFilter
+            type="text"
+            field="firstName"
+            placeholder="Search by name"
+          ></p-columnFilter>
+        </th>
+        <th>
+          <p-columnFilter
+            type="text"
+            field="educationLevel"
+            placeholder="Education level"
+          ></p-columnFilter>
+        </th>
+        <th>
+          <p-columnFilter
+            type="text"
+            field="email"
+            placeholder="Search by email"
+          ></p-columnFilter>
+        </th>
+        <th>
+          <p-columnFilter
+            field="testAuthorizationStatus"
+            matchMode="equals"
+            [showMenu]="false"
+          >
+            <ng-template
+              pTemplate="filter"
+              let-value
+              let-filter="filterCallback"
+            >
+              <p-dropdown
+                [ngModel]="value"
+                [options]="testAuthStatuses"
+                (onChange)="filter($event.value)"
+                placeholder="Select Status"
+                [showClear]="true"
+                styleClass="w-full"
+                optionLabel="label"
+                optionValue="value"
+              >
+                <ng-template pTemplate="item" let-option>
+                  <p-tag
+                    [value]="option.label"
+                    [severity]="option.severity"
+                  ></p-tag>
+                </ng-template>
+              </p-dropdown>
+            </ng-template>
+          </p-columnFilter>
+        </th>
+        <th>
+          <p-columnFilter
+            type="date"
+            field="testAuthorizationDate"
+            placeholder="Search by date"
+          ></p-columnFilter>
+        </th>
+        <th></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-candidate>
+      <tr>
+        <td>
+          <p-tableCheckbox [value]="candidate"></p-tableCheckbox>
+        </td>
+        <td>
+          <div class="flex items-center gap-2">
+            <span
+              class="w-8 h-8 bg-blue-100 text-blue-800 font-bold rounded-full flex items-center justify-center"
+            >
+              {{ candidate.firstName?.charAt(0)
+              }}{{ candidate.lastName?.charAt(0) }}
+            </span>
+            <span class="font-medium"
+              >{{ candidate.firstName }} {{ candidate.lastName }}</span
+            >
+          </div>
+        </td>
+        <td>{{ getEducationLevel(candidate.educationLevel) }}</td>
+        <td>{{ candidate.email }}</td>
+        <td>
+          <p-tag
+            [value]="candidate.testAuthorizationStatus"
+            [severity]="getSeverity(candidate.testAuthorizationStatus)"
+          >
+          </p-tag>
+        </td>
+        <td>{{ formatDate(candidate.testAuthorizationDate) }}</td>
+        <td>
+          <div class="flex justify-start gap-1">
+            <button
+              pButton
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-text p-button-sm"
+              (click)="showDetails(candidate)"
+              pTooltip="View Details"
+              tooltipPosition="top"
+            ></button>
+
+            <ng-container
+              *ngIf="candidate.testAuthorizationStatus === 'pending'"
+            >
+              <button
+                pButton
+                icon="pi pi-check"
+                class="p-button-rounded p-button-success p-button-sm"
+                (click)="confirmAction($event, 'approve', candidate.id)"
+                pTooltip="Approve Request"
+                tooltipPosition="top"
+              ></button>
+
+              <button
+                pButton
+                icon="pi pi-times"
+                class="p-button-rounded p-button-danger p-button-sm"
+                (click)="confirmAction($event, 'reject', candidate.id)"
+                pTooltip="Reject Request"
+                tooltipPosition="top"
+              ></button>
+            </ng-container>
+
+            <ng-container
+              *ngIf="candidate.testAuthorizationStatus === 'approved'"
+            >
+              <button
+                pButton
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-warning p-button-sm"
+                (click)="showAssignmentDialog(candidate)"
+                pTooltip="Assign Test"
+                tooltipPosition="top"
+              ></button>
+            </ng-container>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="text-center p-4">
+          <div class="flex flex-col items-center justify-center py-6">
+            <i class="pi pi-search text-gray-400 text-5xl mb-4"></i>
+            <p class="text-gray-500 text-xl">
+              No candidates found matching your criteria.
+            </p>
+            <button
+              pButton
+              label="Clear Filters"
+              icon="pi pi-filter-slash"
+              class="p-button-text mt-3"
+              (click)="clearFilters()"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="summary">
+      <div class="flex items-center justify-between">
+        <div>Total Candidates: {{ totalRecords }}</div>
+        <div *ngIf="selectedCandidates.length > 0">
+          {{ selectedCandidates.length }} candidates selected
+        </div>
+      </div>
+    </ng-template>
+  </p-table>
 </div>
 
-<p-dialog [(visible)]="visible" [header]="dialogHeader" [modal]="true" [style]="{ width: 'fit' }" [draggable]="false" [resizable]="false">
-    <ng-container [ngSwitch]="selectedCandidate?.status.toLowerCase()">
-        <!-- Completed Test Dialog
-        <div *ngSwitchCase="'completed'">
-            <app-completed-users></app-completed-users>
-        </div> -->
+<!-- Candidate Details Dialog -->
+<p-dialog
+  [(visible)]="detailsDialogVisible"
+  [header]="
+    'Candidate Details: ' +
+    (selectedCandidate?.firstName || '') +
+    ' ' +
+    (selectedCandidate?.lastName || '')
+  "
+  [modal]="true"
+  [style]="{ width: '650px' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="p-fluid"
+>
+  <div class="grid" *ngIf="selectedCandidate">
+    <div class="col-12 md:col-6">
+      <label class="block text-gray-700 font-semibold mb-1">Full Name</label>
+      <div class="p-2 bg-gray-50 rounded-md">
+        {{ selectedCandidate.firstName }} {{ selectedCandidate.lastName }}
+      </div>
+    </div>
 
-        <!-- In Progress Dialog -->
-        <div *ngSwitchCase="'in progress'" class="p-4">
-            <h3 class="text-xl mb-4">Current Progress for {{selectedCandidate?.name}}</h3>
-            <div class="grid gap-4">
-                <div class="col-6">
-                    <label class="font-bold">Time Elapsed:</label>
-                    <p>25 minutes</p>
-                </div>
-                <div class="col-6">
-                    <label class="font-bold">Questions Completed:</label>
-                    <p>15/30</p>
-                </div>
-            </div>
-        </div>
+    <div class="col-12 md:col-6">
+      <label class="block text-gray-700 font-semibold mb-1">Email</label>
+      <div class="p-2 bg-gray-50 rounded-md">{{ selectedCandidate.email }}</div>
+    </div>
 
-        <!-- Not Started Dialog -->
-        <div *ngSwitchCase="'not assigned'" class="p-4">
-            <h3 class="text-xl mb-4">Test Information for {{selectedCandidate?.name}}</h3>
-            <app-not-assigned-users></app-not-assigned-users>
-        </div>
+    <div class="col-12 md:col-6">
+      <label class="block text-gray-700 font-semibold mb-1"
+        >Education Level</label
+      >
+      <div class="p-2 bg-gray-50 rounded-md">
+        {{ getEducationLevel(selectedCandidate.educationLevel) }}
+      </div>
+    </div>
 
-        <!-- Assigned Dialog -->
-        <div *ngSwitchCase="'assigned'" class="p-4">
-            <h3 class="text-xl mb-4">Assignment Details for {{selectedCandidate?.name}}</h3>
-            <app-not-assigned-users [existingAssignment]="selectedCandidate"></app-not-assigned-users>
+    <div class="col-12 md:col-6">
+      <label class="block text-gray-700 font-semibold mb-1"
+        >Current Position</label
+      >
+      <div class="p-2 bg-gray-50 rounded-md">
+        {{ selectedCandidate.currentPosition || "N/A" }}
+      </div>
+    </div>
+
+    <div class="col-12 md:col-6">
+      <label class="block text-gray-700 font-semibold mb-1"
+        >Desired Position</label
+      >
+      <div class="p-2 bg-gray-50 rounded-md">
+        {{ selectedCandidate.desiredPosition || "N/A" }}
+      </div>
+    </div>
+
+    <div class="col-12 md:col-6">
+      <label class="block text-gray-700 font-semibold mb-1">Test Status</label>
+      <div class="p-2 bg-gray-50 rounded-md">
+        <p-tag
+          [value]="selectedCandidate.testAuthorizationStatus"
+          [severity]="
+            getSeverity(selectedCandidate.testAuthorizationStatus || '')
+          "
+        >
+        </p-tag>
+      </div>
+    </div>
+
+    <ng-container *ngIf="selectedCandidate.testEligibilityInfo">
+      <div class="col-12">
+        <h3 class="text-lg font-bold mt-4 mb-2 text-blue-800 border-b pb-1">
+          Test Application Information
+        </h3>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <label class="block text-gray-700 font-semibold mb-1"
+          >Job Position</label
+        >
+        <div class="p-2 bg-gray-50 rounded-md">
+          {{ selectedCandidate.testEligibilityInfo.jobPosition || "N/A" }}
         </div>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <label class="block text-gray-700 font-semibold mb-1">Company</label>
+        <div class="p-2 bg-gray-50 rounded-md">
+          {{ selectedCandidate.testEligibilityInfo.company || "N/A" }}
+        </div>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <label class="block text-gray-700 font-semibold mb-1">Department</label>
+        <div class="p-2 bg-gray-50 rounded-md">
+          {{ selectedCandidate.testEligibilityInfo.department || "N/A" }}
+        </div>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <label class="block text-gray-700 font-semibold mb-1"
+          >Availability</label
+        >
+        <div class="p-2 bg-gray-50 rounded-md">
+          {{
+            selectedCandidate.testEligibilityInfo.availability?.replace(
+              "_",
+              " "
+            ) || "N/A"
+          }}
+        </div>
+      </div>
+
+      <div class="col-12">
+        <label class="block text-gray-700 font-semibold mb-1"
+          >Additional Information</label
+        >
+        <div class="p-2 bg-gray-50 rounded-md min-h-[60px]">
+          {{
+            selectedCandidate.testEligibilityInfo.additionalInfo ||
+              "None provided"
+          }}
+        </div>
+      </div>
     </ng-container>
 
-    <ng-template pTemplate="footer">
-        <div class="flex justify-between gap-2">
-            <button pButton label="Cancel" icon="pi pi-times" (click)="visible = false" class="p-button-text p-button-danger"></button>
-            <button pButton label="Save" icon="pi pi-check" (click)="onSave()" class="p-button-success"></button>
+    <ng-container *ngIf="selectedCandidate.testAssignment">
+      <div class="col-12">
+        <h3 class="text-lg font-bold mt-4 mb-2 text-blue-800 border-b pb-1">
+          Test Assignment
+        </h3>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <label class="block text-gray-700 font-semibold mb-1"
+          >Assigned Test</label
+        >
+        <div class="p-2 bg-gray-50 rounded-md">
+          {{ selectedCandidate.testAssignment.assignedTest || "None" }}
         </div>
-    </ng-template>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <label class="block text-gray-700 font-semibold mb-1">Exam Date</label>
+        <div class="p-2 bg-gray-50 rounded-md">
+          {{ formatDate(selectedCandidate.testAssignment.examDate) }}
+        </div>
+      </div>
+
+      <div class="col-12">
+        <label class="block text-gray-700 font-semibold mb-1"
+          >Additional Tests</label
+        >
+        <div class="p-2 bg-gray-50 rounded-md">
+          <p-tag
+            *ngFor="
+              let test of selectedCandidate.testAssignment?.additionalTests
+            "
+            [value]="test"
+            severity="info"
+            styleClass="mr-1"
+          ></p-tag>
+          <span
+            *ngIf="!selectedCandidate.testAssignment?.additionalTests?.length"
+            >None</span
+          >
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-between">
+      <button
+        pButton
+        label="Close"
+        icon="pi pi-times"
+        (click)="detailsDialogVisible = false"
+        class="p-button-text"
+      ></button>
+
+      <div *ngIf="selectedCandidate?.testAuthorizationStatus === 'approved'">
+        <button
+          pButton
+          label="Assign Test"
+          icon="pi pi-pencil"
+          (click)="showAssignmentDialog(selectedCandidate!)"
+          class="p-button-primary"
+        ></button>
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Test Assignment Dialog -->
+<p-dialog
+  [(visible)]="assignmentDialogVisible"
+  header="Assign Test"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="p-fluid"
+>
+  <form [formGroup]="assignmentForm">
+    <div class="field mb-4">
+      <label for="assignedTest" class="block text-gray-700 font-semibold mb-2"
+        >Test Type*</label
+      >
+      <p-dropdown
+        id="assignedTest"
+        formControlName="assignedTest"
+        [options]="testOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select Test"
+        styleClass="w-full"
+      ></p-dropdown>
+      <small
+        *ngIf="
+          assignmentForm.get('assignedTest')?.invalid &&
+          assignmentForm.get('assignedTest')?.touched
+        "
+        class="p-error"
+        >Test type is required</small
+      >
+    </div>
+
+    <div class="field mb-4">
+      <label
+        for="additionalTests"
+        class="block text-gray-700 font-semibold mb-2"
+        >Additional Tests</label
+      >
+      <p-multiSelect
+        id="additionalTests"
+        formControlName="additionalTests"
+        [options]="additionalTestOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select Additional Tests"
+        styleClass="w-full"
+      >
+      </p-multiSelect>
+    </div>
+
+    <div class="field mb-4">
+      <label for="examDate" class="block text-gray-700 font-semibold mb-2"
+        >Exam Date*</label
+      >
+      <p-calendar
+        id="examDate"
+        formControlName="examDate"
+        [showTime]="true"
+        [minDate]="currentDate"
+        [showIcon]="true"
+        placeholder="Select Exam Date & Time"
+        styleClass="w-full"
+      ></p-calendar>
+      <small
+        *ngIf="
+          assignmentForm.get('examDate')?.invalid &&
+          assignmentForm.get('examDate')?.touched
+        "
+        class="p-error"
+        >Exam date is required</small
+      >
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-between">
+      <button
+        pButton
+        label="Cancel"
+        icon="pi pi-times"
+        (click)="assignmentDialogVisible = false"
+        class="p-button-text"
+      ></button>
+      <button
+        pButton
+        label="Assign"
+        icon="pi pi-check"
+        (click)="assignTest()"
+        [disabled]="!assignmentForm.valid"
+        class="p-button-success"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Bulk Action Dialog -->
+<p-dialog
+  [(visible)]="bulkActionDialogVisible"
+  header="Bulk Update Test Authorizations"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="p-fluid"
+>
+  <form [formGroup]="bulkActionForm">
+    <div class="field mb-4">
+      <label for="status" class="block text-gray-700 font-semibold mb-2"
+        >Status*</label
+      >
+      <p-dropdown
+        id="status"
+        formControlName="status"
+        [options]="[
+          { label: 'Approve', value: 'approved' },
+          { label: 'Reject', value: 'rejected' }
+        ]"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select Status"
+        styleClass="w-full"
+      ></p-dropdown>
+      <small
+        *ngIf="
+          bulkActionForm.get('status')?.invalid &&
+          bulkActionForm.get('status')?.touched
+        "
+        class="p-error"
+        >Status is required</small
+      >
+    </div>
+
+    <div
+      class="field mb-4"
+      *ngIf="bulkActionForm.get('status')?.value === 'approved'"
+    >
+      <label for="bulkExamDate" class="block text-gray-700 font-semibold mb-2"
+        >Exam Date</label
+      >
+      <p-calendar
+        id="bulkExamDate"
+        formControlName="examDate"
+        [showTime]="true"
+        [minDate]="currentDate"
+        [showIcon]="true"
+        placeholder="Select Exam Date & Time (Optional)"
+        styleClass="w-full"
+      ></p-calendar>
+    </div>
+
+    <div class="mt-4">
+      <p class="text-gray-600">
+        <i class="pi pi-info-circle mr-2"></i>
+        This will update the status for {{ selectedCandidates.length }} selected
+        candidates.
+      </p>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-between">
+      <button
+        pButton
+        label="Cancel"
+        icon="pi pi-times"
+        (click)="bulkActionDialogVisible = false"
+        class="p-button-text"
+      ></button>
+      <button
+        pButton
+        label="Process"
+        icon="pi pi-check"
+        (click)="processBulkAction()"
+        [disabled]="!bulkActionForm.valid"
+        class="p-button-success"
+      ></button>
+    </div>
+  </ng-template>
 </p-dialog>

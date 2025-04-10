@@ -305,31 +305,4 @@ exports.bulkUpdateTestAuthorizationStatus = asyncHandler(async (req, res) => {
   });
 });
 
-/**
- * @desc    Test email sending functionality
- * @route   POST /api/users/test-email
- * @access  Private (Admin only)
- */
-exports.testEmailSending = asyncHandler(async (req, res) => {
-  const { email } = req.body;
 
-  if (!email) {
-    throw new ErrorResponse("Email address is required", 400);
-  }
-
-  try {
-    const result = await emailUtil.sendTestEmail(email);
-
-    res.status(200).json({
-      success: true,
-      message: "Test email sent successfully",
-      result,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to send test email",
-      error: error.message,
-    });
-  }
-});

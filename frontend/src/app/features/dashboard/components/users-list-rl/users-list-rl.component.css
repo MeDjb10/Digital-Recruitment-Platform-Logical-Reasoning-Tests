@@ -1,0 +1,82 @@
+:host ::ng-deep .p-datatable .p-datatable-header {
+  background: #f8f9fa;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  border: 1px solid #dee2e6;
+  border-width: 1px 1px 0 1px;
+  padding: 1rem;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
+  background: rgba(59, 130, 246, 0.04);
+  transition: background-color 0.3s;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background-color: #f0f4f8;
+  color: #334155;
+  font-weight: 600;
+}
+
+:host ::ng-deep .p-tag {
+  text-transform: capitalize;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header {
+  background-color: #f0f4f8;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-footer {
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+:host ::ng-deep .p-button.p-button-success {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+:host ::ng-deep .p-button.p-button-success:hover {
+  background: #059669;
+  border-color: #059669;
+}
+
+:host ::ng-deep .p-button.p-button-danger {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+:host ::ng-deep .p-button.p-button-danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+:host ::ng-deep .p-button.p-button-warning {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+:host ::ng-deep .p-button.p-button-warning:hover {
+  background: #d97706;
+  border-color: #d97706;
+}
+
+/* Ensure consistent height on filter inputs */
+:host ::ng-deep .p-column-filter .p-inputtext {
+  height: 2.5rem;
+}
+
+/* Style for the empty state */
+.empty-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #64748b;
+}

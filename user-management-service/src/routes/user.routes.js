@@ -621,34 +621,5 @@ router.put(
   userController.bulkUpdateTestAuthorizationStatus
 );
 
-/**
- * @swagger
- * /api/users/test-email:
- *   post:
- *     summary: Test email functionality (admin only)
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *             properties:
- *               email:
- *                 type: string
- *     responses:
- *       200:
- *         description: Test email sent successfully
- *       403:
- *         description: Forbidden - admin only
- */
-router.post(
-  "/test-email",
-  verifyToken(["admin"]),
-  userController.testEmailSending
-);
 
 module.exports = router;
