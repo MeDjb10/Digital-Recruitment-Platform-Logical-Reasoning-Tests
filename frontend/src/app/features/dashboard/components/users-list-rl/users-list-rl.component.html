@@ -9,7 +9,28 @@
       ></p-badge>
     </div>
 
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap">
+      <div class="p-input-icon-left relative">
+        <i
+          class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+        ></i>
+        <input
+          #globalFilter
+          pInputText
+          type="text"
+          (input)="onGlobalFilterChange($event)"
+          placeholder="Search candidates..."
+          class="p-inputtext rounded-full pl-10 pr-4 border-gray-300 w-full sm:w-64 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all"
+        />
+        <button
+          *ngIf="globalFilterValue"
+          pButton
+          icon="pi pi-times"
+          class="p-button-rounded p-button-text p-button-sm absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500"
+          (click)="clearGlobalFilter(globalFilter)"
+        ></button>
+      </div>
+
       <button
         pButton
         icon="pi pi-filter"
@@ -68,16 +89,25 @@
     <ng-template pTemplate="caption">
       <div class="flex justify-between items-center">
         <h5 class="text-xl font-semibold">Candidates List</h5>
-        <span class="p-input-icon-left ml-auto">
-          <i class="pi pi-search"></i>
-          <input
-            pInputText
-            type="text"
-            (input)="dt.filterGlobal($any($event.target).value, 'contains')"
-            placeholder="Search candidate..."
-            class="p-inputtext-sm"
-          />
-        </span>
+        <div class="flex items-center gap-2">
+          <p-button
+            label="Clear"
+            [outlined]="true"
+            icon="pi pi-filter-slash"
+            (click)="clearAllFilters(dt)"
+            [disabled]="!hasActiveFilters()"
+          ></p-button>
+          <!-- <span class="p-input-icon-left ml-auto">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="globalFilterValue"
+              (input)="onGlobalFilterChange($event)"
+              placeholder="Search candidates..."
+            />
+          </span> -->
+        </div>
       </div>
     </ng-template>
 
@@ -87,85 +117,146 @@
           <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
         </th>
         <th pSortableColumn="firstName" style="width: 15%">
-          Name <p-sortIcon field="firstName"></p-sortIcon>
+          <div class="flex items-center">
+            Name
+            <p-sortIcon field="firstName"></p-sortIcon>
+            <p-columnFilter type="text" field="firstName" display="menu">
+              <ng-template
+                pTemplate="filter"
+                let-value
+                let-filter="filterCallback"
+              >
+                <input
+                  type="text"
+                  pInputText
+                  [ngModel]="value"
+                  (ngModelChange)="
+                    filter($event); onColumnFilterChange('firstName', $event)
+                  "
+                  placeholder="Search by name"
+                  class="p-column-filter-element"
+                />
+              </ng-template>
+            </p-columnFilter>
+          </div>
         </th>
         <th pSortableColumn="educationLevel" style="width: 15%">
-          Education <p-sortIcon field="educationLevel"></p-sortIcon>
+          <div class="flex items-center">
+            Education
+            <p-sortIcon field="educationLevel"></p-sortIcon>
+            <p-columnFilter type="text" field="educationLevel" display="menu">
+              <ng-template
+                pTemplate="filter"
+                let-value
+                let-filter="filterCallback"
+              >
+                <input
+                  type="text"
+                  pInputText
+                  [ngModel]="value"
+                  (ngModelChange)="
+                    filter($event);
+                    onColumnFilterChange('educationLevel', $event)
+                  "
+                  placeholder="Search by education"
+                  class="p-column-filter-element"
+                />
+              </ng-template>
+            </p-columnFilter>
+          </div>
         </th>
         <th pSortableColumn="email" style="width: 20%">
-          Email <p-sortIcon field="email"></p-sortIcon>
+          <div class="flex items-center">
+            Email
+            <p-sortIcon field="email"></p-sortIcon>
+            <p-columnFilter type="text" field="email" display="menu">
+              <ng-template
+                pTemplate="filter"
+                let-value
+                let-filter="filterCallback"
+              >
+                <input
+                  type="text"
+                  pInputText
+                  [ngModel]="value"
+                  (ngModelChange)="
+                    filter($event); onColumnFilterChange('email', $event)
+                  "
+                  placeholder="Search by email"
+                  class="p-column-filter-element"
+                />
+              </ng-template>
+            </p-columnFilter>
+          </div>
         </th>
         <th pSortableColumn="testAuthorizationStatus" style="width: 15%">
-          Status <p-sortIcon field="testAuthorizationStatus"></p-sortIcon>
+          <div class="flex items-center">
+            Status
+            <p-sortIcon field="testAuthorizationStatus"></p-sortIcon>
+            <p-columnFilter
+              field="testAuthorizationStatus"
+              matchMode="equals"
+              display="menu"
+            >
+              <ng-template
+                pTemplate="filter"
+                let-value
+                let-filter="filterCallback"
+              >
+                <p-dropdown
+                  [ngModel]="value"
+                  [options]="testAuthStatuses"
+                  (onChange)="
+                    filter($event.value); onStatusFilterChange($event.value)
+                  "
+                  placeholder="Select Status"
+                  [showClear]="true"
+                  styleClass="w-full"
+                  optionLabel="label"
+                  optionValue="value"
+                  appendTo="body"
+                >
+                  <ng-template pTemplate="item" let-option>
+                    <p-tag
+                      [value]="option.label"
+                      [severity]="option.severity"
+                    ></p-tag>
+                  </ng-template>
+                </p-dropdown>
+              </ng-template>
+            </p-columnFilter>
+          </div>
         </th>
         <th pSortableColumn="testAuthorizationDate" style="width: 15%">
-          Request Date <p-sortIcon field="testAuthorizationDate"></p-sortIcon>
+          <div class="flex items-center">
+            Request Date
+            <p-sortIcon field="testAuthorizationDate"></p-sortIcon>
+            <p-columnFilter
+              type="date"
+              field="testAuthorizationDate"
+              display="menu"
+            >
+              <ng-template
+                pTemplate="filter"
+                let-value
+                let-filter="filterCallback"
+              >
+                <p-calendar
+                  [ngModel]="value || null"
+                  (onSelect)="filter($event); onDateFilterChange($event)"
+                  (onClear)="filter(null); onDateFilterChange(null)"
+                  [showButtonBar]="true"
+                  [readonlyInput]="false"
+                  [appendTo]="'body'"
+                  placeholder="Select Date"
+                  [showClear]="true"
+                  styleClass="p-calendar-w-100"
+                ></p-calendar>
+              </ng-template>
+            </p-columnFilter>
+          </div>
         </th>
         <th style="width: 20%">Actions</th>
-      </tr>
-
-      <tr>
-        <th></th>
-        <th>
-          <p-columnFilter
-            type="text"
-            field="firstName"
-            placeholder="Search by name"
-          ></p-columnFilter>
-        </th>
-        <th>
-          <p-columnFilter
-            type="text"
-            field="educationLevel"
-            placeholder="Education level"
-          ></p-columnFilter>
-        </th>
-        <th>
-          <p-columnFilter
-            type="text"
-            field="email"
-            placeholder="Search by email"
-          ></p-columnFilter>
-        </th>
-        <th>
-          <p-columnFilter
-            field="testAuthorizationStatus"
-            matchMode="equals"
-            [showMenu]="false"
-          >
-            <ng-template
-              pTemplate="filter"
-              let-value
-              let-filter="filterCallback"
-            >
-              <p-dropdown
-                [ngModel]="value"
-                [options]="testAuthStatuses"
-                (onChange)="filter($event.value)"
-                placeholder="Select Status"
-                [showClear]="true"
-                styleClass="w-full"
-                optionLabel="label"
-                optionValue="value"
-              >
-                <ng-template pTemplate="item" let-option>
-                  <p-tag
-                    [value]="option.label"
-                    [severity]="option.severity"
-                  ></p-tag>
-                </ng-template>
-              </p-dropdown>
-            </ng-template>
-          </p-columnFilter>
-        </th>
-        <th>
-          <p-columnFilter
-            type="date"
-            field="testAuthorizationDate"
-            placeholder="Search by date"
-          ></p-columnFilter>
-        </th>
-        <th></th>
       </tr>
     </ng-template>
 
@@ -260,7 +351,7 @@
               label="Clear Filters"
               icon="pi pi-filter-slash"
               class="p-button-text mt-3"
-              (click)="clearFilters()"
+              (click)="clearAllFilters(dt)"
             ></button>
           </div>
         </td>
@@ -268,10 +359,27 @@
     </ng-template>
 
     <ng-template pTemplate="summary">
-      <div class="flex items-center justify-between">
-        <div>Total Candidates: {{ totalRecords }}</div>
-        <div *ngIf="selectedCandidates.length > 0">
-          {{ selectedCandidates.length }} candidates selected
+      <div class="flex items-center justify-between bg-gray-50 rounded-md p-2">
+        <div class="text-sm text-gray-700 font-medium">
+          Total Candidates: {{ totalRecords }}
+        </div>
+        <div
+          *ngIf="selectedCandidates.length > 0"
+          class="flex items-center gap-2"
+        >
+          <span
+            class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+          >
+            {{ selectedCandidates.length }} candidates selected
+          </span>
+          <button
+            pButton
+            icon="pi pi-times"
+            class="p-button-rounded p-button-text p-button-sm"
+            (click)="clearSelection()"
+            pTooltip="Clear selection"
+            tooltipPosition="left"
+          ></button>
         </div>
       </div>
     </ng-template>
@@ -288,10 +396,10 @@
     (selectedCandidate?.lastName || '')
   "
   [modal]="true"
-  [style]="{ width: '650px' }"
+  [style]="{ width: '750px', maxWidth: '95vw' }"
   [draggable]="false"
   [resizable]="false"
-  styleClass="p-fluid"
+  styleClass="p-fluid candidate-details-dialog"
 >
   <div class="grid" *ngIf="selectedCandidate">
     <div class="col-12 md:col-6">
@@ -403,29 +511,7 @@
       </div>
     </ng-container>
 
-    <ng-container *ngIf="selectedCandidate.testAssignment">
-      <div class="col-12">
-        <h3 class="text-lg font-bold mt-4 mb-2 text-blue-800 border-b pb-1">
-          Test Assignment
-        </h3>
-      </div>
-
-      <div class="col-12 md:col-6">
-        <label class="block text-gray-700 font-semibold mb-1"
-          >Assigned Test</label
-        >
-        <div class="p-2 bg-gray-50 rounded-md">
-          {{ selectedCandidate.testAssignment.assignedTest || "None" }}
-        </div>
-      </div>
-
-      <div class="col-12 md:col-6">
-        <label class="block text-gray-700 font-semibold mb-1">Exam Date</label>
-        <div class="p-2 bg-gray-50 rounded-md">
-          {{ formatDate(selectedCandidate.testAssignment.examDate) }}
-        </div>
-      </div>
-
+    <ng-container *ngIf="selectedCandidate?.testAssignment">
       <div class="col-12">
         <label class="block text-gray-700 font-semibold mb-1"
           >Additional Tests</label
@@ -433,14 +519,14 @@
         <div class="p-2 bg-gray-50 rounded-md">
           <p-tag
             *ngFor="
-              let test of selectedCandidate.testAssignment?.additionalTests
+              let test of selectedCandidate?.testAssignment?.additionalTests
             "
             [value]="test"
             severity="info"
             styleClass="mr-1"
           ></p-tag>
           <span
-            *ngIf="!selectedCandidate.testAssignment?.additionalTests?.length"
+            *ngIf="!selectedCandidate?.testAssignment?.additionalTests?.length"
             >None</span
           >
         </div>
@@ -449,16 +535,19 @@
   </div>
 
   <ng-template pTemplate="footer">
-    <div class="flex justify-between">
+    <div class="flex justify-between items-center border-t pt-3">
       <button
         pButton
         label="Close"
         icon="pi pi-times"
         (click)="detailsDialogVisible = false"
-        class="p-button-text"
+        class="p-button-text hover:bg-gray-100"
       ></button>
 
-      <div *ngIf="selectedCandidate?.testAuthorizationStatus === 'approved'">
+      <div
+        *ngIf="selectedCandidate?.testAuthorizationStatus === 'approved'"
+        class="flex gap-2"
+      >
         <button
           pButton
           label="Assign Test"
@@ -476,10 +565,10 @@
   [(visible)]="assignmentDialogVisible"
   header="Assign Test"
   [modal]="true"
-  [style]="{ width: '500px' }"
+  [style]="{ width: '550px', maxWidth: '95vw' }"
   [draggable]="false"
   [resizable]="false"
-  styleClass="p-fluid"
+  styleClass="p-fluid test-assignment-dialog"
 >
   <form [formGroup]="assignmentForm">
     <div class="field mb-4">
@@ -527,15 +616,19 @@
       <label for="examDate" class="block text-gray-700 font-semibold mb-2"
         >Exam Date*</label
       >
-      <p-calendar
-        id="examDate"
-        formControlName="examDate"
-        [showTime]="true"
-        [minDate]="currentDate"
-        [showIcon]="true"
-        placeholder="Select Exam Date & Time"
-        styleClass="w-full"
-      ></p-calendar>
+      <div class="calendar-container">
+        <p-calendar
+          id="examDate"
+          formControlName="examDate"
+          [showTime]="true"
+          [minDate]="currentDate"
+          [showIcon]="true"
+          placeholder="Select Exam Date & Time"
+          styleClass="w-full"
+          [baseZIndex]="1100"
+          appendTo="body"
+        ></p-calendar>
+      </div>
       <small
         *ngIf="
           assignmentForm.get('examDate')?.invalid &&
@@ -548,13 +641,13 @@
   </form>
 
   <ng-template pTemplate="footer">
-    <div class="flex justify-between">
+    <div class="flex justify-between items-center border-t pt-3">
       <button
         pButton
         label="Cancel"
         icon="pi pi-times"
         (click)="assignmentDialogVisible = false"
-        class="p-button-text"
+        class="p-button-text hover:bg-gray-100"
       ></button>
       <button
         pButton
@@ -573,10 +666,10 @@
   [(visible)]="bulkActionDialogVisible"
   header="Bulk Update Test Authorizations"
   [modal]="true"
-  [style]="{ width: '500px' }"
+  [style]="{ width: '550px', maxWidth: '95vw' }"
   [draggable]="false"
   [resizable]="false"
-  styleClass="p-fluid"
+  styleClass="p-fluid bulk-action-dialog"
 >
   <form [formGroup]="bulkActionForm">
     <div class="field mb-4">
@@ -612,15 +705,19 @@
       <label for="bulkExamDate" class="block text-gray-700 font-semibold mb-2"
         >Exam Date</label
       >
-      <p-calendar
-        id="bulkExamDate"
-        formControlName="examDate"
-        [showTime]="true"
-        [minDate]="currentDate"
-        [showIcon]="true"
-        placeholder="Select Exam Date & Time (Optional)"
-        styleClass="w-full"
-      ></p-calendar>
+      <div class="calendar-container">
+        <p-calendar
+          id="bulkExamDate"
+          formControlName="examDate"
+          [showTime]="true"
+          [minDate]="currentDate"
+          [showIcon]="true"
+          placeholder="Select Exam Date & Time (Optional)"
+          styleClass="w-full"
+          [baseZIndex]="1100"
+          appendTo="body"
+        ></p-calendar>
+      </div>
     </div>
 
     <div class="mt-4">
@@ -633,13 +730,13 @@
   </form>
 
   <ng-template pTemplate="footer">
-    <div class="flex justify-between">
+    <div class="flex justify-between items-center border-t pt-3">
       <button
         pButton
         label="Cancel"
         icon="pi pi-times"
         (click)="bulkActionDialogVisible = false"
-        class="p-button-text"
+        class="p-button-text hover:bg-gray-100"
       ></button>
       <button
         pButton

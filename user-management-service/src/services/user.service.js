@@ -23,6 +23,34 @@ exports.getUsers = async (queryParams, userRole) => {
     filter.role = queryParams.role;
   }
 
+  // Add testAuthorizationStatus filter
+  if (queryParams.testAuthorizationStatus) {
+    filter.testAuthorizationStatus = queryParams.testAuthorizationStatus;
+  }
+
+  // Add firstName filter
+  if (queryParams.firstName) {
+    filter.firstName = { $regex: queryParams.firstName, $options: "i" };
+  }
+
+  // Add lastName filter
+  if (queryParams.lastName) {
+    filter.lastName = { $regex: queryParams.lastName, $options: "i" };
+  }
+
+  // Add email filter
+  if (queryParams.email) {
+    filter.email = { $regex: queryParams.email, $options: "i" };
+  }
+
+  // Add educationLevel filter
+  if (queryParams.educationLevel) {
+    filter.educationLevel = {
+      $regex: queryParams.educationLevel,
+      $options: "i",
+    };
+  }
+
   if (queryParams.search) {
     filter.$or = [
       { firstName: { $regex: queryParams.search, $options: "i" } },
@@ -36,10 +64,35 @@ exports.getUsers = async (queryParams, userRole) => {
     filter.status = queryParams.status;
   }
 
+  // Handle date filter
+  if (queryParams.testAuthorizationDate) {
+    const date = new Date(queryParams.testAuthorizationDate);
+    // Create date range for the entire day
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    filter.testAuthorizationDate = {
+      $gte: startDate,
+      $lte: endDate,
+    };
+  }
+
+  console.log("MongoDB filter:", JSON.stringify(filter, null, 2));
+
+  // Add sorting
+  let sortOption = { createdAt: -1 }; // Default sort
+  if (queryParams.sortBy) {
+    const [field, order] = queryParams.sortBy.split(":");
+    sortOption = { [field]: order === "desc" ? -1 : 1 };
+  }
+
   // Execute query with pagination - use projection to exclude password
   const users = await User.find(filter)
     .select("-password")
-    .sort({ createdAt: -1 })
+    .sort(sortOption)
     .skip(skip)
     .limit(limit)
     .lean();

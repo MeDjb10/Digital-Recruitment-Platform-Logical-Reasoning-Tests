@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Table } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -14,8 +14,6 @@ import { ButtonModule } from 'primeng/button';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { DialogModule } from 'primeng/dialog';
-import { CompletedUsersComponent } from '../userDialogue/completed-users/completed-users.component';
-import { NotAssignedUsersComponent } from '../userDialogue/not-assigned-users/not-assigned-users.component';
 import { Router } from '@angular/router';
 import { CalendarModule } from 'primeng/calendar';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -29,6 +27,8 @@ import {
   UserService,
 } from '../../../../core/services/user.service';
 import { BadgeModule } from 'primeng/badge';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+
 @Component({
   selector: 'app-users-list-rl',
   standalone: true,
@@ -48,7 +48,6 @@ import { BadgeModule } from 'primeng/badge';
     ReactiveFormsModule,
     DropdownModule,
     DialogModule,
-    // NotAssignedUsersComponent,
     CalendarModule,
     ConfirmDialogModule,
     ToastModule,
@@ -59,9 +58,13 @@ import { BadgeModule } from 'primeng/badge';
   styleUrl: './users-list-rl.component.css',
 })
 export class UsersListRLComponent implements OnInit {
+  @ViewChild('dt') table!: Table;
+
   candidates: User[] = [];
   selectedCandidates: User[] = [];
   loading: boolean = true;
+  globalFilterValue: string = '';
+  private searchTerms = new Subject<string>();
 
   // Status options for filtering
   testAuthStatuses: any[] = [
@@ -101,6 +104,9 @@ export class UsersListRLComponent implements OnInit {
   totalRecords: number = 0;
   currentDate: Date = new Date(); // Add current date for calendar min date
 
+  // Add variables to track filter state
+  filterValues: any = {};
+
   constructor(
     private userService: UserService,
     private router: Router,
@@ -122,18 +128,194 @@ export class UsersListRLComponent implements OnInit {
 
   ngOnInit() {
     this.loadCandidates();
+
+    // Setup debounce for search
+    this.searchTerms
+      .pipe(debounceTime(400), distinctUntilChanged())
+      .subscribe((term) => {
+        this.filters.search = term;
+        this.loadCandidates();
+      });
   }
 
+  // New method to handle global filter input changes
+  onGlobalFilterChange(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.globalFilterValue = value;
+    this.filters.search = value;
+    this.loadCandidates();
+  }
+
+  // Method to handle status filter changes
+  onStatusFilterChange(value: string) {
+    console.log('Status filter changed to:', value);
+    if (value) {
+      this.filters.testAuthorizationStatus = value as any;
+    } else {
+      delete this.filters.testAuthorizationStatus;
+    }
+    // Manually trigger a reload with the new filters
+    this.loadCandidates();
+  }
+
+  // Clear the global filter
+  clearGlobalFilter(input: HTMLInputElement) {
+    this.globalFilterValue = '';
+    input.value = '';
+    this.searchTerms.next('');
+  }
+
+  // Check if there are active filters
+  hasActiveFilters(): boolean {
+    return (
+      !!this.globalFilterValue ||
+      Object.keys(this.filterValues).length > 0 ||
+      Object.keys(this.filters).some((key) => {
+        const value = this.filters[key as keyof UserFilters];
+        return (
+          key !== 'role' &&
+          key !== 'page' &&
+          key !== 'limit' &&
+          value !== undefined &&
+          value !== null &&
+          value !== ''
+        );
+      })
+    );
+  }
+
+  // Clear selection
+  clearSelection() {
+    this.selectedCandidates = [];
+  }
+
+  // Add a new method to handle generic column filter changes
+  onColumnFilterChange(field: string, value: any) {
+    console.log(`Column filter changed: ${field} = ${value}`);
+
+    if (value && value.trim() !== '') {
+      // Update our tracking object
+      this.filterValues[field] = value;
+
+      // Update the filters object based on the field
+      switch (field) {
+        case 'firstName':
+          this.filters.firstName = value;
+          break;
+        case 'lastName':
+          this.filters.lastName = value;
+          break;
+        case 'email':
+          this.filters.email = value;
+          break;
+        case 'educationLevel':
+          this.filters.educationLevel = value;
+          break;
+        default:
+          // For any other fields
+          (this.filters as any)[field] = value;
+      }
+    } else {
+      // Clear filter if value is empty
+      delete this.filterValues[field];
+
+      // Remove from filters object
+      switch (field) {
+        case 'firstName':
+          delete this.filters.firstName;
+          break;
+        case 'lastName':
+          delete this.filters.lastName;
+          break;
+        case 'email':
+          delete this.filters.email;
+          break;
+        case 'educationLevel':
+          delete this.filters.educationLevel;
+          break;
+        default:
+          // For any other fields
+          delete (this.filters as any)[field];
+      }
+    }
+
+    // Reload the data with updated filters
+    this.loadCandidates();
+  }
+
+  // Add specific handler for date filter - improve with better null handling
+  onDateFilterChange(date: Date | null) {
+    console.log('Date filter changed to:', date);
+
+    if (date) {
+      try {
+        this.filters.testAuthorizationDate = this.formatDateForApi(date);
+        this.filterValues['testAuthorizationDate'] = date;
+      } catch (err) {
+        console.error('Error formatting date:', err);
+        delete this.filters.testAuthorizationDate;
+        delete this.filterValues['testAuthorizationDate'];
+      }
+    } else {
+      delete this.filters.testAuthorizationDate;
+      delete this.filterValues['testAuthorizationDate'];
+    }
+
+    this.loadCandidates();
+  }
+
+  // Improved to handle the right event type
   loadCandidates(event?: any) {
     this.loading = true;
 
+    // Reset filters if not set
+    if (!this.filters) {
+      this.filters = {
+        role: 'candidate',
+        page: 1,
+        limit: 10,
+      };
+    }
+
+    // If we have a lazy loading event, update pagination and sorting
     if (event) {
       this.filters.page = event.first / event.rows + 1;
       this.filters.limit = event.rows;
+
+      // Handle sorting
+      if (event.sortField) {
+        const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
+        this.filters.sortBy = `${event.sortField}:${sortOrder}`;
+      } else {
+        delete this.filters.sortBy;
+      }
+
+      // Handle filters from PrimeNG table only if they're present in the event
+      if (event.filters) {
+        // Process global filter
+        if (event.filters.global) {
+          this.filters.search = event.filters.global.value;
+          this.globalFilterValue = event.filters.global.value;
+        }
+
+        // We'll avoid processing column filters here since we're handling them
+        // directly with our custom handlers (onColumnFilterChange, onStatusFilterChange, etc.)
+      }
     }
+
+    // Ensure global filter is included if set
+    if (this.globalFilterValue && !this.filters.search) {
+      this.filters.search = this.globalFilterValue;
+    }
+
+    console.log('Sending filters to server:', this.filters);
+    console.log('Active filter values:', this.filterValues);
 
     this.userService.getUsers(this.filters).subscribe({
       next: (response) => {
+        console.log('Response from server:', response);
+        console.log('Total records:', response.pagination.total);
+
         // Map users to ensure each has a consistent identifier property for table selection
         this.candidates = response.users.map((user) => {
           // If _id exists but id doesn't, assign _id to id for consistency
@@ -144,8 +326,6 @@ export class UsersListRLComponent implements OnInit {
         });
         this.totalRecords = response.pagination.total;
         this.loading = false;
-        // Clear selection when loading new data
-        this.selectedCandidates = [];
       },
       error: (error) => {
         console.error('Error loading candidates:', error);
@@ -159,31 +339,84 @@ export class UsersListRLComponent implements OnInit {
     });
   }
 
+  // Make formatDateForApi more robust with better error handling
+  formatDateForApi(date: Date | null): string {
+    if (!date) return '';
+
+    try {
+      // More robust way that works even if date is actually a string
+      const d = new Date(date);
+      if (isNaN(d.getTime())) {
+        throw new Error('Invalid date');
+      }
+
+      // Format as YYYY-MM-DD
+      return d.toISOString().split('T')[0];
+    } catch (err) {
+      console.error('Error formatting date:', err);
+      return '';
+    }
+  }
+
+  // Improved method to clear filters
+  clearAllFilters(table: Table) {
+    // Reset the table UI filters
+    table.clear();
+
+    // Reset our internal state
+    this.globalFilterValue = '';
+    this.filterValues = {};
+
+    // Reset the API request filters
+    this.filters = {
+      role: 'candidate',
+      page: 1,
+      limit: 10,
+    };
+
+    // Reload data
+    this.loadCandidates();
+  }
+
   // Method to load test authorization requests
   loadTestAuthRequests(status: string = 'pending') {
     this.loading = true;
-    this.userService
-      .getTestAuthorizationRequests({
-        status: status,
-        page: this.filters.page,
-        limit: this.filters.limit,
-      })
-      .subscribe({
-        next: (response) => {
-          this.candidates = response.requests;
-          this.totalRecords = response.pagination.total;
-          this.loading = false;
-        },
-        error: (error) => {
-          console.error('Error loading test authorization requests:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to load test requests. Please try again.',
-          });
-          this.loading = false;
-        },
-      });
+    this.globalFilterValue = ''; // Reset global filter when changing views
+
+    // Update filters object to include testAuthorizationStatus
+    this.filters = {
+      role: 'candidate',
+      page: 1,
+      limit: 10,
+      testAuthorizationStatus: status as
+        | 'pending'
+        | 'approved'
+        | 'rejected'
+        | 'not_submitted',
+    };
+
+    this.userService.getUsers(this.filters).subscribe({
+      next: (response) => {
+        this.candidates = response.users.map((user) => {
+          if (user._id && !user.id) {
+            user.id = user._id;
+          }
+          return user;
+        });
+        this.totalRecords = response.pagination.total;
+        this.loading = false;
+        this.selectedCandidates = [];
+      },
+      error: (error) => {
+        console.error('Error loading candidates with filter:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load candidates. Please try again.',
+        });
+        this.loading = false;
+      },
+    });
   }
 
   getSeverity(
@@ -330,14 +563,6 @@ export class UsersListRLComponent implements OnInit {
 
     const formData = this.assignmentForm.value;
 
-    // Debug the user ID to see what's being sent
-    console.log('User ID for assignment:', {
-      id: this.selectedCandidate.id,
-      _id: this.selectedCandidate._id,
-      type: typeof this.selectedCandidate.id,
-      fullCandidate: this.selectedCandidate,
-    });
-
     // Determine which ID to use - prefer _id if id is not valid
     let userId = this.selectedCandidate.id;
 
@@ -348,7 +573,6 @@ export class UsersListRLComponent implements OnInit {
       this.isValidObjectId(this.selectedCandidate._id)
     ) {
       userId = this.selectedCandidate._id;
-      console.log('Using _id instead of id for user assignment:', userId);
     }
 
     this.userService
@@ -365,7 +589,8 @@ export class UsersListRLComponent implements OnInit {
             detail: 'Test assigned successfully',
           });
           this.assignmentDialogVisible = false;
-          this.loadTestAuthRequests('approved');
+          // Refresh the data with current filters
+          this.loadCandidates();
         },
         error: (error) => {
           console.error('Error assigning test:', error);

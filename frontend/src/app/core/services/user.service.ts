@@ -17,13 +17,24 @@ import {
   TestAuthorizationRequestsResponse,
 } from '../models/user.model';
 
-// Add a UserFilter interface to match backend filtering capabilities
+// Update UserFilter interface to match backend filtering capabilities
 export interface UserFilters {
   page?: number;
   limit?: number;
   role?: 'candidate' | 'admin' | 'moderator' | 'psychologist';
   search?: string;
   status?: 'active' | 'inactive' | 'suspended';
+  testAuthorizationStatus?:
+    | 'pending'
+    | 'approved'
+    | 'rejected'
+    | 'not_submitted';
+  testAuthorizationDate?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  educationLevel?: string;
+  sortBy?: string;
 }
 
 @Injectable({
@@ -48,16 +59,24 @@ export class UserService {
   getUsers(filters: UserFilters = {}): Observable<UsersResponse> {
     let httpParams = new HttpParams();
 
+    console.log('Building request with filters:', filters);
+
     Object.keys(filters).forEach((key) => {
       const value = filters[key as keyof UserFilters];
-      if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
         httpParams = httpParams.set(key, String(value));
+        console.log(`Added param: ${key}=${String(value)}`);
       }
     });
 
     return this.http
       .get<UsersResponse>(this.apiUrl, { params: httpParams })
-      .pipe(catchError(this.handleError));
+      .pipe(
+        tap((response) =>
+          console.log(`Received ${response.users.length} users from API`)
+        ),
+        catchError(this.handleError)
+      );
   }
 
   // Get user by id

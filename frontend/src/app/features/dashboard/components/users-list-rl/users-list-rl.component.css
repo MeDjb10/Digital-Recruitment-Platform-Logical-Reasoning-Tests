@@ -20,6 +20,13 @@
   background-color: #f0f4f8;
   color: #334155;
   font-weight: 600;
+  padding: 1rem 1rem;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th .flex.items-center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 :host ::ng-deep .p-tag {
@@ -34,6 +41,7 @@
 :host ::ng-deep .p-dialog .p-dialog-footer {
   background-color: #f8fafc;
   border-top: 1px solid #e2e8f0;
+  padding: 1rem;
 }
 
 :host ::ng-deep .p-button.p-button-success {
@@ -71,6 +79,53 @@
   height: 2.5rem;
 }
 
+/* Styling for column filter icons */
+:host ::ng-deep .p-column-filter-menu-button {
+  width: 2rem;
+  height: 2rem;
+  color: #6c757d;
+  border-radius: 50%;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  margin-left: 0.5rem;
+}
+
+:host ::ng-deep .p-column-filter-menu-button:hover {
+  background-color: #e9ecef;
+  color: #343a40;
+}
+
+:host
+  ::ng-deep
+  .p-column-filter-menu-button.p-column-filter-menu-button-active {
+  background-color: #e9ecef;
+  color: #3b82f6;
+}
+
+/* Filter input styles */
+:host ::ng-deep .p-column-filter-element {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Make sure column filter menus have proper z-index and wider width */
+:host ::ng-deep .p-column-filter-overlay {
+  min-width: 200px;
+  z-index: 1000 !important;
+}
+
+/* Improve filter field layout */
+:host ::ng-deep .p-column-filter-row {
+  padding: 0.5rem;
+}
+
+/* Add a visible active state for column filters */
+:host ::ng-deep .p-column-filter-menu-button.p-column-filter-menu-button-active,
+:host ::ng-deep .p-column-filter-menu-button.p-column-filter-menu-button-open {
+  background-color: #e0f3ff;
+  color: #2196f3;
+}
+
 /* Style for the empty state */
 .empty-message {
   display: flex;
@@ -79,4 +134,146 @@
   justify-content: center;
   padding: 2rem;
   color: #64748b;
+}
+
+/* Calendar improvements */
+:host ::ng-deep .calendar-container .p-calendar {
+  width: 100%;
+}
+
+:host ::ng-deep .p-calendar .p-inputtext {
+  width: 100%;
+}
+
+/* Calendar panel positioning */
+:host ::ng-deep .p-datepicker {
+  min-width: 280px;
+}
+
+:host ::ng-deep body .p-datepicker {
+  z-index: 1051 !important;
+}
+
+/* Search input styling */
+:host ::ng-deep .p-input-icon-left input.p-inputtext {
+  padding-left: 2.5rem;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+:host ::ng-deep .p-input-icon-left input.p-inputtext:focus {
+  box-shadow: 0 0 0 2px #eff6ff, 0 0 0 4px #93c5fd;
+  border-color: #3b82f6;
+}
+
+/* Dialog styling improvements */
+:host ::ng-deep .p-dialog {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-radius: 0.5rem;
+  overflow: visible;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-content {
+  padding: 1.5rem;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Footer border and padding */
+:host ::ng-deep .candidate-details-dialog .p-dialog-footer,
+:host ::ng-deep .test-assignment-dialog .p-dialog-footer,
+:host ::ng-deep .bulk-action-dialog .p-dialog-footer {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+}
+
+/* Table pagination styling */
+:host ::ng-deep .p-paginator {
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+:host ::ng-deep .p-paginator .p-paginator-element {
+  min-width: 2.5rem;
+  height: 2.5rem;
+}
+
+/* Improved button hover states */
+:host ::ng-deep .p-button-text:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Filter menu styling */
+:host ::ng-deep .p-column-filter-overlay {
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  min-width: 12.5rem;
+}
+
+:host ::ng-deep .p-column-filter-row-items {
+  padding: 0.5rem;
+}
+
+/* Ensure filter menu is visible above other elements */
+:host ::ng-deep .p-column-filter-overlay {
+  z-index: 1000 !important;
+}
+
+/* Fix for calendar styling */
+:host ::ng-deep .p-calendar {
+  width: 100%;
+  min-width: 200px;
+}
+
+:host ::ng-deep .p-calendar .p-inputtext {
+  width: 100%;
+}
+
+:host ::ng-deep .p-calendar .p-button {
+  color: #6c757d;
+}
+
+:host ::ng-deep .p-datepicker {
+  min-width: 280px !important;
+}
+
+:host ::ng-deep .p-datepicker table td > span {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* Make sure calendar displays properly */
+:host ::ng-deep .p-datepicker table {
+  font-size: 14px;
+  margin: 0.25rem 0;
+}
+
+/* More specific and robust styling for the calendar component */
+:host ::ng-deep .p-calendar-w-100,
+:host ::ng-deep .p-calendar-w-100 .p-inputtext,
+:host ::ng-deep .p-calendar-w-100 .p-component,
+:host ::ng-deep .p-column-filter .p-calendar {
+  width: 100% !important;
+}
+
+:host ::ng-deep .p-datepicker-buttonbar .p-button {
+  width: auto !important;
+  height: auto !important;
+  font-size: 0.875rem !important;
+  padding: 0.4rem 0.8rem !important;
+}
+
+/* Fix for clear button */
+:host ::ng-deep .p-calendar .p-button-icon-only {
+  width: 2.357rem !important;
+  padding: 0.5rem 0 !important;
+}
+
+/* Fix NgClass issue by ensuring all class properties have string values */
+:host ::ng-deep .p-button.p-component [class] {
+  display: inline-flex !important;
 }
