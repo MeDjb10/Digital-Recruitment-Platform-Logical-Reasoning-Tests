@@ -253,18 +253,70 @@ const updateQuestion = async (req, res) => {
     );
   }
 
+  // Add logging to debug update issues
+  logger.info(
+    `Updating question ${id} of type ${existingQuestion.questionType}`
+  );
+  logger.info(`Update payload: ${JSON.stringify(updates, null, 2)}`);
+
   // Update in the correct collection based on the discriminator value
   let updatedQuestion;
-  if (existingQuestion.questionType === "DominoQuestion") {
-    updatedQuestion = await DominoQuestion.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true,
-    });
-  } else {
-    updatedQuestion = await MultipleChoiceQuestion.findByIdAndUpdate(
-      id,
-      updates,
-      { new: true, runValidators: true }
+
+  try {
+    if (existingQuestion.questionType === "DominoQuestion") {
+      // For domino questions, ensure we preserve existing fields if not in the update
+      const updatedFields = { ...updates };
+
+      // Preserve arrays if they're not in the update to avoid losing data
+      if (!updatedFields.dominos && existingQuestion.dominos) {
+        updatedFields.dominos = existingQuestion.dominos;
+      }
+
+      if (!updatedFields.arrows && existingQuestion.arrows) {
+        updatedFields.arrows = existingQuestion.arrows;
+      }
+
+      if (!updatedFields.correctAnswer && existingQuestion.correctAnswer) {
+        updatedFields.correctAnswer = existingQuestion.correctAnswer;
+      }
+
+      updatedQuestion = await DominoQuestion.findByIdAndUpdate(
+        id,
+        updatedFields,
+        {
+          new: true,
+          runValidators: false, // Skip validation to allow partial updates
+        }
+      );
+    } else if (existingQuestion.questionType === "MultipleChoiceQuestion") {
+      // For multiple choice questions, ensure we preserve options if not in the update
+      const updatedFields = { ...updates };
+
+      if (!updatedFields.options && existingQuestion.options) {
+        updatedFields.options = existingQuestion.options;
+      }
+
+      if (
+        updatedFields.correctOptionIndex === undefined &&
+        existingQuestion.correctOptionIndex !== undefined
+      ) {
+        updatedFields.correctOptionIndex = existingQuestion.correctOptionIndex;
+      }
+
+      updatedQuestion = await MultipleChoiceQuestion.findByIdAndUpdate(
+        id,
+        updatedFields,
+        {
+          new: true,
+          runValidators: false, // Skip validation to allow partial updates
+        }
+      );
+    }
+  } catch (error) {
+    logger.error(`Error updating question ${id}: ${error.message}`);
+    throw new AppError(
+      `Error updating question: ${error.message}`,
+      StatusCodes.BAD_REQUEST
     );
   }
 
@@ -275,7 +327,7 @@ const updateQuestion = async (req, res) => {
     );
   }
 
-  logger.info(`Question updated: ${id}`);
+  logger.info(`Question updated successfully: ${id}`);
   res.status(StatusCodes.OK).json({
     success: true,
     data: updatedQuestion,
@@ -360,13 +412,13 @@ const validateDominoQuestion = async (req, res) => {
     }
 
     // Check if there's exactly one editable domino
-    const editableDominos = dominos.filter(d => d.isEditable === true);
+    const editableDominos = dominos.filter((d) => d.isEditable === true);
     if (editableDominos.length === 0) {
       errors.push("At least one editable domino is required");
     } else if (editableDominos.length > 1) {
       errors.push("Only one editable domino is allowed");
     }
-    
+
     // Check if all dominos have exactX and exactY
     for (let i = 0; i < dominos.length; i++) {
       const domino = dominos[i];
@@ -378,7 +430,7 @@ const validateDominoQuestion = async (req, res) => {
       }
     }
   }
-  
+
   // Check arrows if they exist
   if (arrows && Array.isArray(arrows) && arrows.length > 0) {
     for (let i = 0; i < arrows.length; i++) {
@@ -398,37 +450,42 @@ const validateDominoQuestion = async (req, res) => {
   } else {
     // Check if correctAnswer references an editable domino
     if (Array.isArray(dominos) && dominos.length > 0) {
-      const editableDomino = dominos.find(d => d.isEditable === true);
-      
+      const editableDomino = dominos.find((d) => d.isEditable === true);
+
       if (editableDomino && correctAnswer.dominoId !== editableDomino.id) {
         errors.push("correctAnswer must reference the editable domino");
       }
     }
-    
+
     // Check if correctAnswer has valid values
-    if (correctAnswer.topValue === undefined || correctAnswer.bottomValue === undefined) {
+    if (
+      correctAnswer.topValue === undefined ||
+      correctAnswer.bottomValue === undefined
+    ) {
       errors.push("correctAnswer must have topValue and bottomValue");
     }
-    
+
     // Check if values are in valid range (1-6)
-    const topValueValid = correctAnswer.topValue === null || 
-                         (correctAnswer.topValue >= 1 && correctAnswer.topValue <= 6);
-    const bottomValueValid = correctAnswer.bottomValue === null || 
-                            (correctAnswer.bottomValue >= 1 && correctAnswer.bottomValue <= 6);
-    
+    const topValueValid =
+      correctAnswer.topValue === null ||
+      (correctAnswer.topValue >= 1 && correctAnswer.topValue <= 6);
+    const bottomValueValid =
+      correctAnswer.bottomValue === null ||
+      (correctAnswer.bottomValue >= 1 && correctAnswer.bottomValue <= 6);
+
     if (!topValueValid) {
       errors.push("correctAnswer.topValue must be null or between 1 and 6");
     }
-    
+
     if (!bottomValueValid) {
       errors.push("correctAnswer.bottomValue must be null or between 1 and 6");
     }
   }
-  
+
   // Return validation result
   res.status(StatusCodes.OK).json({
     valid: errors.length === 0,
-    errors
+    errors,
   });
 };
 

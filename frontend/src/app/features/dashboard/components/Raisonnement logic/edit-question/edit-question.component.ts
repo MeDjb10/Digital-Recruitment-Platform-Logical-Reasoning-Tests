@@ -1,9 +1,9 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit } from "@angular/core";
-import { ActivatedRoute } from "@angular/router";
-import { Router } from "@angular/router";
-import { TestManagementService } from "../../../../../core/services/test-management.service";
-import { DominoLayoutBuilderComponent } from "../../../../candidate/canvaTest/domino-layout-builder/domino-layout-builder.component";
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
+import { TestManagementService } from '../../../../../core/services/test-management.service';
+import { DominoLayoutBuilderComponent } from '../../../../candidate/canvaTest/domino-layout-builder/domino-layout-builder.component';
 
 @Component({
   selector: 'app-edit-question',
@@ -122,9 +122,12 @@ export class EditQuestionComponent implements OnInit {
         if (question) {
           // Check if it's a DominoQuestion by looking for dominos property
           if (question.questionType === 'DominoQuestion') {
+            // Make sure _id is explicitly set
+            question._id = question._id || this.questionId;
+
             // Map the question to the expected format
             this.question = {
-              id: question._id,
+              _id: question._id, // Ensure _id is properly set here
               testId: question.testId,
               title: question.title || '',
               instruction: question.instruction,
@@ -137,6 +140,11 @@ export class EditQuestionComponent implements OnInit {
               layoutType: question.layoutType || 'grid',
               questionType: question.questionType,
             };
+
+            console.log(
+              'Question loaded for editing with ID:',
+              this.question._id
+            );
           } else {
             // Handle non-domino questions
             console.error(

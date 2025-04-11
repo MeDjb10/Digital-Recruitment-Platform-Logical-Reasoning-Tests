@@ -10,7 +10,6 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Test } from '../../../../../core/models/test.model';
 
-
 @Component({
   selector: 'app-tests-list-rl',
   standalone: true,
@@ -33,7 +32,7 @@ import { Test } from '../../../../../core/models/test.model';
             pButton
             label="Create New Test"
             icon="pi pi-plus"
-            [routerLink]="['/dashboard/RaisonnementLogique/Tests/create']"
+            [routerLink]="['/dashboard/RaisonnementLogique/Tests/type']"
           ></button>
         </div>
       </div>
@@ -96,7 +95,7 @@ import { Test } from '../../../../../core/models/test.model';
                     icon="pi pi-eye"
                     [routerLink]="[
                       '/dashboard/RaisonnementLogique/Tests',
-                      test.id
+                      test._id
                     ]"
                     class="p-button-rounded p-button-text"
                     title="View Details"
@@ -108,7 +107,7 @@ import { Test } from '../../../../../core/models/test.model';
                     icon="pi pi-pencil"
                     [routerLink]="[
                       '/dashboard/RaisonnementLogique/Tests/edit',
-                      test.id || test._id
+                      test._id
                     ]"
                     class="p-button-rounded p-button-text"
                     title="Edit"
@@ -147,7 +146,7 @@ import { Test } from '../../../../../core/models/test.model';
           pButton
           label="Create New Test"
           icon="pi pi-plus"
-          [routerLink]="['/dashboard/RaisonnementLogique/Tests/create']"
+          [routerLink]="['/dashboard/RaisonnementLogique/Tests/type']"
         ></button>
       </div>
     </div>
@@ -314,9 +313,7 @@ export class TestsListRLComponent implements OnInit {
     this.testService.getAllTests().subscribe(
       (tests) => {
         // Filter only logical reasoning tests if needed
-        this.tests = tests.filter(
-          (test) => test.category === 'logical'
-        );
+        this.tests = tests.filter((test) => test.category === 'logical');
         this.loading = false;
       },
       (error) => {

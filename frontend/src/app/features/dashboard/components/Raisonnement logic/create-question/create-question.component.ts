@@ -97,6 +97,7 @@ export class CreateQuestionComponent implements OnInit {
       const testId = params.get('testId');
       if (testId) {
         this.testId = testId;
+        console.log('Creating question for test ID:', this.testId);
         this.verifyTest(testId);
       } else {
         this.loading = false;
@@ -108,13 +109,15 @@ export class CreateQuestionComponent implements OnInit {
     this.testService.getTestById(testId).subscribe({
       next: (test) => {
         if (test) {
+          console.log('Test verified successfully:', test.name);
           this.loading = false;
         } else {
           this.testId = null;
           this.loading = false;
         }
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error verifying test:', error);
         this.testId = null;
         this.loading = false;
       },
@@ -122,8 +125,9 @@ export class CreateQuestionComponent implements OnInit {
   }
 
   onQuestionSaved(question: any): void {
-    // Question was successfully saved via the layout builder
-    // Will be redirected by the layout builder based on returnUrl
+    console.log('Question saved successfully:', question._id);
+    // Navigate back to test details page
+    this.router.navigate(['/dashboard/RaisonnementLogique/Tests', this.testId]);
   }
 
   onCancel(): void {

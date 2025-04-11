@@ -69,6 +69,7 @@ export class CreateTestComponent implements OnInit {
   pageTitle = 'Create New Test';
   pageSubtitle = 'Design a comprehensive assessment for candidate evaluation';
   submitButtonLabel = 'Create Test';
+  testType: string = 'domino'; // Default test type
 
   difficultyOptions = [
     { label: 'Easy', value: 'easy' },
@@ -132,6 +133,18 @@ export class CreateTestComponent implements OnInit {
     this.initForm();
     this.filteredTags = [...this.suggestedTags]; // Initialize with all suggestions
 
+    // Check for test type parameter from the test-type-selector
+    this.route.queryParams.subscribe((params) => {
+      if (
+        params['type'] &&
+        ['domino', 'multiple-choice', 'verbal'].includes(params['type'])
+      ) {
+        this.testType = params['type'];
+        // Pre-select the test type in the form
+        this.testForm.get('type')?.setValue(this.testType);
+      }
+    });
+
     // Check if we are in edit mode by looking for a testId parameter
     this.route.paramMap.subscribe((params) => {
       this.testId = params.get('testId');
@@ -160,6 +173,9 @@ export class CreateTestComponent implements OnInit {
                 isActive: test.isActive,
                 totalQuestions: test.totalQuestions || 0,
               });
+
+              // Store the test type for later use
+              this.testType = test.type;
 
               this.messageService.add({
                 severity: 'info',
@@ -202,7 +218,7 @@ export class CreateTestComponent implements OnInit {
       name: ['', [Validators.required]],
       description: ['', [Validators.required]],
       category: ['logical', [Validators.required]],
-      type: ['domino', [Validators.required]],
+      type: [this.testType, [Validators.required]],
       duration: [
         30,
         [Validators.required, Validators.min(1), Validators.max(120)],
@@ -216,6 +232,11 @@ export class CreateTestComponent implements OnInit {
         10,
         [Validators.required, Validators.min(1), Validators.max(100)],
       ],
+    });
+
+    // Listen to changes on the type field to update testType
+    this.testForm.get('type')?.valueChanges.subscribe((value) => {
+      this.testType = value;
     });
   }
 
@@ -284,11 +305,28 @@ export class CreateTestComponent implements OnInit {
             detail: 'Test created successfully',
           });
 
+          // Navigate to appropriate question creation based on test type
           setTimeout(() => {
-            this.router.navigate([
-              '/dashboard/RaisonnementLogique/Tests',
-              test._id,
-            ]);
+            if (test.type === 'multiple-choice') {
+              this.router.navigate([
+                '/dashboard/RaisonnementLogique/Tests',
+                test._id,
+                'multiple-choice',
+                'create',
+              ]);
+            } else if (test.type === 'domino') {
+              this.router.navigate([
+                '/dashboard/RaisonnementLogique/Tests',
+                test._id,
+                'questions',
+                'create',
+              ]);
+            } else {
+              this.router.navigate([
+                '/dashboard/RaisonnementLogique/Tests',
+                test._id,
+              ]);
+            }
           }, 1500);
         },
         error: (error) => {

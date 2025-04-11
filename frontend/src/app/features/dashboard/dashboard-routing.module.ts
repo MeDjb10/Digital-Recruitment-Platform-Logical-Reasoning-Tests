@@ -12,6 +12,8 @@ import { TestDetailsComponent } from './components/Raisonnement logic/test-detai
 import { TestsListRLComponent } from './components/Raisonnement logic/tests-list-rl/tests-list-rl.component';
 import { CreateQuestionComponent } from './components/Raisonnement logic/create-question/create-question.component';
 import { CompletedUsersComponent } from './components/userDialogue/completed-users/completed-users.component';
+import { TestTypeSelectorComponent } from './components/Raisonnement logic/test-type-selector/test-type-selector.component';
+import { MultipleChoiceEditorComponent } from './components/Raisonnement logic/multiple-choice-editor/multiple-choice-editor.component';
 
 const routes: Routes = [
   {
@@ -41,6 +43,11 @@ const routes: Routes = [
             title: 'Logical Reasoning Tests',
           },
           {
+            path: 'Tests/type',
+            component: TestTypeSelectorComponent,
+            title: 'Select Test Type',
+          },
+          {
             path: 'Tests/create',
             component: CreateTestComponent,
             title: 'Create New Test',
@@ -61,12 +68,22 @@ const routes: Routes = [
               {
                 path: 'questions/create',
                 component: CreateQuestionComponent,
-                title: 'Create Question',
+                title: 'Create Domino Question',
+              },
+              {
+                path: 'multiple-choice/create',
+                component: MultipleChoiceEditorComponent,
+                title: 'Create Multiple Choice Question',
               },
               {
                 path: 'questions/:questionId/edit',
                 component: EditQuestionComponent,
-                title: 'Edit Question',
+                title: 'Edit Domino Question',
+              },
+              {
+                path: 'multiple-choice/:questionId/edit',
+                component: MultipleChoiceEditorComponent,
+                title: 'Edit Multiple Choice Question',
               },
             ],
           },
