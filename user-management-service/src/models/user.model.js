@@ -82,6 +82,33 @@ const userSchema = new mongoose.Schema({
     },
     submissionDate: Date,
   },
+  testAssignment: {
+    assignedTest: {
+      type: String,
+      enum: ["D-70", "D-2000", "none"],
+      default: "none",
+    },
+    additionalTests: [
+      {
+        type: String,
+        enum: ["logique_des_propositions"],
+      },
+    ],
+    isManualAssignment: {
+      type: Boolean,
+      default: false,
+    },
+    assignmentDate: {
+      type: Date,
+    },
+    examDate: {
+      type: Date,
+    },
+    assignedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  },
   createdAt: {
     type: Date,
     default: Date.now,

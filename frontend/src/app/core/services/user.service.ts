@@ -17,6 +17,26 @@ import {
   TestAuthorizationRequestsResponse,
 } from '../models/user.model';
 
+// Update UserFilter interface to match backend filtering capabilities
+export interface UserFilters {
+  page?: number;
+  limit?: number;
+  role?: 'candidate' | 'admin' | 'moderator' | 'psychologist';
+  search?: string;
+  status?: 'active' | 'inactive' | 'suspended';
+  testAuthorizationStatus?:
+    | 'pending'
+    | 'approved'
+    | 'rejected'
+    | 'not_submitted';
+  testAuthorizationDate?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  educationLevel?: string;
+  sortBy?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -36,18 +56,27 @@ export class UserService {
   }
 
   // Get users with filters (admin/moderator/psychologist)
-  getUsers(params: any = {}): Observable<UsersResponse> {
+  getUsers(filters: UserFilters = {}): Observable<UsersResponse> {
     let httpParams = new HttpParams();
 
-    Object.keys(params).forEach((key) => {
-      if (params[key] !== undefined && params[key] !== null) {
-        httpParams = httpParams.set(key, params[key]);
+    console.log('Building request with filters:', filters);
+
+    Object.keys(filters).forEach((key) => {
+      const value = filters[key as keyof UserFilters];
+      if (value !== undefined && value !== null && value !== '') {
+        httpParams = httpParams.set(key, String(value));
+        console.log(`Added param: ${key}=${String(value)}`);
       }
     });
 
     return this.http
       .get<UsersResponse>(this.apiUrl, { params: httpParams })
-      .pipe(catchError(this.handleError));
+      .pipe(
+        tap((response) =>
+          console.log(`Received ${response.users.length} users from API`)
+        ),
+        catchError(this.handleError)
+      );
   }
 
   // Get user by id
@@ -267,6 +296,30 @@ export class UserService {
         totalRequested: number;
       }>(`${this.apiUrl}/test-authorization/bulk`, { userIds, status })
       .pipe(catchError(this.handleError));
+  }
+
+  // Manual test assignment for approved candidates
+  manualTestAssignment(
+    userId: string,
+    assignmentData: {
+      assignedTest: 'D-70' | 'D-2000';
+      additionalTests?: string[];
+      examDate?: Date | string;
+    }
+  ): Observable<UserResponse> {
+    if (!this.isValidObjectId(userId)) {
+      return throwError(() => new Error('Invalid user ID format'));
+    }
+
+    return this.http
+      .put<UserResponse>(
+        `${this.apiUrl}/${userId}/test-assignment`,
+        assignmentData
+      )
+      .pipe(
+        tap((response) => console.log('Test assignment updated successfully')),
+        catchError(this.handleError)
+      );
   }
 
   // Assign role (admin/moderator)
