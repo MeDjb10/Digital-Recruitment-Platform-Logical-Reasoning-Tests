@@ -1,0 +1,424 @@
+<div class="create-test-container">
+  <p-card>
+    <ng-template pTemplate="header">
+      <div
+        class="header-container"
+        style="
+          border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+          padding-bottom: 1rem;
+        "
+      >
+        <div class="header-content">
+          <div class="header-icon">
+            <i
+              class="pi"
+              [ngClass]="isEditMode ? 'pi-pencil' : 'pi-file-edit'"
+            ></i>
+          </div>
+          <div class="header-text">
+            <h1>{{ pageTitle }}</h1>
+            <p class="header-subtitle">
+              {{ pageSubtitle }}
+            </p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button
+            pButton
+            icon="pi pi-arrow-left"
+            label="Back to Tests"
+            class="p-button-text"
+            (click)="goBack()"
+          ></button>
+        </div>
+      </div>
+    </ng-template>
+
+    <div *ngIf="creating && isEditMode" class="loading-container">
+      <p-progressSpinner styleClass="w-4rem h-4rem"></p-progressSpinner>
+      <p>Loading test data...</p>
+    </div>
+
+    <form
+      [formGroup]="testForm"
+      (ngSubmit)="onSubmit()"
+      class="create-test-form"
+      *ngIf="!isEditMode || !creating"
+    >
+      <p-fieldset
+        legend="Test Information"
+        [toggleable]="true"
+        [collapsed]="false"
+      >
+        <div class="p-fluid form-grid m-0.5">
+          <div class="form-field">
+            <label for="name">Test Name*</label>
+            <div class="p-inputgroup">
+              <span class="p-inputgroup-addon">
+                <i class="pi pi-id-card"></i>
+              </span>
+              <input
+                id="name"
+                type="text"
+                pInputText
+                formControlName="name"
+                placeholder="Enter descriptive test name"
+                [ngClass]="{
+                  'ng-invalid ng-dirty': submitted && f['name'].errors
+                }"
+                pTooltip="Give your test a clear, descriptive name"
+                tooltipPosition="right"
+              />
+            </div>
+            <small
+              class="p-error"
+              *ngIf="submitted && f['name'].errors?.['required']"
+            >
+              Test name is required.
+            </small>
+          </div>
+
+          <div class="form-field">
+            <p-floatlabel variant="on">
+              <textarea
+                id="description"
+                pInputTextarea
+                formControlName="description"
+                [rows]="3"
+                style="resize: none; width: 100%"
+                class="h-full"
+                [ngClass]="{
+                  'ng-invalid ng-dirty': submitted && f['description'].errors
+                }"
+                pTooltip="Provide a clear description that explains what this test evaluates"
+                tooltipPosition="right"
+              ></textarea>
+              <label for="description">Description*</label>
+            </p-floatlabel>
+            <small
+              class="p-error"
+              *ngIf="submitted && f['description'].errors?.['required']"
+            >
+              Description is required.
+            </small>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="category">Category*</label>
+              <p-dropdown
+                id="category"
+                formControlName="category"
+                [options]="categoryOptions"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="'Select Category'"
+                [ngClass]="{
+                  'ng-invalid ng-dirty': submitted && f['category'].errors
+                }"
+                pTooltip="Choose the category this test belongs to"
+                tooltipPosition="right"
+              ></p-dropdown>
+              <small
+                class="p-error"
+                *ngIf="submitted && f['category'].errors?.['required']"
+              >
+                Category is required.
+              </small>
+            </div>
+
+            <div class="form-field">
+              <label for="version">Version</label>
+              <p-dropdown
+                id="version"
+                formControlName="version"
+                [options]="versionOptions"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="'Select Version'"
+                pTooltip="Select the version of this test"
+                tooltipPosition="left"
+              ></p-dropdown>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="totalQuestions">Number of Questions*</label>
+              <p-inputNumber
+                id="totalQuestions"
+                formControlName="totalQuestions"
+                [min]="1"
+                [max]="100"
+                [showButtons]="true"
+                placeholder="10"
+                [ngClass]="{
+                  'ng-invalid ng-dirty': submitted && f['totalQuestions'].errors
+                }"
+                pTooltip="Set how many questions this test will contain"
+                tooltipPosition="right"
+              ></p-inputNumber>
+              <small
+                class="p-error"
+                *ngIf="submitted && f['totalQuestions'].errors?.['required']"
+              >
+                Number of questions is required.
+              </small>
+              <small class="helper-text">
+                This helps candidates understand the scope of the test
+              </small>
+            </div>
+          </div>
+        </div>
+      </p-fieldset>
+
+      <p-fieldset
+        legend="Test Type"
+        [toggleable]="true"
+        [collapsed]="false"
+        styleClass="test-type-section"
+      >
+        <div class="form-field">
+          <label>Test Type*</label>
+          <div class="test-type-selection">
+            <div
+              class="test-type-card"
+              [class.selected]="testForm.get('type')?.value === 'domino'"
+            >
+              <div class="test-type-radio">
+                <p-radioButton
+                  formControlName="type"
+                  value="domino"
+                  inputId="domino"
+                ></p-radioButton>
+                <label for="domino">Domino Test</label>
+              </div>
+              <div class="test-type-description">
+                <i class="pi pi-th-large test-type-icon"></i>
+                <p>
+                  Test with domino patterns where candidates identify logical
+                  relationships and patterns.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="test-type-card"
+              [class.selected]="
+                testForm.get('type')?.value === 'multiple-choice'
+              "
+            >
+              <div class="test-type-radio">
+                <p-radioButton
+                  formControlName="type"
+                  value="multiple-choice"
+                  inputId="multiple-choice"
+                ></p-radioButton>
+                <label for="multiple-choice">Multiple Choice</label>
+              </div>
+              <div class="test-type-description">
+                <i class="pi pi-list test-type-icon"></i>
+                <p>
+                  Traditional multiple-choice questions with several possible
+                  answers.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="test-type-card"
+              [class.selected]="testForm.get('type')?.value === 'verbal'"
+            >
+              <div class="test-type-radio">
+                <p-radioButton
+                  formControlName="type"
+                  value="verbal"
+                  inputId="verbal"
+                ></p-radioButton>
+                <label for="verbal">Verbal Assessment</label>
+              </div>
+              <div class="test-type-description">
+                <i class="pi pi-comments test-type-icon"></i>
+                <p>
+                  Text-based questions to evaluate verbal reasoning and language
+                  skills.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <small
+            class="p-error"
+            *ngIf="submitted && f['type'].errors?.['required']"
+          >
+            Test type is required.
+          </small>
+        </div>
+      </p-fieldset>
+
+      <p-fieldset
+        legend="Test Settings"
+        [toggleable]="true"
+        [collapsed]="false"
+      >
+        <div class="p-fluid form-grid">
+          <div class="form-row">
+            <div class="form-field">
+              <label for="duration">Duration (minutes)*</label>
+              <p-inputNumber
+                id="duration"
+                formControlName="duration"
+                [min]="1"
+                [max]="120"
+                [showButtons]="true"
+                placeholder="30"
+                [ngClass]="{
+                  'ng-invalid ng-dirty': submitted && f['duration'].errors
+                }"
+                pTooltip="Set the time limit for completing the test"
+                tooltipPosition="right"
+              ></p-inputNumber>
+              <small
+                class="p-error"
+                *ngIf="submitted && f['duration'].errors?.['required']"
+              >
+                Duration is required.
+              </small>
+            </div>
+
+            <div class="form-field">
+              <label for="difficulty">Difficulty Level*</label>
+              <p-dropdown
+                id="difficulty"
+                formControlName="difficulty"
+                [options]="difficultyOptions"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="'Select Difficulty'"
+                [ngClass]="{
+                  'ng-invalid ng-dirty': submitted && f['difficulty'].errors
+                }"
+                pTooltip="Choose a difficulty level that matches the test content"
+                tooltipPosition="left"
+              ></p-dropdown>
+              <small
+                class="p-error"
+                *ngIf="submitted && f['difficulty'].errors?.['required']"
+              >
+                Difficulty is required.
+              </small>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="tags">Tags</label>
+
+            <div class="tag-input-container">
+              <p-autoComplete
+                [(ngModel)]="newTag"
+                [ngModelOptions]="{ standalone: true }"
+                [suggestions]="filteredTags"
+                [dropdown]="true"
+                placeholder="Type to search or add tags"
+                [minLength]="1"
+                (completeMethod)="filterTags($event)"
+                (onSelect)="selectTag($event)"
+                (onKeyUp)="$event.key === 'Enter' && addTag()"
+                styleClass="w-full"
+              >
+                <ng-template let-tag pTemplate="item">
+                  <div class="tag-suggestion-item">
+                    <i class="pi pi-tag mr-2"></i>
+                    <span>{{ tag }}</span>
+                  </div>
+                </ng-template>
+              </p-autoComplete>
+            </div>
+
+            <div
+              *ngIf="(testForm.get('tags')?.value || []).length > 0"
+              class="tags-display flex flex-wrap gap-2"
+            >
+              <p-chip
+                *ngFor="let tag of testForm.get('tags')?.value || []"
+                [label]="tag"
+                [removable]="true"
+                (onRemove)="removeTag(tag)"
+                styleClass="tag-chip"
+              ></p-chip>
+            </div>
+
+            <small
+              *ngIf="(testForm.get('tags')?.value || []).length === 0"
+              class="no-tags-message"
+            >
+              <i class="pi pi-info-circle"></i> No tags added yet
+            </small>
+          </div>
+        </div>
+      </p-fieldset>
+
+      <p-fieldset legend="Instructions" [toggleable]="true" [collapsed]="false">
+        <div class="form-field">
+          <p-floatlabel variant="on">
+            <textarea
+              id="instructions"
+              pInputTextarea
+              formControlName="instructions"
+              [rows]="4"
+              style="resize: none; width: 100%"
+              class="h-full m-0.5"
+              pTooltip="Include any specific instructions or rules for taking the test"
+              tooltipPosition="right"
+            ></textarea>
+            <label for="instructions">Test Instructions</label>
+          </p-floatlabel>
+          <small class="helper-text">
+            These instructions will be displayed to candidates before they start
+            the test
+          </small>
+        </div>
+      </p-fieldset>
+
+      <p-fieldset legend="Availability" [toggleable]="true" [collapsed]="false">
+        <div class="form-field">
+          <div class="checkbox-vertical-layout">
+            <div class="checkbox-row">
+              <p-checkbox
+                formControlName="isActive"
+                [binary]="true"
+                inputId="isActive"
+              ></p-checkbox>
+              <label for="isActive" class="checkbox-label">
+                Make test active
+              </label>
+            </div>
+            <small class="helper-text checkbox-helper-text">
+              When active, this test can be assigned to candidates
+            </small>
+          </div>
+        </div>
+      </p-fieldset>
+
+      <div class="form-actions">
+        <button
+          pButton
+          type="button"
+          label="Cancel"
+          icon="pi pi-times"
+          class="p-button-outlined"
+          (click)="goBack()"
+        ></button>
+        <button
+          pButton
+          type="submit"
+          [label]="submitButtonLabel"
+          icon="pi pi-check"
+          [loading]="creating"
+        ></button>
+      </div>
+    </form>
+  </p-card>
+</div>
+
+<p-toast position="top-right"></p-toast>

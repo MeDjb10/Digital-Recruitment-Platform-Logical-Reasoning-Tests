@@ -46,6 +46,11 @@ const routes: Routes = [
             title: 'Create New Test',
           },
           {
+            path: 'Tests/edit/:testId',
+            component: CreateTestComponent,
+            title: 'Edit Test',
+          },
+          {
             path: 'Tests/:testId',
             children: [
               {
