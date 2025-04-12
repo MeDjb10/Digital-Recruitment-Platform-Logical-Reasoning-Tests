@@ -125,5 +125,142 @@
   "LANG": {
     "EN": "English",
     "FR": "French"
+  },
+  "DASHBOARD": {
+    "TITLE": "Dashboard",
+    "OVERVIEW": "Dashboard Overview",
+    "USERS": "User Management",
+    "LOGICAL_REASONING": {
+      "STATS": "Logical Reasoning Statistics",
+      "USERS": "Logical Reasoning Users",
+      "TESTS": "Logical Reasoning Tests"
+    },
+    "VERBAL_REASONING": {
+      "STATS": "Verbal Reasoning Statistics",
+      "USERS": "Verbal Reasoning Users",
+      "TESTS": "Verbal Reasoning Tests"
+    },
+    "USERS_LIST": {
+      "TITLE": "Users Management",
+      "SUBTITLE": "View and manage all users in the system",
+      "FILTER_OPTIONS": {
+        "ALL_ROLES": "All Roles",
+        "SEARCH_PLACEHOLDER": "Search users..."
+      },
+      "ROLES": {
+        "ADMIN": "Administrator",
+        "MODERATOR": "Moderator",
+        "PSYCHOLOGIST": "Psychologist",
+        "CANDIDATE": "Candidate"
+      },
+      "STATUS_VALUES": {
+        "ACTIVE": "Active",
+        "INACTIVE": "Inactive",
+        "SUSPENDED": "Suspended",
+        "PENDING": "Pending"
+      },
+      "TOTAL_USERS": "Total Users",
+      "SEARCH": "Search",
+      "PAGINATION_TEMPLATE": "Showing {first} to {last} of {totalRecords} users",
+      "NAME": "Name",
+      "EMAIL": "Email",
+      "ROLE": "Role",
+      "ACTIONS": "Actions",
+      "REGISTERED_ON": "Registered On",
+      "STATUS": "Status",
+      "STATUS_UPDATED": "User status updated successfully",
+      "ROLE_UPDATED": "User role updated successfully",
+      "USER_DELETED": "User deleted successfully",
+      "USER_UPDATED": "User information updated successfully",
+      "ASSIGN_ROLE": "Assign Role",
+      "CONFIRM_ROLE_CHANGE": "Are you sure you want to change this user's role?",
+      "DELETE_USER": "Delete User",
+      "CONFIRM_DELETE": "Are you sure you want to delete this user? This action cannot be undone.",
+      "DELETE_COUNTDOWN": "This action will be confirmed in {{seconds}} seconds",
+      "EDIT_USER": "Edit User",
+      "ERRORS": {
+        "ERROR": "Error",
+        "LOAD_FAILED": "Failed to load users",
+        "STATUS_UPDATE_FAILED": "Failed to update user status",
+        "ROLE_UPDATE_FAILED": "Failed to update user role",
+        "DELETE_FAILED": "Failed to delete user",
+        "UPDATE_FAILED": "Failed to update user information"
+      },
+      "SUCCESS": "Success"
+    },
+    "SIDEBAR": {
+      "DASHBOARD": "Dashboard",
+      "USERS": "Users",
+      "SETTINGS": "Settings",
+      "TEST_MODULES": "Test Modules",
+      "ENTERPRISE": "Enterprise Portal",
+      "LOGICAL_REASONING": "Logical Reasoning",
+      "VERBAL_REASONING": "Verbal Reasoning"
+    },
+    "NAVBAR": {
+      "SEARCH": "Search...",
+      "QUICK_ACTIONS": "Quick Actions",
+      "NOTIFICATIONS": "Notifications",
+      "CHANGE_LANGUAGE": "Change Language",
+      "PROFILE_PHOTO": "Change profile photo",
+      "DELETE_PHOTO": "Delete profile photo",
+      "PROFILE": "Profile",
+      "SETTINGS": "Settings",
+      "SECURITY": "Security",
+      "TEAM": "Team",
+      "HOME": "Home",
+      "SIGN_OUT": "Sign out",
+      "NO_NOTIFICATIONS": "You're all caught up!",
+      "NO_NEW_NOTIFICATIONS": "No new notifications",
+      "VIEW_ALL": "View all notifications",
+      "MARK_ALL_READ": "Mark all as read"
+    },
+    "ANALYTICS": {
+      "OVERVIEW": "Analytics Overview",
+      "MONITOR": "Monitor key recruitment metrics and activities",
+      "EXPORT": "Export",
+      "TIME_PERIODS": {
+        "LAST_7_DAYS": "Last 7 days",
+        "LAST_30_DAYS": "Last 30 days",
+        "THIS_MONTH": "This month",
+        "LAST_QUARTER": "Last quarter",
+        "YEAR_TO_DATE": "Year to date"
+      },
+      "KPI": {
+        "CANDIDATES": "Candidates",
+        "TEST_COMPLETIONS": "Test Completions",
+        "AVG_SCORE": "Average Score",
+        "CONVERSION_RATE": "Conversion Rate",
+        "INCREASE": "Increase from previous period",
+        "DECREASE": "Decrease from previous period",
+        "GROWTH": "Growth from previous period",
+        "DECLINE": "Decline from previous period",
+        "IMPROVED": "Improved from previous period",
+        "DECREASED": "Decreased from previous period",
+        "VIEW_DETAILS": "View details"
+      },
+      "CHARTS": {
+        "PERFORMANCE": "Performance Analysis",
+        "DISTRIBUTION": "Test Distributions",
+        "TRENDS": "Trends & Forecasts",
+        "PERF_BY_TEST": "Candidate Performance by Test Type",
+        "AVG_SCORE": "Average Score",
+        "PASSING_RATE": "Passing Rate",
+        "COMPLETION_DIST": "Test Completion Distribution",
+        "BY_CATEGORY": "By Category",
+        "BY_STATUS": "By Completion Status",
+        "PERF_TRENDS": "Performance Trends"
+      },
+      "ACTIVITY": {
+        "RECENT": "Recent Activity",
+        "CANDIDATE": "Candidate",
+        "ACTION": "Action",
+        "TEST_TYPE": "Test Type",
+        "SCORE": "Score",
+        "DATE": "Date",
+        "STATUS": "Status",
+        "NO_ACTIVITY": "No recent activities found"
+      }
+    }
   }
 }

@@ -9,6 +9,7 @@ import {
   Inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 // PrimeNG Imports
 import { TabViewModule } from 'primeng/tabview';
@@ -49,6 +50,7 @@ interface Activity {
     ButtonModule,
     SelectButtonModule,
     TagModule,
+    TranslateModule,
   ],
   templateUrl: './general-stats.component.html',
   styleUrls: ['./general-stats.component.css'],
@@ -74,12 +76,12 @@ export class GeneralStatsComponent implements OnInit, AfterViewInit {
   @ViewChild('statusChart') statusChartEl!: ElementRef;
   @ViewChild('trendsChart') trendsChartEl!: ElementRef;
 
-  // Time period filter
+  // Time period filter with translation keys
   timePeriods = [
-    { label: 'Last 7 Days', value: '7d' },
-    { label: 'Last 30 Days', value: '30d' },
-    { label: 'Last Quarter', value: '90d' },
-    { label: 'Last Year', value: '365d' },
+    { label: 'DASHBOARD.ANALYTICS.TIME_PERIODS.LAST_7_DAYS ', value: '7d' },
+    { label: 'DASHBOARD.ANALYTICS.TIME_PERIODS.LAST_30_DAYS', value: '30d' },
+    { label: 'DASHBOARD.ANALYTICS.TIME_PERIODS.LAST_QUARTER', value: '90d' },
+    { label: 'DASHBOARD.ANALYTICS.TIME_PERIODS.YEAR_TO_DATE', value: '365d' },
   ];
   selectedTimePeriod = this.timePeriods[1];
 
@@ -172,13 +174,29 @@ export class GeneralStatsComponent implements OnInit, AfterViewInit {
     },
   };
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {
+  // For translated dropdown options
+  translatedTimePeriods: any[] = [];
+  translatedTrendOptions: any[] = [];
+  translatedActivityFilters: any[] = [];
+
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private translateService: TranslateService
+  ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
   ngOnInit() {
     // Generate mock data for activities
     this.generateMockActivities();
+
+    // Setup translations for dropdown options
+    this.updateTranslatedOptions();
+
+    // Subscribe to language changes to update translated options
+    this.translateService.onLangChange.subscribe(() => {
+      this.updateTranslatedOptions();
+    });
 
     // Dynamically import ApexCharts only in browser environment
     if (this.isBrowser) {
@@ -851,5 +869,43 @@ export class GeneralStatsComponent implements OnInit, AfterViewInit {
     };
 
     return severityMap[status] || 'info';
+  }
+
+  // Method to update translated options when language changes
+  updateTranslatedOptions() {
+    // Translate time periods
+    this.translateTimePeriods();
+
+    // Translate trend options and activity filters
+    // You can add translations for these in your translation files if needed
+    this.translatedTrendOptions = this.trendOptions.map((option) => ({
+      ...option,
+      label: option.label, // Use direct label for now or translate if needed
+    }));
+
+    this.translatedActivityFilters = this.activityFilters.map((option) => ({
+      ...option,
+      label: option.label, // Use direct label for now or translate if needed
+    }));
+  }
+
+  // Method to translate time periods
+  translateTimePeriods() {
+    this.translatedTimePeriods = this.timePeriods.map((period) => {
+      return {
+        label: this.translateService.instant(period.label.trim()),
+        value: period.value,
+      };
+    });
+
+    // Update selected time period with translated version
+    if (this.selectedTimePeriod) {
+      const translatedSelectedOption = this.translatedTimePeriods.find(
+        (option) => option.value === this.selectedTimePeriod.value
+      );
+      if (translatedSelectedOption) {
+        this.selectedTimePeriod = translatedSelectedOption;
+      }
+    }
   }
 }

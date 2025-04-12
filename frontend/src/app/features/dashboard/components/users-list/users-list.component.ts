@@ -1,10 +1,18 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { UserService } from '../../../../core/services/user.service';
 import { User } from '../../../../core/models/user.model';
 import { MenuItem, MessageService } from 'primeng/api';
 import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/services/auth.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 
 // Import PrimeNG modules directly
 import { TableModule } from 'primeng/table';
@@ -27,6 +35,7 @@ import { CommonModule } from '@angular/common';
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
+    TranslateModule,
 
     // PrimeNG modules
     TableModule,
@@ -40,7 +49,7 @@ import { CommonModule } from '@angular/common';
     RippleModule,
   ],
 })
-export class UsersListComponent implements OnInit {
+export class UsersListComponent implements OnInit, OnDestroy {
   users: User[] = [];
   filteredUsers: User[] = [];
   loading = false;
@@ -59,12 +68,16 @@ export class UsersListComponent implements OnInit {
   // Filters
   selectedRoleFilter: string = '';
   roleFilterOptions = [
-    { label: 'Tous les rôles', value: '' },
-    { label: 'Admin', value: 'admin' },
-    { label: 'Modérateur', value: 'moderator' },
-    { label: 'Psychologue', value: 'psychologist' },
-    { label: 'Candidat', value: 'candidate' },
+    { labelKey: 'DASHBOARD.USERS_LIST.FILTER_OPTIONS.ALL_ROLES', value: '' },
+    { labelKey: 'DASHBOARD.USERS_LIST.ROLES.ADMIN', value: 'admin' },
+    { labelKey: 'DASHBOARD.USERS_LIST.ROLES.MODERATOR', value: 'moderator' },
+    {
+      labelKey: 'DASHBOARD.USERS_LIST.ROLES.PSYCHOLOGIST',
+      value: 'psychologist',
+    },
+    { labelKey: 'DASHBOARD.USERS_LIST.ROLES.CANDIDATE', value: 'candidate' },
   ];
+  translatedRoleFilterOptions: any[] = [];
 
   // Status Menu
   statusMenuItems: MenuItem[] = [];
@@ -73,12 +86,16 @@ export class UsersListComponent implements OnInit {
   showRoleDialog = false;
   selectedUser: User | null = null;
   selectedRole = '';
-  roleOptions = [
-    { label: 'Admin', value: 'admin' },
-    { label: 'Modérateur', value: 'moderator' },
-    { label: 'Psychologue', value: 'psychologist' },
-    { label: 'Candidat', value: 'candidate' },
+  roleOptionsBase = [
+    { labelKey: 'DASHBOARD.USERS_LIST.ROLES.ADMIN', value: 'admin' },
+    { labelKey: 'DASHBOARD.USERS_LIST.ROLES.MODERATOR', value: 'moderator' },
+    {
+      labelKey: 'DASHBOARD.USERS_LIST.ROLES.PSYCHOLOGIST',
+      value: 'psychologist',
+    },
+    { labelKey: 'DASHBOARD.USERS_LIST.ROLES.CANDIDATE', value: 'candidate' },
   ];
+  translatedRoleOptions: any[] = [];
 
   // Delete dialog
   showDeleteDialog = false;
@@ -91,11 +108,14 @@ export class UsersListComponent implements OnInit {
 
   currentUserRole: string = '';
 
+  private languageChangeSubscription: Subscription;
+
   constructor(
     private userService: UserService,
     private authService: AuthService,
     private messageService: MessageService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private translateService: TranslateService
   ) {
     this.editForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -103,12 +123,41 @@ export class UsersListComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.minLength(6)]],
     });
+
+    // Subscribe to language changes to update translated options
+    this.languageChangeSubscription =
+      this.translateService.onLangChange.subscribe(() => {
+        this.updateTranslatedOptions();
+        this.setupStatusMenuItems();
+      });
   }
 
   ngOnInit() {
     this.currentUserRole = this.authService.getUserRole() || 'candidate';
+    this.updateTranslatedOptions();
     this.loadUsers();
-     this.setupStatusMenuItems(); 
+    this.setupStatusMenuItems();
+  }
+
+  ngOnDestroy() {
+    if (this.languageChangeSubscription) {
+      this.languageChangeSubscription.unsubscribe();
+    }
+  }
+
+  // Update translated options based on current language
+  updateTranslatedOptions() {
+    // Translate role filter options
+    this.translatedRoleFilterOptions = this.roleFilterOptions.map((option) => ({
+      label: this.translateService.instant(option.labelKey),
+      value: option.value,
+    }));
+
+    // Translate role options for dialog
+    this.translatedRoleOptions = this.roleOptionsBase.map((option) => ({
+      label: this.translateService.instant(option.labelKey),
+      value: option.value,
+    }));
   }
 
   loadUsers() {
@@ -145,8 +194,12 @@ export class UsersListComponent implements OnInit {
           console.error('Error loading users', err);
           this.messageService.add({
             severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger la liste des utilisateurs',
+            summary: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.ERRORS.ERROR'
+            ),
+            detail: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.ERRORS.LOAD_FAILED'
+            ),
           });
         },
       });
@@ -174,7 +227,9 @@ export class UsersListComponent implements OnInit {
   setupStatusMenuItems() {
     this.statusMenuItems = [
       {
-        label: 'Actif',
+        label: this.translateService.instant(
+          'DASHBOARD.USERS_LIST.STATUS_VALUES.ACTIVE'
+        ),
         icon: 'pi pi-check-circle',
         command: () => {
           if (this.selectedUser) {
@@ -183,7 +238,9 @@ export class UsersListComponent implements OnInit {
         },
       },
       {
-        label: 'Inactif',
+        label: this.translateService.instant(
+          'DASHBOARD.USERS_LIST.STATUS_VALUES.INACTIVE'
+        ),
         icon: 'pi pi-ban',
         command: () => {
           if (this.selectedUser) {
@@ -192,7 +249,9 @@ export class UsersListComponent implements OnInit {
         },
       },
       {
-        label: 'Suspendu',
+        label: this.translateService.instant(
+          'DASHBOARD.USERS_LIST.STATUS_VALUES.SUSPENDED'
+        ),
         icon: 'pi pi-pause-circle',
         command: () => {
           if (this.selectedUser) {
@@ -225,16 +284,24 @@ export class UsersListComponent implements OnInit {
 
           this.messageService.add({
             severity: 'success',
-            summary: 'Succès',
-            detail: `Statut de l'utilisateur modifié avec succès`,
+            summary: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.SUCCESS'
+            ),
+            detail: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.STATUS_UPDATED'
+            ),
           });
         },
         error: (err) => {
           console.error('Error updating user status', err);
           this.messageService.add({
             severity: 'error',
-            summary: 'Erreur',
-            detail: `Impossible de modifier le statut de l'utilisateur`,
+            summary: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.ERRORS.ERROR'
+            ),
+            detail: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.ERRORS.STATUS_UPDATE_FAILED'
+            ),
           });
         },
       });
@@ -281,16 +348,24 @@ export class UsersListComponent implements OnInit {
 
           this.messageService.add({
             severity: 'success',
-            summary: 'Succès',
-            detail: `Rôle modifié avec succès`,
+            summary: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.SUCCESS'
+            ),
+            detail: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.ROLE_UPDATED'
+            ),
           });
         },
         error: (err) => {
           console.error('Error updating role', err);
           this.messageService.add({
             severity: 'error',
-            summary: 'Erreur',
-            detail: `Impossible de modifier le rôle`,
+            summary: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.ERRORS.ERROR'
+            ),
+            detail: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.ERRORS.ROLE_UPDATE_FAILED'
+            ),
           });
         },
       });
@@ -340,16 +415,24 @@ export class UsersListComponent implements OnInit {
 
           this.messageService.add({
             severity: 'success',
-            summary: 'Succès',
-            detail: `Utilisateur supprimé avec succès`,
+            summary: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.SUCCESS'
+            ),
+            detail: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.USER_DELETED'
+            ),
           });
         },
         error: (err) => {
           console.error('Error deleting user', err);
           this.messageService.add({
             severity: 'error',
-            summary: 'Erreur',
-            detail: `Impossible de supprimer l'utilisateur`,
+            summary: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.ERRORS.ERROR'
+            ),
+            detail: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.ERRORS.DELETE_FAILED'
+            ),
           });
         },
       });
@@ -416,16 +499,24 @@ export class UsersListComponent implements OnInit {
 
           this.messageService.add({
             severity: 'success',
-            summary: 'Succès',
-            detail: `Informations utilisateur mises à jour avec succès`,
+            summary: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.SUCCESS'
+            ),
+            detail: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.USER_UPDATED'
+            ),
           });
         },
         error: (err) => {
           console.error('Error updating user', err);
           this.messageService.add({
             severity: 'error',
-            summary: 'Erreur',
-            detail: `Impossible de mettre à jour les informations utilisateur`,
+            summary: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.ERRORS.ERROR'
+            ),
+            detail: this.translateService.instant(
+              'DASHBOARD.USERS_LIST.ERRORS.UPDATE_FAILED'
+            ),
           });
         },
       });
@@ -436,7 +527,10 @@ export class UsersListComponent implements OnInit {
     if (!date) return 'N/A';
 
     const dateObj = new Date(date);
-    return dateObj.toLocaleDateString('fr-FR', {
+    const currentLang = this.translateService.currentLang;
+    const locale = currentLang === 'fr' ? 'fr-FR' : 'en-US';
+
+    return dateObj.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

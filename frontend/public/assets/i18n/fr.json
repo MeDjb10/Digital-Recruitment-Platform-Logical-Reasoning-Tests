@@ -134,5 +134,142 @@
   "LANG": {
     "EN": "Anglais",
     "FR": "Français"
+  },
+  "DASHBOARD": {
+    "TITLE": "Tableau de bord",
+    "OVERVIEW": "Aperçu du Tableau de bord",
+    "USERS": "Gestion des Utilisateurs",
+    "LOGICAL_REASONING": {
+      "STATS": "Statistiques de Raisonnement Logique",
+      "USERS": "Utilisateurs du Raisonnement Logique",
+      "TESTS": "Tests de Raisonnement Logique"
+    },
+    "VERBAL_REASONING": {
+      "STATS": "Statistiques de Raisonnement Verbal",
+      "USERS": "Utilisateurs du Raisonnement Verbal",
+      "TESTS": "Tests de Raisonnement Verbal"
+    },
+    "USERS_LIST": {
+      "TITLE": "Gestion des Utilisateurs",
+      "SUBTITLE": "Voir et gérer tous les utilisateurs du système",
+      "FILTER_OPTIONS": {
+        "ALL_ROLES": "Tous les Rôles",
+        "SEARCH_PLACEHOLDER": "Rechercher des utilisateurs..."
+      },
+      "ROLES": {
+        "ADMIN": "Administrateur",
+        "MODERATOR": "Modérateur",
+        "PSYCHOLOGIST": "Psychologue",
+        "CANDIDATE": "Candidat"
+      },
+      "STATUS_VALUES": {
+        "ACTIVE": "Actif",
+        "INACTIVE": "Inactif",
+        "SUSPENDED": "Suspendu",
+        "PENDING": "En attente"
+      },
+      "TOTAL_USERS": "Nombre Total d'Utilisateurs",
+      "SEARCH": "Rechercher",
+      "PAGINATION_TEMPLATE": "Affichage de {first} à {last} sur {totalRecords} utilisateurs",
+      "NAME": "Nom",
+      "EMAIL": "Email",
+      "ROLE": "Rôle",
+      "ACTIONS": "Actions",
+      "REGISTERED_ON": "Inscrit le",
+      "STATUS": "Statut",
+      "STATUS_UPDATED": "Statut de l'utilisateur mis à jour avec succès",
+      "ROLE_UPDATED": "Rôle de l'utilisateur mis à jour avec succès",
+      "USER_DELETED": "Utilisateur supprimé avec succès",
+      "USER_UPDATED": "Informations de l'utilisateur mises à jour avec succès",
+      "ASSIGN_ROLE": "Attribuer un Rôle",
+      "CONFIRM_ROLE_CHANGE": "Êtes-vous sûr de vouloir changer le rôle de cet utilisateur ?",
+      "DELETE_USER": "Supprimer l'Utilisateur",
+      "CONFIRM_DELETE": "Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action ne peut pas être annulée.",
+      "DELETE_COUNTDOWN": "Cette action sera confirmée dans {{seconds}} secondes",
+      "EDIT_USER": "Modifier l'Utilisateur",
+      "ERRORS": {
+        "ERROR": "Erreur",
+        "LOAD_FAILED": "Échec du chargement des utilisateurs",
+        "STATUS_UPDATE_FAILED": "Échec de la mise à jour du statut de l'utilisateur",
+        "ROLE_UPDATE_FAILED": "Échec de la mise à jour du rôle de l'utilisateur",
+        "DELETE_FAILED": "Échec de la suppression de l'utilisateur",
+        "UPDATE_FAILED": "Échec de la mise à jour des informations de l'utilisateur"
+      },
+      "SUCCESS": "Succès"
+    },
+    "SIDEBAR": {
+      "DASHBOARD": "Tableau de bord",
+      "USERS": "Utilisateurs",
+      "SETTINGS": "Paramètres",
+      "TEST_MODULES": "Modules de Test",
+      "ENTERPRISE": "Portail d'Entreprise",
+      "LOGICAL_REASONING": "Raisonnement Logique",
+      "VERBAL_REASONING": "Raisonnement Verbal"
+    },
+    "NAVBAR": {
+      "SEARCH": "Rechercher...",
+      "QUICK_ACTIONS": "Actions Rapides",
+      "NOTIFICATIONS": "Notifications",
+      "CHANGE_LANGUAGE": "Changer de langue",
+      "PROFILE_PHOTO": "Changer la photo de profil",
+      "DELETE_PHOTO": "Supprimer la photo de profil",
+      "PROFILE": "Profil",
+      "SETTINGS": "Paramètres",
+      "SECURITY": "Sécurité",
+      "TEAM": "Équipe",
+      "HOME": "Accueil",
+      "SIGN_OUT": "Déconnexion",
+      "NO_NOTIFICATIONS": "Vous êtes à jour !",
+      "NO_NEW_NOTIFICATIONS": "Pas de nouvelles notifications",
+      "VIEW_ALL": "Voir toutes les notifications",
+      "MARK_ALL_READ": "Marquer tout comme lu"
+    },
+    "ANALYTICS": {
+      "OVERVIEW": "Aperçu des Analyses",
+      "MONITOR": "Suivez les métriques clés de recrutement et les activités",
+      "EXPORT": "Exporter",
+      "TIME_PERIODS": {
+        "LAST_7_DAYS": "7 derniers jours",
+        "LAST_30_DAYS": "30 derniers jours",
+        "THIS_MONTH": "Ce mois-ci",
+        "LAST_QUARTER": "Trimestre précédent",
+        "YEAR_TO_DATE": "Depuis le début de l'année"
+      },
+      "KPI": {
+        "CANDIDATES": "Candidats",
+        "TEST_COMPLETIONS": "Tests Complétés",
+        "AVG_SCORE": "Score Moyen",
+        "CONVERSION_RATE": "Taux de Conversion",
+        "INCREASE": "Augmentation par rapport à la période précédente",
+        "DECREASE": "Diminution par rapport à la période précédente",
+        "GROWTH": "Croissance par rapport à la période précédente",
+        "DECLINE": "Baisse par rapport à la période précédente",
+        "IMPROVED": "Amélioration par rapport à la période précédente",
+        "DECREASED": "Diminution par rapport à la période précédente",
+        "VIEW_DETAILS": "Voir les détails"
+      },
+      "CHARTS": {
+        "PERFORMANCE": "Analyse de Performance",
+        "DISTRIBUTION": "Distributions des Tests",
+        "TRENDS": "Tendances & Prévisions",
+        "PERF_BY_TEST": "Performance des Candidats par Type de Test",
+        "AVG_SCORE": "Score Moyen",
+        "PASSING_RATE": "Taux de Réussite",
+        "COMPLETION_DIST": "Distribution des Tests Complétés",
+        "BY_CATEGORY": "Par Catégorie",
+        "BY_STATUS": "Par Statut de Complétion",
+        "PERF_TRENDS": "Tendances de Performance"
+      },
+      "ACTIVITY": {
+        "RECENT": "Activité Récente",
+        "CANDIDATE": "Candidat",
+        "ACTION": "Action",
+        "TEST_TYPE": "Type de Test",
+        "SCORE": "Score",
+        "DATE": "Date",
+        "STATUS": "Statut",
+        "NO_ACTIVITY": "Aucune activité récente trouvée"
+      }
+    }
   }
 }

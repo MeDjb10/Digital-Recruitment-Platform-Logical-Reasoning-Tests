@@ -16,14 +16,17 @@ import { AuthService } from '../../../../core/auth/services/auth.service';
 import { User } from '../../../../core/models/user.model';
 import { environment } from '../../../../../environments/environment';
 import { UserService } from '../../../../core/services/user.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface TestSection {
   name: string;
+  translationKey: string;
   route: string;
   expanded: boolean;
   icon: string;
   subsections: {
     name: string;
+    translationKey: string;
     route: string;
   }[];
 }
@@ -37,6 +40,7 @@ interface TestSection {
     TooltipModule,
     RippleModule,
     ButtonModule,
+    TranslateModule,
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css',
@@ -48,32 +52,73 @@ export class SidebarComponent implements OnInit, OnDestroy {
   tests: TestSection[] = [
     {
       name: 'Raisonnement Logique',
+      translationKey: 'DASHBOARD.SIDEBAR.LOGICAL_REASONING',
       route: 'RaisonnementLogique',
       expanded: false,
       icon: 'pi-chart-line', // Changed from pi-brain which doesn't exist
       subsections: [
-        { name: 'Liste des Tests', route: 'Tests' },
-        { name: 'Statistiques', route: 'Statistique' },
-        { name: 'Utilisateurs', route: 'Users' },
+        {
+          name: 'Liste des Tests',
+          translationKey: 'DASHBOARD.LOGICAL_REASONING.TESTS',
+          route: 'Tests',
+        },
+        {
+          name: 'Statistiques',
+          translationKey: 'DASHBOARD.LOGICAL_REASONING.STATS',
+          route: 'Statistique',
+        },
+        {
+          name: 'Utilisateurs',
+          translationKey: 'DASHBOARD.LOGICAL_REASONING.USERS',
+          route: 'Users',
+        },
       ],
     },
     {
       name: 'Verbal Reasoning',
+      translationKey: 'DASHBOARD.SIDEBAR.VERBAL_REASONING',
       route: 'VerbalReasoning',
       expanded: false,
       icon: 'pi-comments', // Changed from pi-comment
       subsections: [
-        { name: 'Statistics', route: 'Statistics' },
-        { name: 'Users', route: 'Users' },
-        { name: 'Tests', route: 'Tests' },
+        {
+          name: 'Statistics',
+          translationKey: 'DASHBOARD.VERBAL_REASONING.STATS',
+          route: 'Statistics',
+        },
+        {
+          name: 'Users',
+          translationKey: 'DASHBOARD.VERBAL_REASONING.USERS',
+          route: 'Users',
+        },
+        {
+          name: 'Tests',
+          translationKey: 'DASHBOARD.VERBAL_REASONING.TESTS',
+          route: 'Tests',
+        },
       ],
     },
   ];
 
   menuItems = [
-    { label: 'Dashboard', icon: 'pi-chart-bar', route: '/dashboard/info' },
-    { label: 'Users', icon: 'pi-users', route: '/dashboard/users' },
-    { label: 'Settings', icon: 'pi-cog', route: '/dashboard/settings' },
+    {
+      label: 'Dashboard',
+      translationKey: 'DASHBOARD.SIDEBAR.DASHBOARD',
+      icon: 'pi-chart-bar',
+      route: '/dashboard/info',
+    },
+    {
+      label: 'Users',
+      translationKey: 'DASHBOARD.SIDEBAR.USERS',
+      icon: 'pi-users',
+      route: '/dashboard/users',
+    },
+    {
+      label: 'Settings',
+      translationKey: 'DASHBOARD.SIDEBAR.SETTINGS',
+      icon: 'pi-cog',
+      route: '/dashboard/settings',
+    },
   ];
 
   // User properties

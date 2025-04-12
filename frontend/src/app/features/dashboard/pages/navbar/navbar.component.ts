@@ -24,6 +24,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { environment } from '../../../../../environments/environment';
 import { UserService } from '../../../../core/services/user.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 interface Notification {
   id: number;
@@ -45,6 +46,7 @@ interface Notification {
     TooltipModule,
     MenuModule,
     ToastModule,
+    TranslateModule,
   ],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css',
@@ -59,6 +61,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
   showUserDropdown = false;
   searchFocused = false;
   isBrowser: boolean;
+
+  // Language state
+  currentLang: string = 'en';
+  showLanguageDropdown = false;
 
   // User info
   currentUser: User | null = null;
@@ -89,8 +95,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private userService: UserService, // Add this
-    private messageService: MessageService, // Add this
+    private userService: UserService,
+    private messageService: MessageService,
+    private translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -98,6 +105,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   // Update the ngOnInit method to include proper profile picture loading:
   ngOnInit(): void {
+    // Set up translation
+    const savedLang = localStorage.getItem('preferred-language');
+    if (savedLang && ['en', 'fr'].includes(savedLang)) {
+      this.currentLang = savedLang;
+      this.translate.use(savedLang);
+    } else {
+      this.currentLang = this.translate.currentLang || 'en';
+    }
+
     // Update page title based on current route
     this.routeSub = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
@@ -158,6 +174,26 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  // Switch language method
+  switchLanguage(lang: string): void {
+    this.currentLang = lang;
+    this.translate.use(lang);
+
+    // Save language preference to localStorage
+    localStorage.setItem('preferred-language', lang);
+
+    // Close the language dropdown if it's open
+    this.showLanguageDropdown = false;
+  }
+
+  // Toggle language dropdown
+  toggleLanguageDropdown(): void {
+    this.showLanguageDropdown = !this.showLanguageDropdown;
+    // Close other dropdowns
+    this.showNotifications = false;
+    this.showUserDropdown = false;
   }
 
   fetchCurrentUserProfile(userId: string): void {
@@ -558,6 +594,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
       !target.closest('.user-menu-button')
     ) {
       this.showUserDropdown = false;
+    }
+
+    if (
+      !target.closest('.language-dropdown') &&
+      !target.closest('.language-selector')
+    ) {
+      this.showLanguageDropdown = false;
     }
   }
 
