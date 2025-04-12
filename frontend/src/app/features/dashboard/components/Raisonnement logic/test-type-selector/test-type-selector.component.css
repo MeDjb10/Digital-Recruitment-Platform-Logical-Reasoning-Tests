@@ -1,0 +1,73 @@
+/* Custom styles that go beyond Tailwind classes */
+
+/* Custom hover effects for card elements */
+.card-hover-effect {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom color variables (in case we need to reference these elsewhere) */
+:root {
+  --primary-color: #3b82f6; /* blue-500 */
+  --primary-dark-color: #1d4ed8; /* blue-700 */
+  --secondary-green: #16a34a; /* green-600 */
+  --success-color: #10b981; /* emerald-500 */
+}
+
+/* Any custom colors not in Tailwind palette */
+:host ::ng-deep .custom-button:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  outline: none;
+}
+
+/* Media queries for responsive design beyond Tailwind breakpoints if needed */
+@media (max-width: 768px) {
+  .mobile-padding {
+    padding: 1rem !important;
+  }
+
+  .mobile-text-center {
+    text-align: center !important;
+  }
+}
+
+/* Add responsive adjustments if needed */
+@media (max-width: 768px) {
+  .responsive-padding {
+    padding: 1rem;
+  }
+}
+
+/* Any PrimeNG component style overrides */
+:host ::ng-deep .p-card {
+  border-radius: 0.5rem;
+}
+
+:host ::ng-deep .p-card .p-card-content {
+  padding: 0;
+}
+
+:host ::ng-deep .p-toast .p-toast-message {
+  border-radius: 0.375rem;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
