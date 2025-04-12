@@ -94,21 +94,11 @@
 }
 
 /* Floatlabel styling */
-:host ::ng-deep p-floatlabel {
-  position: relative;
-  display: block;
-  width: 100%;
-}
-
 :host ::ng-deep p-floatlabel textarea {
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  padding-top: 1.5rem !important;
-  font-size: 1rem;
-  line-height: 1.5;
-  width: 100%;
 }
 
 :host ::ng-deep p-floatlabel textarea:focus {
@@ -119,35 +109,13 @@
 }
 
 :host ::ng-deep p-floatlabel label {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
   color: #64748b;
   transition: all 0.2s ease;
-  pointer-events: none;
-  font-size: 0.95rem;
-  margin: 0;
-  z-index: 1;
-  transform-origin: left top;
-  background: transparent;
 }
 
 :host ::ng-deep p-floatlabel textarea:focus ~ label,
 :host ::ng-deep p-floatlabel textarea.p-filled ~ label {
-  transform: translateY(-1.25rem) scale(0.85);
   color: #3b82f6;
-}
-
-/* Ensure the label stays floated even when not focused but filled */
-:host ::ng-deep p-floatlabel textarea.p-filled:not(:focus) ~ label {
-  transform: translateY(-1.25rem) scale(0.85);
-  color: #64748b;
-}
-
-/* Add padding to make space for the label */
-:host ::ng-deep .p-float-label {
-  display: block;
-  position: relative;
 }
 
 /* Form validation styling */
