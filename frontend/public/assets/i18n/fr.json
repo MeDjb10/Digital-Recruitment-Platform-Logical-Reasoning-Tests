@@ -112,7 +112,15 @@
     "CANCEL": "Annuler",
     "LOGIN": "Se connecter",
     "REGISTER": "S'inscrire",
-    "LOGOUT": "Déconnexion"
+    "LOGOUT": "Déconnexion",
+    "SAVE": "Enregistrer",
+    "CLOSE": "Fermer",
+    "CONFIRM": "Confirmer",
+    "BACK": "Retour",
+    "NEXT": "Suivant",
+    "CONTINUE": "Continuer",
+    "APPLY": "Appliquer",
+    "RESET": "Réinitialiser"
   },
   "NAV": {
     "HOME": "Accueil",
@@ -129,7 +137,36 @@
     "TESTS": "Mes Tests",
     "DASHBOARD": "Tableau de bord",
     "EMAIL": "Email",
-    "ROLE": "Rôle"
+    "ROLE": "Rôle",
+    "PROFILE_UPDATE_SUCCESS": "Profil mis à jour avec succès",
+    "PASSWORD_UPDATE_SUCCESS": "Mot de passe mis à jour avec succès",
+    "PROFILE_PICTURE_UPDATE_SUCCESS": "Photo de profil mise à jour avec succès",
+    "PROFILE_PICTURE_DELETE_SUCCESS": "Photo de profil supprimée avec succès",
+    "ACCOUNT": {
+      "SETTINGS": "Paramètres du Compte",
+      "PERSONAL_INFO": "Informations Personnelles",
+      "PASSWORD": "Mot de Passe",
+      "SECURITY": "Sécurité",
+      "FIRSTNAME": "Prénom",
+      "LASTNAME": "Nom",
+      "EMAIL": "Adresse Email",
+      "PHONE": "Numéro de Téléphone",
+      "CURRENT_PASSWORD": "Mot de Passe Actuel",
+      "NEW_PASSWORD": "Nouveau Mot de Passe",
+      "CONFIRM_PASSWORD": "Confirmer le Mot de Passe",
+      "PASSWORD_MISMATCH": "Les mots de passe ne correspondent pas",
+      "UPDATE_PROFILE": "Mettre à Jour le Profil",
+      "CHANGE_PASSWORD": "Changer le Mot de Passe"
+    },
+    "UPLOAD": {
+      "SELECT_FILE": "Sélectionner un Fichier",
+      "DROP_FILE": "Déposez le fichier ici ou cliquez pour télécharger",
+      "UPLOADING": "Téléchargement en cours...",
+      "SUCCESS": "Fichier téléchargé avec succès",
+      "ERROR": "Erreur lors du téléchargement du fichier",
+      "SIZE_LIMIT": "La taille du fichier ne doit pas dépasser 5 Mo",
+      "SUPPORTED_FORMATS": "Formats pris en charge : JPEG, PNG, GIF"
+    }
   },
   "LANG": {
     "EN": "Anglais",
@@ -195,7 +232,65 @@
         "DELETE_FAILED": "Échec de la suppression de l'utilisateur",
         "UPDATE_FAILED": "Échec de la mise à jour des informations de l'utilisateur"
       },
-      "SUCCESS": "Succès"
+      "SUCCESS": "Succès",
+      "DIALOGS": {
+        "CHANGE_ROLE": {
+          "TITLE": "Changer le Rôle de l'Utilisateur",
+          "NEW_ROLE_FOR": "Nouveau rôle pour",
+          "CONFIRM": "Confirmer le Changement de Rôle",
+          "CANCEL": "Annuler"
+        },
+        "DELETE_USER": {
+          "TITLE": "Supprimer l'Utilisateur",
+          "CONFIRM_TEXT": "Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action ne peut pas être annulée.",
+          "ARE_YOU_SURE": "Êtes-vous sûr ?",
+          "WARNING": "Cette action ne peut pas être annulée. Toutes les données de l'utilisateur seront définitivement supprimées.",
+          "COUNTDOWN": "Vous pourrez procéder dans {{seconds}} secondes",
+          "CONFIRM": "Oui, Supprimer",
+          "CANCEL": "Annuler"
+        },
+        "EDIT_USER": {
+          "TITLE": "Modifier les Informations de l'Utilisateur",
+          "FIRST_NAME": "Prénom",
+          "LAST_NAME": "Nom",
+          "EMAIL": "Adresse Email",
+          "NEW_PASSWORD": "Nouveau Mot de Passe",
+          "PASSWORD_PLACEHOLDER": "Laisser vide pour conserver le mot de passe actuel",
+          "FIRST_NAME_REQUIRED": "Le prénom est requis",
+          "LAST_NAME_REQUIRED": "Le nom est requis",
+          "EMAIL_INVALID": "Veuillez entrer une adresse email valide",
+          "PASSWORD_TOO_SHORT": "Le mot de passe doit comporter au moins 6 caractères",
+          "SAVE": "Enregistrer les Modifications",
+          "CANCEL": "Annuler"
+        },
+        "CHANGE_STATUS": {
+          "TITLE": "Changer le Statut de l'Utilisateur",
+          "NEW_STATUS_FOR": "Nouveau statut pour",
+          "CONFIRM": "Confirmer le Changement de Statut",
+          "CANCEL": "Annuler"
+        }
+      },
+      "BUTTONS": {
+        "ADD_USER": "Ajouter un utilisateur",
+        "EDIT": "Modifier",
+        "DELETE": "Supprimer",
+        "CHANGE_ROLE": "Changer le rôle",
+        "CHANGE_STATUS": "Changer le statut",
+        "SAVE": "Enregistrer",
+        "CANCEL": "Annuler",
+        "CONFIRM": "Confirmer",
+        "CLOSE": "Fermer",
+        "EXPORT": "Exporter"
+      },
+      "TOOLTIP": {
+        "CHANGE_ROLE": "Changer le rôle de l'utilisateur",
+        "EDIT_INFO": "Modifier les informations de l'utilisateur",
+        "CHANGE_STATUS": "Changer le statut de l'utilisateur",
+        "DELETE_USER": "Supprimer l'utilisateur",
+        "VIEW_DETAILS": "Voir les détails de l'utilisateur",
+        "REFRESH": "Rafraîchir la liste des utilisateurs",
+        "EXPORT": "Exporter les données des utilisateurs"
+      }
     },
     "SIDEBAR": {
       "DASHBOARD": "Tableau de bord",
@@ -222,7 +317,17 @@
       "NO_NOTIFICATIONS": "Vous êtes à jour !",
       "NO_NEW_NOTIFICATIONS": "Pas de nouvelles notifications",
       "VIEW_ALL": "Voir toutes les notifications",
-      "MARK_ALL_READ": "Marquer tout comme lu"
+      "MARK_ALL_READ": "Marquer tout comme lu",
+      "NOTIFICATION_TYPES": {
+        "USER_REGISTERED": "Nouvel utilisateur enregistré",
+        "TEST_COMPLETED": "Test terminé",
+        "SYSTEM": "Notification système",
+        "MESSAGE": "Nouveau message"
+      },
+      "NOTIFICATION_ACTIONS": {
+        "VIEW": "Voir",
+        "DISMISS": "Ignorer"
+      }
     },
     "ANALYTICS": {
       "OVERVIEW": "Aperçu des Analyses",
@@ -270,6 +375,116 @@
         "STATUS": "Statut",
         "NO_ACTIVITY": "Aucune activité récente trouvée"
       }
+    },
+    "ACTIONS": {
+      "SAVE_SUCCESS": "Modifications enregistrées avec succès",
+      "DELETE_SUCCESS": "Élément supprimé avec succès",
+      "UPDATE_SUCCESS": "Mis à jour avec succès",
+      "CREATE_SUCCESS": "Créé avec succès",
+      "ERROR": "Une erreur s'est produite",
+      "CONFIRM_DELETE": "Êtes-vous sûr de vouloir supprimer cet élément ?",
+      "CONFIRM_DISCARD": "Êtes-vous sûr de vouloir annuler les modifications ?"
     }
+  },
+  "TOOLTIPS": {
+    "CLOSE": "Fermer",
+    "INFO": "Information",
+    "HELP": "Aide",
+    "SETTINGS": "Paramètres",
+    "SEARCH": "Rechercher",
+    "NOTIFICATION": "Notification",
+    "USER_MENU": "Menu utilisateur",
+    "LANGUAGE": "Changer de langue",
+    "SORT": "Trier",
+    "FILTER": "Filtrer",
+    "REFRESH": "Rafraîchir"
+  },
+  "TESTS": {
+    "DOMINO": {
+      "TITLE": "Test de Raisonnement Logique Domino",
+      "INSTRUCTIONS": "Ce test évalue votre capacité de raisonnement logique à l'aide de motifs de dominos",
+      "HELP": {
+        "TITLE": "Comment résoudre les puzzles Domino",
+        "DESCRIPTION": "Les puzzles Domino testent votre capacité à reconnaître des modèles et à utiliser le raisonnement logique.",
+        "INSTRUCTIONS": [
+          "Étudiez le motif des points sur chaque domino",
+          "Recherchez les relations entre les dominos consécutifs",
+          "Analysez comment les valeurs changent dans la séquence",
+          "Sélectionnez l'option qui continue correctement le modèle"
+        ]
+      },
+      "TIMER": {
+        "REMAINING": "Temps restant",
+        "EXPIRED": "Temps expiré",
+        "MINUTES": "minutes",
+        "SECONDS": "secondes"
+      }
+    },
+    "VERBAL": {
+      "TITLE": "Test de Raisonnement Verbal",
+      "INSTRUCTIONS": "Ce test évalue votre capacité à comprendre et à analyser des informations écrites",
+      "HELP": {
+        "TITLE": "Comment aborder les questions de Raisonnement Verbal",
+        "DESCRIPTION": "Les tests de raisonnement verbal évaluent votre capacité à comprendre et à interpréter des informations écrites.",
+        "INSTRUCTIONS": [
+          "Lisez attentivement le passage avant de regarder les questions",
+          "Concentrez-vous sur les faits présentés dans le texte",
+          "N'introduisez pas de connaissances extérieures",
+          "Recherchez des preuves pour soutenir votre réponse dans le passage"
+        ]
+      }
+    },
+    "CONTROLS": {
+      "START": "Commencer le Test",
+      "PAUSE": "Pause",
+      "RESUME": "Reprendre",
+      "SUBMIT": "Soumettre les Réponses",
+      "NEXT": "Question Suivante",
+      "PREVIOUS": "Question Précédente",
+      "FINISH": "Terminer le Test"
+    },
+    "MESSAGES": {
+      "CONFIRM_SUBMIT": "Êtes-vous sûr de vouloir soumettre vos réponses ? Vous ne pourrez pas les modifier par la suite.",
+      "CONFIRM_EXIT": "Êtes-vous sûr de vouloir quitter le test ? Votre progression sera perdue.",
+      "TEST_COMPLETED": "Test terminé avec succès",
+      "TEST_FAILED": "Un problème est survenu lors de la soumission de votre test",
+      "TIME_EXPIRED": "Le temps est écoulé. Vos réponses ont été automatiquement soumises."
+    },
+    "STATUS": {
+      "NOT_STARTED": "Non Commencé",
+      "IN_PROGRESS": "En Cours",
+      "COMPLETED": "Terminé",
+      "EXPIRED": "Expiré",
+      "EVALUATED": "Évalué"
+    }
+  },
+  "DIALOGS": {
+    "CONFIRM": {
+      "TITLE": "Confirmation",
+      "YES": "Oui",
+      "NO": "Non",
+      "OK": "OK",
+      "CANCEL": "Annuler"
+    },
+    "ERROR": {
+      "TITLE": "Erreur",
+      "MESSAGE": "Une erreur s'est produite. Veuillez réessayer.",
+      "OK": "OK"
+    },
+    "SUCCESS": {
+      "TITLE": "Succès",
+      "OK": "OK"
+    }
+  },
+  "ERRORS": {
+    "REQUIRED": "Ce champ est obligatoire",
+    "INVALID_EMAIL": "Veuillez entrer une adresse email valide",
+    "MIN_LENGTH": "La longueur minimale est de {{value}} caractères",
+    "MAX_LENGTH": "La longueur maximale est de {{value}} caractères",
+    "PASSWORDS_DONT_MATCH": "Les mots de passe ne correspondent pas",
+    "UNAUTHORIZED": "Vous n'êtes pas autorisé à effectuer cette action",
+    "SESSION_EXPIRED": "Votre session a expiré. Veuillez vous reconnecter.",
+    "CONNECTION_ERROR": "Erreur de connexion. Veuillez vérifier votre connexion internet.",
+    "SERVER_ERROR": "Erreur du serveur. Veuillez réessayer plus tard."
   }
 }

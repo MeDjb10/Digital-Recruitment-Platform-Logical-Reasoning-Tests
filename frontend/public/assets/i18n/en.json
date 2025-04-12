@@ -103,7 +103,15 @@
     "CANCEL": "Cancel",
     "LOGIN": "Login",
     "REGISTER": "Register",
-    "LOGOUT": "Logout"
+    "LOGOUT": "Logout",
+    "SAVE": "Save",
+    "CLOSE": "Close",
+    "CONFIRM": "Confirm",
+    "BACK": "Back",
+    "NEXT": "Next",
+    "CONTINUE": "Continue",
+    "APPLY": "Apply",
+    "RESET": "Reset"
   },
   "NAV": {
     "HOME": "Home",
@@ -120,7 +128,36 @@
     "TESTS": "My Tests",
     "DASHBOARD": "Dashboard",
     "EMAIL": "Email",
-    "ROLE": "Role"
+    "ROLE": "Role",
+    "PROFILE_UPDATE_SUCCESS": "Profile updated successfully",
+    "PASSWORD_UPDATE_SUCCESS": "Password updated successfully",
+    "PROFILE_PICTURE_UPDATE_SUCCESS": "Profile picture updated successfully",
+    "PROFILE_PICTURE_DELETE_SUCCESS": "Profile picture deleted successfully",
+    "ACCOUNT": {
+      "SETTINGS": "Account Settings",
+      "PERSONAL_INFO": "Personal Information",
+      "PASSWORD": "Password",
+      "SECURITY": "Security",
+      "FIRSTNAME": "First Name",
+      "LASTNAME": "Last Name",
+      "EMAIL": "Email Address",
+      "PHONE": "Phone Number",
+      "CURRENT_PASSWORD": "Current Password",
+      "NEW_PASSWORD": "New Password",
+      "CONFIRM_PASSWORD": "Confirm Password",
+      "PASSWORD_MISMATCH": "Passwords do not match",
+      "UPDATE_PROFILE": "Update Profile",
+      "CHANGE_PASSWORD": "Change Password"
+    },
+    "UPLOAD": {
+      "SELECT_FILE": "Select File",
+      "DROP_FILE": "Drop file here or click to upload",
+      "UPLOADING": "Uploading...",
+      "SUCCESS": "File uploaded successfully",
+      "ERROR": "Error uploading file",
+      "SIZE_LIMIT": "File size should not exceed 5MB",
+      "SUPPORTED_FORMATS": "Supported formats: JPEG, PNG, GIF"
+    }
   },
   "LANG": {
     "EN": "English",
@@ -186,7 +223,65 @@
         "DELETE_FAILED": "Failed to delete user",
         "UPDATE_FAILED": "Failed to update user information"
       },
-      "SUCCESS": "Success"
+      "SUCCESS": "Success",
+      "DIALOGS": {
+        "CHANGE_ROLE": {
+          "TITLE": "Change User Role",
+          "NEW_ROLE_FOR": "New role for",
+          "CONFIRM": "Confirm Role Change",
+          "CANCEL": "Cancel"
+        },
+        "DELETE_USER": {
+          "TITLE": "Delete User",
+          "CONFIRM_TEXT": "Are you sure you want to delete this user? This action cannot be undone.",
+          "ARE_YOU_SURE": "Are you sure?",
+          "WARNING": "This action cannot be undone. All user data will be permanently removed.",
+          "COUNTDOWN": "You can proceed in {{seconds}} seconds",
+          "CONFIRM": "Yes, Delete",
+          "CANCEL": "Cancel"
+        },
+        "EDIT_USER": {
+          "TITLE": "Edit User Information",
+          "FIRST_NAME": "First Name",
+          "LAST_NAME": "Last Name",
+          "EMAIL": "Email Address",
+          "NEW_PASSWORD": "New Password",
+          "PASSWORD_PLACEHOLDER": "Leave empty to keep current password",
+          "FIRST_NAME_REQUIRED": "First name is required",
+          "LAST_NAME_REQUIRED": "Last name is required",
+          "EMAIL_INVALID": "Please enter a valid email address",
+          "PASSWORD_TOO_SHORT": "Password must be at least 6 characters",
+          "SAVE": "Save Changes",
+          "CANCEL": "Cancel"
+        },
+        "CHANGE_STATUS": {
+          "TITLE": "Change User Status",
+          "NEW_STATUS_FOR": "New status for",
+          "CONFIRM": "Confirm Status Change",
+          "CANCEL": "Cancel"
+        }
+      },
+      "BUTTONS": {
+        "ADD_USER": "Add User",
+        "EDIT": "Edit",
+        "DELETE": "Delete",
+        "CHANGE_ROLE": "Change Role",
+        "CHANGE_STATUS": "Change Status",
+        "SAVE": "Save",
+        "CANCEL": "Cancel",
+        "CONFIRM": "Confirm",
+        "CLOSE": "Close",
+        "EXPORT": "Export"
+      },
+      "TOOLTIP": {
+        "CHANGE_ROLE": "Change user role",
+        "EDIT_INFO": "Edit user information",
+        "CHANGE_STATUS": "Change user status",
+        "DELETE_USER": "Delete user",
+        "VIEW_DETAILS": "View user details",
+        "REFRESH": "Refresh user list",
+        "EXPORT": "Export user data"
+      }
     },
     "SIDEBAR": {
       "DASHBOARD": "Dashboard",
@@ -213,7 +308,17 @@
       "NO_NOTIFICATIONS": "You're all caught up!",
       "NO_NEW_NOTIFICATIONS": "No new notifications",
       "VIEW_ALL": "View all notifications",
-      "MARK_ALL_READ": "Mark all as read"
+      "MARK_ALL_READ": "Mark all as read",
+      "NOTIFICATION_TYPES": {
+        "USER_REGISTERED": "New user registered",
+        "TEST_COMPLETED": "Test completed",
+        "SYSTEM": "System notification",
+        "MESSAGE": "New message"
+      },
+      "NOTIFICATION_ACTIONS": {
+        "VIEW": "View",
+        "DISMISS": "Dismiss"
+      }
     },
     "ANALYTICS": {
       "OVERVIEW": "Analytics Overview",
@@ -261,6 +366,116 @@
         "STATUS": "Status",
         "NO_ACTIVITY": "No recent activities found"
       }
+    },
+    "ACTIONS": {
+      "SAVE_SUCCESS": "Changes saved successfully",
+      "DELETE_SUCCESS": "Item deleted successfully",
+      "UPDATE_SUCCESS": "Updated successfully",
+      "CREATE_SUCCESS": "Created successfully",
+      "ERROR": "An error occurred",
+      "CONFIRM_DELETE": "Are you sure you want to delete this item?",
+      "CONFIRM_DISCARD": "Are you sure you want to discard changes?"
     }
+  },
+  "TOOLTIPS": {
+    "CLOSE": "Close",
+    "INFO": "Information",
+    "HELP": "Help",
+    "SETTINGS": "Settings",
+    "SEARCH": "Search",
+    "NOTIFICATION": "Notification",
+    "USER_MENU": "User menu",
+    "LANGUAGE": "Change language",
+    "SORT": "Sort",
+    "FILTER": "Filter",
+    "REFRESH": "Refresh"
+  },
+  "TESTS": {
+    "DOMINO": {
+      "TITLE": "Domino Logical Reasoning Test",
+      "INSTRUCTIONS": "This test evaluates your logical reasoning ability using domino patterns",
+      "HELP": {
+        "TITLE": "How to solve Domino puzzles",
+        "DESCRIPTION": "Domino puzzles test your ability to recognize patterns and use logical reasoning.",
+        "INSTRUCTIONS": [
+          "Study the pattern of dots on each domino",
+          "Look for relationships between consecutive dominos",
+          "Analyze how values change across the sequence",
+          "Select the option that correctly continues the pattern"
+        ]
+      },
+      "TIMER": {
+        "REMAINING": "Time remaining",
+        "EXPIRED": "Time expired",
+        "MINUTES": "minutes",
+        "SECONDS": "seconds"
+      }
+    },
+    "VERBAL": {
+      "TITLE": "Verbal Reasoning Test",
+      "INSTRUCTIONS": "This test evaluates your ability to understand and analyze written information",
+      "HELP": {
+        "TITLE": "How to approach Verbal Reasoning questions",
+        "DESCRIPTION": "Verbal reasoning tests assess your ability to understand and interpret written information.",
+        "INSTRUCTIONS": [
+          "Read the passage carefully before looking at the questions",
+          "Focus on the facts presented in the text",
+          "Don't bring in outside knowledge",
+          "Look for evidence to support your answer in the passage"
+        ]
+      }
+    },
+    "CONTROLS": {
+      "START": "Start Test",
+      "PAUSE": "Pause",
+      "RESUME": "Resume",
+      "SUBMIT": "Submit Answers",
+      "NEXT": "Next Question",
+      "PREVIOUS": "Previous Question",
+      "FINISH": "Finish Test"
+    },
+    "MESSAGES": {
+      "CONFIRM_SUBMIT": "Are you sure you want to submit your answers? You cannot change them afterward.",
+      "CONFIRM_EXIT": "Are you sure you want to exit the test? Your progress will be lost.",
+      "TEST_COMPLETED": "Test completed successfully",
+      "TEST_FAILED": "There was a problem submitting your test",
+      "TIME_EXPIRED": "Time has expired. Your answers have been automatically submitted."
+    },
+    "STATUS": {
+      "NOT_STARTED": "Not Started",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "EXPIRED": "Expired",
+      "EVALUATED": "Evaluated"
+    }
+  },
+  "DIALOGS": {
+    "CONFIRM": {
+      "TITLE": "Confirmation",
+      "YES": "Yes",
+      "NO": "No",
+      "OK": "OK",
+      "CANCEL": "Cancel"
+    },
+    "ERROR": {
+      "TITLE": "Error",
+      "MESSAGE": "An error occurred. Please try again.",
+      "OK": "OK"
+    },
+    "SUCCESS": {
+      "TITLE": "Success",
+      "OK": "OK"
+    }
+  },
+  "ERRORS": {
+    "REQUIRED": "This field is required",
+    "INVALID_EMAIL": "Please enter a valid email address",
+    "MIN_LENGTH": "Minimum length is {{value}} characters",
+    "MAX_LENGTH": "Maximum length is {{value}} characters",
+    "PASSWORDS_DONT_MATCH": "Passwords do not match",
+    "UNAUTHORIZED": "You are not authorized to perform this action",
+    "SESSION_EXPIRED": "Your session has expired. Please log in again.",
+    "CONNECTION_ERROR": "Connection error. Please check your internet connection.",
+    "SERVER_ERROR": "Server error. Please try again later."
   }
 }
