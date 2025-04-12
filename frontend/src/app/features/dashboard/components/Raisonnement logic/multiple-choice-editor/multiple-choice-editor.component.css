@@ -1,0 +1,74 @@
+:host ::ng-deep .p-dropdown {
+  width: 100%;
+}
+
+:host ::ng-deep .p-float-label textarea {
+  width: 100%;
+}
+
+:host ::ng-deep .p-button.p-button-sm {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.875rem;
+}
+
+:host ::ng-deep .p-radiobutton .p-radiobutton-box.p-highlight {
+  border-color: #3b82f6;
+  background: #3b82f6;
+}
+
+:host ::ng-deep .p-checkbox .p-checkbox-box.p-highlight {
+  border-color: #3b82f6;
+  background: #3b82f6;
+}
+
+:host
+  ::ng-deep
+  .p-dropdown-panel
+  .p-dropdown-items
+  .p-dropdown-item.p-highlight {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+/* IftaLabel styling */
+:host ::ng-deep p-iftalabel {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+:host ::ng-deep p-iftalabel label {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.75rem;
+  pointer-events: none;
+  transition: 0.2s ease all;
+  font-size: 0.875rem;
+  color: #64748b;
+  transform-origin: left top;
+}
+
+:host ::ng-deep p-iftalabel textarea {
+  padding-top: 1.75rem !important;
+  font-size: 0.95rem;
+}
+
+:host ::ng-deep p-iftalabel textarea:focus ~ label {
+  transform: translateY(-0.5rem) scale(0.85);
+  color: #3b82f6;
+}
+
+:host ::ng-deep p-iftalabel textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+:host ::ng-deep .p-toast {
+  opacity: 0.95;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

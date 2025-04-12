@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { TestManagementService } from '../../../../../core/services/test-management.service';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
+import { DropdownModule } from 'primeng/dropdown';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 @Component({
@@ -13,341 +15,26 @@ import { ConfirmationService, MessageService } from 'primeng/api';
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule,
     ButtonModule,
+    DropdownModule,
     ConfirmDialogModule,
     ToastModule,
   ],
   providers: [ConfirmationService, MessageService],
-  template: `
-    <div class="test-details-container" *ngIf="test">
-      <div class="test-header">
-        <div class="test-info">
-          <h1>{{ test.name }}</h1>
-          <p class="description">{{ test.description }}</p>
-          <div class="metadata">
-            <span class="badge difficulty-{{ test.difficulty }}">{{
-              test.difficulty
-            }}</span>
-            <span class="meta-item"
-              ><i class="pi pi-clock"></i> {{ test.duration }} minutes</span
-            >
-            <span class="meta-item"
-              ><i class="pi pi-list"></i>
-              {{ test.totalQuestions }} questions</span
-            >
-          </div>
-        </div>
-        <div class="actions">
-          <button
-            pButton
-            label="Edit Test"
-            icon="pi pi-pencil"
-            class="p-button-outlined"
-            [routerLink]="[
-              '/dashboard/RaisonnementLogique/Tests/edit',
-              test._id || test.id
-            ]"
-          ></button>
-          <button
-            pButton
-            label="Preview Test"
-            icon="pi pi-eye"
-            class="p-button-outlined"
-          ></button>
-          <button
-            pButton
-            label="Delete"
-            icon="pi pi-trash"
-            class="p-button-outlined p-button-danger"
-            (click)="confirmDeleteTest()"
-          ></button>
-        </div>
-      </div>
-
-      <div class="questions-section">
-        <div class="section-header">
-          <h2>Questions</h2>
-          <button
-            pButton
-            label="Add New Question"
-            icon="pi pi-plus"
-            [routerLink]="[
-              '/dashboard/RaisonnementLogique/Tests',
-              test._id || test.id,
-              'questions',
-              'create'
-            ]"
-          ></button>
-        </div>
-
-        <div class="questions-list" *ngIf="questions.length > 0">
-          <div
-            class="question-card"
-            *ngFor="let question of questions; let i = index"
-          >
-            <div class="question-header">
-              <span class="question-number">Question {{ i + 1 }}</span>
-              <span class="badge difficulty-{{ question.difficulty }}">{{
-                question.difficulty
-              }}</span>
-            </div>
-            <h3>{{ question.title || 'Untitled Question' }}</h3>
-            <p>{{ question.instruction }}</p>
-            <p class="pattern">
-              <strong>Pattern:</strong> {{ question.pattern }}
-            </p>
-            <div class="card-actions">
-              <button
-                pButton
-                icon="pi pi-pencil"
-                label="Edit"
-                class="p-button-sm p-button-outlined"
-                [routerLink]="[
-                  '/dashboard/RaisonnementLogique/Tests',
-                  test._id || test.id,
-                  'questions',
-                  question._id || question.id,
-                  'edit'
-                ]"
-              ></button>
-              <button
-                pButton
-                icon="pi pi-trash"
-                label="Delete"
-                class="p-button-sm p-button-outlined p-button-danger"
-                (click)="confirmDeleteQuestion(question._id || question.id)"
-              ></button>
-            </div>
-          </div>
-        </div>
-
-        <div class="empty-state" *ngIf="questions.length === 0">
-          <p>This test has no questions yet.</p>
-          <button
-            pButton
-            label="Add First Question"
-            icon="pi pi-plus"
-            [routerLink]="[
-              '/dashboard/RaisonnementLogique/Tests',
-              test.id,
-              'questions',
-              'create'
-            ]"
-          ></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="loading-container" *ngIf="loading">
-      <div class="spinner"></div>
-      <p>Loading test details...</p>
-    </div>
-
-    <!-- PrimeNG Components -->
-    <p-toast></p-toast>
-    <p-confirmDialog
-      header="Confirm Deletion"
-      icon="pi pi-exclamation-triangle"
-    ></p-confirmDialog>
-  `,
-  styles: [
-    `
-      .test-details-container {
-        padding: 1.5rem;
-      }
-
-      .test-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #e2e8f0;
-      }
-
-      .test-info {
-        flex: 1;
-      }
-
-      h1 {
-        margin: 0 0 0.5rem;
-        font-size: 1.75rem;
-        color: #1e293b;
-      }
-
-      .description {
-        color: #64748b;
-        margin-bottom: 1rem;
-      }
-
-      .metadata {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-      }
-
-      .badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-      }
-
-      .difficulty-easy {
-        background: #d1fae5;
-        color: #047857;
-      }
-
-      .difficulty-medium {
-        background: #e0f2fe;
-        color: #0369a1;
-      }
-
-      .difficulty-hard {
-        background: #fef3c7;
-        color: #b45309;
-      }
-
-      .difficulty-expert {
-        background: #fee2e2;
-        color: #b91c1c;
-      }
-
-      .meta-item {
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-        color: #64748b;
-        font-size: 0.875rem;
-      }
-
-      .actions {
-        display: flex;
-        gap: 0.5rem;
-        align-items: flex-start;
-      }
-
-      .questions-section {
-        margin-top: 2rem;
-      }
-
-      .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-      }
-
-      .section-header h2 {
-        margin: 0;
-        font-size: 1.5rem;
-        color: #334155;
-      }
-
-      .questions-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 1.5rem;
-      }
-
-      .question-card {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        padding: 1.25rem;
-        position: relative;
-        border: 1px solid #e2e8f0;
-        transition: all 0.2s ease;
-      }
-
-      .question-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        transform: translateY(-2px);
-      }
-
-      .question-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.75rem;
-      }
-
-      .question-number {
-        font-weight: 600;
-        color: #64748b;
-        font-size: 0.875rem;
-      }
-
-      .question-card h3 {
-        margin: 0 0 0.5rem;
-        font-size: 1.125rem;
-        color: #1e293b;
-      }
-
-      .question-card p {
-        margin: 0 0 0.5rem;
-        color: #475569;
-        font-size: 0.9375rem;
-      }
-
-      .pattern {
-        font-size: 0.875rem;
-        background: #f8fafc;
-        padding: 0.5rem;
-        border-radius: 4px;
-        margin-top: 0.75rem;
-      }
-
-      .card-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.5rem;
-        margin-top: 1rem;
-      }
-
-      .empty-state {
-        text-align: center;
-        padding: 3rem 0;
-        background: #f8fafc;
-        border-radius: 8px;
-      }
-
-      .empty-state p {
-        margin-bottom: 1rem;
-        color: #64748b;
-        font-size: 1rem;
-      }
-
-      .loading-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 70vh;
-      }
-
-      .spinner {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        border: 3px solid #e2e8f0;
-        border-top-color: #3b82f6;
-        animation: spin 1s linear infinite;
-        margin-bottom: 1rem;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-    `,
-  ],
+  templateUrl: './test-details.component.html',
+  styleUrls: ['./test-details.component.css'],
 })
 export class TestDetailsComponent implements OnInit {
   test: any;
   questions: any[] = [];
   loading = true;
+  selectedQuestionType: string = 'domino'; // Default selected question type
+
+  questionTypeOptions = [
+    { label: 'Domino Questions', value: 'domino' },
+    { label: 'Multiple Choice Questions', value: 'multiple-choice' },
+  ];
 
   constructor(
     private route: ActivatedRoute,
@@ -372,6 +59,13 @@ export class TestDetailsComponent implements OnInit {
       (test) => {
         this.test = test;
         this.loadQuestions(testId);
+
+        // Set the default selected question type based on the test type
+        if (test && test.type === 'multiple-choice') {
+          this.selectedQuestionType = 'multiple-choice';
+        } else {
+          this.selectedQuestionType = 'domino';
+        }
       },
       (error) => {
         console.error('Error loading test:', error);
@@ -417,7 +111,7 @@ export class TestDetailsComponent implements OnInit {
     this.confirmationService.confirm({
       message: `Are you sure you want to delete the test "${this.test.name}"? This will permanently remove all associated questions.`,
       accept: () => {
-        this.deleteTest(this.test.id);
+        this.deleteTest(this.test._id || this.test.id);
       },
     });
   }
@@ -425,7 +119,9 @@ export class TestDetailsComponent implements OnInit {
   deleteQuestion(questionId: string) {
     this.testManagementService.deleteQuestion(questionId).subscribe(
       () => {
-        this.questions = this.questions.filter((q) => q.id !== questionId);
+        this.questions = this.questions.filter(
+          (q) => q._id !== questionId && q.id !== questionId
+        );
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
@@ -462,5 +158,48 @@ export class TestDetailsComponent implements OnInit {
         });
       }
     );
+  }
+
+  // Helper method to get the appropriate edit route based on question type
+  getEditRoute(question: any): any[] {
+    const testId = this.test._id || this.test.id;
+    const questionId = question._id || question.id;
+
+    if (question.questionType === 'MultipleChoiceQuestion') {
+      return [
+        '/dashboard/RaisonnementLogique/Tests',
+        testId,
+        'multiple-choice',
+        questionId,
+        'edit',
+      ];
+    } else {
+      return [
+        '/dashboard/RaisonnementLogique/Tests',
+        testId,
+        'questions',
+        questionId,
+        'edit',
+      ];
+    }
+  }
+
+  // Helper method to get a readable label for question type
+  getQuestionTypeLabel(type: string): string {
+    const types: { [key: string]: string } = {
+      DominoQuestion: 'Domino',
+      MultipleChoiceQuestion: 'Multiple Choice',
+    };
+    return types[type] || type;
+  }
+
+  // Helper method to get a readable label for test type
+  getTestTypeLabel(type: string): string {
+    const types: { [key: string]: string } = {
+      domino: 'Domino Test',
+      'multiple-choice': 'Multiple Choice',
+      verbal: 'Verbal Assessment',
+    };
+    return types[type] || type;
   }
 }

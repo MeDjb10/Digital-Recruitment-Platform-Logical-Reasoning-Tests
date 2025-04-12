@@ -1,0 +1,193 @@
+<!-- filepath: e:\PFE\GithubProject\Digital-Recruitment-Platform-Logical-Reasoning-Tests\frontend\src\app\features\dashboard\components\Raisonnement logic\test-details\test-details.component.html -->
+<div class="test-details-container" *ngIf="test">
+  <div class="test-header">
+    <div class="test-info">
+      <h1>{{ test.name }}</h1>
+      <p class="description">{{ test.description }}</p>
+      <div class="metadata">
+        <span class="badge difficulty-{{ test.difficulty }}">{{
+          test.difficulty
+        }}</span>
+        <span class="badge type-{{ test.type }}">{{
+          getTestTypeLabel(test.type)
+        }}</span>
+        <span class="meta-item"
+          ><i class="pi pi-clock"></i> {{ test.duration }} minutes</span
+        >
+        <span class="meta-item"
+          ><i class="pi pi-list"></i> {{ test.totalQuestions }} questions</span
+        >
+      </div>
+    </div>
+    <div class="actions">
+      <button
+        pButton
+        label="Edit Test"
+        icon="pi pi-pencil"
+        class="p-button-outlined"
+        [routerLink]="[
+          '/dashboard/RaisonnementLogique/Tests/edit',
+          test._id || test.id
+        ]"
+      ></button>
+      <button
+        pButton
+        label="Preview Test"
+        icon="pi pi-eye"
+        class="p-button-outlined"
+      ></button>
+      <button
+        pButton
+        label="Delete"
+        icon="pi pi-trash"
+        class="p-button-outlined p-button-danger"
+        (click)="confirmDeleteTest()"
+      ></button>
+    </div>
+  </div>
+
+  <div class="questions-section">
+    <div class="section-header">
+      <h2>Questions</h2>
+      <div class="header-actions">
+        <p-dropdown
+          [options]="questionTypeOptions"
+          [(ngModel)]="selectedQuestionType"
+          placeholder="Select Question Type"
+          [style]="{ 'min-width': '220px', 'margin-right': '0.5rem' }"
+        ></p-dropdown>
+
+        <button
+          pButton
+          *ngIf="selectedQuestionType === 'domino'"
+          label="Add Domino Question"
+          icon="pi pi-plus"
+          [routerLink]="[
+            '/dashboard/RaisonnementLogique/Tests',
+            test._id || test.id,
+            'questions',
+            'create'
+          ]"
+        ></button>
+
+        <button
+          pButton
+          *ngIf="selectedQuestionType === 'multiple-choice'"
+          label="Add Multiple Choice Question"
+          icon="pi pi-plus"
+          [routerLink]="[
+            '/dashboard/RaisonnementLogique/Tests',
+            test._id || test.id,
+            'multiple-choice',
+            'create'
+          ]"
+        ></button>
+      </div>
+    </div>
+
+    <div class="questions-list" *ngIf="questions.length > 0">
+      <div
+        class="question-card"
+        *ngFor="let question of questions; let i = index"
+      >
+        <div class="question-header">
+          <span class="question-number">Question {{ i + 1 }}</span>
+          <div class="question-badges">
+            <span class="badge question-type-{{ question.questionType }}">
+              {{ getQuestionTypeLabel(question.questionType) }}
+            </span>
+            <span class="badge difficulty-{{ question.difficulty }}">
+              {{ question.difficulty }}
+            </span>
+          </div>
+        </div>
+        <h3>{{ question.title || "Untitled Question" }}</h3>
+        <p>{{ question.instruction }}</p>
+        <p class="pattern" *ngIf="question.questionType === 'DominoQuestion'">
+          <strong>Pattern:</strong> {{ question.pattern }}
+        </p>
+        <p
+          class="options-summary"
+          *ngIf="question.questionType === 'MultipleChoiceQuestion'"
+        >
+          <strong>Options:</strong> {{ question.options?.length || 0 }}
+          <span
+            *ngIf="question.allowMultipleCorrect"
+            class="badge multiple-correct"
+            >Multiple Correct</span
+          >
+        </p>
+        <div class="card-actions">
+          <button
+            pButton
+            icon="pi pi-pencil"
+            label="Edit"
+            class="p-button-sm p-button-outlined"
+            [routerLink]="getEditRoute(question)"
+          ></button>
+          <button
+            pButton
+            icon="pi pi-trash"
+            label="Delete"
+            class="p-button-sm p-button-outlined p-button-danger"
+            (click)="confirmDeleteQuestion(question._id || question.id)"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="questions.length === 0">
+      <div class="empty-state-content">
+        <img
+          src="assets/images/empty-questions.svg"
+          alt="No questions"
+          class="empty-state-image"
+        />
+        <p>This test has no questions yet.</p>
+        <p class="empty-state-help">
+          What type of question would you like to create?
+        </p>
+
+        <div class="empty-state-buttons">
+          <button
+            pButton
+            label="Create Domino Question"
+            icon="pi pi-th-large"
+            class="p-button-outlined"
+            [routerLink]="[
+              '/dashboard/RaisonnementLogique/Tests',
+              test._id || test.id,
+              'questions',
+              'create'
+            ]"
+          ></button>
+
+          <button
+            pButton
+            label="Create Multiple Choice Question"
+            icon="pi pi-list"
+            class="p-button-outlined"
+            [routerLink]="[
+              '/dashboard/RaisonnementLogique/Tests',
+              test._id || test.id,
+              'multiple-choice',
+              'create'
+            ]"
+          ></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="loading-container" *ngIf="loading">
+  <div class="spinner"></div>
+  <p>Loading test details...</p>
+</div>
+
+<!-- PrimeNG Components -->
+<p-toast></p-toast>
+<p-confirmDialog
+  header="Confirm Deletion"
+  icon="pi pi-exclamation-triangle"
+></p-confirmDialog>

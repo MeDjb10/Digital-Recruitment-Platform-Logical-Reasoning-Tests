@@ -1,29 +1,44 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit, AfterViewInit, OnChanges, ViewChild, ElementRef, Input, Output, ChangeDetectorRef, SimpleChanges, HostListener } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute } from "@angular/router";
-import { EventEmitter } from "@angular/core";
-import { Router } from "@angular/router";
-import { ButtonModule } from "primeng/button";
-import { CheckboxModule } from "primeng/checkbox";
-import { DropdownModule } from "primeng/dropdown";
-import { InputGroupModule } from "primeng/inputgroup";
-import { SliderModule } from "primeng/slider";
-import { TextareaModule } from "primeng/textarea";
-import { TooltipModule } from "primeng/tooltip";
-import { TestManagementService } from "../../../../core/services/test-management.service";
-import { InteractiveArrowComponent } from "../../DominoTest/components/interactive-arrow/interactive-arrow.component";
-import { InteractiveDominoComponent } from "../../DominoTest/components/interactive-domino/interactive-domino.component";
+import { CommonModule } from '@angular/common';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  OnChanges,
+  ViewChild,
+  ElementRef,
+  Input,
+  Output,
+  ChangeDetectorRef,
+  SimpleChanges,
+  HostListener,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { EventEmitter } from '@angular/core';
+import { Router } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { CheckboxModule } from 'primeng/checkbox';
+import { DropdownModule } from 'primeng/dropdown';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { SliderModule } from 'primeng/slider';
+import { TextareaModule } from 'primeng/textarea';
+import { TooltipModule } from 'primeng/tooltip';
+import { TestManagementService } from '../../../../core/services/test-management.service';
+import { InteractiveArrowComponent } from '../../DominoTest/components/interactive-arrow/interactive-arrow.component';
+import { InteractiveDominoComponent } from '../../DominoTest/components/interactive-domino/interactive-domino.component';
 
-import { BuilderHeaderComponent } from "../builder-header/builder-header.component";
-import { EditorLayoutComponent } from "../editor-layout/editor-layout.component";
-import { QuestionFormComponent } from "../question-form/question-form.component";
-import { ArrowPropertiesService } from "../services/arrow-properties.service";
-import { DominoPropertiesService } from "../services/domino-proprties.service";
-import { StatusBarComponent } from "../status-bar/status-bar.component";
-import { LayoutToolbarComponent } from "../toolbar/layout-toolbar.component";
-import { DominoQuestion } from "../../../../core/models/question.model";
-import { ArrowPosition, DominoPosition } from "../../../../core/models/domino.model";
+import { BuilderHeaderComponent } from '../builder-header/builder-header.component';
+import { EditorLayoutComponent } from '../editor-layout/editor-layout.component';
+import { QuestionFormComponent } from '../question-form/question-form.component';
+import { ArrowPropertiesService } from '../services/arrow-properties.service';
+import { DominoPropertiesService } from '../services/domino-proprties.service';
+import { StatusBarComponent } from '../status-bar/status-bar.component';
+import { LayoutToolbarComponent } from '../toolbar/layout-toolbar.component';
+import { DominoQuestion } from '../../../../core/models/question.model';
+import {
+  ArrowPosition,
+  DominoPosition,
+} from '../../../../core/models/domino.model';
 
 // Define question interface for better type safety
 
@@ -233,9 +248,6 @@ export class DominoLayoutBuilderComponent
   /**
    * Initialize the builder from an existing question
    */
-  /**
-   * Initialize the builder from an existing question
-   */
   initializeFromQuestion(): void {
     if (!this.initialQuestion) return;
 
@@ -246,6 +258,8 @@ export class DominoLayoutBuilderComponent
     this.questionDifficulty = this.initialQuestion.difficulty || 'medium';
     this.questionPattern = this.initialQuestion.pattern || '';
     this.layoutType = this.initialQuestion.layoutType || 'grid';
+
+    console.log('Initializing from question with ID:', this.questionId);
 
     // Handle canvas dimensions and grid size
     if (this.initialQuestion.gridLayout) {
@@ -903,7 +917,18 @@ export class DominoLayoutBuilderComponent
 
     console.log('Question data to save:', questionData);
 
-    if (this.mode === 'edit' && this.questionId) {
+    // Check if we're in edit mode with a valid questionId
+    const isEditMode = this.mode === 'edit' && this.questionId;
+    console.log(
+      'Save operation mode:',
+      isEditMode ? 'UPDATE' : 'CREATE',
+      'mode:',
+      this.mode,
+      'questionId:',
+      this.questionId || '<empty string>'
+    );
+
+    if (isEditMode) {
       // Update existing question
       this.testManagementService
         .updateQuestion(this.questionId, questionData)
@@ -912,10 +937,10 @@ export class DominoLayoutBuilderComponent
             console.log('Question updated successfully:', response);
             this.isSaving = false;
             this.hasUnsavedChanges = false;
-            this.showNotification('Question updated successfully!', 'success');
-
-            // Update the questionId with the backend _id
-            this.questionId = response._id;
+            this.showNotification(
+              '✅ Question updated successfully!',
+              'success'
+            );
 
             // Combine the response and local data into a properly formatted object
             const updatedQuestion: Partial<DominoQuestion> = {
@@ -930,7 +955,7 @@ export class DominoLayoutBuilderComponent
             console.error('Error updating question:', error);
             this.isSaving = false;
             this.showNotification(
-              'Failed to update question: ' + error.message,
+              '❌ Failed to update question: ' + (error.message || error),
               'error'
             );
           },
@@ -953,7 +978,10 @@ export class DominoLayoutBuilderComponent
             console.log('Question created successfully:', response);
             this.isSaving = false;
             this.hasUnsavedChanges = false;
-            this.showNotification('Question created successfully!', 'success');
+            this.showNotification(
+              '✅ ✅ Question created successfully!',
+              'success'
+            );
 
             // Update mode and ID for future saves
             this.mode = 'edit';
@@ -972,7 +1000,7 @@ export class DominoLayoutBuilderComponent
             console.error('Error creating question:', error);
             this.isSaving = false;
             this.showNotification(
-              'Failed to create question: ' + error.message,
+              '❌ Failed to create question: ' + (error.message || error),
               'error'
             );
           },

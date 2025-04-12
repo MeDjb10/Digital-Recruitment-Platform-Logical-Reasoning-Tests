@@ -143,9 +143,24 @@ export class TestService {
     questionId: string,
     updates: any
   ): Observable<QuestionResponse> {
+    // Strip _id from the updates if present to avoid conflicts
+    const updatePayload = { ...updates };
+    if (updatePayload._id) delete updatePayload._id;
+    if (updatePayload.id) delete updatePayload.id;
+
+    console.log(`Updating question ${questionId} with payload:`, updatePayload);
+
     return this.http
-      .put<QuestionResponse>(`${this.questionApiUrl}/${questionId}`, updates)
-      .pipe(catchError(this.handleError));
+      .put<QuestionResponse>(
+        `${this.questionApiUrl}/${questionId}`,
+        updatePayload
+      )
+      .pipe(
+        tap((response) => {
+          console.log('Update question response:', response);
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**

@@ -1,0 +1,30 @@
+<div class="h-full">
+  <div *ngIf="loading" class="flex flex-col items-center justify-center h-1/2">
+    <div
+      class="w-10 h-10 rounded-full border-3 border-gray-200 border-t-blue-500 animate-spin mb-4"
+    ></div>
+    <p class="text-gray-700">Loading test information...</p>
+  </div>
+
+  <app-domino-layout-builder
+    *ngIf="!loading && testId"
+    [testId]="testId"
+    mode="create"
+    [returnUrl]="'/dashboard/RaisonnementLogique/Tests/' + testId"
+    (save)="onQuestionSaved($event)"
+    (cancel)="onCancel()"
+  ></app-domino-layout-builder>
+
+  <div
+    *ngIf="!loading && !testId"
+    class="text-center p-8 m-8 max-w-md mx-auto bg-red-100 rounded-lg text-red-800"
+  >
+    <p>Test not found. Please check the test ID and try again.</p>
+    <button
+      (click)="goBack()"
+      class="mt-4 px-4 py-2 bg-red-500 text-white border-none rounded cursor-pointer hover:bg-red-600"
+    >
+      Go Back
+    </button>
+  </div>
+</div>
