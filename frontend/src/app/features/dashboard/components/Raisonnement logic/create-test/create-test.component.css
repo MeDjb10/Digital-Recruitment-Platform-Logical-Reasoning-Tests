@@ -1,156 +1,4 @@
-.create-test-container {
-  max-width: 900px;
-  margin: 2rem auto;
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-.header {
-  margin-bottom: 1rem;
-}
-
-.header h1 {
-  margin: 0;
-  font-size: 1.75rem;
-  color: var(--primary-color, #3b82f6);
-  font-weight: 600;
-}
-
-.section-title {
-  margin: 1.5rem 0 0.75rem 0;
-}
-
-.section-title h2 {
-  font-size: 1.25rem;
-  color: var(--text-color-secondary, #64748b);
-  font-weight: 500;
-  margin: 0;
-}
-
-.form-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.form-field label {
-  font-weight: 500;
-  color: var(--text-color, #334155);
-  font-size: 0.95rem;
-  margin-bottom: 0.5rem;
-  display: block;
-}
-
-.form-field .helper-text {
-  font-size: 0.8rem;
-  color: var(--text-color-secondary, #64748b);
-  margin-top: 0.25rem;
-}
-
-.checkbox-label {
-  margin-left: 0.5rem;
-}
-
-.p-field-checkbox {
-  display: flex;
-  align-items: center;
-  margin: 0.5rem 0;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-/* Test type selection styling */
-.test-type-section {
-  margin: 1.5rem 0;
-}
-
-.test-type-selection {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-top: 0.5rem;
-}
-
-.test-type-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1rem;
-  transition: all 0.2s ease;
-  background-color: #f8fafc;
-  cursor: pointer;
-}
-
-.test-type-card.selected {
-  border-color: var(--primary-color, #3b82f6);
-  background-color: rgba(59, 130, 246, 0.04);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.test-type-radio {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.test-type-radio label {
-  font-weight: 600;
-  color: var(--text-color, #334155);
-}
-
-.test-type-description {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding-left: 1.5rem;
-}
-
-.test-type-icon {
-  font-size: 1.5rem;
-  color: var(--primary-color, #3b82f6);
-}
-
-.test-type-description p {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--text-color-secondary, #64748b);
-  line-height: 1.4;
-}
-
-/* Create test form */
-.create-test-form p-fieldset {
-  margin-bottom: 1.5rem;
-}
-
-/* Validation styling */
-.ng-invalid.ng-dirty:not(form) {
-  border-color: var(--red-500) !important;
-}
-
-.p-error {
-  color: var(--red-500);
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
-}
-
-/* Animations */
+/* Custom animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -162,24 +10,21 @@
   }
 }
 
-/* Responsive adjustments */
-@media screen and (max-width: 768px) {
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
+@keyframes tagPop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
   }
-
-  .create-test-container {
-    margin: 1rem;
-    max-width: none;
+  50% {
+    transform: scale(1.1);
   }
-
-  .test-type-selection {
-    grid-template-columns: 1fr;
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
-/* Enhance focus states for accessibility */
+/* Custom styling for PrimeNG components that can't be easily styled with Tailwind */
 :host ::ng-deep .p-inputtext:focus,
 :host ::ng-deep .p-dropdown:focus,
 :host ::ng-deep .p-inputnumber:focus,
@@ -187,195 +32,20 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
 }
 
-/* Improve button styling */
-:host ::ng-deep .p-button {
-  transition: all 0.2s ease;
-}
-
-:host ::ng-deep .p-button:hover {
-  transform: translateY(-1px);
-}
-
-:host ::ng-deep .p-button:active {
-  transform: translateY(0);
-}
-
-/* Card styling */
-:host ::ng-deep .p-card {
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-}
-
-:host ::ng-deep .p-card .p-card-content {
-  padding: 1.5rem;
-  padding-top: 0.5rem;
-}
-
-/* Fieldset styling */
-:host ::ng-deep .p-fieldset {
-  margin-bottom: 1.5rem;
-  border-radius: 12px;
-  border: 1px solid var(--surface-200, #e2e8f0);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-:host ::ng-deep .p-fieldset-legend {
-  font-weight: 600;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  background-color: var(--surface-50, #f8fafc);
-  border: 1px solid var(--surface-200, #e2e8f0);
-}
-
-:host ::ng-deep .p-fieldset-content {
-  padding: 1.25rem;
-}
-
-/* Chips styling */
-:host ::ng-deep .p-chips .p-chips-multiple-container .p-chips-token {
-  background-color: var(--primary-color, #3b82f6);
-  color: white;
-}
-
-/* Tag Input Styling */
-.tag-input-container {
-  margin-bottom: 12px;
-}
-
-.tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 10px 0;
-  min-height: 40px;
-  padding: 5px 0;
-}
-
-.tag-suggestions {
-  margin-top: 12px;
-}
-
-.suggestion-label {
-  font-size: 0.8rem;
-  color: var(--text-color-secondary, #64748b);
-  display: block;
-  margin-bottom: 6px;
-}
-
-.suggested-tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.suggestion-tag {
-  transition: all 0.2s ease;
-  font-size: 0.75rem;
-  padding: 0.15rem 0.75rem;
-  background-color: var(--surface-200, #f1f5f9);
-  color: var(--text-color, #334155);
-  border: 1px solid var(--surface-300, #e2e8f0);
-}
-
-.suggestion-tag:not(:disabled):hover {
-  background-color: var(--surface-300, #e2e8f0);
-  transform: translateY(-1px);
-}
-
-.suggestion-tag:disabled {
-  opacity: 0.5;
-  text-decoration: line-through;
-  cursor: not-allowed;
-}
-
-.no-tags-message {
-  color: var(--text-color-secondary, #64748b);
-  font-style: italic;
-  padding: 6px 0;
-}
-
-/* Custom styling for p-chip */
+/* Custom styling for the tag chip component */
 :host ::ng-deep .tag-chip {
-  background-color: var(--primary-color, #3b82f6);
-  color: white;
-  border-radius: 16px;
-  padding: 2px 8px;
-  transition: all 0.2s ease;
-}
-
-:host ::ng-deep .tag-chip:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-:host ::ng-deep .tag-chip .p-chip-remove-icon {
-  margin-left: 6px;
-}
-
-/* Updated Tag Input and Display Styling */
-.tag-input-container {
-  margin-bottom: 12px;
-}
-
-.tags-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 10px 0;
-  min-height: 40px;
-  padding: 5px 0;
-  animation: fadeIn 0.3s ease;
-}
-
-.tag-suggestion-item {
-  display: flex;
-  align-items: center;
-  padding: 4px 0;
-  color: var(--text-color, #334155);
-}
-
-.tag-content {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.tag-icon {
-  font-size: 0.75rem;
-  opacity: 0.8;
-}
-
-.tag-label {
-  font-weight: 500;
-}
-
-.no-tags-message {
-  display: flex;
-  align-items: center;
-  color: var(--text-color-secondary, #64748b);
-  padding: 10px 0;
-  font-style: italic;
-}
-
-/* Custom styling for p-chip with modern design */
-:host ::ng-deep .tag-chip {
-  background: linear-gradient(
-    to right,
-    var(--primary-400, #60a5fa),
-    var(--primary-700, #1d4ed8)
-  );
+  background: linear-gradient(to right, #60a5fa, #1d4ed8);
   color: white;
   border-radius: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: none;
   padding: 6px 8px 6px 12px;
   transition: all 0.2s ease;
-  max-width: 200px;
+  animation: tagPop 0.3s ease;
 }
 
 :host ::ng-deep .tag-chip:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -395,911 +65,118 @@
   background-color: rgba(255, 255, 255, 0.4);
 }
 
-/* AutoComplete styling */
-:host ::ng-deep .p-autocomplete {
-  width: 100%;
-}
-
-:host ::ng-deep .p-autocomplete-panel {
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-:host ::ng-deep .p-autocomplete-items {
-  padding: 6px 0;
-}
-
-:host ::ng-deep .p-autocomplete-item {
-  padding: 8px 16px;
-  margin: 0 6px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-:host ::ng-deep .p-autocomplete-item:hover {
-  background-color: var(--surface-200, #f1f5f9);
-  transform: translateX(2px);
-}
-
-/* Add animation for tag additions/removals */
-@keyframes tagPop {
-  0% {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-:host ::ng-deep .tag-chip {
-  animation: tagPop 0.3s ease;
-}
-
-/* Improved Tag Styling */
-.tag-input-container {
-  margin-bottom: 12px;
-}
-
-.tags-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 10px 0;
-  min-height: 40px;
-  padding: 5px 0;
-}
-
-.tag-suggestion-item {
-  display: flex;
-  align-items: center;
-  padding: 4px 0;
-  color: var(--text-color, #334155);
-}
-
-.no-tags-message {
-  display: flex;
-  align-items: center;
-  color: var(--text-color-secondary, #64748b);
-  padding: 10px 0;
-  font-style: italic;
-}
-
-/* Clean, professional tag styling */
-:host ::ng-deep .tag-chip {
-  background-color: var(--primary-color, #3b82f6);
-  color: white;
-  border-radius: 16px;
-  padding: 6px 10px;
-  margin: 3px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-}
-
-:host ::ng-deep .tag-chip:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-:host ::ng-deep .tag-chip .pi-tag {
-  font-size: 0.7rem;
-  margin-right: 4px;
-}
-
-:host ::ng-deep .tag-chip .p-chip-remove-icon {
-  margin-left: 4px;
-}
-
-/* AutoComplete styling */
-:host ::ng-deep .p-autocomplete {
-  width: 100%;
-}
-
-:host ::ng-deep .p-autocomplete .p-inputtext {
-  padding: 0.75rem 1rem;
-}
-
-:host ::ng-deep .p-autocomplete-panel {
-  border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-:host ::ng-deep .p-autocomplete-items {
-  padding: 4px 0;
-}
-
-:host ::ng-deep .p-autocomplete-item {
-  padding: 8px 16px;
-  margin: 0 4px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-:host ::ng-deep .p-autocomplete-item:hover {
-  background-color: var(--surface-200, #f1f5f9);
-  transform: translateX(2px);
-}
-
-/* Simplified, Professional Tag Styling */
-.tag-input-container {
-  margin-bottom: 12px;
-}
-
-.tags-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0;
-  padding: 4px 0;
-}
-
-.tag-suggestion-item {
-  display: flex;
-  align-items: center;
-  color: var(--text-color, #334155);
-}
-
-.no-tags-message {
-  display: flex;
-  align-items: center;
-  color: var(--text-color-secondary, #64748b);
-  padding: 8px 0;
-  font-style: italic;
-}
-
-/* Clean professional tag chip styling */
-:host ::ng-deep .tag-chip {
-  background-color: var(--primary-color, #3b82f6);
-  border-radius: 16px;
-  padding: 0;
-  margin: 3px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-}
-
-:host ::ng-deep .tag-chip:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-/* Fix for the content width issue */
-:host ::ng-deep .tag-chip .p-chip-content {
-  display: inline-flex !important;
-  align-items: center;
-  padding: 5px 10px;
-  color: white;
-  max-width: 100%;
-}
-
-:host ::ng-deep .tag-chip .p-chip-icon {
-  font-size: 0.75rem;
-  margin-right: 6px;
-}
-
-:host ::ng-deep .tag-chip .p-chip-remove-icon {
-  margin-left: 6px;
-  color: white;
-}
-
-/* Ensure tag text doesn't overflow */
-:host ::ng-deep .tag-chip span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Improve AutoComplete styling */
-:host ::ng-deep .p-autocomplete {
-  width: 100%;
-}
-
-:host ::ng-deep .p-autocomplete-panel {
-  border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Fixed Tag Styling to ensure content visibility */
-.tags-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 10px 0;
-  padding: 4px 0;
-}
-
-.tag-suggestion-item {
-  display: flex;
-  align-items: center;
-  color: var(--text-color, #334155);
-}
-
-/* Completely refactored chip styling to fix width issues */
-:host ::ng-deep .tag-chip {
-  background-color: var(--primary-color, #3b82f6);
-  border-radius: 16px;
-  margin: 4px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-  min-width: auto;
-  display: inline-block;
-}
-
-:host ::ng-deep .tag-chip:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-/* Fix for content display */
-:host ::ng-deep .tag-chip .p-chip-content {
-  display: flex !important;
-  align-items: center;
-  padding: 6px 12px;
-  color: white;
-  width: auto;
-  white-space: nowrap;
-}
-
-:host ::ng-deep .tag-chip .pi-tag {
-  font-size: 0.75rem;
-  margin-right: 6px;
-}
-
-:host ::ng-deep .tag-chip .p-chip-remove-icon {
-  margin-left: 6px;
-  color: white;
-}
-
-/* No wrap to ensure text doesn't break */
-:host ::ng-deep .tag-chip span {
-  white-space: nowrap;
-  overflow: visible;
-}
-
-/* Override any Prime NG constraints causing width issues */
-:host ::ng-deep .p-chip.tag-chip {
-  width: auto !important;
-  max-width: none !important;
-  height: auto !important;
-}
-
-/* Override container styling that might be constraining the chips */
 :host ::ng-deep .p-chip-content {
-  max-width: none !important;
-  width: auto !important;
   display: flex !important;
-}
-
-/* Simple, Clean Tag Styling */
-.tags-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 10px 0;
-  padding: 5px 0;
-}
-
-/* Basic styling override for p-chip to ensure readability */
-:host ::ng-deep .p-chip.custom-tag {
-  background-color: #3b82f6;
+  align-items: center;
   color: white;
-  border-radius: 4px;
-  padding: 8px 12px;
-  margin: 4px;
-  display: inline-flex;
-  align-items: center;
-  font-size: 14px;
-  line-height: 1;
-  box-shadow: none;
-}
-
-:host ::ng-deep .p-chip.custom-tag .p-chip-text {
-  margin-left: 5px;
-}
-
-:host ::ng-deep .p-chip.custom-tag .p-chip-remove-icon {
-  margin-left: 8px;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.tag-icon {
-  margin-right: 5px;
-  font-size: 12px;
-}
-
-.no-tags-message {
-  font-style: italic;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  margin-top: 8px;
-}
-
-/* Ensure autocomplete works properly */
-.tag-input-container {
-  margin-bottom: 12px;
-}
-
-/* Simple tag styling using standard components */
-.tag-input-container {
-  margin-bottom: 15px;
-}
-
-.tag-suggestions {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 10px 0;
-}
-
-.tag-button {
-  margin: 2px;
-  border-radius: 16px;
-}
-
-.tag-button .p-button-icon-right {
-  margin-left: 4px;
-}
-
-.no-tags-message {
-  font-style: italic;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  margin-top: 8px;
-  gap: 5px;
-}
-
-/* Tag styling */
-.tag-input-container {
-  margin-bottom: 8px;
-}
-
-.tags-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0 12px 0;
-  padding: 4px 0;
-}
-
-.tag-suggestion-item {
-  display: flex;
-  align-items: center;
-}
-
-.no-tags-message {
-  display: flex;
-  align-items: center;
-  color: var(--text-color-secondary, #64748b);
-  margin-top: 4px;
-  font-style: italic;
-}
-
-/* Fix p-chip width issue */
-:host ::ng-deep .p-chip {
-  height: auto;
-  border-radius: 16px;
-  margin: 2px;
-}
-
-:host ::ng-deep .p-chip .p-chip-text {
-  overflow: visible;
+  width: auto !important;
   white-space: nowrap;
 }
 
-:host ::ng-deep .tag-chip.p-chip {
-  background-color: var(--primary-color, #3b82f6);
-  color: white;
-}
-
-:host ::ng-deep .tag-chip.p-chip:hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-:host ::ng-deep .p-autocomplete {
-  width: 100%;
-}
-
-:host ::ng-deep .p-autocomplete-panel {
-  padding: 4px;
-}
-
-/* Improved Tag styling */
-.tag-input-container {
-  margin-bottom: 15px;
-  width: 100%;
-}
-
-.tags-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 12px 0;
-  padding: 5px 0;
-}
-
-/* Completely refactored p-chip styling for better appearance */
-:host ::ng-deep .p-chip.tag-chip {
-  background-color: var(--primary-color, #3b82f6);
-  color: white;
-  border-radius: 4px;
-  padding: 0 4px 0 10px;
-  height: auto;
-  min-height: 32px;
-  font-size: 14px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-}
-
-:host ::ng-deep .p-chip.tag-chip:hover {
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-}
-
-:host ::ng-deep .p-chip.tag-chip .p-chip-text {
-  color: white;
-  padding: 4px 0;
-  line-height: 1.4;
-  font-weight: 400;
-  overflow: visible;
-  white-space: nowrap;
-}
-
-:host ::ng-deep .p-chip.tag-chip .p-chip-remove-icon {
-  color: rgba(255, 255, 255, 0.8);
-  margin-left: 8px;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease;
-}
-
-:host ::ng-deep .p-chip.tag-chip .p-chip-remove-icon:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.no-tags-message {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--text-color-secondary, #64748b);
-  font-style: italic;
-  margin: 10px 0;
-}
-
-/* Autocomplete styling improvements */
-:host ::ng-deep .p-autocomplete {
-  width: 100%;
-}
-
-:host ::ng-deep .p-autocomplete-panel {
-  padding: 5px;
-}
-
-.tag-suggestion-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 0;
-}
-
-/* Enhanced Header Styling */
-.header-container {
-  padding: 1rem 1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: linear-gradient(
-    to right,
-    rgba(59, 130, 246, 0.05),
-    rgba(59, 130, 246, 0.02)
-  );
-  border-radius: 8px 8px 0 0;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
-  margin-bottom: 0; /* Remove margin */
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.header-icon {
-  background-color: var(--primary-color, #3b82f6);
-  color: white;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-.header-icon i {
-  font-size: 1.5rem;
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.header-text h1 {
-  margin: 0;
-  font-size: 1.75rem;
-  color: var(--text-color, #334155);
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.header-subtitle {
-  margin: 0.25rem 0 0;
-  color: var(--text-color-secondary, #64748b);
-  font-size: 0.95rem;
-  font-weight: 400;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-}
-
-/* Animation for the header */
-.header-container {
-  animation: fadeSlideDown 0.5s ease-out;
-}
-
-@keyframes fadeSlideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Responsive adjustments */
-@media screen and (max-width: 768px) {
-  .header-container {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .header-actions {
-    align-self: flex-start;
-  }
-}
-
-/* Fix spacing between header and form */
-:host ::ng-deep .p-card .p-card-content {
-  padding-top: 0.75rem;
-}
-
-.create-test-form p-fieldset:first-child {
-  margin-top: 0;
-}
-
-.create-test-form p-fieldset {
-  margin-bottom: 1.25rem;
-}
-
-/* Enhanced Form Controls UI */
-:host ::ng-deep .p-inputtext {
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--surface-300, #e2e8f0);
-  background-color: var(--surface-50, #f8fafc);
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-:host ::ng-deep .p-inputtext:hover {
-  border-color: var(--primary-200, #bfdbfe);
-  background-color: var(--surface-0, #ffffff);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-:host ::ng-deep .p-inputtext:focus {
-  border-color: var(--primary-color, #3b82f6);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
-  background-color: #ffffff;
-}
-
-/* Textarea specific styling */
-:host ::ng-deep .p-inputtextarea {
-  min-height: 100px;
-  line-height: 1.5;
-  resize: vertical;
-  border-radius: 10px;
-  border: 1px solid var(--surface-300, #e2e8f0);
-  padding: 0.85rem 1rem;
-  transition: all 0.3s ease;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-:host ::ng-deep .p-inputtextarea:hover {
-  border-color: var(--primary-200, #bfdbfe);
-}
-
-:host ::ng-deep .p-inputtextarea:focus {
-  border-color: var(--primary-color, #3b82f6);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15),
-    inset 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-/* Input group styling */
-:host ::ng-deep .p-inputgroup .p-inputgroup-addon {
-  background-color: var(--surface-100, #f1f5f9);
-  border-color: var(--surface-300, #e2e8f0);
-  border-radius: 8px 0 0 8px;
-  padding: 0.75rem 1rem;
-  color: var(--text-color-secondary, #64748b);
-}
-
-:host ::ng-deep .p-inputgroup .p-inputtext {
-  border-radius: 0 8px 8px 0;
-}
-
-/* Dropdown styling */
-:host ::ng-deep .p-dropdown {
-  border-radius: 8px;
-  border: 1px solid var(--surface-300, #e2e8f0);
-  background-color: var(--surface-50, #f8fafc);
-  transition: all 0.3s ease;
-}
-
-:host ::ng-deep .p-dropdown:hover {
-  border-color: var(--primary-200, #bfdbfe);
-  background-color: var(--surface-0, #ffffff);
-}
-
-:host ::ng-deep .p-dropdown:focus {
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
-}
-
-:host ::ng-deep .p-dropdown-panel {
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-:host ::ng-deep .p-dropdown-item {
-  padding: 0.75rem 1rem;
-  margin: 0 4px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-:host ::ng-deep .p-dropdown-item:hover {
-  background-color: var(--surface-100, #f1f5f9);
-  transform: translateX(2px);
-}
-
-/* InputNumber styling */
-:host ::ng-deep .p-inputnumber .p-inputtext {
-  border-radius: 8px;
-}
-
-:host ::ng-deep .p-inputnumber-buttons-stacked .p-button.p-inputnumber-button {
-  background-color: var(--surface-200, #e2e8f0);
-  border-color: var(--surface-300, #e2e8f0);
-  color: var(--text-color, #334155);
-}
-
-:host
-  ::ng-deep
-  .p-inputnumber-buttons-stacked
-  .p-button.p-inputnumber-button:hover {
-  background-color: var(--surface-300, #cbd5e1);
-}
-
-/* Form field labels */
-.form-field label {
-  font-weight: 500;
-  color: var(--text-color, #334155);
-  font-size: 0.95rem;
-  margin-bottom: 0.5rem;
-  display: block;
-}
-
-/* Fieldset styling */
+/* Fieldset styling overrides */
 :host ::ng-deep .p-fieldset {
-  border-radius: 12px;
-  border: 1px solid var(--surface-200, #e2e8f0);
   margin-bottom: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 :host ::ng-deep .p-fieldset-legend {
-  border-radius: 8px;
-  background-color: var(--surface-50, #f8fafc);
-  border: 1px solid var(--surface-200, #e2e8f0);
-  padding: 0.75rem 1.25rem;
   font-weight: 600;
-  color: var(--text-color, #334155);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
 }
 
 :host ::ng-deep .p-fieldset-content {
   padding: 1.25rem;
 }
 
-/* Fix spacing between header and form */
-:host ::ng-deep .p-card .p-card-content {
-  padding-top: 0.5rem;
-}
-
-/* Loading container */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 1rem;
-  text-align: center;
-}
-
-.loading-container p {
-  margin-top: 1rem;
-  color: var(--text-color-secondary, #64748b);
-  font-size: 1rem;
-}
-
-/* Enhanced Floating Label Styling */
-:host ::ng-deep .p-iftalabel {
-  display: block;
-  margin-bottom: 8px;
-}
-
-:host ::ng-deep .p-iftalabel textarea {
-  width: 100%;
-  padding: 1rem;
-  font-size: 1rem;
-  background-color: var(--surface-50, #f8fafc);
-  border: 1px solid var(--surface-300, #e2e8f0);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-:host ::ng-deep .p-iftalabel textarea:hover {
-  border-color: var(--primary-300, #93c5fd);
-  background-color: var(--surface-0, #ffffff);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-:host ::ng-deep .p-iftalabel textarea:focus {
-  outline: 0 none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
-  border-color: var(--primary-500, #3b82f6);
-  background-color: #ffffff;
-}
-
-:host ::ng-deep .p-iftalabel label {
-  color: var(--text-color-secondary, #64748b);
-  transition: all 0.2s ease;
-}
-
-:host ::ng-deep .p-iftalabel textarea:focus ~ label,
-:host ::ng-deep .p-iftalabel textarea.p-filled ~ label {
-  color: var(--primary-color, #3b82f6);
-}
-
-:host ::ng-deep .p-iftalabel .ng-invalid.ng-dirty ~ label {
-  color: var(--red-500, #ef4444);
-}
-
-/* Form field margins for floating labels */
-.form-field {
-  margin-bottom: 1.5rem;
-}
-
-/* Validation styling */
-:host ::ng-deep .p-iftalabel .ng-invalid.ng-dirty {
-  border-color: var(--red-500, #ef4444) !important;
-}
-
-/* Enhanced Floating Label Styling */
+/* Floatlabel styling */
 :host ::ng-deep p-floatlabel {
+  position: relative;
   display: block;
   width: 100%;
-  margin-bottom: 8px;
 }
 
 :host ::ng-deep p-floatlabel textarea {
-  width: 100%;
-  padding: 1rem;
-  font-size: 1rem;
-  background-color: var(--surface-50, #f8fafc);
-  border: 1px solid var(--surface-300, #e2e8f0);
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-:host ::ng-deep p-floatlabel textarea:hover {
-  border-color: var(--primary-300, #93c5fd);
-  background-color: var(--surface-0, #ffffff);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding-top: 1.5rem !important;
+  font-size: 1rem;
+  line-height: 1.5;
+  width: 100%;
 }
 
 :host ::ng-deep p-floatlabel textarea:focus {
   outline: 0 none;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
-  border-color: var(--primary-500, #3b82f6);
+  border-color: #3b82f6;
   background-color: #ffffff;
 }
 
 :host ::ng-deep p-floatlabel label {
-  color: var(--text-color-secondary, #64748b);
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  color: #64748b;
   transition: all 0.2s ease;
+  pointer-events: none;
+  font-size: 0.95rem;
+  margin: 0;
+  z-index: 1;
+  transform-origin: left top;
+  background: transparent;
 }
 
 :host ::ng-deep p-floatlabel textarea:focus ~ label,
 :host ::ng-deep p-floatlabel textarea.p-filled ~ label {
-  color: var(--primary-color, #3b82f6);
+  transform: translateY(-1.25rem) scale(0.85);
+  color: #3b82f6;
 }
 
-:host ::ng-deep p-floatlabel .ng-invalid.ng-dirty ~ label {
-  color: var(--red-500, #ef4444);
+/* Ensure the label stays floated even when not focused but filled */
+:host ::ng-deep p-floatlabel textarea.p-filled:not(:focus) ~ label {
+  transform: translateY(-1.25rem) scale(0.85);
+  color: #64748b;
 }
 
-/* Form field margins for floating labels */
-.form-field {
-  margin-bottom: 1.5rem;
+/* Add padding to make space for the label */
+:host ::ng-deep .p-float-label {
+  display: block;
+  position: relative;
 }
 
-/* Validation styling */
-:host ::ng-deep p-floatlabel .ng-invalid.ng-dirty {
-  border-color: var(--red-500, #ef4444) !important;
+/* Form validation styling */
+.p-error {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
 }
 
-/* Vertical layout for checkbox and helper text */
-.checkbox-vertical-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+:host ::ng-deep .ng-invalid.ng-dirty:not(form) {
+  border-color: #ef4444 !important;
 }
 
-.checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* PrimeNG button styling overrides */
+:host ::ng-deep .p-button {
+  transition: all 0.2s ease;
 }
 
-.checkbox-label {
-  margin: 0;
-  font-weight: 500;
-  color: var(--text-color, #334155);
+:host ::ng-deep .p-button:hover {
+  transform: translateY(-1px);
 }
 
-.checkbox-helper-text {
-  margin-left: 30px; /* Aligns with the checkbox text */
-  color: var(--text-color-secondary, #64748b);
-  font-size: 0.875rem;
+:host ::ng-deep .p-button:active {
+  transform: translateY(0);
+}
+
+/* Media queries */
+@media screen and (max-width: 768px) {
+  :host ::ng-deep .test-type-selection {
+    grid-template-columns: 1fr;
+  }
 }
