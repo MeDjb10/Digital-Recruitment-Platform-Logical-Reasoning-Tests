@@ -154,19 +154,31 @@ const validateMultipleChoiceQuestion = [
 ];
 
 // Common validator for any question type
-// Replace your validateQuestion function with this:
 const validateQuestion = (req, res, next) => {
   const { questionType } = req.body;
+  const isUpdate = req.method === "PUT"; // Check if this is an update operation
 
-  if (!questionType) {
-    return next(new AppError("questionType is required", StatusCodes.BAD_REQUEST));
+  if (!questionType && !isUpdate) {
+    return next(
+      new AppError("questionType is required", StatusCodes.BAD_REQUEST)
+    );
   }
 
+  // For updates, we don't need to validate everything, just what's being updated
+  if (isUpdate) {
+    // Skip extensive validation for updates and proceed
+    return next();
+  }
+
+  // For new questions, validate fully
   if (questionType === "DominoQuestion") {
     // Apply each validator in sequence
     for (const validator of validateDominoQuestion) {
       try {
-        if (typeof validator === 'function' && validator.name === 'validateRequest') {
+        if (
+          typeof validator === "function" &&
+          validator.name === "validateRequest"
+        ) {
           // This is the last validator that calls next()
           return validator(req, res, next);
         } else {
@@ -181,7 +193,10 @@ const validateQuestion = (req, res, next) => {
     // Apply each validator in sequence
     for (const validator of validateMultipleChoiceQuestion) {
       try {
-        if (typeof validator === 'function' && validator.name === 'validateRequest') {
+        if (
+          typeof validator === "function" &&
+          validator.name === "validateRequest"
+        ) {
           // This is the last validator that calls next()
           return validator(req, res, next);
         } else {

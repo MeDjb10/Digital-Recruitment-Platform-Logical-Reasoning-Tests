@@ -7,10 +7,11 @@
   >
     <div class="flex-1">
       <h2 class="text-2xl font-bold text-blue-700 mb-1">
-        Liste des utilisateurs
+        {{ "DASHBOARD.USERS_LIST.TITLE" | translate }}
       </h2>
       <p class="text-gray-600 text-sm">
-        {{ pagination.total }} utilisateurs au total
+        {{ pagination.total }}
+        {{ "DASHBOARD.USERS_LIST.TOTAL_USERS" | translate }}
       </p>
     </div>
 
@@ -21,7 +22,7 @@
           type="text"
           pInputText
           class="w-full p-3 pl-10 border-2 border-gray-200 rounded-lg"
-          placeholder="Rechercher..."
+          [placeholder]="'DASHBOARD.USERS_LIST.SEARCH' | translate"
           (input)="onSearchChange($event)"
         />
         <i class="pi pi-search !top-[13px]"></i>
@@ -48,7 +49,11 @@
     [totalRecords]="pagination.total"
     [rowsPerPageOptions]="[10, 25, 50]"
     [showCurrentPageReport]="true"
-    currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} utilisateurs"
+    [currentPageReportTemplate]="
+      'DASHBOARD.USERS_LIST.PAGINATION_TEMPLATE'
+        | translate
+          : { first: '{first}', last: '{last}', totalRecords: '{totalRecords}' }
+    "
     [tableStyle]="{ 'min-width': '50rem' }"
     styleClass="p-datatable-striped p-datatable-gridlines p-datatable-sm"
     [rowHover]="true"
@@ -60,32 +65,36 @@
       <tr class="bg-gray-50">
         <th pSortableColumn="firstName" class="p-4">
           <div class="flex items-center gap-2">
-            Nom <p-sortIcon field="firstName"></p-sortIcon>
+            {{ "DASHBOARD.USERS_LIST.NAME" | translate }}
+            <p-sortIcon field="firstName"></p-sortIcon>
           </div>
         </th>
         <th pSortableColumn="email" class="p-4">
           <div class="flex items-center gap-2">
-            Email <p-sortIcon field="email"></p-sortIcon>
+            {{ "DASHBOARD.USERS_LIST.EMAIL" | translate }}
+            <p-sortIcon field="email"></p-sortIcon>
           </div>
         </th>
         <th class="p-4">
           <div class="flex items-center gap-2">
-            Role
+            {{ "DASHBOARD.USERS_LIST.ROLE" | translate }}
             <p-dropdown
-              [options]="roleFilterOptions"
+              [options]="translatedRoleFilterOptions"
               [(ngModel)]="selectedRoleFilter"
               (onChange)="filterByRole($event)"
               optionLabel="label"
               optionValue="value"
               [style]="{ width: '150px' }"
               [appendTo]="'body'"
-              placeholder="Filtrer par rôle"
+              [placeholder]="'DASHBOARD.USERS_LIST.FILTER_BY_ROLE' | translate"
             >
             </p-dropdown>
           </div>
         </th>
-        <th class="p-4">État</th>
-        <th class="p-4 text-right">Actions</th>
+        <th class="p-4">{{ "DASHBOARD.USERS_LIST.STATUS" | translate }}</th>
+        <th class="p-4 text-right">
+          {{ "DASHBOARD.USERS_LIST.ACTIONS" | translate }}
+        </th>
       </tr>
     </ng-template>
 
@@ -105,7 +114,8 @@
                 {{ user.firstName }} {{ user.lastName }}
               </p>
               <p class="text-sm text-gray-500">
-                Inscrit le: {{ formatDate(user.createdAt) }}
+                {{ "DASHBOARD.USERS_LIST.REGISTERED_ON" | translate }}:
+                {{ formatDate(user.createdAt) }}
               </p>
             </div>
           </div>
@@ -122,25 +132,29 @@
               *ngSwitchCase="'admin'"
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700"
             >
-              <i class="pi pi-shield"></i> Admin
+              <i class="pi pi-shield"></i>
+              {{ "DASHBOARD.USERS_LIST.ROLES.ADMIN" | translate }}
             </span>
             <span
               *ngSwitchCase="'psychologist'"
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700"
             >
-              <i class="pi pi-heart"></i> Psychologue
+              <i class="pi pi-heart"></i>
+              {{ "DASHBOARD.USERS_LIST.ROLES.PSYCHOLOGIST" | translate }}
             </span>
             <span
               *ngSwitchCase="'candidate'"
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
             >
-              <i class="pi pi-user"></i> Candidat
+              <i class="pi pi-user"></i>
+              {{ "DASHBOARD.USERS_LIST.ROLES.CANDIDATE" | translate }}
             </span>
             <span
               *ngSwitchCase="'moderator'"
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700"
             >
-              <i class="pi pi-verified"></i> Modérateur
+              <i class="pi pi-verified"></i>
+              {{ "DASHBOARD.USERS_LIST.ROLES.MODERATOR" | translate }}
             </span>
           </div>
         </td>
@@ -150,43 +164,53 @@
               *ngSwitchCase="'active'"
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700"
             >
-              <i class="pi pi-check-circle"></i> Actif
+              <i class="pi pi-check-circle"></i>
+              {{ "DASHBOARD.USERS_LIST.STATUS_VALUES.ACTIVE" | translate }}
             </span>
             <span
               *ngSwitchCase="'inactive'"
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
             >
-              <i class="pi pi-ban"></i> Inactif
+              <i class="pi pi-ban"></i>
+              {{ "DASHBOARD.USERS_LIST.STATUS_VALUES.INACTIVE" | translate }}
             </span>
             <span
               *ngSwitchCase="'suspended'"
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700"
             >
-              <i class="pi pi-pause-circle"></i> Suspendu
+              <i class="pi pi-pause-circle"></i>
+              {{ "DASHBOARD.USERS_LIST.STATUS_VALUES.SUSPENDED" | translate }}
             </span>
             <span
               *ngSwitchDefault
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
             >
-              <i class="pi pi-question-circle"></i> Inconnu
+              <i class="pi pi-question-circle"></i>
+              {{ "DASHBOARD.USERS_LIST.STATUS_VALUES.UNKNOWN" | translate }}
             </span>
           </div>
         </td>
         <td class="p-4">
           <div class="flex justify-center gap-2">
             <!-- Only show role change button if current user is admin or moderator -->
-            <button *ngIf="currentUserRole == 'admin' || currentUserRole == 'moderator'"
+            <button
+              *ngIf="
+                currentUserRole == 'admin' || currentUserRole == 'moderator'
+              "
               class="p-2 rounded-full text-blue-600 hover:bg-blue-50 transition-colors"
-              pTooltip="Modifier le rôle"
+              [pTooltip]="
+                'DASHBOARD.USERS_LIST.TOOLTIP.CHANGE_ROLE' | translate
+              "
               tooltipPosition="bottom"
               (click)="onRoleChange(user)"
             >
               <i class="fa fa-pencil"></i>
             </button>
 
-            <button *ngIf="currentUserRole == 'admin'"
+            <button
+              *ngIf="currentUserRole == 'admin'"
               class="p-2 rounded-full text-green-600 hover:bg-blue-50 transition-colors"
-              pTooltip="Modifier les infos"
+              [pTooltip]="'DASHBOARD.USERS_LIST.TOOLTIP.EDIT_INFO' | translate"
               tooltipPosition="bottom"
               (click)="onEditInfo(user)"
             >
@@ -194,9 +218,12 @@
             </button>
 
             <!-- Status dropdown menu -->
-            <button  *ngIf="currentUserRole == 'admin'"
+            <button
+              *ngIf="currentUserRole == 'admin'"
               class="p-2 rounded-full text-orange-600 hover:bg-orange-50 transition-colors"
-              pTooltip="Changer statut"
+              [pTooltip]="
+                'DASHBOARD.USERS_LIST.TOOLTIP.CHANGE_STATUS' | translate
+              "
               tooltipPosition="bottom"
               #statusBtn
               (click)="setSelectedUser(user); statusMenu.toggle($event)"
@@ -214,13 +241,14 @@
             <button
               *ngIf="user.role !== 'admin' && currentUserRole == 'admin'"
               class="p-2 rounded-full text-red-600 hover:bg-red-50 transition-colors"
-              pTooltip="Supprimer l'utilisateur"
+              [pTooltip]="
+                'DASHBOARD.USERS_LIST.TOOLTIP.DELETE_USER' | translate
+              "
               tooltipPosition="bottom"
               (click)="onDeleteClick(user)"
             >
               <i class="fa fa-trash"></i>
             </button>
-            
           </div>
         </td>
       </tr>
@@ -234,10 +262,10 @@
             <i class="pi pi-search text-6xl text-gray-300"></i>
             <div>
               <p class="text-xl font-medium text-gray-600 mb-1">
-                Aucun utilisateur trouvé
+                {{ "DASHBOARD.USERS_LIST.NO_USERS_FOUND" | translate }}
               </p>
               <p class="text-gray-400">
-                Modifiez vos critères de recherche et réessayez
+                {{ "DASHBOARD.USERS_LIST.CHANGE_SEARCH_CRITERIA" | translate }}
               </p>
             </div>
           </div>
@@ -249,7 +277,7 @@
 
 <!-- Role Change Dialog -->
 <p-dialog
-  header="Modifier le rôle"
+  [header]="'DASHBOARD.USERS_LIST.DIALOGS.CHANGE_ROLE.TITLE' | translate"
   [(visible)]="showRoleDialog"
   [modal]="true"
   [style]="{ width: '450px' }"
@@ -258,13 +286,15 @@
   <div class="p-4">
     <div class="mb-4">
       <label class="block text-md font-medium text-gray-700 mb-2">
-        Nouveau rôle pour
+        {{
+          "DASHBOARD.USERS_LIST.DIALOGS.CHANGE_ROLE.NEW_ROLE_FOR" | translate
+        }}
         <span class="font-bold"
           >{{ selectedUser?.firstName }} {{ selectedUser?.lastName }}</span
         >
       </label>
       <p-dropdown
-        [options]="roleOptions"
+        [options]="translatedRoleOptions"
         [(ngModel)]="selectedRole"
         optionLabel="label"
         optionValue="value"
@@ -276,13 +306,13 @@
     <div class="flex justify-end gap-3">
       <button
         pButton
-        label="Annuler"
+        [label]="'DASHBOARD.USERS_LIST.BUTTONS.CANCEL' | translate"
         class="p-button-text"
         (click)="cancelRoleChange()"
       ></button>
       <button
         pButton
-        label="Confirmer"
+        [label]="'DASHBOARD.USERS_LIST.BUTTONS.CONFIRM' | translate"
         class="p-button-primary"
         [loading]="loadingAction"
         (click)="confirmRoleChange()"
@@ -293,7 +323,7 @@
 
 <!-- Delete Confirmation Dialog -->
 <p-dialog
-  header="Supprimer l'utilisateur"
+  [header]="'DASHBOARD.USERS_LIST.DIALOGS.DELETE_USER.TITLE' | translate"
   [(visible)]="showDeleteDialog"
   [modal]="true"
   [style]="{ width: '400px' }"
@@ -303,24 +333,29 @@
 >
   <div class="p-4 text-center">
     <i class="pi pi-exclamation-triangle text-5xl text-yellow-500 mb-4"></i>
-    <h3 class="text-xl font-medium mb-2">Êtes-vous sûr ?</h3>
+    <h3 class="text-xl font-medium mb-2">
+      {{ "DASHBOARD.USERS_LIST.DIALOGS.DELETE_USER.ARE_YOU_SURE" | translate }}
+    </h3>
     <p class="text-gray-600 mb-6">
-      Cette action est irréversible et supprimera définitivement l'utilisateur.
+      {{ "DASHBOARD.USERS_LIST.DIALOGS.DELETE_USER.WARNING" | translate }}
     </p>
     <div class="mb-4 text-sm text-gray-500" *ngIf="deleteCountdown > 0">
-      Le bouton de suppression sera activé dans {{ deleteCountdown }} secondes
+      {{
+        "DASHBOARD.USERS_LIST.DIALOGS.DELETE_USER.COUNTDOWN"
+          | translate : { seconds: deleteCountdown }
+      }}
     </div>
     <div class="flex justify-center gap-3">
       <button
         pButton
-        label="Annuler"
+        [label]="'DASHBOARD.USERS_LIST.BUTTONS.CANCEL' | translate"
         icon="pi pi-times"
         class="p-button-text"
         (click)="cancelDelete()"
       ></button>
       <button
         pButton
-        label="Supprimer"
+        [label]="'DASHBOARD.USERS_LIST.BUTTONS.DELETE' | translate"
         icon="pi pi-trash"
         class="p-button-danger"
         [disabled]="deleteCountdown > 0"
@@ -333,7 +368,7 @@
 
 <!-- Edit User Dialog -->
 <p-dialog
-  header="Modifier les informations"
+  [header]="'DASHBOARD.USERS_LIST.DIALOGS.EDIT_USER.TITLE' | translate"
   [(visible)]="showEditDialog"
   [modal]="true"
   [style]="{ width: '500px' }"
@@ -344,7 +379,9 @@
       <div class="grid grid-cols-2 gap-4">
         <div class="form-group">
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            Prénom
+            {{
+              "DASHBOARD.USERS_LIST.DIALOGS.EDIT_USER.FIRST_NAME" | translate
+            }}
           </label>
           <input
             type="text"
@@ -359,12 +396,15 @@
               editForm.get('firstName')?.touched
             "
           >
-            Prénom requis
+            {{
+              "DASHBOARD.USERS_LIST.DIALOGS.EDIT_USER.FIRST_NAME_REQUIRED"
+                | translate
+            }}
           </small>
         </div>
         <div class="form-group">
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            Nom
+            {{ "DASHBOARD.USERS_LIST.DIALOGS.EDIT_USER.LAST_NAME" | translate }}
           </label>
           <input
             type="text"
@@ -379,14 +419,17 @@
               editForm.get('lastName')?.touched
             "
           >
-            Nom requis
+            {{
+              "DASHBOARD.USERS_LIST.DIALOGS.EDIT_USER.LAST_NAME_REQUIRED"
+                | translate
+            }}
           </small>
         </div>
       </div>
 
       <div class="form-group">
         <label class="block text-sm font-medium text-gray-700 mb-1">
-          Email
+          {{ "DASHBOARD.USERS_LIST.DIALOGS.EDIT_USER.EMAIL" | translate }}
         </label>
         <input
           type="email"
@@ -400,20 +443,27 @@
             editForm.get('email')?.invalid && editForm.get('email')?.touched
           "
         >
-          Email invalide
+          {{
+            "DASHBOARD.USERS_LIST.DIALOGS.EDIT_USER.EMAIL_INVALID" | translate
+          }}
         </small>
       </div>
 
       <div class="form-group">
         <label class="block text-sm font-medium text-gray-700 mb-1">
-          Nouveau mot de passe
+          {{
+            "DASHBOARD.USERS_LIST.DIALOGS.EDIT_USER.NEW_PASSWORD" | translate
+          }}
         </label>
         <input
           type="password"
           pInputText
           formControlName="password"
           class="w-full p-2 border rounded-lg"
-          placeholder="Laisser vide pour ne pas modifier"
+          [placeholder]="
+            'DASHBOARD.USERS_LIST.DIALOGS.EDIT_USER.PASSWORD_PLACEHOLDER'
+              | translate
+          "
         />
         <small
           class="text-red-500"
@@ -423,7 +473,10 @@
             editForm.get('password')?.value
           "
         >
-          Minimum 6 caractères
+          {{
+            "DASHBOARD.USERS_LIST.DIALOGS.EDIT_USER.PASSWORD_TOO_SHORT"
+              | translate
+          }}
         </small>
       </div>
     </form>
@@ -431,13 +484,13 @@
     <div class="flex justify-end gap-3 mt-6">
       <button
         pButton
-        label="Annuler"
+        [label]="'DASHBOARD.USERS_LIST.BUTTONS.CANCEL' | translate"
         class="p-button-text"
         (click)="cancelEdit()"
       ></button>
       <button
         pButton
-        label="Enregistrer"
+        [label]="'DASHBOARD.USERS_LIST.BUTTONS.SAVE' | translate"
         class="p-button-primary"
         [loading]="loadingAction"
         (click)="confirmEdit()"

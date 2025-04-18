@@ -2,6 +2,7 @@ const User = require("../models/user.model");
 const { asyncHandler, ErrorResponse } = require("../utils/error-handler.util");
 const emailUtil = require("../utils/email.util");
 const mongoose = require("mongoose");
+const userService = require("../services/user.service");
 const {
   processAndSaveImage,
   deleteOldProfilePicture,
@@ -13,47 +14,15 @@ const {
  * @access  Private (Admin, Moderator, Psychologist)
  */
 exports.getUsers = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
-
-  // Build filters
-  const filter = {};
-
-  if (req.query.role) {
-    filter.role = req.query.role;
-  }
-
-  if (req.query.search) {
-    filter.$or = [
-      { firstName: { $regex: req.query.search, $options: "i" } },
-      { lastName: { $regex: req.query.search, $options: "i" } },
-      { email: { $regex: req.query.search, $options: "i" } },
-    ];
-  }
-
-  // Status filter (admin only)
-  if (req.query.status && req.userRole === "admin") {
-    filter.status = req.query.status;
-  }
-
-  // Execute query with pagination
-  const users = await User.find(filter, { password: 0 })
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
-
-  const totalUsers = await User.countDocuments(filter);
+  const { users, pagination } = await userService.getUsers(
+    req.query,
+    req.userRole
+  );
 
   res.status(200).json({
     success: true,
     users,
-    pagination: {
-      total: totalUsers,
-      page,
-      pages: Math.ceil(totalUsers / limit),
-      limit,
-    },
+    pagination,
   });
 });
 
@@ -63,70 +32,30 @@ exports.getUsers = asyncHandler(async (req, res) => {
  * @access  Private
  */
 exports.getUserById = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.userId, { password: 0 });
-
-  if (!user) {
-    throw new ErrorResponse("User not found", 404);
-  }
-
-  // Check if requester has permission to view this user
-  // Only allow admins/moderators/psychologists to view other users or users to view themselves
-  if (
-    !["admin", "moderator", "psychologist"].includes(req.userRole) &&
-    req.userId !== user._id.toString()
-  ) {
-    throw new ErrorResponse("Not authorized to access this user profile", 403);
-  }
+  const user = await userService.getUserById(
+    req.params.userId,
+    req.userRole,
+    req.userId
+  );
 
   res.status(200).json({
     success: true,
     user,
   });
 });
+
 /**
  * @desc    Create a user from auth service (internal endpoint)
  * @route   POST /api/users/create
  * @access  Private (Service-to-service only)
  */
 exports.createUser = asyncHandler(async (req, res) => {
-  // Extract user data from request body
-  const { authId, email, firstName, lastName, role = "candidate" } = req.body;
-
-  // Validate required fields
-  if (!authId || !email) {
-    throw new ErrorResponse("Auth ID and email are required", 400);
-  }
-
-  // Check if user already exists with this authId
-  const existingUser = await User.findOne({ authId });
-  if (existingUser) {
-    // If user exists, return it without error (idempotent operation)
-    return res.status(200).json({
-      success: true,
-      message: "User profile already exists",
-      user: existingUser
-    });
-  }
-
-  // Create a new user profile
-  const user = await User.create({
-    _id: authId,
-    email,
-    firstName,
-    lastName,
-    role: role || "candidate",
-    status: "active",
-    // Add default values for other fields as needed
-    dateCreated: new Date(),
-  });
-
-  // Log the successful user creation
-  console.log(`User profile created for authId: ${authId}, email: ${email}`);
+  const user = await userService.createUser(req.body);
 
   res.status(201).json({
     success: true,
     message: "User profile created successfully",
-    user
+    user,
   });
 });
 
@@ -136,66 +65,13 @@ exports.createUser = asyncHandler(async (req, res) => {
  * @access  Private (Self or Admin)
  */
 exports.updateUser = asyncHandler(async (req, res) => {
-  // Check if user is updating their own profile or is an admin
-  if (req.params.userId !== req.userId && req.userRole !== "admin") {
-    throw new ErrorResponse("Not authorized to update this user profile", 403);
-  }
-
-  // Get current user data to access role for folder organization
-  const currentUser = await User.findById(req.params.userId);
-  if (!currentUser) {
-    throw new ErrorResponse("User not found", 404);
-  }
-
-  // Fields that regular users can update
-  const allowedUpdates = [
-    "firstName",
-    "lastName",
-    "dateOfBirth",
-    "gender",
-    "currentPosition",
-    "desiredPosition",
-    "educationLevel",
-  ];
-
-  // Additional fields that admins can update
-  if (req.userRole === "admin") {
-    allowedUpdates.push("status");
-  }
-
-  // Filter out fields that aren't allowed to be updated
-  const updateData = {};
-  Object.keys(req.body).forEach((key) => {
-    if (allowedUpdates.includes(key)) {
-      updateData[key] = req.body[key];
-    }
-  });
-
-  // Handle profile picture upload if provided
-  if (req.file) {
-    // Delete old profile picture if exists
-    await deleteOldProfilePicture(currentUser.profilePicture);
-    
-    // Process and save new profile picture
-    const profilePicturePath = await processAndSaveImage(
-      req.file,
-      req.params.userId,
-      currentUser.role
-    );
-    
-    // Add profile picture path to update data
-    updateData.profilePicture = profilePicturePath;
-  }
-
-  const updatedUser = await User.findByIdAndUpdate(
+  const updatedUser = await userService.updateUser(
     req.params.userId,
-    { $set: updateData },
-    { new: true, runValidators: true }
-  ).select("-password");
-
-  if (!updatedUser) {
-    throw new ErrorResponse("User not found", 404);
-  }
+    req.userId,
+    req.userRole,
+    req.body,
+    req.file
+  );
 
   res.status(200).json({
     success: true,
@@ -204,45 +80,21 @@ exports.updateUser = asyncHandler(async (req, res) => {
   });
 });
 
-
 /**
  * @desc    Assign role to user
  * @route   PUT /api/users/role
  * @access  Private (Admin or Moderator with restrictions)
  */
 exports.assignRole = asyncHandler(async (req, res) => {
-  const { userId, role } = req.body;
-
-  // Check if the user exists first
-  const userToUpdate = await User.findById(userId);
-  if (!userToUpdate) {
-    throw new ErrorResponse("User not found", 404);
-  }
-
-  // Role-based permissions for role assignment
-  if (req.userRole === "admin") {
-    // Admin can assign any role
-  } else if (req.userRole === "moderator") {
-    // Moderator can only assign "psychologist" role
-    if (role !== "psychologist") {
-      throw new ErrorResponse(
-        "Moderators can only assign the psychologist role",
-        403
-      );
-    }
-  } else {
-    throw new ErrorResponse("Not authorized to assign roles", 403);
-  }
-
-  const updatedUser = await User.findByIdAndUpdate(
-    userId,
-    { role },
-    { new: true, runValidators: true }
-  ).select("-password");
+  const updatedUser = await userService.assignRole(
+    req.body.userId,
+    req.body.role,
+    req.userRole
+  );
 
   res.status(200).json({
     success: true,
-    message: `User role updated to ${role} successfully`,
+    message: `User role updated to ${req.body.role} successfully`,
     user: updatedUser,
   });
 });
@@ -253,80 +105,23 @@ exports.assignRole = asyncHandler(async (req, res) => {
  * @access  Private (Self or Admin)
  */
 exports.updateProfilePicture = asyncHandler(async (req, res) => {
-  console.log("Update profile picture request received");
-  console.log("Request body:", req.body);
-  console.log(
-    "Request file:",
+  const updatedUser = await userService.updateProfilePicture(
+    req.params.userId,
+    req.userId,
+    req.userRole,
     req.file
-      ? {
-          originalname: req.file.originalname,
-          mimetype: req.file.mimetype,
-          size: req.file.size,
-          path: req.file.path,
-        }
-      : "No file"
   );
 
-  // Check permissions - only the user or admin can update profile picture
-  const requestedUserId = req.params.userId;
+  // Add cache control headers
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
 
-  if (requestedUserId !== req.userId && req.userRole !== "admin") {
-    throw new ErrorResponse(
-      "Not authorized to update this user's profile picture",
-      403
-    );
-  }
-
-  // Find the user
-  const user = await User.findById(requestedUserId);
-  if (!user) {
-    throw new ErrorResponse("User not found", 404);
-  }
-  console.log("User found:", user._id);
-
-  // Check if a file was uploaded
-  if (!req.file) {
-    throw new ErrorResponse("No image file provided", 400);
-  }
-
-  try {
-    // Process the new image
-    console.log("Processing new image:", req.file.path);
-    const profilePicturePath = await processAndSaveImage(
-      req.file,
-      requestedUserId,
-      user.role
-    );
-
-    // Delete old profile picture if it exists
-    if (user.profilePicture) {
-      await deleteOldProfilePicture(user.profilePicture);
-    }
-
-    // Update the user's profile picture in the database
-    const updatedUser = await User.findByIdAndUpdate(
-      requestedUserId,
-      { profilePicture: profilePicturePath },
-      { new: true }
-    ).select("-password");
-
-    // Add cache control headers
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.setHeader("Pragma", "no-cache");
-    res.setHeader("Expires", "0");
-
-    res.status(200).json({
-      success: true,
-      message: "Profile picture updated successfully",
-      user: updatedUser,
-    });
-  } catch (error) {
-    console.error("Error updating profile picture:", error);
-    throw new ErrorResponse(
-      `Failed to update profile picture: ${error.message}`,
-      500
-    );
-  }
+  res.status(200).json({
+    success: true,
+    message: "Profile picture updated successfully",
+    user: updatedUser,
+  });
 });
 
 /**
@@ -335,32 +130,16 @@ exports.updateProfilePicture = asyncHandler(async (req, res) => {
  * @access  Private (Self or Admin)
  */
 exports.deleteProfilePicture = asyncHandler(async (req, res) => {
-  // Check if user is deleting their own profile picture or is an admin
-  if (req.params.userId !== req.userId && req.userRole !== "admin") {
-    throw new ErrorResponse("Not authorized to delete this user's profile picture", 403);
-  }
-
-  const user = await User.findById(req.params.userId);
-  if (!user) {
-    throw new ErrorResponse("User not found", 404);
-  }
-
-  // Delete profile picture if exists
-  if (user.profilePicture) {
-    await deleteOldProfilePicture(user.profilePicture);
-  }
-
-  // Update user to remove profile picture reference
-  const updatedUser = await User.findByIdAndUpdate(
+  const updatedUser = await userService.deleteProfilePicture(
     req.params.userId,
-    { $unset: { profilePicture: 1 } },
-    { new: true }
-  ).select("-password");
+    req.userId,
+    req.userRole
+  );
 
   res.status(200).json({
     success: true,
     message: "Profile picture deleted successfully",
-    user: updatedUser
+    user: updatedUser,
   });
 });
 
@@ -370,18 +149,7 @@ exports.deleteProfilePicture = asyncHandler(async (req, res) => {
  * @access  Private (Admin only)
  */
 exports.deleteUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.userId);
-
-  if (!user) {
-    throw new ErrorResponse("User not found", 404);
-  }
-
-  // Don't allow admins to delete themselves
-  if (req.userId === req.params.userId) {
-    throw new ErrorResponse("You cannot delete your own account", 400);
-  }
-
-  await User.deleteOne({ _id: req.params.userId });
+  await userService.deleteUser(req.params.userId, req.userId);
 
   res.status(200).json({
     success: true,
@@ -395,11 +163,7 @@ exports.deleteUser = asyncHandler(async (req, res) => {
  * @access  Private
  */
 exports.getMyProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.userId).select("-password");
-
-  if (!user) {
-    throw new ErrorResponse("User not found", 404);
-  }
+  const user = await userService.getMyProfile(req.userId);
 
   res.status(200).json({
     success: true,
@@ -413,25 +177,14 @@ exports.getMyProfile = asyncHandler(async (req, res) => {
  * @access  Private (Admin only)
  */
 exports.updateUserStatus = asyncHandler(async (req, res) => {
-  const { status } = req.body;
-
-  if (!["active", "inactive", "suspended"].includes(status)) {
-    throw new ErrorResponse("Invalid status value", 400);
-  }
-
-  const updatedUser = await User.findByIdAndUpdate(
+  const updatedUser = await userService.updateUserStatus(
     req.params.userId,
-    { status },
-    { new: true }
-  ).select("-password");
-
-  if (!updatedUser) {
-    throw new ErrorResponse("User not found", 404);
-  }
+    req.body.status
+  );
 
   res.status(200).json({
     success: true,
-    message: `User status updated to ${status} successfully`,
+    message: `User status updated to ${req.body.status} successfully`,
     user: updatedUser,
   });
 });
@@ -442,19 +195,11 @@ exports.updateUserStatus = asyncHandler(async (req, res) => {
  * @access  Private (Service-to-service only)
  */
 exports.getUserRole = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.userId);
-  
-  if (!user) {
-    // For users that don't have profiles yet, return a default role
-    return res.status(200).json({
-      success: true,
-      role: "candidate" // Default role if user doesn't exist in User Management
-    });
-  }
-  
+  const role = await userService.getUserRole(req.params.userId);
+
   res.status(200).json({
     success: true,
-    role: user.role
+    role,
   });
 });
 
@@ -464,107 +209,11 @@ exports.getUserRole = asyncHandler(async (req, res) => {
  * @access  Private (Candidates only)
  */
 exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
-  // Check if user is a candidate
-  const user = await User.findById(req.userId);
-
-  if (!user) {
-    throw new ErrorResponse("User not found", 404);
-  }
-
-  if (user.role !== "candidate") {
-    throw new ErrorResponse(
-      "Only candidates can submit test authorization requests",
-      403
-    );
-  }
-
-  const {
-    // Test authorization data
-    jobPosition,
-    company,
-    department,
-    additionalInfo,
-    availability, // Add this new field
-
-    // User profile data
-    firstName,
-    lastName,
-    dateOfBirth,
-    gender,
-    currentPosition,
-    desiredPosition,
-    educationLevel,
-  } = req.body;
-
-  // Validate required fields for test authorization
-  if (!jobPosition || !company) {
-    throw new ErrorResponse(
-      "Job position and company are required fields",
-      400
-    );
-  }
-
-  // Build update object including both test authorization and profile data
-  const updateData = {
-    testAuthorizationStatus: "pending",
-    testEligibilityInfo: {
-      jobPosition,
-      company,
-      department,
-      additionalInfo,
-      availability: availability || "immediately", // Add availability with default
-      submissionDate: new Date(),
-    },
-  };
-
-  // Add profile data if provided
-  if (firstName) updateData.firstName = firstName;
-  if (lastName) updateData.lastName = lastName;
-  if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
-  if (gender) updateData.gender = gender;
-  if (currentPosition) updateData.currentPosition = currentPosition;
-  if (desiredPosition) updateData.desiredPosition = desiredPosition;
-  if (educationLevel) updateData.educationLevel = educationLevel;
-
-  // Handle profile picture upload if provided
-  if (req.file) {
-    console.log("Processing profile picture for test authorization request", {
-      fileName: req.file.originalname,
-      fileSize: req.file.size,
-      filePath: req.file.path,
-    });
-
-    try {
-      // Delete old profile picture if exists
-      if (user.profilePicture) {
-        await deleteOldProfilePicture(user.profilePicture);
-      }
-
-      // Process and save new profile picture
-      const profilePicturePath = await processAndSaveImage(
-        req.file,
-        req.userId,
-        user.role
-      );
-
-      // Add profile picture path to update data
-      updateData.profilePicture = profilePicturePath;
-      console.log("Profile picture saved:", profilePicturePath);
-    } catch (error) {
-      console.error("Error processing profile picture:", error);
-      // Continue with the request even if profile picture processing fails
-    }
-  }
-
-  // Update user with both test authorization request data and profile data
-  const updatedUser = await User.findByIdAndUpdate(
+  const updatedUser = await userService.submitTestAuthorizationRequest(
     req.userId,
-    { $set: updateData },
-    { new: true, runValidators: true }
-  ).select("-password");
-
-  // Send confirmation email
-  await emailUtil.sendRequestSubmissionEmail(updatedUser);
+    req.body,
+    req.file
+  );
 
   res.status(200).json({
     success: true,
@@ -574,84 +223,36 @@ exports.submitTestAuthorizationRequest = asyncHandler(async (req, res) => {
   });
 });
 
-
 /**
  * @desc    Get all test authorization requests with pagination and filtering
  * @route   GET /api/users/test-authorization-requests
  * @access  Private (Admin, Moderator, Psychologist)
  */
 exports.getTestAuthorizationRequests = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
-
-  // Build filters
-  const filter = { testAuthorizationStatus: req.query.status || "pending" };
-
-  if (req.query.search) {
-    filter.$or = [
-      { firstName: { $regex: req.query.search, $options: "i" } },
-      { lastName: { $regex: req.query.search, $options: "i" } },
-      { email: { $regex: req.query.search, $options: "i" } },
-      { "testEligibilityInfo.jobPosition": { $regex: req.query.search, $options: "i" } },
-      { "testEligibilityInfo.company": { $regex: req.query.search, $options: "i" } },
-    ];
-  }
-
-  // Execute query with pagination
-  const requests = await User.find(filter, { password: 0 })
-    .sort({ "testEligibilityInfo.submissionDate": -1 })
-    .skip(skip)
-    .limit(limit);
-
-  const totalRequests = await User.countDocuments(filter);
+  const { requests, pagination } =
+    await userService.getTestAuthorizationRequests(req.query);
 
   res.status(200).json({
     success: true,
     requests,
-    pagination: {
-      total: totalRequests,
-      page,
-      pages: Math.ceil(totalRequests / limit),
-      limit,
-    },
+    pagination,
   });
 });
 
 /**
- * @desc    Update test authorization status (approve/reject)
+ * @desc    Update test authorization status (approve/reject) with test assignment
  * @route   PUT /api/users/:userId/test-authorization
  * @access  Private (Admin, Moderator, Psychologist)
  */
 exports.updateTestAuthorizationStatus = asyncHandler(async (req, res) => {
-  const { status } = req.body;
+  const { status, examDate } = req.body;
 
-  if (!["approved", "rejected"].includes(status)) {
-    throw new ErrorResponse("Invalid status value", 400);
-  }
-
-  const user = await User.findById(req.params.userId);
-  
-  if (!user) {
-    throw new ErrorResponse("User not found", 404);
-  }
-  
-  if (user.testAuthorizationStatus === "not_submitted") {
-    throw new ErrorResponse("This user has not submitted a test authorization request", 400);
-  }
-
-  const updatedUser = await User.findByIdAndUpdate(
+  const updatedUser = await userService.updateTestAuthorizationStatus(
     req.params.userId,
-    { 
-      testAuthorizationStatus: status,
-      testAuthorizationDate: new Date(),
-      authorizedBy: req.userId
-    },
-    { new: true }
-  ).select("-password");
-
-  // Send status change email
-  await emailUtil.sendStatusChangeEmail(updatedUser, status);
+    status,
+    req.userId,
+    examDate
+  );
 
   res.status(200).json({
     success: true,
@@ -660,62 +261,48 @@ exports.updateTestAuthorizationStatus = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @desc    Manually assign tests to an approved candidate
+ * @route   PUT /api/users/:userId/test-assignment
+ * @access  Private (Psychologist only)
+ */
+exports.manualTestAssignment = asyncHandler(async (req, res) => {
+  const { assignedTest, additionalTests, examDate } = req.body;
+
+  const updatedUser = await userService.manualTestAssignment(
+    req.params.userId,
+    { assignedTest, additionalTests, examDate },
+    req.userId
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Test assignment updated successfully",
+    user: updatedUser,
+  });
+});
 
 /**
- * @desc    Bulk update test authorization statuses
+ * @desc    Bulk update test authorization statuses with optional exam date
  * @route   PUT /api/users/test-authorization/bulk
  * @access  Private (Admin, Moderator, Psychologist)
  */
 exports.bulkUpdateTestAuthorizationStatus = asyncHandler(async (req, res) => {
-  const { userIds, status } = req.body;
-  
-  // Validate input
-  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
-    throw new ErrorResponse("User IDs array is required", 400);
-  }
-  
-  if (!["approved", "rejected"].includes(status)) {
-    throw new ErrorResponse("Invalid status value", 400);
-  }
-  
-  // Validate all user IDs
-  for (const userId of userIds) {
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      throw new ErrorResponse(`Invalid user ID format: ${userId}`, 400);
-    }
-  }
-  
-  // Update all users
-  const updateResult = await User.updateMany(
-    { 
-      _id: { $in: userIds },
-      testAuthorizationStatus: { $ne: "not_submitted" } // Only update users who have submitted a request
-    },
-    { 
-      testAuthorizationStatus: status,
-      testAuthorizationDate: new Date(),
-      authorizedBy: req.userId
-    }
+  const { userIds, status, examDate } = req.body;
+
+  const result = await userService.bulkUpdateTestAuthorizationStatus(
+    userIds,
+    status,
+    req.userId,
+    examDate
   );
-  
-  // Find the updated users to send emails
-  const updatedUsers = await User.find({
-    _id: { $in: userIds },
-    testAuthorizationStatus: status
-  });
-  
-  // Send emails to all updated users
-  const emailPromises = updatedUsers.map(user => 
-    emailUtil.sendStatusChangeEmail(user, status)
-  );
-  
-  // Wait for all emails to be sent
-  await Promise.allSettled(emailPromises);
-  
+
   res.status(200).json({
     success: true,
-    message: `Bulk updated ${updateResult.modifiedCount} test authorization requests to ${status}`,
-    updatedCount: updateResult.modifiedCount,
-    totalRequested: userIds.length
+    message: `Bulk updated ${result.modifiedCount} test authorization requests to ${status}`,
+    updatedCount: result.modifiedCount,
+    totalRequested: userIds.length,
   });
 });
+
+

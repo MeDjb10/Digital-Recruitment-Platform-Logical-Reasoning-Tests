@@ -1,0 +1,150 @@
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tagPop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Custom styling for PrimeNG components that can't be easily styled with Tailwind */
+:host ::ng-deep .p-inputtext:focus,
+:host ::ng-deep .p-dropdown:focus,
+:host ::ng-deep .p-inputnumber:focus,
+:host ::ng-deep .p-checkbox:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+/* Custom styling for the tag chip component */
+:host ::ng-deep .tag-chip {
+  background: linear-gradient(to right, #60a5fa, #1d4ed8);
+  color: white;
+  border-radius: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: none;
+  padding: 6px 8px 6px 12px;
+  transition: all 0.2s ease;
+  animation: tagPop 0.3s ease;
+}
+
+:host ::ng-deep .tag-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+:host ::ng-deep .tag-chip .p-chip-remove-icon {
+  margin-left: 6px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+:host ::ng-deep .tag-chip .p-chip-remove-icon:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+:host ::ng-deep .p-chip-content {
+  display: flex !important;
+  align-items: center;
+  color: white;
+  width: auto !important;
+  white-space: nowrap;
+}
+
+/* Fieldset styling overrides */
+:host ::ng-deep .p-fieldset {
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+:host ::ng-deep .p-fieldset-legend {
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+:host ::ng-deep .p-fieldset-content {
+  padding: 1.25rem;
+}
+
+/* Floatlabel styling */
+:host ::ng-deep p-floatlabel textarea {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+:host ::ng-deep p-floatlabel textarea:focus {
+  outline: 0 none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  border-color: #3b82f6;
+  background-color: #ffffff;
+}
+
+:host ::ng-deep p-floatlabel label {
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+:host ::ng-deep p-floatlabel textarea:focus ~ label,
+:host ::ng-deep p-floatlabel textarea.p-filled ~ label {
+  color: #3b82f6;
+}
+
+/* Form validation styling */
+.p-error {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+:host ::ng-deep .ng-invalid.ng-dirty:not(form) {
+  border-color: #ef4444 !important;
+}
+
+/* PrimeNG button styling overrides */
+:host ::ng-deep .p-button {
+  transition: all 0.2s ease;
+}
+
+:host ::ng-deep .p-button:hover {
+  transform: translateY(-1px);
+}
+
+:host ::ng-deep .p-button:active {
+  transform: translateY(0);
+}
+
+/* Media queries */
+@media screen and (max-width: 768px) {
+  :host ::ng-deep .test-type-selection {
+    grid-template-columns: 1fr;
+  }
+}

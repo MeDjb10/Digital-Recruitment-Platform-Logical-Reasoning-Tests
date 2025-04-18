@@ -1,0 +1,12 @@
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Additional styles that might be needed beyond Tailwind */
+.border-3 {
+  border-width: 3px;
+}
+
+/* We'll keep this empty or minimal since we're using Tailwind classes in the HTML */

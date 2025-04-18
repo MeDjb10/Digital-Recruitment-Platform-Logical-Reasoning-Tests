@@ -1,4 +1,4 @@
-import { environment } from "../../../environments/environment";
+import { environment } from '../../../environments/environment';
 
 export interface User {
   id: string; // Use id consistently across the application
@@ -20,13 +20,22 @@ export interface User {
     | 'rejected'
     | 'not_submitted';
   testAuthorizationDate?: string | Date;
+  authorizedBy?: string; // ID of the user who authorized the test
   testEligibilityInfo?: {
     jobPosition: string;
     company: string;
     department?: string;
     additionalInfo?: string;
-    availability?: string; // Add this new field
+    availability?: 'immediately' | 'one_week' | 'two_weeks' | 'one_month';
     submissionDate?: string | Date;
+  };
+  testAssignment?: {
+    assignedTest: 'D-70' | 'D-2000' | 'none';
+    additionalTests?: string[];
+    isManualAssignment?: boolean;
+    assignmentDate?: string | Date;
+    examDate?: string | Date;
+    assignedBy?: string; // ID of the user who assigned the test
   };
   createdAt?: string | Date;
   updatedAt?: string | Date;
@@ -75,7 +84,6 @@ export interface TestAuthorizationRequestsResponse {
     limit: number;
   };
 }
-
 
 export function getFullProfilePictureUrl(
   url: string | undefined

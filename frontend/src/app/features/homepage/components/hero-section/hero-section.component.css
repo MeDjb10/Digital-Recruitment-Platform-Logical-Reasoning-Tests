@@ -330,10 +330,7 @@ img[alt="Candidate Illustration"] {
   transform: translateY(-15px); /* Move image slightly higher */
 }
 
-/* Remove the unwanted hover effect */
-.image-container:hover img {
-  transform: translateY(-15px); /* Keep it consistently higher, but don't add scale on hover */
-}
+
 
 /* Enhance the image container itself */
 .image-container {
@@ -370,6 +367,10 @@ img[alt="Candidate Illustration"] {
   display: flex;
   align-items: center;
   min-height: 500px; /* Ensure container is tall enough */
+}
+
+.bg-gradient-radial {
+  background-image: radial-gradient(var(--tw-gradient-stops));
 }
 
 /* Subtle animation for border decoration */

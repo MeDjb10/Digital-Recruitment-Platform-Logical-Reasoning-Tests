@@ -1,0 +1,6 @@
+/* Only keeping the custom spin animation that's not provided by Tailwind */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

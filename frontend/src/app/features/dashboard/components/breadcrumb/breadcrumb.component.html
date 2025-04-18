@@ -2,18 +2,25 @@
   <a routerLink="/dashboard" class="hover:text-blue-600 transition-colors">
     <i class="pi pi-home"></i>
   </a>
-  
-  <i *ngIf="breadcrumbs.length > 0" class="pi pi-angle-right mx-2 text-gray-400"></i>
-  
-  <ng-container *ngFor="let item of breadcrumbs; let last = last; let i = index">
-    <a [routerLink]="item.url" 
-       [class.text-gray-900]="last"
-       [class.font-medium]="last"
-       [class.hover:text-blue-600]="!last"
-       class="transition-colors">
-      {{ item.label }}
+
+  <i
+    *ngIf="breadcrumbs.length > 0"
+    class="pi pi-angle-right mx-2 text-gray-400"
+  ></i>
+
+  <ng-container
+    *ngFor="let item of breadcrumbs; let last = last; let i = index"
+  >
+    <a
+      [routerLink]="item.url"
+      [class.text-gray-900]="last"
+      [class.font-medium]="last"
+      [class.hover:text-blue-600]="!last"
+      class="transition-colors"
+    >
+      {{ item.label | translate }}
     </a>
-    
+
     <i *ngIf="!last" class="pi pi-angle-right mx-2 text-gray-400"></i>
   </ng-container>
 </div>

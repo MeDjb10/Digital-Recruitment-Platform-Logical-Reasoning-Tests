@@ -1,19 +1,25 @@
 <nav
-  [ngClass]="{
-    'navbar-scrolled': isScrolled,
-    'navbar-transparent': !isScrolled
-  }"
-  class="fixed top-0 left-0 w-full z-50 transition-all duration-300 py-3"
+  [ngClass]="
+    isScrolled
+      ? 'bg-[#0f2b5b] shadow-lg backdrop-blur-md border-b border-white/5'
+      : 'bg-[rgba(23,55,120,0.85)] backdrop-blur-md border-b border-white/10'
+  "
+  class="fixed top-0 left-0 w-full z-50 transition-all duration-300 py-3 font-['Inter','Segoe_UI',sans-serif]"
 >
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between items-center">
       <!-- Logo and Brand -->
       <div class="flex-shrink-0">
-        <a routerLink="/" class="flex items-center gap-3 brand-logo">
+        <a
+          routerLink="/"
+          class="flex items-center gap-3 transition-transform duration-300 hover:scale-[1.02]"
+        >
           <!-- <img 
             class="h-10 w-auto"
           > -->
-          <span class="brand-name text-lg hidden md:block">
+          <span
+            class="hidden md:block text-lg font-bold tracking-wide bg-gradient-to-r from-white to-[#e1e1ff] bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(255,255,255,0.15)]"
+          >
             {{ "NAV.BRAND_NAME" | translate }}
           </span>
         </a>
@@ -23,19 +29,31 @@
       <div class="hidden md:flex items-center space-x-2">
         <a
           routerLink="/home"
-          routerLinkActive="nav-active"
+          routerLinkActive="text-white font-semibold bg-white/15 after:content-[''] after:absolute after:bottom-[-2px] after:left-1/2 after:w-[70%] after:h-[3px] after:bg-gradient-to-r after:from-[#ff6b6b] after:to-[#ff9e9e] after:rounded-md after:transform after:-translate-x-1/2 after:shadow-[0_1px_3px_rgba(255,107,107,0.3)]"
           [routerLinkActiveOptions]="{ exact: true }"
-          class="nav-link"
+          class="relative py-[0.625rem] px-[0.75rem] mx-1 text-white/85 font-medium rounded-md transition-all duration-300 hover:text-white hover:bg-white/10 hover:translate-y-[-1px] hover:after:w-[70%] after:content-[''] after:absolute after:bottom-[-2px] after:left-1/2 after:w-0 after:h-[3px] after:bg-gradient-to-r after:from-[#ff6b6b] after:to-[#ff9e9e] after:rounded-md after:transform after:-translate-x-1/2 after:transition-all after:duration-300 after:shadow-[0_1px_3px_rgba(255,107,107,0.3)]"
         >
           {{ "NAV.HOME" | translate }}
         </a>
-        <a routerLink="/tests" routerLinkActive="nav-active" class="nav-link">
+        <a
+          routerLink="/tests"
+          routerLinkActive="text-white font-semibold bg-white/15 after:content-[''] after:absolute after:bottom-[-2px] after:left-1/2 after:w-[70%] after:h-[3px] after:bg-gradient-to-r after:from-[#ff6b6b] after:to-[#ff9e9e] after:rounded-md after:transform after:-translate-x-1/2 after:shadow-[0_1px_3px_rgba(255,107,107,0.3)]"
+          class="relative py-[0.625rem] px-[0.75rem] mx-1 text-white/85 font-medium rounded-md transition-all duration-300 hover:text-white hover:bg-white/10 hover:translate-y-[-1px] hover:after:w-[70%] after:content-[''] after:absolute after:bottom-[-2px] after:left-1/2 after:w-0 after:h-[3px] after:bg-gradient-to-r after:from-[#ff6b6b] after:to-[#ff9e9e] after:rounded-md after:transform after:-translate-x-1/2 after:transition-all after:duration-300 after:shadow-[0_1px_3px_rgba(255,107,107,0.3)]"
+        >
           {{ "NAV.TESTS" | translate }}
         </a>
-        <a routerLink="/about" routerLinkActive="nav-active" class="nav-link">
+        <a
+          routerLink="/about"
+          routerLinkActive="text-white font-semibold bg-white/15 after:content-[''] after:absolute after:bottom-[-2px] after:left-1/2 after:w-[70%] after:h-[3px] after:bg-gradient-to-r after:from-[#ff6b6b] after:to-[#ff9e9e] after:rounded-md after:transform after:-translate-x-1/2 after:shadow-[0_1px_3px_rgba(255,107,107,0.3)]"
+          class="relative py-[0.625rem] px-[0.75rem] mx-1 text-white/85 font-medium rounded-md transition-all duration-300 hover:text-white hover:bg-white/10 hover:translate-y-[-1px] hover:after:w-[70%] after:content-[''] after:absolute after:bottom-[-2px] after:left-1/2 after:w-0 after:h-[3px] after:bg-gradient-to-r after:from-[#ff6b6b] after:to-[#ff9e9e] after:rounded-md after:transform after:-translate-x-1/2 after:transition-all after:duration-300 after:shadow-[0_1px_3px_rgba(255,107,107,0.3)]"
+        >
           {{ "NAV.ABOUT" | translate }}
         </a>
-        <a routerLink="/contact" routerLinkActive="nav-active" class="nav-link">
+        <a
+          routerLink="/contact"
+          routerLinkActive="text-white font-semibold bg-white/15 after:content-[''] after:absolute after:bottom-[-2px] after:left-1/2 after:w-[70%] after:h-[3px] after:bg-gradient-to-r after:from-[#ff6b6b] after:to-[#ff9e9e] after:rounded-md after:transform after:-translate-x-1/2 after:shadow-[0_1px_3px_rgba(255,107,107,0.3)]"
+          class="relative py-[0.625rem] px-[0.75rem] mx-1 text-white/85 font-medium rounded-md transition-all duration-300 hover:text-white hover:bg-white/10 hover:translate-y-[-1px] hover:after:w-[70%] after:content-[''] after:absolute after:bottom-[-2px] after:left-1/2 after:w-0 after:h-[3px] after:bg-gradient-to-r after:from-[#ff6b6b] after:to-[#ff9e9e] after:rounded-md after:transform after:-translate-x-1/2 after:transition-all after:duration-300 after:shadow-[0_1px_3px_rgba(255,107,107,0.3)]"
+        >
           {{ "NAV.CONTACT" | translate }}
         </a>
       </div>
@@ -43,47 +61,106 @@
       <!-- Auth Actions - Desktop -->
       <div class="hidden md:flex items-center space-x-4">
         <!-- Language Selector -->
-        <div class="language-selector mr-3">
-          <button
-            (click)="switchLanguage('en')"
-            [class.active]="currentLang === 'en'"
-            class="lang-btn"
+        <div class="flex items-center mr-3">
+          <div
+            class="relative flex items-center rounded-xl overflow-hidden bg-[#0c275a]/60 border border-white/15 shadow-md p-0.5 backdrop-blur"
           >
-            EN
-          </button>
-          <button
-            (click)="switchLanguage('fr')"
-            [class.active]="currentLang === 'fr'"
-            class="lang-btn"
-          >
-            FR
-          </button>
+            <button
+              (click)="switchLanguage('en')"
+              [ngClass]="
+                currentLang === 'en'
+                  ? 'bg-gradient-to-r from-blue-700/80 to-blue-600/80 text-white shadow-sm'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              "
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer"
+            >
+              <span
+                class="relative flex items-center justify-center w-4 h-4 rounded-full overflow-hidden"
+              >
+                <!-- US flag SVG icon -->
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 512 512"
+                  class="w-5 h-5 object-cover"
+                >
+                  <path fill="#f0f0f0" d="M0 85.33h512v341.337H0z" />
+                  <g fill="#d80027">
+                    <path
+                      d="M0 85.33h512v42.663H0zM0 170.66h512v42.663H0zM0 256h512v42.663H0zM0 341.33h512v42.663H0z"
+                    />
+                  </g>
+                  <path fill="#2e52b2" d="M0 85.33h256v170.663H0z" />
+                  <g fill="#f0f0f0">
+                    <path
+                      d="m99.82 160.624-4.184 12.883h-13.534l10.947 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.946-7.96h-13.533zM103.797 219.288l-4.185 12.883H86.08l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96h-13.532zM43.663 219.288l-4.185 12.883H25.946l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96H54.65zM43.663 160.624l-4.185 12.883H25.946l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96H54.65zM155.57 160.624l-4.184 12.883h-13.533l10.946 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.947-7.96h-13.534zM155.57 219.288l-4.184 12.883h-13.533l10.946 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.947-7.96h-13.534zM43.663 102.85l-4.185 12.884H25.946l10.947 7.96-4.183 12.883 10.954-7.974 10.957 7.974-4.185-12.883 10.946-7.96H54.65zM103.797 102.85l-4.185 12.884H86.08l10.947 7.96-4.183 12.883 10.954-7.974 10.957 7.974-4.185-12.883 10.946-7.96h-13.532zM155.57 102.85l-4.184 12.884h-13.533l10.946 7.96-4.185 12.883 10.956-7.974 10.956 7.974-4.185-12.883 10.947-7.96h-13.534z"
+                    />
+                  </g>
+                </svg>
+              </span>
+              <span>EN</span>
+            </button>
+            <button
+              (click)="switchLanguage('fr')"
+              [ngClass]="
+                currentLang === 'fr'
+                  ? 'bg-gradient-to-r from-blue-700/80 to-blue-600/80 text-white shadow-sm'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              "
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer"
+            >
+              <span
+                class="relative flex items-center justify-center w-4 h-4 rounded-full overflow-hidden"
+              >
+                <!-- French flag SVG icon -->
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 512 512"
+                  class="w-5 h-5 object-cover"
+                >
+                  <path fill="#f0f0f0" d="M0 85.33h512v341.337H0z" />
+                  <path fill="#0052b4" d="M0 85.33h170.663v341.337H0z" />
+                  <path
+                    fill="#d80027"
+                    d="M341.337 85.33H512v341.337H341.337z"
+                  />
+                </svg>
+              </span>
+              <span>FR</span>
+            </button>
+          </div>
         </div>
+
         <!-- Show Login/Register buttons if not logged in -->
         <ng-container *ngIf="!currentUser">
           <button
             type="button"
-            class="btn-signup"
+            class="bg-transparent border-2 border-white/70 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 hover:bg-white/10 hover:border-white/90 hover:translate-y-[-2px]"
             (click)="navigateToRegister()"
           >
             {{ "BUTTONS.REGISTER" | translate }}
           </button>
 
-          <button type="button" class="btn-login" (click)="navigateToLogin()">
+          <button
+            type="button"
+            class="bg-gradient-to-r from-[#ff6b6b] to-[#c63939] border-none shadow-[0_4px_12px_rgba(255,107,107,0.3)] text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-300 hover:translate-y-[-2px] hover:shadow-[0_6px_15px_rgba(255,107,107,0.4)] hover:from-[#ff7b7b] hover:to-[#d33f3f] active:translate-y-0"
+            (click)="navigateToLogin()"
+          >
             {{ "BUTTONS.LOGIN" | translate }}
           </button>
         </ng-container>
 
         <!-- Show user menu if logged in -->
-        <div *ngIf="currentUser" class="relative user-menu-container">
+        <div *ngIf="currentUser" class="relative">
           <button
-            class="user-menu-button flex items-center space-x-3"
+            class="flex items-center space-x-3 bg-white/10 rounded-xl p-2 transition-all duration-300 hover:bg-white/20 hover:translate-y-[-1px]"
             (click)="toggleUserDropdown($event)"
           >
-            <div class="avatar-container">
+            <div
+              class="w-[38px] h-[38px] relative flex-shrink-0 rounded-full overflow-hidden"
+            >
               <img
                 [src]="avatarUrl"
-                class="user-avatar"
+                class="w-full h-full object-cover rounded-full shadow-[0_0_0_2px_rgba(255,255,255,0.2)] bg-[#3b82f6]"
                 alt="User avatar"
                 (error)="handleImageError()"
               />
@@ -104,22 +181,33 @@
           </button>
 
           <!-- User Dropdown Menu -->
-          <div *ngIf="showUserDropdown" class="user-dropdown">
+          <div
+            *ngIf="showUserDropdown"
+            class="absolute right-0 mt-2 w-[280px] bg-white rounded-xl overflow-hidden shadow-[0_10px_25px_rgba(0,0,0,0.15),0_2px_10px_rgba(0,0,0,0.12)] border border-black/[0.08] animate-[dropdownFade_0.25s_ease-out_forwards]"
+          >
             <!-- User Info Header -->
-            <div class="user-dropdown-header">
+            <div
+              class="bg-gradient-to-r from-[#f8faff] to-[#edf1fd] p-4 border-b border-black/[0.06]"
+            >
               <div class="flex items-start">
-                <div class="avatar-container dropdown-avatar">
+                <div
+                  class="w-[42px] h-[42px] relative flex-shrink-0 rounded-full overflow-hidden"
+                >
                   <img
                     [src]="avatarUrl"
-                    class="user-avatar"
+                    class="w-full h-full object-cover rounded-full shadow-[0_0_0_2px_rgba(255,255,255,0.2)] bg-[#3b82f6]"
                     alt="User avatar"
                     (error)="handleImageError()"
                   />
                 </div>
                 <div class="ml-3">
-                  <p class="user-fullname">{{ userFullName }}</p>
-                  <p class="user-email">{{ currentUser.email }}</p>
-                  <div class="user-role-badge">
+                  <p class="font-semibold text-[#2d3748] mb-0.5">
+                    {{ userFullName }}
+                  </p>
+                  <p class="text-[#718096] text-xs">{{ currentUser.email }}</p>
+                  <div
+                    class="inline-flex items-center bg-gradient-to-r from-[#e6f0ff] to-[#d4e5ff] text-[#2c5282] text-[0.7rem] font-semibold py-1 px-2.5 rounded-full mt-2 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-[rgba(44,82,130,0.1)]"
+                  >
                     <i class="pi pi-user mr-1 text-xs"></i>
                     {{ userRole }}
                   </div>
@@ -128,37 +216,54 @@
             </div>
 
             <!-- Menu Items -->
-            <div class="dropdown-section">
-              <a routerLink="/profile" class="user-dropdown-item">
-                <i class="pi pi-user"></i>
+            <div class="py-2">
+              <a
+                routerLink="/profile"
+                class="flex items-center py-3.5 px-4 text-[0.9rem] text-[#4a5568] border-l-[3px] border-transparent transition-all duration-200 hover:bg-[#f7fafc] hover:text-[#2d3748] hover:border-l-[#4299e1]"
+              >
+                <i
+                  class="w-5 mr-3 text-[1.1rem] text-[#718096] transition-all duration-200 hover:text-[#3182ce] hover:translate-x-0.5 pi pi-user"
+                ></i>
                 <span>{{ "USER.PROFILE" | translate }}</span>
               </a>
 
-              <a routerLink="/tests/my-tests" class="user-dropdown-item">
-                <i class="pi pi-list"></i>
+              <a
+                routerLink="/tests/my-tests"
+                class="flex items-center py-3.5 px-4 text-[0.9rem] text-[#4a5568] border-l-[3px] border-transparent transition-all duration-200 hover:bg-[#f7fafc] hover:text-[#2d3748] hover:border-l-[#4299e1]"
+              >
+                <i
+                  class="w-5 mr-3 text-[1.1rem] text-[#718096] transition-all duration-200 hover:text-[#3182ce] hover:translate-x-0.5 pi pi-list"
+                ></i>
                 <span>{{ "USER.TESTS" | translate }}</span>
               </a>
             </div>
 
-            <div class="dropdown-divider" *ngIf="isStaffMember()"></div>
+            <div class="h-px bg-[#e2e8f0] my-1" *ngIf="isStaffMember()"></div>
 
-            <div class="dropdown-section" *ngIf="isStaffMember()">
-              <a routerLink="/dashboard" class="user-dropdown-item">
-                <i class="pi pi-th-large"></i>
+            <div class="py-2" *ngIf="isStaffMember()">
+              <a
+                routerLink="/dashboard"
+                class="flex items-center py-3.5 px-4 text-[0.9rem] text-[#4a5568] border-l-[3px] border-transparent transition-all duration-200 hover:bg-[#f7fafc] hover:text-[#2d3748] hover:border-l-[#4299e1]"
+              >
+                <i
+                  class="w-5 mr-3 text-[1.1rem] text-[#718096] transition-all duration-200 hover:text-[#3182ce] hover:translate-x-0.5 pi pi-th-large"
+                ></i>
                 <span>{{ "USER.DASHBOARD" | translate }}</span>
               </a>
             </div>
 
-            <div class="dropdown-divider"></div>
+            <div class="h-px bg-[#e2e8f0] my-1"></div>
 
-            <div class="dropdown-section">
-              <button
+            <div class="py-2">
+              <a
                 (click)="logout()"
-                class="user-dropdown-item danger w-full text-left"
+                class="flex items-center w-full text-left py-3.5 px-4 text-[0.9rem] text-[#e53e3e] border-l-[3px] border-transparent transition-all duration-200 hover:bg-[#fff5f5] hover:border-l-[#fc8181] cursor-pointer"
               >
-                <i class="pi pi-sign-out"></i>
+                <i
+                  class="w-5 mr-3 text-[1.1rem] text-[#e53e3e] transition-all duration-200 hover:translate-x-0.5 pi pi-sign-out"
+                ></i>
                 <span>{{ "BUTTONS.LOGOUT" | translate }}</span>
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -171,10 +276,28 @@
           class="p-2 rounded-md focus:outline-none"
           (click)="toggleMobileMenu()"
         >
-          <div class="hamburger-icon" [ngClass]="{ active: isMobileMenuOpen }">
-            <span></span>
-            <span></span>
-            <span></span>
+          <div
+            class="w-6 h-6 relative transition-all duration-300"
+            [ngClass]="{ '': isMobileMenuOpen }"
+          >
+            <span
+              class="block absolute h-0.5 w-full bg-white opacity-100 left-0 transition-all duration-250 ease-in-out"
+              [ngClass]="
+                isMobileMenuOpen ? 'top-3 transform rotate-[135deg]' : 'top-1.5'
+              "
+            ></span>
+            <span
+              class="block absolute h-0.5 w-full bg-white opacity-100 left-0 top-3 transition-all duration-250 ease-in-out"
+              [ngClass]="isMobileMenuOpen ? 'opacity-0 left-[-60px]' : ''"
+            ></span>
+            <span
+              class="block absolute h-0.5 w-full bg-white opacity-100 left-0 transition-all duration-250 ease-in-out"
+              [ngClass]="
+                isMobileMenuOpen
+                  ? 'top-3 transform rotate-[-135deg]'
+                  : 'top-[18px]'
+              "
+            ></span>
           </div>
         </button>
       </div>
@@ -187,53 +310,105 @@
     class="md:hidden bg-blue-900/95 backdrop-blur-lg mt-3 pb-4 rounded-b-xl"
   >
     <!-- Language Selector for Mobile -->
-    <div class="px-4 pt-3 pb-2 flex justify-center">
-      <div class="language-selector">
+    <div class="px-4 pt-3 pb-3 flex justify-center">
+      <div
+        class="relative flex items-center rounded-xl overflow-hidden bg-[#0a1d3e]/60 border border-white/15 shadow-md p-0.5 backdrop-blur w-full max-w-[220px]"
+      >
         <button
           (click)="switchLanguage('en')"
-          [class.active]="currentLang === 'en'"
-          class="lang-btn"
+          [ngClass]="
+            currentLang === 'en'
+              ? 'bg-gradient-to-r from-blue-700/80 to-blue-600/80 text-white shadow-sm'
+              : 'text-white/70 hover:text-white hover:bg-white/10'
+          "
+          class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer flex-1"
         >
-          {{ "LANG.EN" | translate }}
+          <span
+            class="relative flex items-center justify-center w-4 h-4 rounded-full overflow-hidden"
+          >
+            <!-- US flag SVG icon -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 512 512"
+              class="w-5 h-5 object-cover"
+            >
+              <path fill="#f0f0f0" d="M0 85.33h512v341.337H0z" />
+              <g fill="#d80027">
+                <path
+                  d="M0 85.33h512v42.663H0zM0 170.66h512v42.663H0zM0 256h512v42.663H0zM0 341.33h512v42.663H0z"
+                />
+              </g>
+              <path fill="#2e52b2" d="M0 85.33h256v170.663H0z" />
+              <g fill="#f0f0f0">
+                <path
+                  d="m99.82 160.624-4.184 12.883h-13.534l10.947 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.946-7.96h-13.533zM103.797 219.288l-4.185 12.883H86.08l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96h-13.532zM43.663 219.288l-4.185 12.883H25.946l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96H54.65zM43.663 160.624l-4.185 12.883H25.946l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96H54.65zM155.57 160.624l-4.184 12.883h-13.533l10.946 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.947-7.96h-13.534zM155.57 219.288l-4.184 12.883h-13.533l10.946 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.947-7.96h-13.534zM43.663 102.85l-4.185 12.884H25.946l10.947 7.96-4.183 12.883 10.954-7.974 10.957 7.974-4.185-12.883 10.946-7.96H54.65zM103.797 102.85l-4.185 12.884H86.08l10.947 7.96-4.183 12.883 10.954-7.974 10.957 7.974-4.185-12.883 10.946-7.96h-13.532zM155.57 102.85l-4.184 12.884h-13.533l10.946 7.96-4.185 12.883 10.956-7.974 10.956 7.974-4.185-12.883 10.947-7.96h-13.534z"
+                />
+              </g>
+            </svg>
+          </span>
+          <span>EN</span>
         </button>
         <button
           (click)="switchLanguage('fr')"
-          [class.active]="currentLang === 'fr'"
-          class="lang-btn"
+          [ngClass]="
+            currentLang === 'fr'
+              ? 'bg-gradient-to-r from-blue-700/80 to-blue-600/80 text-white shadow-sm'
+              : 'text-white/70 hover:text-white hover:bg-white/10'
+          "
+          class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer flex-1"
         >
-          {{ "LANG.FR" | translate }}
+          <span
+            class="relative flex items-center justify-center w-4 h-4 rounded-full overflow-hidden"
+          >
+            <!-- French flag SVG icon -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 512 512"
+              class="w-5 h-5 object-cover"
+            >
+              <path fill="#f0f0f0" d="M0 85.33h512v341.337H0z" />
+              <path fill="#0052b4" d="M0 85.33h170.663v341.337H0z" />
+              <path fill="#d80027" d="M341.337 85.33H512v341.337H341.337z" />
+            </svg>
+          </span>
+          <span>FR</span>
         </button>
       </div>
     </div>
+
     <div class="px-4 pt-3 pb-4 space-y-1">
       <a
         routerLink="/home"
-        routerLinkActive="mobile-nav-active"
+        routerLinkActive="bg-white/20 text-white border-l-[3px] border-[#ff6b6b]"
         [routerLinkActiveOptions]="{ exact: true }"
-        class="mobile-nav-link"
+        class="flex items-center py-3 px-4 rounded-lg my-1 text-base font-medium text-white/90 transition-all duration-250 hover:bg-white/15 hover:text-white hover:translate-x-[3px]"
       >
-        <i class="pi pi-home"></i> {{ "NAV.HOME" | translate }}
+        <i class="pi pi-home mr-3 text-lg opacity-90"></i>
+        {{ "NAV.HOME" | translate }}
       </a>
       <a
         routerLink="/tests"
-        routerLinkActive="mobile-nav-active"
-        class="mobile-nav-link"
+        routerLinkActive="bg-white/20 text-white border-l-[3px] border-[#ff6b6b]"
+        class="flex items-center py-3 px-4 rounded-lg my-1 text-base font-medium text-white/90 transition-all duration-250 hover:bg-white/15 hover:text-white hover:translate-x-[3px]"
       >
-        <i class="pi pi-list"></i> {{ "NAV.TESTS" | translate }}
+        <i class="pi pi-list mr-3 text-lg opacity-90"></i>
+        {{ "NAV.TESTS" | translate }}
       </a>
       <a
         routerLink="/about"
-        routerLinkActive="mobile-nav-active"
-        class="mobile-nav-link"
+        routerLinkActive="bg-white/20 text-white border-l-[3px] border-[#ff6b6b]"
+        class="flex items-center py-3 px-4 rounded-lg my-1 text-base font-medium text-white/90 transition-all duration-250 hover:bg-white/15 hover:text-white hover:translate-x-[3px]"
       >
-        <i class="pi pi-info-circle"></i> {{ "NAV.ABOUT" | translate }}
+        <i class="pi pi-info-circle mr-3 text-lg opacity-90"></i>
+        {{ "NAV.ABOUT" | translate }}
       </a>
       <a
         routerLink="/contact"
-        routerLinkActive="mobile-nav-active"
-        class="mobile-nav-link"
+        routerLinkActive="bg-white/20 text-white border-l-[3px] border-[#ff6b6b]"
+        class="flex items-center py-3 px-4 rounded-lg my-1 text-base font-medium text-white/90 transition-all duration-250 hover:bg-white/15 hover:text-white hover:translate-x-[3px]"
       >
-        <i class="pi pi-envelope"></i> {{ "NAV.CONTACT" | translate }}
+        <i class="pi pi-envelope mr-3 text-lg opacity-90"></i>
+        {{ "NAV.CONTACT" | translate }}
       </a>
 
       <!-- Auth Buttons for Mobile -->
@@ -242,7 +417,7 @@
           <div class="flex flex-col space-y-3">
             <button
               type="button"
-              class="btn-login w-full flex justify-center items-center"
+              class="bg-gradient-to-r from-[#ff6b6b] to-[#c63939] shadow-[0_4px_12px_rgba(255,107,107,0.3)] text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-300 hover:translate-y-[-2px] hover:shadow-[0_6px_15px_rgba(255,107,107,0.4)] hover:from-[#ff7b7b] hover:to-[#d33f3f] active:translate-y-0 w-full flex justify-center items-center"
               (click)="navigateToLogin()"
             >
               <i class="pi pi-sign-in mr-2"></i>
@@ -250,7 +425,7 @@
             </button>
             <button
               type="button"
-              class="btn-signup w-full flex justify-center items-center"
+              class="bg-transparent border-2 border-white/70 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 hover:bg-white/10 hover:border-white/90 hover:translate-y-[-2px] w-full flex justify-center items-center"
               (click)="navigateToRegister()"
             >
               <i class="pi pi-user-plus mr-2"></i>
@@ -261,10 +436,12 @@
 
         <div *ngIf="currentUser" class="pt-3">
           <div class="flex items-center mb-4 p-3 bg-blue-800/50 rounded-xl">
-            <div class="avatar-container mobile-avatar">
+            <div
+              class="w-[46px] h-[46px] relative flex-shrink-0 rounded-full overflow-hidden"
+            >
               <img
                 [src]="avatarUrl"
-                class="user-avatar"
+                class="w-full h-full object-cover rounded-full border-2 border-white/30 bg-[#3b82f6]"
                 alt="User avatar"
                 (error)="handleImageError()"
               />
@@ -272,33 +449,45 @@
             <div class="ml-3">
               <p class="text-sm font-medium text-white">{{ userFullName }}</p>
               <p class="text-xs text-gray-300 mb-1">{{ currentUser.email }}</p>
-              <div class="user-role-badge">
+              <div
+                class="inline-flex items-center bg-gradient-to-r from-[#e6f0ff] to-[#d4e5ff] text-[#2c5282] text-[0.7rem] font-semibold py-1 px-2.5 rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-[rgba(44,82,130,0.1)]"
+              >
                 {{ userRole }}
               </div>
             </div>
           </div>
 
-          <a routerLink="/profile" class="mobile-nav-link">
-            <i class="pi pi-user"></i> {{ "USER.PROFILE" | translate }}
+          <a
+            routerLink="/profile"
+            class="flex items-center py-3 px-4 rounded-lg my-1 text-base font-medium text-white/90 transition-all duration-250 hover:bg-white/15 hover:text-white hover:translate-x-[3px]"
+          >
+            <i class="pi pi-user mr-3 text-lg opacity-90"></i>
+            {{ "USER.PROFILE" | translate }}
           </a>
 
-          <a routerLink="/tests/my-tests" class="mobile-nav-link">
-            <i class="pi pi-list"></i> {{ "USER.TESTS" | translate }}
+          <a
+            routerLink="/tests/my-tests"
+            class="flex items-center py-3 px-4 rounded-lg my-1 text-base font-medium text-white/90 transition-all duration-250 hover:bg-white/15 hover:text-white hover:translate-x-[3px]"
+          >
+            <i class="pi pi-list mr-3 text-lg opacity-90"></i>
+            {{ "USER.TESTS" | translate }}
           </a>
 
           <a
             routerLink="/dashboard"
             *ngIf="isStaffMember()"
-            class="mobile-nav-link"
+            class="flex items-center py-3 px-4 rounded-lg my-1 text-base font-medium text-white/90 transition-all duration-250 hover:bg-white/15 hover:text-white hover:translate-x-[3px]"
           >
-            <i class="pi pi-th-large"></i> {{ "USER.DASHBOARD" | translate }}
+            <i class="pi pi-th-large mr-3 text-lg opacity-90"></i>
+            {{ "USER.DASHBOARD" | translate }}
           </a>
 
           <button
             (click)="logout()"
-            class="mobile-nav-link w-full text-left text-red-300 hover:text-red-100"
+            class="flex items-center py-3 px-4 rounded-lg my-1 text-base font-medium text-red-300 hover:text-red-100 w-full text-left transition-all duration-250 hover:bg-white/15 hover:translate-x-[3px]"
           >
-            <i class="pi pi-sign-out"></i> {{ "BUTTONS.LOGOUT" | translate }}
+            <i class="pi pi-sign-out mr-3 text-lg opacity-90"></i>
+            {{ "BUTTONS.LOGOUT" | translate }}
           </button>
         </div>
       </div>

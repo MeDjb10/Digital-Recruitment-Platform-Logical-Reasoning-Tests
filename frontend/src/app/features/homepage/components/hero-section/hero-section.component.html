@@ -229,7 +229,7 @@
       </div>
 
       <!-- RIGHT SIDE: Enhanced illustration with 3D effect -->
-      
+
       <div
         class="relative content-block perspective-card"
         [ngClass]="{ 'fade-out': !isContentVisible }"
@@ -252,25 +252,19 @@
             class="absolute inset-4 bg-[#00329B] opacity-5 blur-3xl rounded-full"
           ></div>
 
-          <!-- Image container with enhanced glass effect - no hover transform -->
+          <!-- Updated image container for white background image -->
           <div
-            class="relative z-10 image-glass-effect p-4 shadow-xl transition-all duration-300 image-container"
+            class="relative z-10 bg-gradient-to-br from-white/60 to-blue-50/60 p-6 shadow-xl transition-all duration-300 image-container backdrop-blur-sm rounded-2xl border border-white/30"
           >
-            <!-- Ambient glow within the container -->
-            <div class="image-glow"></div>
-
-            <!-- Main illustration with enhanced size and fixed position -->
-            <div
-              class="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[#00329B] opacity-10 rounded-2xl"
-            ></div>
-
+         
+            <!-- Main illustration with slight shadow for depth -->
             <img
-              src="assets/images/candidate-removebg-preview.png"
+              src="assets/images/heroSectionCandidateWhiteBg.png"
               alt="Candidate Illustration"
-              class="w-full object-contain mx-auto"
+              class="w-full object-contain mx-auto relative z-10 drop-shadow-lg rounded-xl "
+              data-aos="fade-up"
             />
 
-            <!-- Add a subtle badge to increase credibility -->
            
           </div>
         </div>
@@ -285,24 +279,9 @@
         <div
           class="absolute top-1/4 right-0 w-12 h-12 bg-[#00329B] rounded-full opacity-60 animate-float-delayed"
         ></div>
-        <div
-          class="absolute bottom-1/3 left-1/4 w-8 h-8 bg-[#00329B] rounded-full opacity-40 animate-float"
-        ></div>
+    
 
-        <!-- Star decoration with pulse effect -->
-        <div class="absolute top-1/2 right-1/4 w-10 h-10 animate-spin-slow">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-full h-full text-[#00329B] opacity-70 animate-pulse"
-          >
-            <path
-              d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-              fill="currentColor"
-            />
-          </svg>
-        </div>
+      
 
         <!-- Company logo or trust badge -->
         <div

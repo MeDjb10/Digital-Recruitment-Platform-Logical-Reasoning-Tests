@@ -12,15 +12,14 @@ const {
   validateTestAuthRequest,
   validateTestAuthStatusUpdate,
   validateBulkTestAuthStatusUpdate,
+  validateManualTestAssignment,
 } = require("../utils/validation.util");
 const verifyServiceToken = require("../middleware/service-auth.middleware");
 
 // Add this route
-router.get('/health', (req, res) => {
-  res.json({ message: 'User service is responding properly' });
+router.get("/health", (req, res) => {
+  res.json({ message: "User service is responding properly" });
 });
-
-
 
 /**
  * @swagger
@@ -40,11 +39,7 @@ router.get('/health', (req, res) => {
  *       200:
  *         description: Returns user role
  */
-router.get(
-  "/role/:userId",
-  verifyServiceToken,
-  userController.getUserRole
-);
+router.get("/role/:userId", verifyServiceToken, userController.getUserRole);
 
 /**
  * @swagger
@@ -444,7 +439,6 @@ router.patch(
   userController.updateUserStatus
 );
 
-
 /**
  * @swagger
  * /api/users/create:
@@ -484,18 +478,13 @@ router.patch(
  *       401:
  *         description: Unauthorized - invalid service token
  */
-router.post(
-  "/create",
-  verifyServiceToken,
-  userController.createUser
-);
-
+router.post("/create", verifyServiceToken, userController.createUser);
 
 /**
  * @swagger
  * /api/users/{userId}/test-authorization:
  *   put:
- *     summary: Update test authorization status
+ *     summary: Update test authorization status with optional test assignment
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -516,6 +505,10 @@ router.post(
  *               status:
  *                 type: string
  *                 enum: [approved, rejected]
+ *               examDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Optional exam date when approving
  *     responses:
  *       200:
  *         description: Test authorization status updated successfully
@@ -534,15 +527,62 @@ router.put(
   userController.updateTestAuthorizationStatus
 );
 
-
-module.exports = router;
-
+/**
+ * @swagger
+ * /api/users/{userId}/test-assignment:
+ *   put:
+ *     summary: Manually assign tests to an approved candidate
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - assignedTest
+ *             properties:
+ *               assignedTest:
+ *                 type: string
+ *                 enum: [D-70, D-2000]
+ *               additionalTests:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum: [logique_des_propositions]
+ *               examDate:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Test assignment updated successfully
+ *       400:
+ *         description: Invalid input data
+ *       403:
+ *         description: Forbidden - psychologist only
+ *       404:
+ *         description: User not found
+ */
+router.put(
+  "/:userId/test-assignment",
+  verifyToken(["admin", "psychologist"]),
+  validateUserId,
+  validateManualTestAssignment,
+  userController.manualTestAssignment
+);
 
 /**
  * @swagger
  * /api/users/test-authorization/bulk:
  *   put:
- *     summary: Bulk update test authorization statuses
+ *     summary: Bulk update test authorization statuses with optional exam date
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -562,6 +602,10 @@ module.exports = router;
  *               status:
  *                 type: string
  *                 enum: [approved, rejected]
+ *               examDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Optional exam date for approved candidates
  *     responses:
  *       200:
  *         description: Test authorization statuses updated successfully
@@ -576,3 +620,6 @@ router.put(
   validateBulkTestAuthStatusUpdate,
   userController.bulkUpdateTestAuthorizationStatus
 );
+
+
+module.exports = router;

@@ -16,12 +16,7 @@ import {
   providedIn: 'root',
 })
 export class TestManagementService {
- 
-  
-
-  constructor(private http: HttpClient, private testService: TestService) {
-  
-  }
+  constructor(private http: HttpClient, private testService: TestService) {}
 
   // CRUD Operations: Tests
 
@@ -212,7 +207,33 @@ export class TestManagementService {
     questionId: string,
     updates: any
   ): Observable<DominoQuestion | MultipleChoiceQuestion> {
-    return this.testService.updateQuestion(questionId, updates).pipe(
+    // Create a copy of the updates object and remove the questionType field
+    // to prevent the "Cannot change question type" error from the backend
+    const updatesWithoutType = { ...updates };
+
+    // Remove fields that shouldn't be part of the update payload
+    if (updatesWithoutType.questionType) {
+      delete updatesWithoutType.questionType;
+    }
+
+    // Make sure we're not sending _id or id if they exist in the updates
+    // This prevents confusion between the path parameter and body
+    if (updatesWithoutType._id) {
+      delete updatesWithoutType._id;
+    }
+    if (updatesWithoutType.id) {
+      delete updatesWithoutType.id;
+    }
+
+    console.log(
+      `Updating question ${questionId} with data:`,
+      updatesWithoutType
+    );
+
+    return this.testService.updateQuestion(questionId, updatesWithoutType).pipe(
+      tap((response) => {
+        console.log('Update question response:', response);
+      }),
       map((response) => {
         if (!response.success || !response.data) {
           throw new Error('Failed to update question');
