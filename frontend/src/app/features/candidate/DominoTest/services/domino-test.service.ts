@@ -260,12 +260,12 @@ export class DominoTestService {
 
   // Get available tests for candidates
   getAvailableTests(): Observable<any[]> {
-    // Use TestService to get active tests of type "domino"
+    // Use TestService to get ALL active tests (remove type filter)
     return this.testService
       .getAllTests({
         isActive: true,
-        type: 'domino',
-        category: 'logical',
+        // Remove type: 'domino' to get all types
+        category: 'logical', // Keep category if needed
       })
       .pipe(
         map((response) => {
@@ -273,6 +273,7 @@ export class DominoTestService {
             return [];
           }
 
+          // Map all test types
           return response.data.map((test) => ({
             id: test._id,
             name: test.name,
@@ -280,6 +281,7 @@ export class DominoTestService {
             duration: test.duration,
             totalQuestions: test.totalQuestions || 0,
             difficulty: test.difficulty,
+            type: test.type || 'unknown', // Include type if available
           }));
         }),
         catchError((error) => {

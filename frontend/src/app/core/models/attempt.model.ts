@@ -18,6 +18,7 @@ export interface TestAttempt {
     visitCounts?: Record<string, number>;
     timePerQuestion?: Record<string, number>;
   };
+  lastActivityAt?: Date; // Added to match backend
 }
 
 export interface QuestionResponse {
@@ -30,10 +31,16 @@ export interface QuestionResponse {
     topValue: number | null;
     bottomValue: number | null;
   };
-  selectedOptions?: number[];
-  isCorrect: boolean;
-  isReversed: boolean;
-  isHalfCorrect: boolean;
+  // New field for V/F/?/X answers
+  propositionResponses?: {
+    propositionIndex: number;
+    candidateEvaluation: 'V' | 'F' | '?' | 'X';
+    isCorrect?: boolean; // Optional: if backend sends individual correctness
+  }[];
+  // Removed: selectedOptions
+  isCorrect: boolean; // Overall correctness for the question
+  isReversed: boolean; // Primarily for Domino
+  isHalfCorrect: boolean; // Primarily for Domino
   timeSpent: number;
   visitCount: number;
   isFlagged: boolean;
@@ -71,26 +78,33 @@ export interface AttemptQuestionsResponse {
 export interface AttemptResultsResponse {
   success: boolean;
   data: {
-    attemptId: string;
-    testId: string;
-    testName: string;
-    candidateId: string;
-    startTime: Date;
-    endTime: Date;
-    timeSpent: number;
-    score: number;
-    percentageScore: number;
-    metrics: {
-      totalQuestions: number;
-      correctCount: number;
-      halfCorrectCount: number;
-      reversedCount: number;
-      skippedCount: number;
-      averageTimePerQuestion: number;
+    attempt: {
+      // Updated to match TestAttempt structure more closely
+      _id: string;
+      testId: string;
+      testName: string; // Populated from testId
+      candidateId: string;
+      startTime: Date;
+      endTime: Date;
+      timeSpent: number;
+      status: 'in-progress' | 'completed' | 'timed-out' | 'abandoned';
+      score: number;
+      percentageScore: number;
+      metrics: {
+        questionsAnswered: number;
+        questionsSkipped: number;
+        answerChanges: number;
+        flaggedQuestions: number;
+        visitCounts?: Record<string, number>;
+        timePerQuestion?: Record<string, number>;
+      };
+      device?: string;
+      browser?: string;
+      ipAddress?: string;
     };
     questions: {
       question: {
-        id: string;
+        _id: string; // Use _id
         title?: string;
         instruction: string;
         questionNumber: number;
@@ -98,20 +112,34 @@ export interface AttemptResultsResponse {
         difficulty: string;
       };
       response?: {
+        _id: string; // Add response ID
         dominoAnswer?: {
           dominoId: number;
           topValue: number | null;
           bottomValue: number | null;
         };
-        selectedOptions?: number[];
-        isCorrect: boolean;
-        isHalfCorrect: boolean;
-        isReversed: boolean;
+        // Add propositionResponses
+        propositionResponses?: {
+          propositionIndex: number;
+          candidateEvaluation: 'V' | 'F' | '?' | 'X';
+          isCorrect?: boolean;
+        }[];
+        // Removed: selectedOptions
+        isCorrect: boolean; // Overall question correctness
+        isHalfCorrect: boolean; // Domino specific
+        isReversed: boolean; // Domino specific
         isSkipped: boolean;
+        isFlagged: boolean; // Added
         timeSpent: number;
         visitCount: number;
+        answeredAt?: Date; // Added
+        answerChanges: number; // Added
       };
-      correctAnswer: any;
+      correctAnswer: any; // Keep as any or define specific structures per type
+      // Example structure for MultipleChoiceQuestion correctAnswer:
+      // correctAnswer: {
+      //   propositions: { text: string; correctEvaluation: 'V' | 'F' | '?' }[];
+      // } | { dominoId: number; topValue: number | null; bottomValue: number | null };
     }[];
   };
 }

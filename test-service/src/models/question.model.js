@@ -34,11 +34,13 @@ const QuestionSchema = new Schema(
       required: [true, "Question number is required"],
     },
     analytics: {
-      correctAnswerRate: { type: Number, default: 0 },
-      halfCorrectRate: { type: Number, default: 0 },
-      reversedAnswerRate: { type: Number, default: 0 },
+      correctAnswerRate: { type: Number, default: 0 }, // May need adjustment based on proposition scoring
+      // halfCorrectRate might not apply directly
+      // reversedAnswerRate might not apply directly
       averageTimeSpent: { type: Number, default: 0 },
       visitCountAverage: { type: Number, default: 0 },
+      // Add metric for 'X' answers if needed
+      dontUnderstandRate: { type: Number, default: 0 },
     },
   },
   {
@@ -47,21 +49,47 @@ const QuestionSchema = new Schema(
   }
 );
 
-// Update analytics method
+// Update analytics method - Needs adjustment for proposition scoring
 QuestionSchema.methods.updateAnalytics = async function () {
   const QuestionResponse = mongoose.model("QuestionResponse");
-
   const responses = await QuestionResponse.find({ questionId: this._id });
   if (!responses.length) return this;
 
-  const correctCount = responses.filter((r) => r.isCorrect).length;
-  const halfCorrectCount = responses.filter((r) => r.isHalfCorrect).length;
-  const reversedCount = responses.filter((r) => r.isReversed).length;
+  let totalPropositionsAttempted = 0;
+  let totalCorrectEvaluations = 0;
+  let totalDontUnderstand = 0;
+
+  responses.forEach((response) => {
+    if (
+      response.propositionResponses &&
+      response.propositionResponses.length > 0
+    ) {
+      response.propositionResponses.forEach((propResponse, index) => {
+        if (this.propositions && index < this.propositions.length) {
+          totalPropositionsAttempted++;
+          if (propResponse.candidateEvaluation === "X") {
+            totalDontUnderstand++;
+          } else if (
+            propResponse.candidateEvaluation ===
+            this.propositions[index].correctEvaluation
+          ) {
+            totalCorrectEvaluations++;
+          }
+        }
+      });
+    }
+  });
 
   this.analytics = {
-    correctAnswerRate: (correctCount / responses.length) * 100,
-    halfCorrectRate: (halfCorrectCount / responses.length) * 100,
-    reversedAnswerRate: (reversedCount / responses.length) * 100,
+    // Correct rate could be defined as average correct propositions per response
+    correctAnswerRate:
+      totalPropositionsAttempted > 0
+        ? (totalCorrectEvaluations / totalPropositionsAttempted) * 100
+        : 0,
+    dontUnderstandRate:
+      totalPropositionsAttempted > 0
+        ? (totalDontUnderstand / totalPropositionsAttempted) * 100
+        : 0,
     averageTimeSpent:
       responses.reduce((sum, r) => sum + (r.timeSpent || 0), 0) /
       responses.length,
@@ -69,6 +97,10 @@ QuestionSchema.methods.updateAnalytics = async function () {
       responses.reduce((sum, r) => sum + (r.visitCount || 0), 0) /
       responses.length,
   };
+
+  // Reset potentially irrelevant fields if needed
+  this.analytics.halfCorrectRate = 0;
+  this.analytics.reversedAnswerRate = 0;
 
   return this.save();
 };
@@ -133,20 +165,22 @@ const DominoQuestionSchema = new Schema({
   },
 });
 
-// Multiple Choice Question Schema
+// Multiple Choice Question Schema (Updated for V/F/?/X)
 const MultipleChoiceQuestionSchema = new Schema({
-  options: [
+  propositions: [
     {
       text: {
         type: String,
-        required: [true, "Option text is required"],
+        required: [true, "Proposition text is required"],
+        trim: true,
       },
-      isCorrect: Boolean,
+      correctEvaluation: {
+        type: String,
+        enum: ["V", "F", "?"], // Vrai, Faux, Cannot Know
+        required: [true, "Correct evaluation (V, F, ?) is required"],
+      },
     },
   ],
-  correctOptionIndex: Number,
-  allowMultipleCorrect: { type: Boolean, default: false },
-  randomizeOptions: { type: Boolean, default: false },
 });
 
 // Register discriminators

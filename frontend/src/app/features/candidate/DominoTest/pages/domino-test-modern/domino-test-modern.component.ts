@@ -44,7 +44,8 @@ export class DominoTestModernComponent
 
   // Test meta data
   testName: string = 'Domino Logical Reasoning Test';
-  testId: string = 'd70'; // Default to d70 test
+  test
+  teIds: string = 'd70'; // Default to d70 test
   attemptId: string | null = null;
 
   // Questions and navigation
@@ -88,12 +89,9 @@ export class DominoTestModernComponent
   loadingError: string | null = null;
   isTestComplete: boolean = false;
 
-  // Current question getter for convenience
-  get currentQuestion(): TestQuestion | undefined {
-    return this.questions[this.currentQuestionIndex];
-  }
+  // Curre
 
-  // Progress percentage
+rogrePrcentage
   get progressPercentage(): number {
     return this.questions.length > 0
       ? Math.round((this.answeredCount / this.questions.length) * 100)
@@ -172,7 +170,9 @@ export class DominoTestModernComponent
         if (testData) {
           // Store test data
           this.testName = testData.name || 'Logical Reasoning Test';
-          this.testDuration = testData.duration || 30;
+      
+
+          this.testType = testData.type || 'domino'; // Default to domino type    this.testDuration = testData.duration || 30;
           this.timeLeft = this.testDuration * 60;
           this.updateFormattedTime();
 
@@ -673,7 +673,8 @@ export class DominoTestModernComponent
         next: (testData) => {
           if (testData) {
             this.testName = testData.name || 'Logical Reasoning Test';
-            this.testDuration = testData.duration || 30;
+            this.testDur
+            ation = testData.duration || 30;
             this.timeLeft = this.testDuration * 60;
             this.updateFormattedTime();
 

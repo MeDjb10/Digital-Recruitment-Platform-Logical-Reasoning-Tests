@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const {
   DominoQuestion,
   MultipleChoiceQuestion,
+  Question, // Import base Question model if needed for counts/updates
 } = require("../models/question.model");
 const Test = require("../models/test.model");
 const { AppError } = require("../middleware/errorHandler");
@@ -14,10 +15,13 @@ const logger = require("../utils/logger");
  */
 const createQuestion = async (req, res) => {
   const { testId } = req.params;
+  logger.info(`Attempting to create question for test ${testId}`);
+  logger.debug(`Request body: ${JSON.stringify(req.body)}`);
 
   // Validate test exists
   const test = await Test.findById(testId);
   if (!test) {
+    logger.error(`Test not found: ${testId}`);
     throw new AppError(
       `Test with ID ${testId} not found`,
       StatusCodes.NOT_FOUND
@@ -25,99 +29,163 @@ const createQuestion = async (req, res) => {
   }
 
   // Determine the next question number for this test
-  const questionCount =
-    (await DominoQuestion.countDocuments({ testId })) +
-    (await MultipleChoiceQuestion.countDocuments({ testId }));
+  // Use the base Question model to count all types
+  const questionCount = await Question.countDocuments({ testId });
+  logger.debug(`Current question count for test ${testId}: ${questionCount}`);
 
   const questionData = {
     ...req.body,
     testId,
     questionNumber: questionCount + 1,
   };
+  logger.debug(`Prepared question data: ${JSON.stringify(questionData)}`);
 
   // Create the correct question type
   let question;
-  if (req.body.questionType === "DominoQuestion") {
-    // Validate that we have required domino question fields
-    if (!questionData.dominos || !questionData.correctAnswer) {
-      throw new AppError(
-        "Domino questions require dominos and correctAnswer fields",
-        StatusCodes.BAD_REQUEST
-      );
-    }
-
-    // Validate minimum number of dominos
-    if (
-      !Array.isArray(questionData.dominos) ||
-      questionData.dominos.length < 2
-    ) {
-      throw new AppError(
-        "Domino questions require at least 2 dominos",
-        StatusCodes.BAD_REQUEST
-      );
-    }
-
-    // Validate exactly one editable domino
-    const editableDominos = questionData.dominos.filter(
-      (d) => d.isEditable === true
-    );
-    if (editableDominos.length !== 1) {
-      throw new AppError(
-        "Domino questions require exactly one editable domino",
-        StatusCodes.BAD_REQUEST
-      );
-    }
-
-    // Validate exactX and exactY for all dominos
-    const missingCoordinates = questionData.dominos.some(
-      (domino) => domino.exactX === undefined || domino.exactY === undefined
-    );
-    if (missingCoordinates) {
-      throw new AppError(
-        "All dominos must have exactX and exactY coordinates",
-        StatusCodes.BAD_REQUEST
-      );
-    }
-
-    // Validate arrows if they exist
-    if (
-      questionData.arrows &&
-      Array.isArray(questionData.arrows) &&
-      questionData.arrows.length > 0
-    ) {
-      const missingArrowCoordinates = questionData.arrows.some(
-        (arrow) => arrow.exactX === undefined || arrow.exactY === undefined
-      );
-      if (missingArrowCoordinates) {
+  try {
+    if (req.body.questionType === "DominoQuestion") {
+      // ... existing Domino validation ...
+      logger.info(`Creating DominoQuestion for test ${testId}`);
+      if (!questionData.dominos || !questionData.correctAnswer) {
         throw new AppError(
-          "All arrows must have exactX and exactY coordinates",
+          "Domino questions require dominos and correctAnswer fields",
           StatusCodes.BAD_REQUEST
         );
       }
-    }
+      if (
+        !Array.isArray(questionData.dominos) ||
+        questionData.dominos.length < 2
+      ) {
+        throw new AppError(
+          "Domino questions require at least 2 dominos",
+          StatusCodes.BAD_REQUEST
+        );
+      }
+      const editableDominos = questionData.dominos.filter(
+        (d) => d.isEditable === true
+      );
+      if (editableDominos.length !== 1) {
+        throw new AppError(
+          "Domino questions require exactly one editable domino",
+          StatusCodes.BAD_REQUEST
+        );
+      }
+      const missingCoordinates = questionData.dominos.some(
+        (domino) => domino.exactX === undefined || domino.exactY === undefined
+      );
+      if (missingCoordinates) {
+        throw new AppError(
+          "All dominos must have exactX and exactY coordinates",
+          StatusCodes.BAD_REQUEST
+        );
+      }
+      if (
+        questionData.arrows &&
+        Array.isArray(questionData.arrows) &&
+        questionData.arrows.length > 0
+      ) {
+        const missingArrowCoordinates = questionData.arrows.some(
+          (arrow) => arrow.exactX === undefined || arrow.exactY === undefined
+        );
+        if (missingArrowCoordinates) {
+          throw new AppError(
+            "All arrows must have exactX and exactY coordinates",
+            StatusCodes.BAD_REQUEST
+          );
+        }
+      }
+      // Create the domino question
+      question = await DominoQuestion.create(questionData);
+      logger.info(`DominoQuestion created successfully: ${question._id}`);
+    } else if (req.body.questionType === "MultipleChoiceQuestion") {
+      // Validate V/F/?/X structure
+      logger.info(`Creating MultipleChoiceQuestion for test ${testId}`);
+      if (
+        !questionData.propositions ||
+        !Array.isArray(questionData.propositions) ||
+        questionData.propositions.length === 0
+      ) {
+        throw new AppError(
+          "Multiple choice questions (V/F/? type) require at least one proposition",
+          StatusCodes.BAD_REQUEST
+        );
+      }
+      // Validate each proposition
+      for (const prop of questionData.propositions) {
+        if (
+          !prop.text ||
+          typeof prop.text !== "string" ||
+          prop.text.trim() === ""
+        ) {
+          throw new AppError(
+            "Each proposition must have non-empty text",
+            StatusCodes.BAD_REQUEST
+          );
+        }
+        if (
+          !prop.correctEvaluation ||
+          !["V", "F", "?"].includes(prop.correctEvaluation)
+        ) {
+          throw new AppError(
+            `Each proposition must have a correctEvaluation of 'V', 'F', or '?'`,
+            StatusCodes.BAD_REQUEST
+          );
+        }
+      }
 
-    // Create the domino question
-    question = await DominoQuestion.create(questionData);
-  } else if (req.body.questionType === "MultipleChoiceQuestion") {
-    // Validate that we have required multiple choice question fields
-    if (!questionData.options || !questionData.options.length) {
+      // Create the multiple choice question
+      question = await MultipleChoiceQuestion.create(questionData);
+      logger.info(
+        `MultipleChoiceQuestion created successfully: ${question._id}`
+      );
+    } else {
+      logger.error(`Invalid question type specified: ${req.body.questionType}`);
       throw new AppError(
-        "Multiple choice questions require options",
+        "Invalid question type specified",
         StatusCodes.BAD_REQUEST
       );
     }
-
-    // Create the multiple choice question
-    question = await MultipleChoiceQuestion.create(questionData);
-  } else {
-    throw new AppError("Invalid question type", StatusCodes.BAD_REQUEST);
+  } catch (creationError) {
+    logger.error(
+      `Error during question creation: ${creationError.message}`,
+      creationError
+    );
+    // Check for Mongoose validation errors specifically
+    if (creationError.name === "ValidationError") {
+      const messages = Object.values(creationError.errors).map(
+        (e) => e.message
+      );
+      throw new AppError(
+        `Validation failed during creation: ${messages.join(", ")}`,
+        StatusCodes.BAD_REQUEST
+      );
+    }
+    // Rethrow other errors as internal server errors
+    throw new AppError(
+      `Failed to create question in database: ${creationError.message}`,
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
   }
 
   // Update the total question count in test
-  test.totalQuestions = questionCount + 1;
-  await test.save();
+  try {
+    test.totalQuestions = questionCount + 1;
+    await test.save();
+    logger.info(
+      `Updated totalQuestions for test ${testId} to ${test.totalQuestions}`
+    );
+  } catch (testSaveError) {
+    logger.error(
+      `Error updating totalQuestions for test ${testId}: ${testSaveError.message}`,
+      testSaveError
+    );
+    // Decide how critical this is. Maybe just log and continue, or throw an error.
+    // For now, just log it. The question was created.
+  }
 
-  logger.info(`New question created for test ${testId}: ${question._id}`);
+  logger.info(
+    `New question ${question._id} fully processed for test ${testId}`
+  );
   res.status(StatusCodes.CREATED).json({
     success: true,
     data: question,
@@ -150,31 +218,19 @@ const getQuestionsByTestId = async (req, res) => {
 
   // Calculate pagination
   const skip = (parseInt(page) - 1) * parseInt(limit);
+  const limitNum = parseInt(limit);
 
   // Prepare sort options
   const sortOptions = {};
   sortOptions[sort] = 1; // Default ascending
 
-  // First get count of all matching documents
-  const totalCount =
-    (await DominoQuestion.countDocuments(filter)) +
-    (await MultipleChoiceQuestion.countDocuments(filter));
+  // Use the base Question model for querying and counting
+  const totalCount = await Question.countDocuments(filter);
 
-  // Then perform the query for the requested page
-  const dominoQuestions = await DominoQuestion.find(filter)
+  const questions = await Question.find(filter)
     .sort(sortOptions)
     .skip(skip)
-    .limit(parseInt(limit));
-
-  const mcQuestions = await MultipleChoiceQuestion.find(filter)
-    .sort(sortOptions)
-    .skip(Math.max(0, skip - (await DominoQuestion.countDocuments(filter))))
-    .limit(parseInt(limit) - dominoQuestions.length);
-
-  // Combine questions and sort again
-  const questions = [...dominoQuestions, ...mcQuestions].sort((a, b) => {
-    return a.questionNumber - b.questionNumber;
-  });
+    .limit(limitNum);
 
   res.status(StatusCodes.OK).json({
     success: true,
@@ -182,8 +238,8 @@ const getQuestionsByTestId = async (req, res) => {
     totalCount,
     pagination: {
       page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(totalCount / parseInt(limit)),
+      limit: limitNum,
+      totalPages: Math.ceil(totalCount / limitNum),
     },
     data: questions,
   });
@@ -200,13 +256,11 @@ const getQuestionById = async (req, res) => {
   try {
     objectId = mongoose.Types.ObjectId(id);
   } catch (error) {
-    throw new AppError("Invalid question ID", StatusCodes.BAD_REQUEST);
+    throw new AppError("Invalid question ID format", StatusCodes.BAD_REQUEST);
   }
 
-  // Try to find as either DominoQuestion or MultipleChoiceQuestion
-  const question =
-    (await DominoQuestion.findById(objectId)) ||
-    (await MultipleChoiceQuestion.findById(objectId));
+  // Use the base Question model to find by ID
+  const question = await Question.findById(objectId);
 
   if (!question) {
     throw new AppError(
@@ -228,23 +282,22 @@ const updateQuestion = async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
 
-  // Don't allow changing the question type
-  if (updates.questionType) {
-    throw new AppError("Cannot change question type", StatusCodes.BAD_REQUEST);
-  }
+  // Don't allow changing the question type or testId via update
+  delete updates.questionType;
+  delete updates.testId;
+  // Also prevent changing questionNumber directly, use move endpoint
+  delete updates.questionNumber;
 
   // Create an ObjectId from the id parameter
   let objectId;
   try {
     objectId = mongoose.Types.ObjectId(id);
   } catch (error) {
-    throw new AppError("Invalid question ID", StatusCodes.BAD_REQUEST);
+    throw new AppError("Invalid question ID format", StatusCodes.BAD_REQUEST);
   }
 
-  // Find the question to get its type
-  const existingQuestion =
-    (await DominoQuestion.findById(objectId)) ||
-    (await MultipleChoiceQuestion.findById(objectId));
+  // Find the question using the base model
+  const existingQuestion = await Question.findById(objectId);
 
   if (!existingQuestion) {
     throw new AppError(
@@ -259,70 +312,85 @@ const updateQuestion = async (req, res) => {
   );
   logger.info(`Update payload: ${JSON.stringify(updates, null, 2)}`);
 
-  // Update in the correct collection based on the discriminator value
-  let updatedQuestion;
-
-  try {
-    if (existingQuestion.questionType === "DominoQuestion") {
-      // For domino questions, ensure we preserve existing fields if not in the update
-      const updatedFields = { ...updates };
-
-      // Preserve arrays if they're not in the update to avoid losing data
-      if (!updatedFields.dominos && existingQuestion.dominos) {
-        updatedFields.dominos = existingQuestion.dominos;
-      }
-
-      if (!updatedFields.arrows && existingQuestion.arrows) {
-        updatedFields.arrows = existingQuestion.arrows;
-      }
-
-      if (!updatedFields.correctAnswer && existingQuestion.correctAnswer) {
-        updatedFields.correctAnswer = existingQuestion.correctAnswer;
-      }
-
-      updatedQuestion = await DominoQuestion.findByIdAndUpdate(
-        id,
-        updatedFields,
-        {
-          new: true,
-          runValidators: false, // Skip validation to allow partial updates
-        }
-      );
-    } else if (existingQuestion.questionType === "MultipleChoiceQuestion") {
-      // For multiple choice questions, ensure we preserve options if not in the update
-      const updatedFields = { ...updates };
-
-      if (!updatedFields.options && existingQuestion.options) {
-        updatedFields.options = existingQuestion.options;
-      }
-
+  // Validate updates specific to the question type
+  if (existingQuestion.questionType === "MultipleChoiceQuestion") {
+    if (updates.propositions) {
       if (
-        updatedFields.correctOptionIndex === undefined &&
-        existingQuestion.correctOptionIndex !== undefined
+        !Array.isArray(updates.propositions) ||
+        updates.propositions.length === 0
       ) {
-        updatedFields.correctOptionIndex = existingQuestion.correctOptionIndex;
+        throw new AppError(
+          "Propositions must be a non-empty array",
+          StatusCodes.BAD_REQUEST
+        );
       }
-
-      updatedQuestion = await MultipleChoiceQuestion.findByIdAndUpdate(
-        id,
-        updatedFields,
-        {
-          new: true,
-          runValidators: false, // Skip validation to allow partial updates
+      for (const prop of updates.propositions) {
+        if (
+          !prop.text ||
+          typeof prop.text !== "string" ||
+          prop.text.trim() === ""
+        ) {
+          throw new AppError(
+            "Each proposition must have non-empty text",
+            StatusCodes.BAD_REQUEST
+          );
         }
-      );
+        if (
+          !prop.correctEvaluation ||
+          !["V", "F", "?"].includes(prop.correctEvaluation)
+        ) {
+          throw new AppError(
+            `Each proposition must have a correctEvaluation of 'V', 'F', or '?'`,
+            StatusCodes.BAD_REQUEST
+          );
+        }
+      }
     }
+    // Prevent accidental update with old fields
+    delete updates.options;
+    delete updates.correctOptionIndex;
+    delete updates.allowMultipleCorrect;
+    delete updates.randomizeOptions;
+  } else if (existingQuestion.questionType === "DominoQuestion") {
+    // Add validation for domino updates if necessary
+    // Prevent accidental update with MCQ fields
+    delete updates.propositions;
+  }
+
+  // Perform the update using findByIdAndUpdate on the base model
+  // Mongoose handles applying updates correctly based on the discriminator key
+  let updatedQuestion;
+  try {
+    updatedQuestion = await Question.findByIdAndUpdate(
+      id,
+      updates, // Apply validated updates
+      {
+        new: true, // Return the updated document
+        runValidators: true, // Run schema validators on update
+        context: "query", // Necessary for some validators on update
+      }
+    );
   } catch (error) {
     logger.error(`Error updating question ${id}: ${error.message}`);
+    // Check for validation errors
+    if (error.name === "ValidationError") {
+      // Extract specific validation messages
+      const messages = Object.values(error.errors).map((e) => e.message);
+      throw new AppError(
+        `Validation failed: ${messages.join(", ")}`,
+        StatusCodes.BAD_REQUEST
+      );
+    }
     throw new AppError(
       `Error updating question: ${error.message}`,
-      StatusCodes.BAD_REQUEST
+      StatusCodes.INTERNAL_SERVER_ERROR // Or BAD_REQUEST depending on error type
     );
   }
 
   if (!updatedQuestion) {
+    // This case might happen if the ID was valid format but not found during update
     throw new AppError(
-      `Question with ID ${id} not found`,
+      `Question with ID ${id} not found during update`,
       StatusCodes.NOT_FOUND
     );
   }
@@ -345,13 +413,11 @@ const deleteQuestion = async (req, res) => {
   try {
     objectId = mongoose.Types.ObjectId(id);
   } catch (error) {
-    throw new AppError("Invalid question ID", StatusCodes.BAD_REQUEST);
+    throw new AppError("Invalid question ID format", StatusCodes.BAD_REQUEST);
   }
 
-  // Find the question to get its type and testId
-  const existingQuestion =
-    (await DominoQuestion.findById(objectId)) ||
-    (await MultipleChoiceQuestion.findById(objectId));
+  // Find the question using the base model to get its testId and questionNumber
+  const existingQuestion = await Question.findById(objectId);
 
   if (!existingQuestion) {
     throw new AppError(
@@ -362,127 +428,98 @@ const deleteQuestion = async (req, res) => {
 
   const { testId, questionNumber } = existingQuestion;
 
-  // Delete the question
-  if (existingQuestion.questionType === "DominoQuestion") {
-    await DominoQuestion.findByIdAndDelete(id);
-  } else {
-    await MultipleChoiceQuestion.findByIdAndDelete(id);
+  // Delete the question using the base model
+  const deletedQuestion = await Question.findByIdAndDelete(id); // Use findByIdAndDelete to ensure it existed
+
+  if (!deletedQuestion) {
+    // This case handles if the question was deleted between the find and delete operations (unlikely but possible)
+    throw new AppError(
+      `Question with ID ${id} not found during deletion`,
+      StatusCodes.NOT_FOUND
+    );
   }
 
-  // Update the question numbers for all questions after this one
-  await DominoQuestion.updateMany(
-    { testId, questionNumber: { $gt: questionNumber } },
-    { $inc: { questionNumber: -1 } }
-  );
-
-  await MultipleChoiceQuestion.updateMany(
+  // Update the question numbers for all subsequent questions in the same test
+  // Use the base Question model for updates
+  await Question.updateMany(
     { testId, questionNumber: { $gt: questionNumber } },
     { $inc: { questionNumber: -1 } }
   );
 
   // Update the test's total question count
-  const questionCount =
-    (await DominoQuestion.countDocuments({ testId })) +
-    (await MultipleChoiceQuestion.countDocuments({ testId }));
-
+  const questionCount = await Question.countDocuments({ testId });
   await Test.findByIdAndUpdate(testId, { totalQuestions: questionCount });
 
   logger.info(`Question deleted: ${id}`);
-  res.status(StatusCodes.OK).json({
-    success: true,
-    data: {},
-  });
+  // Send 200 OK with success body instead of 204 No Content
+  res.status(StatusCodes.OK).json({ success: true });
 };
 
 /**
- * Validate the structure of a domino question
+ * Validate the structure of a domino question (Controller Function)
+ * This is the actual controller function used by the route.
  */
-const validateDominoQuestion = async (req, res) => {
+const validateDominoQuestionController = async (req, res) => {
   const { dominos, correctAnswer, arrows } = req.body;
-
   const errors = [];
 
-  // Check if dominos is an array with at least 2 items
   if (!Array.isArray(dominos)) {
     errors.push("Dominos must be an array");
   } else {
-    // Check minimum number of dominos
-    if (dominos.length < 2) {
-      errors.push("At least 2 dominos are required");
-    }
-
-    // Check if there's exactly one editable domino
+    if (dominos.length < 2) errors.push("At least 2 dominos are required");
     const editableDominos = dominos.filter((d) => d.isEditable === true);
-    if (editableDominos.length === 0) {
+    if (editableDominos.length === 0)
       errors.push("At least one editable domino is required");
-    } else if (editableDominos.length > 1) {
+    else if (editableDominos.length > 1)
       errors.push("Only one editable domino is allowed");
-    }
 
-    // Check if all dominos have exactX and exactY
     for (let i = 0; i < dominos.length; i++) {
       const domino = dominos[i];
-      if (domino.exactX === undefined || domino.exactX === null) {
+      if (domino.exactX === undefined || domino.exactX === null)
         errors.push(`Domino at index ${i} is missing exactX coordinate`);
-      }
-      if (domino.exactY === undefined || domino.exactY === null) {
+      if (domino.exactY === undefined || domino.exactY === null)
         errors.push(`Domino at index ${i} is missing exactY coordinate`);
-      }
+    }
+    // Check correctAnswer reference
+    if (
+      correctAnswer &&
+      editableDominos.length === 1 &&
+      correctAnswer.dominoId !== editableDominos[0].id
+    ) {
+      errors.push("correctAnswer must reference the editable domino's id");
     }
   }
-
-  // Check arrows if they exist
   if (arrows && Array.isArray(arrows) && arrows.length > 0) {
     for (let i = 0; i < arrows.length; i++) {
       const arrow = arrows[i];
-      if (arrow.exactX === undefined || arrow.exactX === null) {
+      if (arrow.exactX === undefined || arrow.exactX === null)
         errors.push(`Arrow at index ${i} is missing exactX coordinate`);
-      }
-      if (arrow.exactY === undefined || arrow.exactY === null) {
+      if (arrow.exactY === undefined || arrow.exactY === null)
         errors.push(`Arrow at index ${i} is missing exactY coordinate`);
-      }
     }
   }
-
-  // Validate correctAnswer
   if (!correctAnswer) {
     errors.push("correctAnswer is required");
   } else {
-    // Check if correctAnswer references an editable domino
-    if (Array.isArray(dominos) && dominos.length > 0) {
-      const editableDomino = dominos.find((d) => d.isEditable === true);
-
-      if (editableDomino && correctAnswer.dominoId !== editableDomino.id) {
-        errors.push("correctAnswer must reference the editable domino");
-      }
-    }
-
-    // Check if correctAnswer has valid values
+    if (correctAnswer.dominoId === undefined)
+      errors.push("correctAnswer must have dominoId");
     if (
       correctAnswer.topValue === undefined ||
       correctAnswer.bottomValue === undefined
-    ) {
+    )
       errors.push("correctAnswer must have topValue and bottomValue");
-    }
-
-    // Check if values are in valid range (1-6)
     const topValueValid =
       correctAnswer.topValue === null ||
-      (correctAnswer.topValue >= 1 && correctAnswer.topValue <= 6);
+      (correctAnswer.topValue >= 0 && correctAnswer.topValue <= 6); // Allow 0 if needed, else 1-6
     const bottomValueValid =
       correctAnswer.bottomValue === null ||
-      (correctAnswer.bottomValue >= 1 && correctAnswer.bottomValue <= 6);
-
-    if (!topValueValid) {
-      errors.push("correctAnswer.topValue must be null or between 1 and 6");
-    }
-
-    if (!bottomValueValid) {
-      errors.push("correctAnswer.bottomValue must be null or between 1 and 6");
-    }
+      (correctAnswer.bottomValue >= 0 && correctAnswer.bottomValue <= 6); // Allow 0 if needed, else 1-6
+    if (!topValueValid)
+      errors.push("correctAnswer.topValue must be null or between 0 and 6");
+    if (!bottomValueValid)
+      errors.push("correctAnswer.bottomValue must be null or between 0 and 6");
   }
 
-  // Return validation result
   res.status(StatusCodes.OK).json({
     valid: errors.length === 0,
     errors,
@@ -496,13 +533,10 @@ const moveQuestionPosition = async (req, res) => {
   const { id } = req.params;
   const { newPosition } = req.body;
 
-  if (
-    newPosition === undefined ||
-    isNaN(parseInt(newPosition)) ||
-    parseInt(newPosition) < 1
-  ) {
+  const targetPosition = parseInt(newPosition);
+  if (isNaN(targetPosition) || targetPosition < 1) {
     throw new AppError(
-      "Valid newPosition is required",
+      "newPosition must be a positive integer",
       StatusCodes.BAD_REQUEST
     );
   }
@@ -512,13 +546,11 @@ const moveQuestionPosition = async (req, res) => {
   try {
     objectId = mongoose.Types.ObjectId(id);
   } catch (error) {
-    throw new AppError("Invalid question ID", StatusCodes.BAD_REQUEST);
+    throw new AppError("Invalid question ID format", StatusCodes.BAD_REQUEST);
   }
 
-  // Find the question to get its current position and test ID
-  const question =
-    (await DominoQuestion.findById(objectId)) ||
-    (await MultipleChoiceQuestion.findById(objectId));
+  // Find the question using the base model
+  const question = await Question.findById(objectId);
 
   if (!question) {
     throw new AppError(
@@ -528,12 +560,9 @@ const moveQuestionPosition = async (req, res) => {
   }
 
   const { testId, questionNumber: currentPosition } = question;
-  const targetPosition = parseInt(newPosition);
 
-  // Count total questions to validate the target position
-  const totalQuestions =
-    (await DominoQuestion.countDocuments({ testId })) +
-    (await MultipleChoiceQuestion.countDocuments({ testId }));
+  // Use base model for count
+  const totalQuestions = await Question.countDocuments({ testId });
 
   if (targetPosition > totalQuestions) {
     throw new AppError(
@@ -542,7 +571,6 @@ const moveQuestionPosition = async (req, res) => {
     );
   }
 
-  // No need to update if position doesn't change
   if (currentPosition === targetPosition) {
     return res.status(StatusCodes.OK).json({
       success: true,
@@ -551,60 +579,55 @@ const moveQuestionPosition = async (req, res) => {
     });
   }
 
-  // Moving up (smaller number) or down (larger number)
-  if (targetPosition < currentPosition) {
-    // Moving up: Increment positions for questions in between
-    await DominoQuestion.updateMany(
-      {
-        testId,
-        questionNumber: { $gte: targetPosition, $lt: currentPosition },
-      },
-      { $inc: { questionNumber: 1 } }
-    );
+  // Use base model for updates
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    if (targetPosition < currentPosition) {
+      // Moving up: Increment positions for questions in between
+      await Question.updateMany(
+        {
+          testId,
+          questionNumber: { $gte: targetPosition, $lt: currentPosition },
+        },
+        { $inc: { questionNumber: 1 } },
+        { session }
+      );
+    } else {
+      // Moving down: Decrement positions for questions in between
+      await Question.updateMany(
+        {
+          testId,
+          questionNumber: { $gt: currentPosition, $lte: targetPosition },
+        },
+        { $inc: { questionNumber: -1 } },
+        { session }
+      );
+    }
 
-    await MultipleChoiceQuestion.updateMany(
-      {
-        testId,
-        questionNumber: { $gte: targetPosition, $lt: currentPosition },
-      },
-      { $inc: { questionNumber: 1 } }
-    );
-  } else {
-    // Moving down: Decrement positions for questions in between
-    await DominoQuestion.updateMany(
-      {
-        testId,
-        questionNumber: { $gt: currentPosition, $lte: targetPosition },
-      },
-      { $inc: { questionNumber: -1 } }
-    );
-
-    await MultipleChoiceQuestion.updateMany(
-      {
-        testId,
-        questionNumber: { $gt: currentPosition, $lte: targetPosition },
-      },
-      { $inc: { questionNumber: -1 } }
-    );
-  }
-
-  // Update the question's position
-  if (question.questionType === "DominoQuestion") {
+    // Update the question's position
     question.questionNumber = targetPosition;
-    await question.save();
-  } else {
-    question.questionNumber = targetPosition;
-    await question.save();
-  }
+    await question.save({ session });
 
-  logger.info(
-    `Question ${id} moved from position ${currentPosition} to ${targetPosition}`
-  );
-  res.status(StatusCodes.OK).json({
-    success: true,
-    message: `Question moved from position ${currentPosition} to ${targetPosition}`,
-    data: question,
-  });
+    await session.commitTransaction();
+    logger.info(
+      `Question ${id} moved from position ${currentPosition} to ${targetPosition}`
+    );
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: `Question moved from position ${currentPosition} to ${targetPosition}`,
+      data: question,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    logger.error(`Error moving question ${id}: ${error.message}`);
+    throw new AppError(
+      "Failed to move question position",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  } finally {
+    session.endSession();
+  }
 };
 
 /**
@@ -618,13 +641,11 @@ const duplicateQuestion = async (req, res) => {
   try {
     objectId = mongoose.Types.ObjectId(id);
   } catch (error) {
-    throw new AppError("Invalid question ID", StatusCodes.BAD_REQUEST);
+    throw new AppError("Invalid question ID format", StatusCodes.BAD_REQUEST);
   }
 
-  // Find the original question
-  const originalQuestion =
-    (await DominoQuestion.findById(objectId)) ||
-    (await MultipleChoiceQuestion.findById(objectId));
+  // Find the original question using the base model
+  const originalQuestion = await Question.findById(objectId);
 
   if (!originalQuestion) {
     throw new AppError(
@@ -639,52 +660,63 @@ const duplicateQuestion = async (req, res) => {
 
   // Remove fields that should be unique or auto-generated
   delete questionData._id;
-  delete questionData.id;
+  // delete questionData.id; // Mongoose virtual, no need to delete if using toObject()
   delete questionData.createdAt;
   delete questionData.updatedAt;
-  delete questionData.__v;
+  delete questionData.__v; // Version key
 
-  // Determine the next question number for this test
-  const questionCount =
-    (await DominoQuestion.countDocuments({ testId })) +
-    (await MultipleChoiceQuestion.countDocuments({ testId }));
-
-  // Set the new question number to be at the end
+  // Determine the next question number for this test using the base model
+  const questionCount = await Question.countDocuments({ testId });
   questionData.questionNumber = questionCount + 1;
 
   // Add "copy" to the title if it exists
   if (questionData.title) {
     questionData.title = `${questionData.title} (copy)`;
+  } else {
+    questionData.title = `Question ${questionData.questionNumber} (copy)`; // Add a default title if none exists
   }
 
-  // Create a new question of the same type
+  // Reset analytics
+  questionData.analytics = undefined; // Or set to default values
+
+  // Create a new question using the appropriate model constructor
   let newQuestion;
-  if (questionType === "DominoQuestion") {
-    // For domino questions, ensure unique IDs for dominos
-    if (questionData.dominos && questionData.dominos.length > 0) {
-      let maxId = 0;
-      questionData.dominos.forEach((domino) => {
-        maxId = Math.max(maxId, domino.id);
-
-        // Ensure each domino has a unique ID in case uniqueId is used
-        if (domino.uniqueId) {
-          domino.uniqueId = `${domino.uniqueId}_copy_${Date.now()}`;
-        }
-      });
-
-      // Same for arrows
-      if (questionData.arrows && questionData.arrows.length > 0) {
-        questionData.arrows.forEach((arrow) => {
-          if (arrow.uniqueId) {
-            arrow.uniqueId = `${arrow.uniqueId}_copy_${Date.now()}`;
-          }
+  try {
+    if (questionType === "DominoQuestion") {
+      // Ensure unique IDs for dominos/arrows if they have uniqueId field
+      if (questionData.dominos) {
+        questionData.dominos.forEach((d) => {
+          if (d.uniqueId)
+            d.uniqueId = `${d.uniqueId}_copy_${Date.now()}_${Math.random()
+              .toString(36)
+              .substring(2, 7)}`;
         });
       }
+      if (questionData.arrows) {
+        questionData.arrows.forEach((a) => {
+          if (a.uniqueId)
+            a.uniqueId = `${a.uniqueId}_copy_${Date.now()}_${Math.random()
+              .toString(36)
+              .substring(2, 7)}`;
+        });
+      }
+      newQuestion = await DominoQuestion.create(questionData);
+    } else if (questionType === "MultipleChoiceQuestion") {
+      newQuestion = await MultipleChoiceQuestion.create(questionData);
+    } else {
+      throw new AppError(
+        `Cannot duplicate unknown question type: ${questionType}`,
+        StatusCodes.BAD_REQUEST
+      );
     }
-
-    newQuestion = await DominoQuestion.create(questionData);
-  } else {
-    newQuestion = await MultipleChoiceQuestion.create(questionData);
+  } catch (error) {
+    logger.error(
+      `Error creating duplicated question from ${id}: ${error.message}`
+    );
+    throw new AppError(
+      `Failed to create duplicate question: ${error.message}`,
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
   }
 
   // Update the test's total question count
@@ -692,6 +724,10 @@ const duplicateQuestion = async (req, res) => {
   if (test) {
     test.totalQuestions = questionCount + 1;
     await test.save();
+  } else {
+    logger.warn(
+      `Test ${testId} not found when updating count after duplicating question ${id}`
+    );
   }
 
   logger.info(`Question duplicated from ${id} to ${newQuestion._id}`);
@@ -706,8 +742,8 @@ module.exports = {
   getQuestionsByTestId,
   getQuestionById,
   updateQuestion,
-  deleteQuestion,
-  validateDominoQuestion,
+  deleteQuestion, // Ensure this is correctly exported
+  validateDominoQuestion: validateDominoQuestionController, // Export the controller function under the expected name
   moveQuestionPosition,
   duplicateQuestion,
 };

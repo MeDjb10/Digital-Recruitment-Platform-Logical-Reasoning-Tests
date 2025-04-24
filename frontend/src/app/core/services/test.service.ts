@@ -12,6 +12,10 @@ import {
   AttemptResultsResponse,
 } from '../models/attempt.model';
 import { AuthService } from '../auth/services/auth.service';
+import {
+  TestQuestion,
+  PropositionResponse,
+} from '../../features/candidate/DominoTest/models/domino.model'; // Import frontend model
 
 @Injectable({
   providedIn: 'root',
@@ -430,109 +434,138 @@ export class TestService {
    * This combines several API calls to prepare everything needed for the test UI
    */
   getTestWithQuestions(testId: string): Observable<any> {
-    console.log(`Getting test with questions for testId: ${testId}`);
+    console.log(`[TestService] Getting test with questions for testId: ${testId}`);
 
     // First get the test details
     return this.getTestById(testId).pipe(
       tap((testResponse) => {
-        console.log('Test response:', testResponse);
+        console.log('[TestService] Test response:', testResponse);
       }),
       switchMap((testResponse) => {
         if (!testResponse.success || !testResponse.data) {
-          console.error('Test not found or invalid response:', testResponse);
+          console.error('[TestService] Test not found or invalid response:', testResponse);
           return throwError(() => new Error('Test not found'));
         }
 
         const test = testResponse.data;
         const candidateId = this.authService.getCurrentUserId();
-        console.log('Starting test attempt for candidate:', candidateId);
+        if (!candidateId) {
+          return throwError(() => new Error('Candidate ID not found'));
+        }
+        console.log('[TestService] Starting test attempt for candidate:', candidateId);
 
         // Start a test attempt
         return this.startTestAttempt(testId, candidateId).pipe(
           tap((attemptResponse) => {
-            console.log('Attempt response:', attemptResponse);
+            console.log('[TestService] Attempt response:', attemptResponse);
           }),
           switchMap((attemptResponse) => {
             if (!attemptResponse.success || !attemptResponse.data) {
-              console.error('Failed to create test attempt:', attemptResponse);
+              console.error('[TestService] Failed to create test attempt:', attemptResponse);
               return throwError(
                 () => new Error('Failed to create test attempt')
               );
             }
 
             const attemptId = attemptResponse.data._id;
-            console.log('Created attempt ID:', attemptId);
+            console.log('[TestService] Created attempt ID:', attemptId);
 
             // Get questions for this attempt
             return this.getAttemptQuestions(attemptId).pipe(
               tap((questionsResponse) => {
-                console.log('Questions response:', questionsResponse);
+                console.log('[TestService] Raw Questions response from attempt:', questionsResponse); // DEBUG: Log raw questions
               }),
               map((questionsResponse) => {
                 if (!questionsResponse.success || !questionsResponse.data) {
-                  console.error(
-                    'Failed to get attempt questions:',
-                    questionsResponse
-                  );
-                  return throwError(
-                    () => new Error('Failed to load questions')
-                  );
+                  console.error('[TestService] Failed to get attempt questions:', questionsResponse);
+                  throw new Error('Failed to load questions for the attempt');
                 }
 
-                // Format the response for the test-taking interface
-                const formattedResponse = {
+                // Map the backend questions/responses to the frontend TestQuestion format
+                const mappedQuestions = this.mapQuestionsForTestInterface(
+                  questionsResponse.data.questions // Pass the array of questions with responses
+                );
+
+                // Combine test details, attempt ID, and mapped questions
+                const formattedData = {
                   id: test._id,
                   name: test.name,
                   description: test.description,
                   duration: test.duration,
-                  totalQuestions: test.totalQuestions || 0,
+                  totalQuestions: test.totalQuestions,
                   attemptId: attemptId,
-                  questions: this.mapQuestionsForTestInterface(
-                    questionsResponse.data.questions
-                  ),
+                  questions: mappedQuestions, // Use the correctly mapped questions
                 };
-
-                console.log(
-                  'Formatted test data for frontend:',
-                  formattedResponse
-                );
-                return formattedResponse;
+                console.log('[TestService] Formatted test data for frontend:', formattedData); // DEBUG: Log final formatted data
+                return formattedData;
               })
             );
           })
         );
       }),
       catchError((error) => {
-        console.error('Error in getTestWithQuestions:', error);
+        console.error('[TestService] Error in getTestWithQuestions:', error);
         return throwError(
-          () => new Error(`Failed to load test: ${error.message}`)
+          () => new Error(`Failed to load test: ${error.message || error}`)
         );
       })
     );
   }
 
-  // Map backend questions to the frontend test interface format
-  private mapQuestionsForTestInterface(questions: any[]): any[] {
-    return questions.map((q) => {
-      // Handle both question with response or just question
-      const question = q.question || q;
-      const response = q.response || null;
+  // Map backend questions (with responses) to the frontend TestQuestion interface format
+  private mapQuestionsForTestInterface(
+    backendQuestionsWithResponses: any[]
+  ): TestQuestion[] {
+    console.log('[TestService] Mapping backend questions:', backendQuestionsWithResponses); // DEBUG
+    return backendQuestionsWithResponses.map((qwr, index) => {
+      // qwr contains the question object and the response object
+      const question = qwr; // The backend question data is directly on the object now
+      const response = qwr.response; // The response data is nested
 
-      return {
+      // Determine user answer based on question type
+      let userAnswer: any = undefined;
+      if (question.questionType === 'DominoQuestion' && response?.dominoAnswer) {
+        userAnswer = response.dominoAnswer;
+      } else if (question.questionType === 'MultipleChoiceQuestion' && response?.propositionResponses) {
+        userAnswer = response.propositionResponses;
+      }
+
+      // Determine if answered based on response data and type
+      let answered = false;
+      if (question.questionType === 'DominoQuestion') {
+        answered = !!response?.dominoAnswer;
+      } else if (question.questionType === 'MultipleChoiceQuestion') {
+        // Considered answered if there are responses and not all are 'X' (or adjust logic as needed)
+        answered = !!response?.propositionResponses && response.propositionResponses.length > 0 && response.propositionResponses.some((pr: PropositionResponse) => pr.candidateEvaluation !== 'X');
+      } else {
+        answered = !!response?.answeredAt; // Fallback for other types or if specific answer fields are missing
+      }
+
+
+      const mappedQuestion: TestQuestion = {
         id: question._id,
+        questionType: question.questionType, // ** Use the type from backend **
         title: question.title || '',
-        instruction: question.instruction,
+        instruction: question.instruction || 'No instruction provided.',
+        // Domino specific fields
         dominos: question.dominos || [],
         arrows: question.arrows || [],
         gridLayout: question.gridLayout || { rows: 3, cols: 3 },
-        correctAnswer: question.correctAnswer, // This might be null for candidate interface
-        answered: response?.dominoAnswer ? true : false,
-        flaggedForReview: response?.isFlagged || false,
-        visited: response?.visitCount > 0,
         pattern: question.pattern || '',
         layoutType: question.layoutType || 'grid',
-        userAnswer: response?.dominoAnswer,
+        // MCQ specific fields
+        propositions: question.propositions || [], // ** Map propositions **
+        // Common fields from response
+        answered: answered,
+        flaggedForReview: response?.isFlagged || false,
+        visited: (response?.visitCount || 0) > 0,
+        userAnswer: userAnswer, // Assign the determined user answer
+        // Fields from question (correctAnswer might be omitted for candidates)
+        correctAnswer: question.correctAnswer, // Keep if needed, but backend might omit it
+        questionNumber: question.questionNumber || index + 1, // Use backend number or index
       };
+       // console.log(`[TestService] Mapped question ${index + 1}:`, mappedQuestion); // DEBUG individual mapping
+      return mappedQuestion;
     });
   }
 

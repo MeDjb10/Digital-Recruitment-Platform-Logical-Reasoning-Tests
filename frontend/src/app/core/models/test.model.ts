@@ -13,6 +13,13 @@ export interface Test {
   createdBy?: string;
   instructions?: string;
   tags?: string[];
+  analytics?: {
+    // Added analytics field
+    attempts: number;
+    completionRate: number;
+    averageScore: number;
+    averageTimeSpent: number;
+  };
 }
 
 export interface TestsResponse {

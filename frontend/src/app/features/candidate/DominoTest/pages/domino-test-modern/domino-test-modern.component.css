@@ -1,5 +1,5 @@
 .test-container {
-   --transition-speed: 0.3s;
+  --transition-speed: 0.3s;
   --primary-color: #4f46e5;
   --accent-color: #a2cdf6;
   display: flex;
@@ -17,39 +17,52 @@
 
 .question-area {
   flex: 1;
-  padding: 10px;
+  padding: 10px 20px; /* Adjusted padding */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 15px; /* Adjusted gap */
   /* Add a minimum height to ensure footer is visible */
   min-height: 500px;
-    transition: padding var(--transition-speed) ease;
+  transition: padding var(--transition-speed) ease;
+}
+
+/* Style for the main content viewport */
+.content-viewport {
+  flex: 1; /* Allow this area to grow */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center content vertically */
+  align-items: center; /* Center content horizontally */
+  position: relative;
+  width: 100%; /* Ensure it takes available width */
+  margin: 0 auto;
+  padding: 20px 0;
+  min-height: 350px; /* Ensure minimum height */
+  max-height: calc(100vh - 250px); /* Limit height based on viewport */
+  overflow: visible; /* Allow potential overflow like tooltips */
 }
 
 /* Make grid wrapper have proper spacing and dimensions */
-.domino-grid-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  width: 80%;  /* This ensures it's 80% wide */
-  margin: 0 auto;
-  padding: 20px 0;
-  /* Set a min and max height to prevent extreme sizes */
-  min-height: 350px;
-  max-height: 500px; /* Limit height so it doesn't push content down too far */
-  overflow: visible; /* Allow overflow for tooltip */
-}
+/* This class might not be needed anymore if content-viewport handles sizing */
+/* .domino-grid-wrapper { ... } */
 
+/* Adjust domino-viewport if it's still used specifically for the grid */
 .domino-viewport {
+  /* Rename or merge into content-viewport */
   width: 100%; /* Take full width of parent container */
   transition: all var(--transition-speed) ease;
   padding-bottom: 0; /* Remove bottom padding */
   margin-bottom: 0; /* Remove bottom margin */
- 
+  display: flex; /* Ensure flex properties for centering */
+  justify-content: center;
+  align-items: center;
+}
+
+/* Ensure the MCQ component fits well */
+app-multiple-choice-question {
+  width: 100%;
+  max-width: 800px; /* Or adjust as needed */
 }
 
 /* Add this new tooltip container styling */
@@ -61,6 +74,12 @@
   display: flex;
   justify-content: center;
   z-index: 100;
+  pointer-events: none; /* Allow clicks through */
+}
+
+/* Ensure tooltip itself allows pointer events */
+.tooltip-container > app-help-tooltip {
+  pointer-events: auto;
 }
 
 @keyframes fadeSlideIn {
@@ -74,101 +93,124 @@
   }
 }
 
-app-question-panel, 
-.domino-viewport, 
-app-navigation-controls {
-  animation: fadeSlideIn 0.4s ease-out;
-}
-/* Make sure navigation controls don't get hidden */
-app-navigation-controls {
-  position: relative;
-  z-index: 10;
-  margin-top: 0px;
-  padding-top: 5px;
-  border-top: 1px solid #e2e8f0;
-}
-
-/* Make sure footer always stays at bottom */
-app-test-footer {
-  position: relative;
-  z-index: 20; /* Higher than other elements */
-}
-
+/* Question Info Bar Styles */
 .question-info-bar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background-color: white;
-  border-radius: 8px 8px 0 0;
-  padding: 10px 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  margin-bottom: 0px;
+  align-items: flex-start; /* Align items to the top */
+  padding: 10px 0; /* Reduced padding */
+  background-color: #fff; /* Optional: background */
+  border-radius: 8px; /* Optional: rounded corners */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); /* Subtle shadow */
+  margin-bottom: 10px; /* Space below */
 }
 
 .question-title {
-  flex: 1;
+  flex-grow: 1;
 }
 
 .question-title h2 {
-  font-size: 16px;
-  color: #1e293b;
-  margin: 0;
+  font-size: 1.1rem; /* Slightly smaller */
   font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 5px 0; /* Reduced margin */
+}
+
+.instruction-text {
+  font-size: 0.9rem; /* Slightly smaller */
+  color: #475569;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .flag-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  background-color: #f1f5f9;
+  color: #475569;
+  border: none;
+  padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  background-color: white;
-  color: #64748b;
-  font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+  margin-left: 15px; /* Space from instructions */
+  white-space: nowrap; /* Prevent wrapping */
 }
 
 .flag-button:hover {
-  background-color: #fef3c7;
-  border-color: #f59e0b;
-  color: #92400e;
-  transform: translateY(-1px);
+  background-color: #e2e8f0;
+  color: #1e293b;
 }
 
 .flag-button.flagged {
-  background-color: #fef3c7;
-  border-color: #f59e0b;
-  color: #92400e;
+  background-color: #fef9c3; /* Light yellow */
+  color: #a16207; /* Dark yellow */
 }
 
+.flag-button.flagged:hover {
+  background-color: #fde68a;
+}
 
-/* Loading state styling */
-.loading-container {
+.flag-button i {
+  font-size: 1rem;
+}
+
+/* Loading and Error States */
+.loading-container,
+.error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 300px;
-  width: 100%;
+  padding: 40px;
+  text-align: center;
   color: #64748b;
-  font-size: 14px;
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  margin-bottom: 16px;
+  width: 30px;
+  height: 30px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
   border-radius: 50%;
-  border: 3px solid rgba(79, 70, 229, 0.1);
-  border-top-color: #4f46e5;
-  animation: spin 1s infinite linear;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
 }
 
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+.error-container {
+  color: #dc2626;
+}
+
+.error-container button {
+  margin-top: 15px;
+  padding: 8px 16px;
+  /* Add button styling */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .question-area {
+    padding: 10px;
+  }
+  .question-info-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .flag-button {
+    margin-top: 10px;
+    margin-left: 0;
+    align-self: flex-start;
+  }
+  .content-viewport {
+    max-height: calc(100vh - 280px); /* Adjust max height on smaller screens */
   }
 }

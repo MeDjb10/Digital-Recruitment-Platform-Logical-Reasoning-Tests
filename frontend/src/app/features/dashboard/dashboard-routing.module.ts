@@ -14,12 +14,15 @@ import { CreateQuestionComponent } from './components/Raisonnement logic/create-
 import { CompletedUsersComponent } from './components/userDialogue/completed-users/completed-users.component';
 import { TestTypeSelectorComponent } from './components/Raisonnement logic/test-type-selector/test-type-selector.component';
 import { MultipleChoiceEditorComponent } from './components/Raisonnement logic/multiple-choice-editor/multiple-choice-editor.component';
+import { AuthGuard } from '../../core/guards/auth.guard';
 
 const routes: Routes = [
   {
     path: '',
     component: DashboardComponent,
+    canActivate: [AuthGuard],
     children: [
+      { path: '', redirectTo: 'RaisonnementLogique', pathMatch: 'full' }, // Default redirect within dashboard
       {
         path: 'info',
         component: GeneralStatsComponent,

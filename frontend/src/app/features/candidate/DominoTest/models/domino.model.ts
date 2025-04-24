@@ -48,22 +48,37 @@ export interface ArrowPosition {
   curvature: number;
 }
 
+// Add questionType and propositions to the TestQuestion interface if they don't exist
 export interface TestQuestion {
   id: number;
-  title?: string;
+  questionType: 'DominoQuestion' | 'MultipleChoiceQuestion'; // Add this line
+  title: string;
   instruction: string;
   dominos: DominoPosition[];
-  arrows?:ArrowPosition[];
-  gridLayout?: { rows: number; cols: number; width?: number; height?: number };
+  arrows: ArrowPosition[];
+  gridLayout: { rows: number; cols: number; width?: number; height?: number };
+  propositions?: Proposition[]; // Add this line
+  correctAnswer?: any; // Keep generic or use a union type
   answered: boolean;
   flaggedForReview: boolean;
   visited: boolean;
   pattern?: string;
-  userAnswer?: {
-    topValue: number | null;
-    bottomValue: number | null;
-    dominoId: number;
-  };
+  layoutType?: string;
+  userAnswer?: any; // Keep generic or use a union type
+  questionNumber: number;
+}
+
+// Add Proposition interface if it doesn't exist
+export interface Proposition {
+  text: string;
+  correctEvaluation: 'V' | 'F' | '?';
+  // Add any other relevant fields from the backend model if needed
+}
+
+// Define the structure for proposition responses
+export interface PropositionResponse {
+  propositionIndex: number;
+  candidateEvaluation: 'V' | 'F' | '?' | 'X';
 }
 
 export interface QuestionInfo {
