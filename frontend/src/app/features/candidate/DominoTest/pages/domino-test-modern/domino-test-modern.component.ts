@@ -18,8 +18,13 @@ import { SimpleDominoGridComponent } from '../../components/simple-domino-grid/s
 import { TestHeaderComponent } from '../../components/test-header/testHeader.component';
 import { TestSidebarComponent } from '../../components/test-sidebar/testSidebar.component';
 import { DominoTestService } from '../../services/domino-test.service';
-import { TestQuestion, DominoChange } from '../../models/domino.model';
+import {
+  TestQuestion,
+  DominoChange,
+  PropositionResponse, // Import PropositionResponse
+} from '../../models/domino.model';
 import { DominoPosition } from '../../../../../core/models/domino.model';
+import { MultipleChoiceQuestionComponent } from '../../components/multiple-choice-question/multiple-choice-question.component'; // Import the new component
 
 @Component({
   selector: 'app-domino-test-modern',
@@ -32,6 +37,8 @@ import { DominoPosition } from '../../../../../core/models/domino.model';
     SimpleDominoGridComponent,
     NavigationControlsComponent,
     HelpTooltipComponent,
+    MultipleChoiceQuestionComponent, // Add the new component here
+    
   ],
   templateUrl: './domino-test-modern.component.html',
   styleUrls: ['./domino-test-modern.component.css'],
@@ -44,13 +51,14 @@ export class DominoTestModernComponent
 
   // Test meta data
   testName: string = 'Domino Logical Reasoning Test';
-  test
-  teIds: string = 'd70'; // Default to d70 test
+  testType: string = 'domino'; // Default type
+  testId: string = 'd70'; // Default to d70 test
   attemptId: string | null = null;
 
   // Questions and navigation
   questions: TestQuestion[] = [];
   currentQuestionIndex: number = 0;
+  currentQuestion: TestQuestion | undefined; // Explicitly type and ensure not readonly
   answeredCount: number = 0;
   flaggedCount: number = 0;
 
@@ -88,10 +96,11 @@ export class DominoTestModernComponent
   isSubmittingTest: boolean = false;
   loadingError: string | null = null;
   isTestComplete: boolean = false;
+  loading: boolean = true; // Loading state for the test data
 
-  // Curre
+ 
 
-rogrePrcentage
+  // Progress percentage
   get progressPercentage(): number {
     return this.questions.length > 0
       ? Math.round((this.answeredCount / this.questions.length) * 100)
@@ -115,7 +124,6 @@ rogrePrcentage
   }
 
   ngOnInit(): void {
-    // Get test ID from route if available
     this.route.params.subscribe((params) => {
       if (params['id']) {
         this.testId = params['id'];
@@ -125,6 +133,7 @@ rogrePrcentage
       console.log('testId', this.testId);
       this.loadTestData(this.testId);
     });
+
   }
 
   ngAfterViewInit(): void {
@@ -151,13 +160,19 @@ rogrePrcentage
     this.trackingService.cleanup();
   }
 
+
+
   loadTestData(testId: string): void {
-    console.log('Loading test data for ID:', testId);
+
+
+    this.loading = true;
+    this.loadingError = null;
+    console.log('[ModernTest] Loading test data for ID:', testId); // DEBUG
 
     // Check for saved progress first
     const savedProgress = this.dominoTestService.loadProgress(testId);
     if (savedProgress) {
-      console.log('Found saved progress, loading it');
+      console.log('[ModernTest] Found saved progress, loading it'); // DEBUG
       this.handleSavedProgress(savedProgress);
       return;
     }
@@ -165,14 +180,14 @@ rogrePrcentage
     // Load fresh data from backend
     this.dominoTestService.getTest(testId).subscribe({
       next: (testData) => {
-        console.log('Test data loaded:', testData);
+        console.log('[ModernTest] Raw test data loaded from backend:', testData); // DEBUG
 
         if (testData) {
           // Store test data
           this.testName = testData.name || 'Logical Reasoning Test';
-      
 
-          this.testType = testData.type || 'domino'; // Default to domino type    this.testDuration = testData.duration || 30;
+          this.testType = testData.type || 'domino'; // Default to domino type
+          this.testDuration = testData.duration || 30;
           this.timeLeft = this.testDuration * 60;
           this.updateFormattedTime();
 
@@ -185,23 +200,31 @@ rogrePrcentage
             console.error('No attempt ID provided in test data');
           }
 
-          // Process questions - handle both _id and id formats
-          this.questions = testData.questions.map((q: any) => ({
+          // Process questions - handle both _id and id formats, and questionType
+          this.questions = testData.questions.map((q: any, index: number) => ({ // Added index for logging
             id: q._id || q.id, // Support both formats
+            questionType: q.questionType || 'DominoQuestion', // Default to Domino if missing
             title: q.title || '',
             instruction:
-              q.instruction || 'Find the missing values in the domino pattern',
+              q.instruction || 'Answer the question based on the information provided', // More generic default
+            // Domino specific fields
             dominos: q.dominos || [],
             arrows: q.arrows || [],
             gridLayout: q.gridLayout || { rows: 3, cols: 3 },
-            correctAnswer: q.correctAnswer,
+            // MCQ specific fields
+            propositions: q.propositions || [],
+            // Common fields
+            correctAnswer: q.correctAnswer, // Keep generic for now
             answered: q.answered || false,
             flaggedForReview: q.flaggedForReview || false,
             visited: q.visited || false,
-            pattern: q.pattern || '',
-            layoutType: q.layoutType || 'grid',
-            userAnswer: q.userAnswer,
+            pattern: q.pattern || '', // May only apply to Domino
+            layoutType: q.layoutType || 'grid', // May only apply to Domino
+            userAnswer: q.userAnswer, // Restore user answer
+            questionNumber: index + 1, // Add question number for easier debugging
           }));
+
+          console.log('[ModernTest] Mapped questions after loading:', JSON.stringify(this.questions, null, 2)); // DEBUG - Log mapped questions
 
           // Set first question as visited and start tracking it
           if (this.questions.length > 0) {
@@ -213,8 +236,9 @@ rogrePrcentage
             }
           }
 
-          // Start timer and calculate progress
+       
           this.startTimer();
+          
           this.recalculateProgress();
           this.cdr.markForCheck();
         } else {
@@ -231,60 +255,88 @@ rogrePrcentage
   }
 
   handleSavedProgress(savedProgress: any): void {
-    // Restore test state
+    console.log('[ModernTest] Handling saved progress. Raw saved data:', JSON.stringify(savedProgress, null, 2)); // DEBUG
+
+    this.testId = savedProgress.testId;
     this.testName = savedProgress.testName;
-    this.timeLeft = savedProgress.timeLeft;
-    this.testDuration = savedProgress.testDuration;
-    this.attemptId = savedProgress.attemptId;
-    this.updateFormattedTime();
+    this.testDuration = savedProgress.duration;
+    this.timeLeft = savedProgress.remainingTime;
+    this.attemptId = savedProgress.attemptId; // Restore attemptId
 
-    // Initialize tracking service if we have an attempt ID
-    if (this.attemptId) {
-      this.trackingService.initAttempt(this.attemptId);
-    }
-
-    // Restore questions and progress
-    this.questions = savedProgress.questions;
+    // Restore questions and progress - **Refined Mapping**
+    this.questions = savedProgress.questions.map((q: any, index: number) => ({
+      // Explicitly map all fields needed, similar to loadTestData
+      id: q.id, // Assuming ID is saved correctly
+      questionType: q.questionType || 'DominoQuestion', // Default if missing in saved data
+      title: q.title || '',
+      instruction: q.instruction || 'Answer the question based on the information provided',
+      // Domino specific fields
+      dominos: q.dominos || [],
+      arrows: q.arrows || [],
+      gridLayout: q.gridLayout || { rows: 3, cols: 3 },
+      // MCQ specific fields
+      propositions: q.propositions || [], // **Crucial: Ensure propositions are mapped**
+      // Common fields
+      correctAnswer: q.correctAnswer, // May or may not be saved/needed
+      answered: q.answered || false,
+      flaggedForReview: q.flaggedForReview || false,
+      visited: q.visited || false,
+      pattern: q.pattern || '',
+      layoutType: q.layoutType || 'grid',
+      userAnswer: q.userAnswer, // Restore user answer
+      questionNumber: q.questionNumber || index + 1, // Restore or recalculate
+    }));
     this.currentQuestionIndex = savedProgress.currentQuestionIndex || 0;
 
-    // Start tracking the current question
-    if (this.attemptId && this.currentQuestion) {
-      this.trackingService.startQuestionVisit(String(this.currentQuestion.id));
+    console.log('[ModernTest] Mapped questions after loading saved progress (Refined):', JSON.stringify(this.questions, null, 2)); // DEBUG
+
+    if (this.questions.length > 0) {
+      this.currentQuestion = this.questions[this.currentQuestionIndex];
+      // Mark the current question as visited upon loading progress
+      if (this.currentQuestion) {
+        this.currentQuestion.visited = true;
+      }
+    } else {
+      this.currentQuestion = undefined;
     }
 
-    // Calculate answered and flagged counts
     this.recalculateProgress();
-
-    // Start the timer
-    this.startTimer();
+      this.startTimer(); // Resume timer
+  
+    this.loading = false;
     this.cdr.markForCheck();
 
-    console.log('Test progress restored from previous session.');
+    // Start animations after loading saved progress
+    this.startAnimations();
   }
 
   saveProgress(): void {
-    // Skip if test is complete
-    if (this.isTestComplete) return;
+    if (!this.testId || !this.questions || this.questions.length === 0) {
+      console.warn('[ModernTest] Attempted to save progress with invalid data.');
+      return;
+    }
 
-    const progress = {
+    const progressData = {
       testId: this.testId,
-      attemptId: this.attemptId,
       testName: this.testName,
-      timeLeft: this.timeLeft,
-      testDuration: this.testDuration,
-      questions: this.questions,
+      duration: this.testDuration,
+      remainingTime: this.timeLeft,
       currentQuestionIndex: this.currentQuestionIndex,
-      savedAt: new Date().toISOString(),
+      questions: this.questions, // Save the current state of questions array
+      attemptId: this.attemptId, // Save attemptId
+      timestamp: new Date().toISOString(),
     };
 
-    this.dominoTestService.saveProgress(this.testId, progress);
+    // DEBUG: Log the data being saved
+    console.log('[ModernTest] Saving progress. Data:', JSON.stringify(progressData.questions.map(q => ({ id: q.id, type: q.questionType, props: q.propositions?.length })), null, 2));
+
+    this.dominoTestService.saveProgress(this.testId, progressData);
   }
 
   startTimer(): void {
-    // Clear any existing timer
-    if (this.timerSubscription) {
-      this.timerSubscription.unsubscribe();
-    }
+    if ( this.timerSubscription) return; // Ensure modal closed and timer not running
+
+   
 
     // Start a new timer
     this.timerSubscription = interval(1000).subscribe(() => {
@@ -340,39 +392,33 @@ rogrePrcentage
 
   // Navigation methods
   goToQuestion(index: number): void {
-    if (
-      index >= 0 &&
-      index < this.questions.length &&
-      index !== this.currentQuestionIndex
-    ) {
-      // Record time spent on current question before navigating away
-      this.trackingService.endCurrentQuestionVisit();
-
-      // Mark current question as visited
-      if (this.currentQuestion) {
-        this.currentQuestion.visited = true;
-      }
-
-      // Update current index
-      this.currentQuestionIndex = index;
-
-      // Mark new question as visited and start tracking time
-      if (this.questions[index]) {
-        this.questions[index].visited = true;
-        this.trackingService.startQuestionVisit(
-          String(this.questions[index].id)
-        );
-      }
-
-      // Reset animations to trigger them again
-      this.resetAnimations();
-      setTimeout(() => this.startAnimations(), 50);
-
-      this.cdr.markForCheck();
-
-      // Auto-save progress
-      this.saveProgress();
+    if (index < 0 || index >= this.questions.length) {
+      console.warn(`[ModernTest] Attempted to navigate to invalid index: ${index}`); // DEBUG
+      return;
     }
+
+    // End visit tracking for the previous question
+    this.trackingService.endCurrentQuestionVisit();
+
+    this.currentQuestionIndex = index;
+    this.currentQuestion = this.questions[this.currentQuestionIndex];
+
+    // Start visit tracking for the new question
+    if (this.currentQuestion) {
+      this.trackingService.startQuestionVisit(String(this.currentQuestion.id));
+      this.currentQuestion.visited = true;
+      console.log(`[ModernTest] Navigated to question ${index + 1}. Current Question Data (Post-Fix Check):`, JSON.stringify(this.currentQuestion, null, 2)); // DEBUG
+      console.log(`[ModernTest] Question Type (Post-Fix Check): ${this.currentQuestion.questionType}`); // DEBUG
+      console.log(`[ModernTest] Propositions (Post-Fix Check): ${JSON.stringify(this.currentQuestion.propositions)}`); // DEBUG
+    } else {
+      console.error(`[ModernTest] Error: currentQuestion is null after navigating to index ${index}`); // DEBUG
+    }
+
+
+    this.resetAnimations();
+    this.startAnimations();
+    this.saveProgress(); // Save progress on navigation
+    this.cdr.markForCheck();
   }
 
   previousQuestion(): void {
@@ -423,12 +469,13 @@ rogrePrcentage
   }
 
   onHasEditableDominosChanged(hasEditableDominos: boolean): void {
+    // This might only be relevant for Domino questions, adjust tooltip logic if needed
     this.hasEditableDominos = hasEditableDominos;
     this.cdr.markForCheck();
   }
 
   onDominoChanged(change: DominoChange): void {
-    if (!this.currentQuestion) return;
+    if (!this.currentQuestion || this.currentQuestion.questionType !== 'DominoQuestion') return;
 
     const dominoIndex = this.currentQuestion.dominos.findIndex(
       (d) => d.id === change.id
@@ -479,6 +526,38 @@ rogrePrcentage
         );
       }
     }
+  }
+
+  // New handler for MCQ answers
+  onPropositionAnswerChanged(responses: PropositionResponse[]): void {
+    if (!this.currentQuestion || this.currentQuestion.questionType !== 'MultipleChoiceQuestion') return;
+
+    // Store the responses in the question object
+    this.currentQuestion.userAnswer = responses;
+    // Mark as answered if all propositions have a response other than 'X' (or decide your own logic)
+    const allAnswered = responses.every(r => r.candidateEvaluation !== 'X');
+    this.currentQuestion.answered = allAnswered; // Or simply true once any interaction happens
+
+    console.log('Submitting proposition answers:', responses);
+
+    // Submit the answer array to the backend via tracking service
+    if (this.attemptId) {
+      this.trackingService
+        .submitAnswer(String(this.currentQuestion.id), responses) // Send the array
+        .subscribe({
+          next: (response) => {
+            console.log('Proposition answers submitted successfully:', response);
+            this.recalculateProgress();
+            this.saveProgress(); // Save progress after answering
+          },
+          error: (err) => console.error('Error submitting proposition answers:', err),
+        });
+    } else {
+      console.error('Cannot submit answer: No attempt ID available');
+    }
+
+    this.recalculateProgress();
+    this.cdr.markForCheck();
   }
 
   onDominoSelected(id: number): void {
@@ -645,8 +724,6 @@ rogrePrcentage
     return maxRow + 1; // Add 1 because rows are 0-indexed
   }
 
-  // Alternative approach using subscription
-  // Replace the resetTest method with this corrected version:
   resetTest(): void {
     // Show confirmation dialog
     if (confirm('This will reset all your progress. Are you sure?')) {
@@ -673,26 +750,31 @@ rogrePrcentage
         next: (testData) => {
           if (testData) {
             this.testName = testData.name || 'Logical Reasoning Test';
-            this.testDur
-            ation = testData.duration || 30;
+            this.testType = testData.type || 'domino'; // Default to domino type
+            this.testDuration = testData.duration || 30;
             this.timeLeft = this.testDuration * 60;
             this.updateFormattedTime();
 
             // Process questions
             if (testData.questions && testData.questions.length > 0) {
               this.questions = testData.questions.map((q: any) => ({
-                id: q.id,
+                id: q._id || q.id,
+                questionType: q.questionType || 'DominoQuestion', // Add this
                 title: q.title || `Question ${q.id}`,
                 instruction:
                   q.instruction ||
-                  'Find the missing values in the domino pattern',
-                dominos: q.dominos,
+                  'Answer the question based on the information provided',
+                dominos: q.dominos || [],
                 arrows: q.arrows || [],
                 gridLayout: q.gridLayout || { rows: 3, cols: 3 },
+                propositions: q.propositions || [], // Add this
                 answered: false,
                 flaggedForReview: false,
                 visited: false,
                 pattern: q.pattern || '',
+                layoutType: q.layoutType || 'grid',
+                userAnswer: undefined, // Clear user answer on reset
+                correctAnswer: q.correctAnswer,
               }));
 
               // Mark first question as visited
