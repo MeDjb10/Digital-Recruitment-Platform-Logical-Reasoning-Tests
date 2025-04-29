@@ -93,145 +93,110 @@
                 styleClass="w-full"
               ></p-dropdown>
             </div>
-
-            <div class="flex items-center">
-              <div class="mt-6">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <p-checkbox
-                    formControlName="allowMultipleCorrect"
-                    [binary]="true"
-                    inputId="allowMultipleCorrect"
-                  ></p-checkbox>
-                  <span class="text-slate-700"
-                    >Allow multiple correct answers</span
-                  >
-                </label>
-              </div>
-            </div>
-
-            <div class="flex items-center">
-              <div class="mt-6">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <p-checkbox
-                    formControlName="randomizeOptions"
-                    [binary]="true"
-                    inputId="randomizeOptions"
-                  ></p-checkbox>
-                  <span class="text-slate-700">Randomize option order</span>
-                </label>
-              </div>
-            </div>
           </div>
         </div>
 
-        <!-- Options Section -->
+        <!-- Propositions Section -->
         <div class="bg-slate-50 rounded-xl p-6 border border-slate-200">
           <div class="flex justify-between items-center mb-5">
-            <h2 class="text-lg font-semibold text-slate-800">Answer Options</h2>
+            <h2 class="text-lg font-semibold text-slate-800">Propositions</h2>
             <button
               type="button"
               pButton
               icon="pi pi-plus"
-              label="Add Option"
+              label="Add Proposition"
               class="p-button-sm"
-              (click)="addOption()"
-              [disabled]="options.length >= 10"
+              (click)="addProposition()"
+              [disabled]="propositions.length >= 10"
             ></button>
           </div>
 
-          <div formArrayName="options">
+          <div formArrayName="propositions">
             <div
-              *ngFor="let option of options.controls; let i = index"
-              class="mb-3"
+              *ngFor="let proposition of propositions.controls; let i = index"
+              class="mb-4"
             >
               <div
                 [formGroupName]="i"
-                class="flex border border-slate-200 rounded-lg overflow-hidden bg-white"
+                class="flex flex-col md:flex-row border border-slate-200 rounded-lg overflow-hidden bg-white"
               >
                 <div
-                  class="flex items-center justify-center bg-blue-50 text-blue-600 font-bold px-4 min-w-[50px]"
+                  class="flex items-center justify-center bg-blue-50 text-blue-600 font-bold px-4 py-2 md:py-0 md:min-w-[50px] border-b md:border-b-0 md:border-r border-slate-200"
                 >
                   {{ i + 1 }}
                 </div>
 
                 <div class="p-3 flex-1">
-                  <p-iftalabel>
-                    <textarea
-                      pTextarea
-                      formControlName="text"
-                      [rows]="2"
-                      style="resize: none; width: 100%"
-                      class="w-full rounded-lg border border-slate-200 hover:border-blue-300 transition-colors"
-                      placeholder="Enter option text"
-                    ></textarea>
-                    <label class="text-slate-500">Option Text</label>
-                  </p-iftalabel>
+                  <label
+                    [for]="'prop-text-' + i"
+                    class="block text-sm font-medium text-slate-600 mb-1.5"
+                    >Proposition Text <span class="text-red-500">*</span></label
+                  >
+                  <textarea
+                    [id]="'prop-text-' + i"
+                    pTextarea
+                    formControlName="text"
+                    [rows]="2"
+                    style="resize: none; width: 100%"
+                    class="w-full rounded-lg border border-slate-300 hover:border-blue-400 focus:border-blue-500 transition-colors"
+                    placeholder="Enter proposition text"
+                  ></textarea>
                   <small
                     *ngIf="
-                      option.get('text')?.invalid && option.get('text')?.touched
+                      proposition.get('text')?.invalid &&
+                      proposition.get('text')?.touched
                     "
                     class="text-red-500 text-xs mt-1 block"
                   >
-                    Option text is required
+                    Proposition text is required
                   </small>
                 </div>
 
                 <div
-                  class="flex items-center px-4 min-w-[120px] border-l border-slate-100"
+                  class="p-3 min-w-[200px] border-t md:border-t-0 md:border-l border-slate-200"
                 >
-                  <div
-                    *ngIf="!questionForm.get('allowMultipleCorrect')?.value"
-                    class="flex items-center gap-2"
+                  <label
+                    [for]="'prop-eval-' + i"
+                    class="block text-sm font-medium text-slate-600 mb-1.5"
+                    >Correct Evaluation
+                    <span class="text-red-500">*</span></label
                   >
-                    <p-radioButton
-                      [inputId]="'correct-' + i"
-                      [value]="i"
-                      [(ngModel)]="correctOptionIndex"
-                      [ngModelOptions]="{ standalone: true }"
-                    ></p-radioButton>
-                    <label
-                      [for]="'correct-' + i"
-                      class="cursor-pointer text-sm text-slate-700"
-                      >Correct</label
-                    >
-                  </div>
-                  <div
-                    *ngIf="questionForm.get('allowMultipleCorrect')?.value"
-                    class="flex items-center gap-2"
+                  <p-selectButton
+                    [id]="'prop-eval-' + i"
+                    [options]="evaluationOptions"
+                    formControlName="correctEvaluation"
+                    optionLabel="label"
+                    optionValue="value"
+                    styleClass="w-full evaluation-select"
+                  ></p-selectButton>
+                  <small
+                    *ngIf="
+                      proposition.get('correctEvaluation')?.invalid &&
+                      proposition.get('correctEvaluation')?.touched
+                    "
+                    class="text-red-500 text-xs mt-1 block"
                   >
-                    <p-checkbox
-                      [inputId]="'correct-multi-' + i"
-                      [binary]="true"
-                      formControlName="isCorrect"
-                    ></p-checkbox>
-                    <label
-                      [for]="'correct-multi-' + i"
-                      class="cursor-pointer text-sm text-slate-700"
-                      >Correct</label
-                    >
-                  </div>
+                    Evaluation is required
+                  </small>
                 </div>
 
-                <div class="flex items-center px-3 border-l border-slate-100">
+                <div
+                  class="flex items-center justify-center px-3 py-2 md:py-0 border-t md:border-t-0 md:border-l border-slate-200"
+                >
                   <button
                     type="button"
                     pButton
                     icon="pi pi-trash"
                     class="p-button-rounded p-button-danger p-button-text p-button-sm"
-                    (click)="removeOption(i)"
-                    [disabled]="options.length <= 2"
+                    (click)="removeProposition(i)"
+                    [disabled]="propositions.length <= 1"
+                    pTooltip="Remove Proposition"
+                    tooltipPosition="top"
                   ></button>
                 </div>
               </div>
             </div>
           </div>
-
-          <small
-            *ngIf="showCorrectAnswerError"
-            class="text-red-500 text-xs mt-3 block"
-          >
-            Please select at least one correct answer
-          </small>
         </div>
 
         <!-- Preview Section -->
@@ -244,36 +209,45 @@
           >
             <div class="mb-5">
               <h3 class="text-base font-semibold text-slate-800 mb-2">
-                {{ questionForm.get("title")?.value || "Question" }}
+                {{
+                  questionForm.get("title")?.value ||
+                    "Question Title (Optional)"
+                }}
               </h3>
               <p class="text-slate-700">
                 {{
                   questionForm.get("instruction")?.value ||
-                    "Your question text will appear here"
+                    "Your question instruction text will appear here."
                 }}
               </p>
             </div>
 
             <div class="flex flex-col gap-3">
               <div
-                *ngFor="let option of options.controls; let i = index"
-                class="flex items-center bg-white rounded-lg p-3 border border-slate-200 relative"
-                [class.border-green-200]="isOptionCorrect(i)"
-                [class.bg-green-50]="isOptionCorrect(i)"
+                *ngFor="let proposition of propositions.controls; let i = index"
+                class="flex items-start bg-white rounded-lg p-3 border border-slate-200 relative"
               >
-                <div class="font-medium text-blue-600 mr-3 w-8">
-                  {{ getOptionLabel(i) }}
+                <div
+                  class="font-medium text-blue-600 mr-3 w-8 flex-shrink-0 pt-0.5"
+                >
+                  {{ i + 1 }}.
                 </div>
-                <div class="flex-1 text-slate-800">
-                  {{ option.get("text")?.value || "Option text" }}
+                <div class="flex-1 text-slate-800 mr-3">
+                  {{ proposition.get("text")?.value || "Proposition text..." }}
                 </div>
                 <div
-                  *ngIf="isOptionCorrect(i)"
-                  class="bg-green-100 text-green-700 text-xs font-semibold py-1 px-3 rounded-full"
+                  *ngIf="proposition.get('correctEvaluation')?.value"
+                  class="bg-blue-100 text-blue-700 text-xs font-semibold py-1 px-3 rounded-full flex-shrink-0"
                 >
-                  Correct
+                  Correct: {{ proposition.get("correctEvaluation")?.value }}
                 </div>
               </div>
+              <p
+                *ngIf="propositions.length === 0"
+                class="text-slate-500 italic"
+              >
+                Add propositions to see a preview.
+              </p>
             </div>
           </div>
         </div>

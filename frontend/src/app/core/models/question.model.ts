@@ -40,16 +40,14 @@ export interface DominoQuestion extends Question {
   } | null;
 }
 
-// Multiple choice specific question
+// Multiple choice specific question (Updated for V/F/? type)
 export interface MultipleChoiceQuestion extends Question {
   questionType: 'MultipleChoiceQuestion';
-  options: {
+  propositions: {
     text: string;
-    isCorrect?: boolean;
+    correctEvaluation: 'V' | 'F' | '?'; // Vrai, Faux, Cannot Know
   }[];
-  correctOptionIndex?: number;
-  allowMultipleCorrect: boolean;
-  randomizeOptions: boolean;
+  // Removed: options, correctOptionIndex, allowMultipleCorrect, randomizeOptions
 }
 
 // Response interfaces

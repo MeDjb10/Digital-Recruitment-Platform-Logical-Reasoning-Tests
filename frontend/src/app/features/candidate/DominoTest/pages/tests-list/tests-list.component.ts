@@ -26,6 +26,7 @@ import { DominoTestService } from '../../services/domino-test.service';
       </div>
 
       <div class="tests-list" *ngIf="!loading">
+        <!-- Iterate over all available tests -->
         <div class="test-card" *ngFor="let test of availableTests">
           <div class="test-info">
             <h2>{{ test.name }}</h2>
@@ -39,10 +40,22 @@ import { DominoTestService } from '../../services/domino-test.service';
                 <i class="pi pi-list"></i>
                 <span>{{ test.totalQuestions }} questions</span>
               </div>
+              <!-- Optionally display test type -->
+              <div class="meta-item" *ngIf="test.type">
+                <i class="pi pi-tag"></i>
+                <span>{{
+                  test.type === 'DominoQuestion'
+                    ? 'Domino Logic'
+                    : test.type === 'MultipleChoiceQuestion'
+                    ? 'Multiple Choice'
+                    : test.type
+                }}</span>
+              </div>
             </div>
           </div>
 
           <div class="test-actions">
+            <!-- Link remains the same, routing handles the test ID -->
             <a
               [routerLink]="['/tests', test.id || test._id]"
               class="btn btn-primary"
@@ -51,7 +64,10 @@ import { DominoTestService } from '../../services/domino-test.service';
           </div>
         </div>
 
-        <div class="no-tests-message" *ngIf="availableTests.length === 0">
+        <div
+          class="no-tests-message"
+          *ngIf="!loading && availableTests.length === 0"
+        >
           <p>No tests are currently available for you.</p>
           <a routerLink="/dashboard" class="btn btn-secondary"
             >Return to Dashboard</a
@@ -148,11 +164,18 @@ import { DominoTestService } from '../../services/domino-test.service';
         color: #64748b;
         margin-bottom: 20px;
         line-height: 1.5;
+        min-height: 4.5em; /* Ensure space for ~3 lines */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3; /* Limit to 3 lines */
+        -webkit-box-orient: vertical;
       }
 
       .test-meta {
         display: flex;
-        gap: 20px;
+        flex-wrap: wrap; /* Allow wrapping */
+        gap: 15px; /* Adjusted gap */
         margin-top: 20px;
       }
 
@@ -236,6 +259,9 @@ import { DominoTestService } from '../../services/domino-test.service';
         .tests-list {
           grid-template-columns: 1fr;
         }
+        .description {
+          min-height: auto; /* Remove min-height on small screens */
+        }
       }
     `,
   ],
@@ -246,7 +272,7 @@ export class TestsListComponent implements OnInit {
   errorMessage: string = '';
 
   constructor(
-    private dominoTestService: DominoTestService,
+    private dominoTestService: DominoTestService, // Service name is okay, it fetches all tests now
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -258,6 +284,7 @@ export class TestsListComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
+    // This service method now fetches all test types
     this.dominoTestService.getAvailableTests().subscribe({
       next: (tests) => {
         console.log('Available tests loaded:', tests);

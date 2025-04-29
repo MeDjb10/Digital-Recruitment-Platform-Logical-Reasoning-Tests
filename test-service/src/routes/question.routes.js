@@ -6,28 +6,27 @@ const {
   getQuestionById,
   updateQuestion,
   deleteQuestion,
-  validateDominoQuestion,
+  validateDominoQuestion: validateDominoHandler, // Rename import from controller
   moveQuestionPosition,
   duplicateQuestion,
 } = require("../controllers/question.controller");
 const { verifyToken, authorize } = require("../middleware/auth.middleware");
 const {
-  validateQuestion,
-  validateQuestionId,
-  validatePositionMove,
+  validateQuestionTypeSpecificFields, // Correct import name
+  validateQuestionIdParam, // Correct import name
+  validatePositionMove, // Keep this one
 } = require("../utils/questionValidator.util");
 
-
-
 // Public validation endpoint (no auth required)
-router.post("/validate-domino", validateDominoQuestion);
+// This endpoint uses the CONTROLLER function directly
+router.post("/validate-domino", validateDominoHandler); // Use the renamed import
 
 // Create a new question for a test
 router.post(
   "/tests/:testId/questions",
   verifyToken,
   authorize("admin", "psychologist"),
-  validateQuestion,
+  validateQuestionTypeSpecificFields, // Use the correct validator middleware
   createQuestion
 );
 
@@ -35,15 +34,15 @@ router.post(
 router.get("/tests/:testId/questions", verifyToken, getQuestionsByTestId);
 
 // Get a question by ID
-router.get("/:id", verifyToken, getQuestionById);
+router.get("/:id", verifyToken, validateQuestionIdParam, getQuestionById); // Add ID validation
 
 // Update a question
 router.put(
   "/:id",
   verifyToken,
   authorize("admin", "psychologist"),
-  validateQuestionId, // Add this validator
-  validateQuestion, // Add this validator
+  validateQuestionIdParam, // Use the correct ID validator
+  validateQuestionTypeSpecificFields, // Use the correct general validator (will apply optional checks)
   updateQuestion
 );
 
@@ -52,6 +51,7 @@ router.delete(
   "/:id",
   verifyToken,
   authorize("admin", "psychologist"),
+  validateQuestionIdParam, // Add ID validation
   deleteQuestion
 );
 
@@ -60,6 +60,8 @@ router.patch(
   "/:id/position",
   verifyToken,
   authorize("admin", "psychologist"),
+  validateQuestionIdParam, // Add ID validation
+  validatePositionMove, // Use the specific position move validator
   moveQuestionPosition
 );
 
@@ -68,6 +70,7 @@ router.post(
   "/:id/duplicate",
   verifyToken,
   authorize("admin", "psychologist"),
+  validateQuestionIdParam, // Add ID validation
   duplicateQuestion
 );
 

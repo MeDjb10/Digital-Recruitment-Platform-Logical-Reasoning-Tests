@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -7,14 +7,12 @@ import {
   FormArray,
   Validators,
   ReactiveFormsModule,
-  FormsModule,
+  AbstractControl,
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { DropdownModule } from 'primeng/dropdown';
-import { CheckboxModule } from 'primeng/checkbox';
-import { RadioButtonModule } from 'primeng/radiobutton';
 import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
 import { ToastModule } from 'primeng/toast';
@@ -22,32 +20,31 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { TestManagementService } from '../../../../../core/services/test-management.service';
 import { MultipleChoiceQuestion } from '../../../../../core/models/question.model';
+import { Subscription } from 'rxjs';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { IftaLabelModule } from 'primeng/iftalabel';
-
 @Component({
   selector: 'app-multiple-choice-editor',
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    FormsModule,
     ButtonModule,
     InputTextModule,
     TextareaModule,
     DropdownModule,
-    CheckboxModule,
-    RadioButtonModule,
     CardModule,
     DividerModule,
     ToastModule,
     ConfirmDialogModule,
+    SelectButtonModule,
     IftaLabelModule,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './multiple-choice-editor.component.html',
   styleUrls: ['./multiple-choice-editor.component.css'],
 })
-export class MultipleChoiceEditorComponent implements OnInit {
+export class MultipleChoiceEditorComponent implements OnInit, OnDestroy {
   questionForm!: FormGroup;
   testId: string = '';
   questionId?: string;
@@ -55,8 +52,10 @@ export class MultipleChoiceEditorComponent implements OnInit {
   loading = true;
   isSaving = false;
   testInfo: any = null;
-  correctOptionIndex: number = 0;
-  showCorrectAnswerError = false;
+  private routeSub!: Subscription;
+  private testInfoSub!: Subscription;
+  private questionSub!: Subscription;
+  private saveSub!: Subscription;
 
   difficultyOptions = [
     { label: 'Easy', value: 'easy' },
@@ -65,8 +64,14 @@ export class MultipleChoiceEditorComponent implements OnInit {
     { label: 'Expert', value: 'expert' },
   ];
 
-  get options() {
-    return this.questionForm.get('options') as FormArray;
+  evaluationOptions = [
+    { label: 'Vrai (V)', value: 'V' },
+    { label: 'Faux (F)', value: 'F' },
+    { label: 'Ne sait pas (?)', value: '?' },
+  ];
+
+  get propositions() {
+    return this.questionForm.get('propositions') as FormArray;
   }
 
   constructor(
@@ -81,31 +86,36 @@ export class MultipleChoiceEditorComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
 
-    this.route.paramMap.subscribe((params) => {
+    this.routeSub = this.route.paramMap.subscribe((params) => {
       this.testId = params.get('testId') || '';
       this.questionId = params.get('questionId') || undefined;
-
       this.isEditMode = !!this.questionId;
 
-      if (this.testId) {
-        this.loadTestInfo();
-        if (this.isEditMode && this.questionId) {
-          this.loadQuestion();
-        } else {
-          // In create mode, add default two empty options
-          this.addOption();
-          this.addOption();
-          this.loading = false;
-        }
-      } else {
+      if (!this.testId) {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Test ID is missing. Cannot create question.',
+          detail: 'Test ID is missing.',
         });
         this.router.navigate(['/dashboard/RaisonnementLogique/Tests']);
+        return;
+      }
+
+      this.loadTestInfo();
+      if (this.isEditMode && this.questionId) {
+        this.loadQuestion();
+      } else {
+        this.addProposition();
+        this.loading = false;
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+    this.testInfoSub?.unsubscribe();
+    this.questionSub?.unsubscribe();
+    this.saveSub?.unsubscribe();
   }
 
   initForm(): void {
@@ -113,39 +123,14 @@ export class MultipleChoiceEditorComponent implements OnInit {
       title: [''],
       instruction: ['', Validators.required],
       difficulty: ['medium', Validators.required],
-      allowMultipleCorrect: [false],
-      randomizeOptions: [false],
-      options: this.fb.array([]),
+      propositions: this.fb.array([]),
     });
-
-    // Listen for changes in the allowMultipleCorrect checkbox
-    this.questionForm
-      .get('allowMultipleCorrect')
-      ?.valueChanges.subscribe((allowMultiple) => {
-        // When switching to single choice, reset all isCorrect flags and just use correctOptionIndex
-        if (!allowMultiple) {
-          const optionsArray = this.questionForm.get('options') as FormArray;
-          optionsArray.controls.forEach((control, index) => {
-            control
-              .get('isCorrect')
-              ?.setValue(index === this.correctOptionIndex);
-          });
-        } else {
-          // When switching to multiple choice, set isCorrect based on correctOptionIndex
-          const optionsArray = this.questionForm.get('options') as FormArray;
-          optionsArray.controls.forEach((control, index) => {
-            control
-              .get('isCorrect')
-              ?.setValue(index === this.correctOptionIndex);
-          });
-        }
-      });
   }
 
   loadTestInfo(): void {
-    this.testService.getTestById(this.testId).subscribe({
-      next: (test) => {
-        this.testInfo = test;
+    this.testInfoSub = this.testService.getTestById(this.testId).subscribe({
+      next: (response) => {
+        this.testInfo = response;
       },
       error: (error) => {
         console.error('Error loading test info:', error);
@@ -161,128 +146,111 @@ export class MultipleChoiceEditorComponent implements OnInit {
   loadQuestion(): void {
     if (!this.questionId) return;
 
+    console.log(`[Editor] Loading question with ID: ${this.questionId}`); // Log start
     this.loading = true;
-    this.testService.getQuestionById(this.questionId).subscribe({
-      next: (question: any) => {
-        if (question && question.questionType === 'MultipleChoiceQuestion') {
-          this.populateFormWithQuestion(question as MultipleChoiceQuestion);
-        } else {
+    this.questionSub = this.testService // This is actually TestManagementService
+      .getQuestionById(this.questionId)
+      .subscribe({
+        // The 'response' here is the Question object itself, or null
+        next: (question) => {
+          console.log('[Editor] Received question data:', question); // Log received data
+
+          // Check if question data exists and is the correct type
+          if (question && question.questionType === 'MultipleChoiceQuestion') {
+            console.log('[Editor] Question type is correct. Populating form.'); // Log success path
+            this.populateFormWithQuestion(question as MultipleChoiceQuestion);
+          } else {
+            // Handle cases where question is null or wrong type
+            console.error(
+              `[Editor] Question not found, null, or invalid type (${question?.questionType}). Navigating back.`
+            ); // Log failure path
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Question not found or invalid type.',
+            });
+            this.navigateBack(); // Navigate back if type is wrong or question is null
+          }
+        },
+        error: (error) => {
+          console.error('[Editor] Error loading question:', error); // Log error
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Invalid question type or question not found',
+            detail: `Failed to load question: ${
+              error.message || 'Unknown error'
+            }`,
           });
-          this.router.navigate([
-            '/dashboard/RaisonnementLogique/Tests',
-            this.testId,
-          ]);
-        }
-      },
-      error: (error) => {
-        console.error('Error loading question:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load question',
-        });
-        this.loading = false;
-      },
-      complete: () => {
-        this.loading = false;
-      },
-    });
+          this.loading = false;
+          this.navigateBack(); // Navigate back on error
+        },
+        complete: () => {
+          console.log('[Editor] Finished loading question.'); // Log completion
+          this.loading = false;
+        },
+      });
   }
 
   populateFormWithQuestion(question: MultipleChoiceQuestion): void {
-    // Clear the existing options array
-    while (this.options.length !== 0) {
-      this.options.removeAt(0);
-    }
+    this.propositions.clear();
 
-    // Add options from the question
-    if (question.options && question.options.length > 0) {
-      question.options.forEach((option) => {
-        this.options.push(this.createOption(option.text, option.isCorrect));
+    if (question.propositions && question.propositions.length > 0) {
+      question.propositions.forEach((prop) => {
+        this.propositions.push(
+          this.createProposition(prop.text, prop.correctEvaluation)
+        );
       });
     } else {
-      // Add default options if none exist
-      this.addOption();
-      this.addOption();
+      this.addProposition();
     }
 
-    // Set correctOptionIndex if available and not using multiple correct
-    if (
-      question.correctOptionIndex !== undefined &&
-      !question.allowMultipleCorrect
-    ) {
-      this.correctOptionIndex = question.correctOptionIndex;
-    } else {
-      // Find the first correct option for single choice mode
-      const correctIndex = question.options.findIndex((opt) => opt.isCorrect);
-      this.correctOptionIndex = correctIndex >= 0 ? correctIndex : 0;
-    }
-
-    // Update the form values
     this.questionForm.patchValue({
       title: question.title || '',
       instruction: question.instruction,
       difficulty: question.difficulty,
-      allowMultipleCorrect: question.allowMultipleCorrect,
-      randomizeOptions: question.randomizeOptions,
     });
   }
 
-  createOption(text: string = '', isCorrect: boolean = false) {
+  createProposition(
+    text: string = '',
+    correctEvaluation: 'V' | 'F' | '?' | null = null
+  ): FormGroup {
     return this.fb.group({
       text: [text, Validators.required],
-      isCorrect: [isCorrect],
+      correctEvaluation: [correctEvaluation, Validators.required],
     });
   }
 
-  addOption(): void {
-    this.options.push(this.createOption());
+  addProposition(): void {
+    this.propositions.push(this.createProposition());
   }
 
-  removeOption(index: number): void {
-    if (this.options.length <= 2) {
+  removeProposition(index: number): void {
+    if (this.propositions.length <= 1) {
       this.messageService.add({
-        severity: 'info',
-        summary: 'Info',
-        detail: 'A question must have at least two options',
+        severity: 'warn',
+        summary: 'Warning',
+        detail: 'A question must have at least one proposition',
       });
       return;
     }
-
-    this.options.removeAt(index);
-
-    // If removing the correct option in single choice mode, reset the index
-    if (
-      !this.questionForm.get('allowMultipleCorrect')?.value &&
-      index === this.correctOptionIndex
-    ) {
-      this.correctOptionIndex = 0;
-    }
+    this.propositions.removeAt(index);
   }
 
-  isOptionCorrect(index: number): boolean {
-    if (this.questionForm.get('allowMultipleCorrect')?.value) {
-      return this.options.at(index).get('isCorrect')?.value;
-    } else {
-      return index === this.correctOptionIndex;
-    }
-  }
-
-  getOptionLabel(index: number): string {
-    return String.fromCharCode(65 + index) + '.';
+  getPropositionLabel(index: number): string {
+    return `Proposition ${index + 1}:`;
   }
 
   onCancel(): void {
     if (this.questionForm.dirty) {
       this.confirmationService.confirm({
         message: 'You have unsaved changes. Are you sure you want to leave?',
-        accept: () => {
-          this.navigateBack();
-        },
+        header: 'Unsaved Changes',
+        icon: 'pi pi-exclamation-triangle',
+        acceptButtonStyleClass: 'p-button-danger',
+        rejectButtonStyleClass: 'p-button-text',
+        accept: () => this.navigateBack(),
+        reject: () => {},
       });
     } else {
       this.navigateBack();
@@ -290,82 +258,69 @@ export class MultipleChoiceEditorComponent implements OnInit {
   }
 
   navigateBack(): void {
+    console.log(
+      `[Editor] Navigating back to test details for test ID: ${this.testId}`
+    ); // Log navigation
     this.router.navigate(['/dashboard/RaisonnementLogique/Tests', this.testId]);
   }
 
   prepareQuestionData(): any {
-    // Get base form values
     const formValue = this.questionForm.value;
 
-    // Update the isCorrect flags for options if in single choice mode
-    if (!formValue.allowMultipleCorrect) {
-      formValue.options.forEach((option: any, index: number) => {
-        option.isCorrect = index === this.correctOptionIndex;
-      });
-    }
-
-    // Prepare the question data
     const questionData: any = {
       testId: this.testId,
-      title: formValue.title,
+      title: formValue.title || null,
       instruction: formValue.instruction,
       difficulty: formValue.difficulty,
       questionType: 'MultipleChoiceQuestion',
-      allowMultipleCorrect: formValue.allowMultipleCorrect,
-      randomizeOptions: formValue.randomizeOptions,
-      options: formValue.options,
-      // Only include correctOptionIndex for single-choice questions
-      correctOptionIndex: !formValue.allowMultipleCorrect
-        ? this.correctOptionIndex
-        : undefined,
+      propositions: formValue.propositions.map((prop: any) => ({
+        text: prop.text,
+        correctEvaluation: prop.correctEvaluation,
+      })),
     };
-
-    // If editing, include the question ID
-    if (this.isEditMode && this.questionId) {
-      questionData._id = this.questionId;
-    }
 
     return questionData;
   }
 
   validateForm(): boolean {
+    this.questionForm.markAllAsTouched();
+
     if (!this.questionForm.valid) {
       this.messageService.add({
         severity: 'error',
         summary: 'Validation Error',
-        detail: 'Please complete all required fields correctly',
+        detail: 'Please complete all required fields correctly.',
       });
-
-      // Mark all fields as touched to show validation errors
-      this.questionForm.markAllAsTouched();
       return false;
     }
 
-    // Check if at least one correct answer is selected
-    const formValue = this.questionForm.value;
-    let hasCorrectAnswer = false;
-
-    if (formValue.allowMultipleCorrect) {
-      // For multiple correct, check if any option has isCorrect=true
-      hasCorrectAnswer = formValue.options.some((opt: any) => opt.isCorrect);
-    } else {
-      // For single correct, correctOptionIndex should be valid
-      hasCorrectAnswer =
-        this.correctOptionIndex >= 0 &&
-        this.correctOptionIndex < formValue.options.length;
-    }
-
-    if (!hasCorrectAnswer) {
-      this.showCorrectAnswerError = true;
+    if (this.propositions.length === 0) {
       this.messageService.add({
         severity: 'error',
         summary: 'Validation Error',
-        detail: 'Please select at least one correct answer',
+        detail: 'At least one proposition is required.',
       });
       return false;
     }
 
-    this.showCorrectAnswerError = false;
+    const allEvaluationsSet = this.propositions.controls.every(
+      (control: AbstractControl) => !!control.get('correctEvaluation')?.value
+    );
+    if (!allEvaluationsSet) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Validation Error',
+        detail:
+          'Please select the correct evaluation (V, F, or ?) for every proposition.',
+      });
+      this.propositions.controls.forEach((control) => {
+        if (!control.get('correctEvaluation')?.value) {
+          control.get('correctEvaluation')?.markAsTouched();
+        }
+      });
+      return false;
+    }
+
     return true;
   }
 
@@ -374,53 +329,44 @@ export class MultipleChoiceEditorComponent implements OnInit {
 
     this.isSaving = true;
     const questionData = this.prepareQuestionData();
+    console.log('Saving question data:', questionData);
 
-    if (this.isEditMode && this.questionId) {
-      // Update existing question
-      this.testService.updateQuestion(this.questionId, questionData).subscribe({
-        next: (response) => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Question updated successfully',
-          });
-          setTimeout(() => this.navigateBack(), 1500);
-        },
-        error: (error) => {
-          console.error('Error updating question:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail:
-              'Failed to update question: ' +
-              (error.message || 'Unknown error'),
-          });
-          this.isSaving = false;
-        },
-      });
-    } else {
-      // Create new question
-      this.testService.createQuestion(this.testId, questionData).subscribe({
-        next: (response) => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Question created successfully',
-          });
-          setTimeout(() => this.navigateBack(), 1500);
-        },
-        error: (error) => {
-          console.error('Error creating question:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail:
-              'Failed to create question: ' +
-              (error.message || 'Unknown error'),
-          });
-          this.isSaving = false;
-        },
-      });
-    }
+    const operation =
+      this.isEditMode && this.questionId
+        ? this.testService.updateQuestion(this.questionId, questionData)
+        : this.testService.createQuestion(this.testId, questionData);
+
+    this.saveSub = operation.subscribe({
+      next: (response) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: `Question ${
+            this.isEditMode ? 'updated' : 'created'
+          } successfully`,
+        });
+        this.questionForm.markAsPristine();
+        setTimeout(() => this.navigateBack(), 1500);
+      },
+      error: (error) => {
+        console.error(
+          `Error ${this.isEditMode ? 'updating' : 'creating'} question:`,
+          error
+        );
+        const detail =
+          error?.error?.message || error?.message || 'Unknown error';
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: `Failed to ${
+            this.isEditMode ? 'update' : 'create'
+          } question: ${detail}`,
+        });
+        this.isSaving = false;
+      },
+      complete: () => {
+        this.isSaving = false;
+      },
+    });
   }
 }

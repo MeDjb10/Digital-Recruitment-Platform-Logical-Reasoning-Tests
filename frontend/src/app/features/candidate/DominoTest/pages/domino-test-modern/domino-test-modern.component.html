@@ -1,4 +1,7 @@
-<div class="test-container">
+<!-- Add the modal component at the top level -->
+
+<!-- Only render the main test container if the modal is closed -->
+<div class="test-container" >
   <!-- Compact Header Component -->
   <app-test-header
     [testName]="testName"
@@ -15,14 +18,26 @@
   >
   </app-test-header>
 
-  <!-- Help tooltip -->
+  <!-- Help tooltip - Conditionally show based on question type? -->
   <div class="tooltip-container">
     <app-help-tooltip
+      *ngIf="currentQuestion?.questionType === 'DominoQuestion'"
       [show]="showTooltip && hasEditableDominos"
       [animate]="animateTooltip"
       [title]="'How to Answer'"
       [description]="'Click on the highlighted domino to edit its values.'"
       [instructions]="tooltipInstructions"
+      (close)="dismissTooltip()"
+    >
+    </app-help-tooltip>
+    <!-- Add a tooltip for MCQ if needed -->
+     <app-help-tooltip
+      *ngIf="currentQuestion?.questionType === 'MultipleChoiceQuestion'"
+      [show]="showTooltip"
+      [animate]="animateTooltip"
+      [title]="'How to Answer'"
+      [description]="'Select True (V), False (F), Cannot Know (?), or Don\'t Understand (X) for each proposition.'"
+      [instructions]="['Select one option for each statement.', 'Your answer is saved automatically.']"
       (close)="dismissTooltip()"
     >
     </app-help-tooltip>
@@ -61,10 +76,11 @@
         </button>
       </div>
 
-      <!-- Domino Grid - Main Content Area -->
-      <div class="domino-viewport">
+      <!-- Main Content Area - Conditional Rendering -->
+      <div class="content-viewport">
+        <!-- Domino Grid -->
         <app-simple-domino-grid
-          *ngIf="currentQuestion"
+          *ngIf="currentQuestion && currentQuestion.questionType === 'DominoQuestion'"
           [dominos]="currentQuestion.dominos"
           [arrows]="currentQuestion.arrows || []"
           [gridLayout]="
@@ -81,13 +97,26 @@
         >
         </app-simple-domino-grid>
 
+        <!-- Multiple Choice Question -->
+        <app-multiple-choice-question
+          *ngIf="currentQuestion && currentQuestion.questionType === 'MultipleChoiceQuestion'"
+          [question]="currentQuestion"
+          (answerChanged)="onPropositionAnswerChanged($event)"
+        >
+        </app-multiple-choice-question>
+
+        <!-- Loading/Error State -->
         <div class="loading-container" *ngIf="!currentQuestion">
           <div class="loading-spinner"></div>
-          <span>Loading domino puzzle...</span>
+          <span>Loading question...</span>
         </div>
+         <div class="error-container" *ngIf="loadingError">
+           <p>{{ loadingError }}</p>
+           <button (click)="loadTestData(testId)">Retry</button>
+         </div>
       </div>
 
-      <!-- Navigation Controls - Keep these for question navigation -->
+      <!-- Navigation Controls -->
       <app-navigation-controls
         [isFirstQuestion]="currentQuestionIndex === 0"
         [isLastQuestion]="currentQuestionIndex === questions.length - 1"
@@ -106,3 +135,4 @@
     </section>
   </main>
 </div>
+
