@@ -1,72 +1,83 @@
-<div class="p-4 bg-white grid grid-cols-5 gap-4 rounded-lg shadow-md">
+<div class="p-4 bg-white grid grid-cols-5 gap-4 rounded-lg shadow-md ">
     <div class="col-span-5 ">
         <button pButton icon="pi pi-arrow-left" label="Back to Users List" class="p-button-secondary"
             (click)="goBack()">
         </button>
+        <button pButton icon="pi pi-download" label="Download Report" class="p-button-secondary ml-2" (click)="print()">
+        </button>
     </div>
-    <div class="col-span-1 p-4 border-r border-gray-200">
-        <div class="flex flex-col items-center">
-            <img src="assets/images/testimonial-avatar.jpg" alt="User Profile"
-                class="w-32 h-32 rounded-full mb-4 border-2 border-blue-500">
-            <h3 class="text-xl font-bold text-gray-800">John Doe</h3>
-            <p class="text-gray-600 mb-4">john.doe&#64;example.com</p>
+    <div class="col-span-5 grid-cols-5" id="printJS-div">
 
-            <div class="w-full space-y-3">
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Level:</span>
-                    <span class="font-semibold">Master</span>
+
+        <div class="col-span-1 p-4 border-r border-gray-200">
+            <div class="flex flex-col items-center">
+                <img src="assets/images/testimonial-avatar.jpg" alt="User Profile"
+                    class="w-32 h-32 rounded-full mb-4 border-2 border-blue-500">
+                <h3 class="text-xl font-bold text-gray-800">John Doe</h3>
+                <p class="text-gray-600 mb-4">john.doe&#64;example.com</p>
+
+                <div class="w-full space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Level:</span>
+                        <span class="font-semibold">Master</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Birthday:</span>
+                        <span class="font-semibold">15/03/1995</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Test Date:</span>
+                        <span class="font-semibold">10/11/2023</span>
+                    </div>
+                    <hr class="my-4 w-full border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Multiple choice</span>
+                        <i *ngIf="hasMultipleChoiceTest()" class="fa-solid fa-circle-check text-green-600"></i>
+                        <i *ngIf="!hasMultipleChoiceTest()" class="fa-solid fa-circle-xmark text-red-600"></i>
+                    </div>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Birthday:</span>
-                    <span class="font-semibold">15/03/1995</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Test Date:</span>
-                    <span class="font-semibold">10/11/2023</span>
-                </div>
+
                 <hr class="my-4 w-full border-gray-200">
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-600">Multiple choice</span>
-                    <i *ngIf="hasMultipleChoiceTest()" class="fa-solid fa-circle-check text-green-600"></i>
-                    <i *ngIf="!hasMultipleChoiceTest()" class="fa-solid fa-circle-xmark text-red-600"></i>
-                </div>
-            </div>
 
-            <hr class="my-4 w-full border-gray-200">
-
-            <div class="w-full">
-                <h4 class="text-lg font-semibold mb-2">Psychologist</h4>
-                <div class="flex items-center">
-                    <img src="assets/wom.png" alt="Psychologist" class="w-10 h-10 rounded-full mr-2">
-                    <div>
-                        <p class="font-medium">Dr. Sarah Smith</p>
-                        <p class="text-sm text-gray-500">Cognitive Specialist</p>
+                <div class="w-full">
+                    <h4 class="text-lg font-semibold mb-2">Psychologist</h4>
+                    <div class="flex items-center">
+                        <img src="assets/wom.png" alt="Psychologist" class="w-10 h-10 rounded-full mr-2">
+                        <div>
+                            <p class="font-medium">Dr. Sarah Smith</p>
+                            <p class="text-sm text-gray-500">Cognitive Specialist</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col-span-4">
-        <p-tabView>
-            <p-tabPanel>
-                <ng-template pTemplate="header">
-                    <div class="flex items-center gap-2">
-                        <i class="pi pi-table"></i>
-                        <span>Domino Test</span>
-                    </div>
-                </ng-template>
-                <app-domino-test-section></app-domino-test-section>
-            </p-tabPanel>
+        <div class="col-span-4">
+            <p-tabView>
+                <p-tabPanel>
+                    <ng-template pTemplate="header">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-table"></i>
+                            <span>Domino Test</span>
+                        </div>
+                    </ng-template>
+                    <app-domino-test-section></app-domino-test-section>
+                </p-tabPanel>
 
-            <p-tabPanel *ngIf="hasMultipleChoiceTest()">
-                <ng-template pTemplate="header">
-                    <div class="flex items-center gap-2">
-                        <i class="pi pi-list"></i>
-                        <span>Multiple Choice Test</span>
-                    </div>
-                </ng-template>
-                <app-multiple-choice-section></app-multiple-choice-section>
-            </p-tabPanel>
-        </p-tabView>
+                <p-tabPanel *ngIf="hasMultipleChoiceTest()">
+                    <ng-template pTemplate="header">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-list"></i>
+                            <span>Multiple Choice Test</span>
+                        </div>
+                    </ng-template>
+                    <app-multiple-choice-section></app-multiple-choice-section>
+                </p-tabPanel>
+            </p-tabView>
+        </div>
     </div>
+</div>
+
+<!-- Hidden printable page -->
+<div style="display: none;">
+    <app-printable-page id="printable-page"></app-printable-page>
 </div>

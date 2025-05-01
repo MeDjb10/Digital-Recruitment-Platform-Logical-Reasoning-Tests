@@ -48,14 +48,14 @@ class PerformanceAnalyzer:
             embedding_function=sentence_transformer_ef
         )
 
-    def analyze(self, metrics: PerformanceMetrics) -> Dict[str, Any]:
+    def analyze(self, metrics: PerformanceMetrics, desired_position: str = "", education_level: str = "") -> Dict[str, Any]:
         """Analyze performance metrics and generate AI commentary"""
         try:
             # Get prediction
             prediction_result = self.predictor.predict(metrics)
             
-            # Generate AI comment using RAG
-            ai_comment = self._generate_ai_comment(metrics, prediction_result)
+            # Generate AI comment using RAG with position and education context
+            ai_comment = self._generate_ai_comment(metrics, prediction_result, desired_position, education_level)
               
             # Store interaction
             self._store_interaction(metrics, ai_comment)
@@ -81,8 +81,6 @@ class PerformanceAnalyzer:
             documents=[metrics_str],
             metadatas=[{
                 "timestamp": timestamp,
-                "accuracy": metrics["correct_answers"] / metrics["answered_questions"] if metrics["answered_questions"] > 0 else 0,
-                "speed": metrics["answered_questions"] / metrics["time_passed"] if metrics["time_passed"] > 0 else 0
             }],
             ids=[f"metrics_{timestamp}"]
         )
@@ -144,7 +142,8 @@ class PerformanceAnalyzer:
         
         return similar_cases
 
-    def _generate_ai_comment(self, metrics: PerformanceMetrics, prediction: Dict[str, Any]) -> str:
+    def _generate_ai_comment(self, metrics: PerformanceMetrics, prediction: Dict[str, Any], 
+                            desired_position: str, education_level: str) -> str:
         """Generate AI commentary using RAG"""
         similar_cases = self._retrieve_similar_cases(metrics)
         
@@ -156,8 +155,32 @@ class PerformanceAnalyzer:
             for i, case in enumerate(similar_cases)
         ])
         
+        # Add test-specific information
+        test_type = metrics.get('test_type', '').lower()
+        test_info = {
+            'd70': {
+                'total_questions': 44,
+                'time_limit': 25,
+                'description': 'D-70 Test (44 questions, 25 minutes time limit)'
+            },
+            'd2000': {
+                'total_questions': 40,
+                'time_limit': 20,
+                'description': 'D-2000 Test (40 questions, 20 minutes time limit)'
+            }
+        }.get(test_type, {})
+
         prompt = f"""
-        Analyze the following test performance data, considering these similar historical cases:
+        Analyze the following test performance data for a candidate, considering:
+        
+        Test Information:
+        {test_info['description']}
+        - Total Questions: {test_info['total_questions']}
+        - Time Limit: {test_info['time_limit']} minutes
+        
+        Candidate Profile:
+        - Desired Position: {desired_position}
+        - Education Level: {education_level}
 
         Current Performance:
         {json.dumps(metrics, indent=2)}
@@ -168,10 +191,15 @@ class PerformanceAnalyzer:
         Historical Similar Cases:
         {similar_cases_text}
 
-        Based on the current metrics and similar historical cases, provide a detailed but concise analysis that:
-        1. Evaluates overall performance
+        Based on the test requirements, current metrics, similar historical cases, and the candidate's profile, provide a detailed analysis that:
+        1. Evaluates overall performance relative to test requirements (time management and completion rate)
         2. Points out key strengths
         3. Identifies areas for improvement
+        4. Assesses suitability for the desired position considering:
+           - Required cognitive abilities for the role
+           - Educational background alignment
+           - Performance compared to role expectations and test benchmarks
+        5. Provide a clear recommendation (Suitable/Not Suitable) with justification
         
         Keep the tone professional and constructive.
         """
@@ -306,17 +334,23 @@ def main():
                 return
         
         test_metrics: PerformanceMetrics = {
-            'time_passed': 25,
-            'answered_questions':10,
-            'correct_answers': 3,
-            'skips': 20,
-            'spatial': 1,
-            'numeric': 0,
-            'arithmetic':1,
+            'test_type': 'd70',
+            'questionsAnswered': 40,
+            'correct answers': 20,
+            'timeSpent': 20,
+            'halfCorrect': 0,
+            'reversed': 0,
+            'questionsSkipped': 0,
+            'answerChanges': 3,
+            'flaggedQuestions': 2,
             'timestamp': datetime.now().isoformat()
         }
         
-        result = analyzer.analyze(test_metrics)
+        # Add position and education inputs
+        position = input("Enter desired position: ")
+        education = input("Enter education level: ")
+        
+        result = analyzer.analyze(test_metrics, position, education)
         
         print("\n=== Initial Performance Analysis ===")
         print("\nAI Analysis:")
