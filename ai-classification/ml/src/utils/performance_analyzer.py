@@ -343,14 +343,13 @@ def main():
             'questionsSkipped': 0,
             'answerChanges': 3,
             'flaggedQuestions': 2,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
+            'desired_position': 'Software Engineer',  # Added position field
+            'education_level': 'Bachelor in Computer Science'  # Added education field
         }
         
-        # Add position and education inputs
-        position = input("Enter desired position: ")
-        education = input("Enter education level: ")
-        
-        result = analyzer.analyze(test_metrics, position, education)
+        result = analyzer.analyze(test_metrics, test_metrics.get('desired_position', ''), 
+                                test_metrics.get('education_level', ''))
         
         print("\n=== Initial Performance Analysis ===")
         print("\nAI Analysis:")
