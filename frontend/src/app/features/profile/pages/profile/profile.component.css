@@ -1,0 +1,180 @@
+.profile-picture-container {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.profile-picture-container:hover {
+  transform: scale(1.02);
+}
+
+.profile-picture-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-picture-upload {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-picture-upload:hover {
+  background: #2563eb;
+  transform: scale(1.1);
+}
+
+/* User status badges */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.status-badge.active {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.inactive {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.suspended {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* Animate sections on load */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-section {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.profile-section:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.profile-section:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+/* Profile Picture Upload Animation */
+.upload-button {
+  transition: transform 0.2s ease-in-out;
+}
+
+.upload-button:hover {
+  transform: scale(1.1);
+}
+
+/* Password Strength Animation */
+.strength-bar div {
+  transition: all 0.3s ease;
+}
+
+/* Dialog Animations */
+:host ::ng-deep .p-dialog {
+  animation: dialogFadeIn 0.3s ease-out;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-content {
+  padding: 0;
+}
+
+/* Profile Picture Circle Animation */
+.profile-picture-container {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.profile-picture-container:hover {
+  transform: scale(1.02);
+}
+
+/* Ping Animation for Status */
+@keyframes ping {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slow {
+  animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Dialog Fade In Animation */
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Password Strength Colors */
+.strength-level-1 { background-color: #ef4444; }
+.strength-level-2 { background-color: #f97316; }
+.strength-level-3 { background-color: #eab308; }
+.strength-level-4 { background-color: #22c55e; }
+
+/* Form Input Focus States */
+:host ::ng-deep .p-inputtext:enabled:focus {
+  box-shadow: 0 0 0 2px #e8f0fe;
+  border-color: #2563eb;
+}
+
+/* Button Hover Effects */
+:host ::ng-deep .p-button:not(.p-button-outlined):not(:disabled):hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+:host ::ng-deep .p-button.p-button-outlined:not(:disabled):hover {
+  background: #e8f0fe;
+  color: #2563eb;
+}
+
+/* Shake Animation for Invalid Inputs */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.shake-animation {
+  animation: shake 0.3s ease-in-out;
+}

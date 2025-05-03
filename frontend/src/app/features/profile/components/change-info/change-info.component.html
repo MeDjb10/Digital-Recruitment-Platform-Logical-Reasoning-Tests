@@ -1,0 +1,49 @@
+<div class="p-4 space-y-6">
+    <!-- First Name -->
+    <div class="form-group">
+        <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+        <input type="text" id="firstName" pInputText [(ngModel)]="editedUser.firstName" class="w-full p-inputtext"
+            placeholder="Enter first name">
+    </div>
+
+    <!-- Last Name -->
+    <div class="form-group">
+        <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+        <input type="text" id="lastName" pInputText [(ngModel)]="editedUser.lastName" class="w-full p-inputtext"
+            placeholder="Enter last name">
+    </div>
+
+    <!-- Gender -->
+    <div class="form-group">
+        <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+        <p-dropdown [options]="genderOptions" [(ngModel)]="editedUser.gender" 
+            placeholder="Select gender" [style]="{'width':'100%'}" 
+            styleClass="w-full">
+        </p-dropdown>
+    </div>
+
+    <!-- Date of Birth -->
+    <div class="form-group">
+        <label for="dateOfBirth" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+        <p-calendar [(ngModel)]="editedUser.dateOfBirth" 
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            [style]="{'width':'100%'}"
+            [maxDate]="maxDate"
+            placeholder="Select date of birth">
+        </p-calendar>
+    </div>
+
+    <!-- Current Position -->
+    <div class="form-group">
+        <label for="currentPosition" class="block text-sm font-medium text-gray-700 mb-1">Current Position</label>
+        <input type="text" id="currentPosition" pInputText [(ngModel)]="editedUser.currentPosition" 
+            class="w-full p-inputtext"
+            placeholder="Enter current position">
+    </div>
+</div>
+
+<div class="flex justify-end gap-3 pt-4 border-t">
+    <button pButton label="Cancel" class="p-button-outlined" (click)="cancel()"></button>
+    <button pButton label="Save Changes" (click)="saveChanges()"></button>
+</div>
