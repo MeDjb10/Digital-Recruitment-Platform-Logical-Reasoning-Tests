@@ -163,18 +163,39 @@ const processAndSaveImage = async (file, userId, role) => {
 
     console.log(`Image processed and saved to: ${outputPath}`);
 
-    // Clean up the temporary file
-    fs.unlinkSync(file.path);
-    console.log(`Temporary file deleted: ${file.path}`);
+    // Try to delete the temporary file, but don't throw if it fails
+    try {
+      await fs.promises.unlink(file.path);
+      console.log(`Temporary file deleted: ${file.path}`);
+    } catch (unlinkError) {
+      // Just log the error but don't throw - the image was processed successfully
+      console.warn(`Warning: Could not delete temporary file: ${file.path}`, unlinkError.message);
+      
+      // Schedule deletion for later (after 1 second)
+      setTimeout(async () => {
+        try {
+          if (fs.existsSync(file.path)) {
+            await fs.promises.unlink(file.path);
+            console.log(`Delayed deletion of temporary file successful: ${file.path}`);
+          }
+        } catch (delayedError) {
+          console.warn(`Warning: Could not delete temporary file even after delay: ${file.path}`);
+        }
+      }, 1000);
+    }
 
     // Return the public URL path
     return `/uploads/profile-pictures/${folder}/${filename}`;
   } catch (error) {
     console.error("Error processing image:", error);
 
-    // Clean up temp file if it exists
-    if (fs.existsSync(file.path)) {
-      fs.unlinkSync(file.path);
+    // Try to clean up temp file if it exists, but don't throw if cleanup fails
+    try {
+      if (fs.existsSync(file.path)) {
+        await fs.promises.unlink(file.path);
+      }
+    } catch (cleanupError) {
+      console.warn(`Warning: Could not clean up temporary file after error: ${file.path}`);
     }
 
     throw new ErrorResponse(`Image processing failed: ${error.message}`, 500);
