@@ -15,8 +15,11 @@ console.log(
 
 /**
  * Generate access token with role from User Management Service
+ * @param {Object} user - User object
+ * @param {Boolean} rememberMe - Whether to extend token expiration
+ * @returns {String} JWT access token
  */
-exports.generateAccessToken = async (user) => {
+exports.generateAccessToken = async (user, rememberMe = false) => {
   try {
     // Get the latest role from User Management service
     const response = await axios.get(`${USER_SERVICE_URL}/role/${user._id}`, {
@@ -37,10 +40,17 @@ exports.generateAccessToken = async (user) => {
       `Retrieved role '${role}' for user ${user._id} from User Management Service`
     );
 
-    // Generate token with role from User Management
+    // Set expiration based on rememberMe flag
+    const expiration = rememberMe 
+      ? process.env.JWT_EXPIRY_EXTENDED || "24h" 
+      : process.env.JWT_EXPIRY || "1h";
+    
+    console.log(`Using ${expiration} expiration for access token (rememberMe: ${rememberMe})`);
+
+    // Generate token with role from User Management and ensure id is included
     return jwt.sign(
       {
-        id: user._id,
+        id: user._id.toString(), // Convert ObjectId to string
         email: user.email,
         role: role,
         firstName: user.firstName,
@@ -48,7 +58,7 @@ exports.generateAccessToken = async (user) => {
         tokenVersion: user.tokenVersion || 0,
       },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRY || "1h" }
+      { expiresIn: expiration }
     );
   } catch (error) {
     console.error("Failed to get role from User Management:", error.message);
@@ -60,32 +70,48 @@ exports.generateAccessToken = async (user) => {
     }
     console.error("Using default role 'candidate' for token generation");
 
-    // Fallback to default role if User Management is unavailable
+    // Set expiration based on rememberMe flag (fallback case)
+    const expiration = rememberMe 
+      ? process.env.JWT_EXPIRY_EXTENDED || "24h" 
+      : process.env.JWT_EXPIRY || "1h";
+
+    // Fallback with id property still included
     return jwt.sign(
       {
-        id: user._id,
+        id: user._id.toString(), // Ensure this is included and as string
         email: user.email,
-        role: "candidate", // Default fallback role
+        role: "candidate",
         firstName: user.firstName,
         lastName: user.lastName,
         tokenVersion: user.tokenVersion || 0,
       },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRY || "1h" }
+      { expiresIn: expiration }
     );
   }
 };
 
 /**
  * Generate refresh token
+ * @param {Object} user - User object
+ * @param {Boolean} rememberMe - Whether to extend token expiration
+ * @returns {String} JWT refresh token
  */
-exports.generateRefreshToken = (user) => {
+exports.generateRefreshToken = (user, rememberMe = false) => {
+  // Set expiration based on rememberMe flag
+  const expiration = rememberMe 
+    ? process.env.REFRESH_TOKEN_EXPIRY_EXTENDED || "30d" 
+    : process.env.REFRESH_TOKEN_EXPIRY || "7d";
+  
+  console.log(`Using ${expiration} expiration for refresh token (rememberMe: ${rememberMe})`);
+
   return jwt.sign(
     {
-      id: user._id,
+      id: user._id.toString(),
       tokenVersion: user.tokenVersion || 0, // For token revocation
+      rememberMe: rememberMe, // Store the flag in the token
     },
     process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET,
-    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" }
+    { expiresIn: expiration }
   );
 };

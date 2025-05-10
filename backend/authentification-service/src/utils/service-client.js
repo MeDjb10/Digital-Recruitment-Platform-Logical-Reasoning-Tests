@@ -86,7 +86,12 @@ const validateCredentialsBreaker = createBreaker(
 
 const getUserByIdBreaker = createBreaker(async (userId) => {
   try {
-    const response = await userServiceClient.get(`/${userId}`);
+    // Fix the double slash issue by using a properly formatted path
+    const path = `service/${userId}`; // Remove the leading slash
+
+    console.log(`Making request to: ${path}`);
+    
+    const response = await userServiceClient.get(path);
     return response.data;
   } catch (error) {
     // Handle 404s specially (user not found is a normal case)

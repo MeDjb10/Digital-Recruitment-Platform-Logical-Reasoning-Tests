@@ -38,11 +38,18 @@ function verifyToken(allowedRoles = []) {
 
       // Verify token with the secret from environment variables
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("Token decoded successfully:", {
+        decoded_id: decoded.id,
+        decoded_userId: decoded.userId,
+        role: decoded.role,
+        email: decoded.email,
+      });
 
-      // Set user info for use in controllers
-      req.userId = decoded.id || decoded.userId;
+      // Ensure we get the ID correctly, with fallbacks
+      req.userId = decoded.id || decoded.userId || decoded.sub;
       req.userRole = decoded.role;
       req.userEmail = decoded.email;
+      console.log("Set req.userId to:", req.userId);
 
       // Role-based access control
       if (allowedRoles.length > 0 && !allowedRoles.includes(req.userRole)) {

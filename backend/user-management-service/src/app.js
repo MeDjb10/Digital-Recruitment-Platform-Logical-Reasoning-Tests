@@ -4,7 +4,6 @@ const cors = require("cors");
 const morgan = require("morgan");
 const swaggerJsDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
-const userRoutes = require("./routes/user.routes");
 const dotenv = require("dotenv");
 const path = require("path");
 const fs = require("fs");
@@ -12,6 +11,13 @@ const helmet = require("helmet");
 const compression = require("compression");
 const { errorHandler } = require("./utils/error-handler.util");
 const logger = require("./utils/logger.util");
+
+// Import routes
+const authRoutes = require("./routes/auth.routes");
+const userRoutes = require("./routes/user.routes");
+const profileRoutes = require("./routes/profile.routes");
+const roleRoutes = require("./routes/role.routes");
+const testAuthRoutes = require("./routes/test-auth.routes");
 
 // Load environment variables
 dotenv.config();
@@ -159,6 +165,10 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Routes
 app.use("/api/users", userRoutes);
+app.use("/api/users", authRoutes);
+app.use("/api/users", profileRoutes);
+app.use("/api/users", roleRoutes);
+app.use("/api/users", testAuthRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

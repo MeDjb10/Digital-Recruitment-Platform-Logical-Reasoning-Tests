@@ -113,18 +113,20 @@ exports.getUsers = async (queryParams, userRole) => {
 /**
  * Get user by ID
  */
-exports.getUserById = async (userId, userRole, requestUserId) => {
+exports.getUserById = async (userId, userRole, requestUserId, isServiceRequest = false) => {
   const user = await User.findById(userId).select("-password").lean();
 
   if (!user) {
     throw new ErrorResponse("User not found", 404);
   }
 
-  // Check if requester has permission to view this user
-  if (
-    !["admin", "moderator", "psychologist"].includes(userRole) &&
-    requestUserId !== user._id.toString()
-  ) {
+  // Skip permission check for service-to-service requests
+  if (isServiceRequest) {
+    return user;
+  }
+  
+  // For regular user requests, enforce access control
+  if (userId !== requestUserId && !["admin", "moderator"].includes(userRole)) {
     throw new ErrorResponse("Not authorized to access this user profile", 403);
   }
 

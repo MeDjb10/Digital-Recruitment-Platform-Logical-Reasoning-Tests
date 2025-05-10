@@ -1,13 +1,9 @@
 function verifyServiceToken(req, res, next) {
   try {
-    console.log("⚡️ Verifying service-to-service request...");
-    
+    console.log("⚡️ Verifying service-to-service request to:", req.originalUrl);
+
     // Get token from header
     const authHeader = req.headers["authorization"];
-    
-    console.log("📨 Authorization header:", 
-      authHeader ? `${authHeader.substring(0, 20)}...` : "missing");
-    
     if (!authHeader) {
       console.log("❌ Access denied: No authorization header");
       return res.status(403).json({
@@ -39,7 +35,7 @@ function verifyServiceToken(req, res, next) {
 
     const expectedToken = process.env.SERVICE_TOKEN;
     
-    // Log token checks (debugging only)
+    // Log token checks (for debugging only - just show first few chars)
     console.log(
       "🔑 Expected token starts with:",
       expectedToken ? expectedToken.substring(0, 5) + "..." : "NOT SET"
