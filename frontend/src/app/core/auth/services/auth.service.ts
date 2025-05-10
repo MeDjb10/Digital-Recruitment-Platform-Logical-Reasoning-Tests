@@ -6,29 +6,50 @@ import { Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { User } from '../../../core/models/user.model';
 
-
 export interface AuthResponse {
+  success: boolean;
   message?: string;
   accessToken: string;
   refreshToken: string;
-  user?: User;
+  rememberMe?: boolean;
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role?: string;
+  };
 }
 
 export interface RegistrationResponse {
+  success: boolean;
   message: string;
   email: string;
-  activationToken: string;
+  requiresVerification: boolean;
 }
 
 export interface EmailVerificationResponse {
+  success: boolean;
   message: string;
-  accessToken: string;
-  refreshToken: string;
+  user?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    isEmailVerified: boolean;
+    isActive: boolean;
+  };
 }
 
 export interface PasswordResetResponse {
+  success: boolean;
   message: string;
-  resetToken: string;
+}
+
+export interface OtpVerificationResponse {
+  success: boolean;
+  message: string;
 }
 
 @Injectable({
@@ -38,7 +59,12 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  private apiUrl = `${environment.apiUrl}/auth`;
+  // Auth service endpoints
+  private authApiUrl = `${environment.apiUrl}/auth`;
+
+  // User management service endpoints - use correct base URL
+  private userMgmtApiUrl = `${environment.apiUrl}/users`;
+
   private tokenExpiryTimer: any;
 
   constructor(private http: HttpClient, private router: Router) {
@@ -79,6 +105,7 @@ export class AuthService {
     }
   }
 
+  // Register user - Now handled by User Management Service
   register(userData: {
     firstName: string;
     lastName: string;
@@ -86,7 +113,7 @@ export class AuthService {
     password: string;
   }): Observable<RegistrationResponse> {
     return this.http
-      .post<RegistrationResponse>(`${this.apiUrl}/register`, userData)
+      .post<RegistrationResponse>(`${this.userMgmtApiUrl}/signup`, userData)
       .pipe(
         catchError((error) => {
           const errorMessage = error.error?.message || 'Registration failed';
@@ -99,32 +126,24 @@ export class AuthService {
     return this.currentUserSubject.value?.role || 'candidate';
   }
 
-  // Replace the updateCurrentUser method with this version:
   updateCurrentUser(updatedUser: User): void {
-    // Get the current user
     const currentUser = this.currentUserSubject.value;
-
     if (currentUser && updatedUser) {
-      // Check if there are actual changes to avoid unnecessary updates
       let hasChanges = false;
-
-      // Create a merged user object
       const mergedUser = { ...currentUser };
 
-      // Only update fields that have changed
       Object.keys(updatedUser).forEach((key) => {
         const typedKey = key as keyof User;
         if (
           updatedUser[typedKey] !== undefined &&
           updatedUser[typedKey] !== currentUser[typedKey]
         ) {
-          // Type assertion to ensure type compatibility
-          (mergedUser[typedKey] as typeof updatedUser[typeof typedKey]) = updatedUser[typedKey];
+          (mergedUser[typedKey] as (typeof updatedUser)[typeof typedKey]) =
+            updatedUser[typedKey];
           hasChanges = true;
         }
       });
 
-      // Only update the BehaviorSubject if there were actual changes
       if (hasChanges) {
         console.log(
           'Updating current user with changes:',
@@ -134,35 +153,23 @@ export class AuthService {
           })
         );
         this.currentUserSubject.next(mergedUser);
-      } else {
-        console.log('No changes to current user, skipping update');
       }
-    } else {
-      console.warn('Cannot update user: No current user or updated user data');
     }
   }
 
-  // Verify email with OTP after registration
+  // Verify email with OTP after registration - Now handled by User Management Service
   verifyEmail(
     email: string,
-    otp: string,
-    activationToken: string
+    otp: string
   ): Observable<EmailVerificationResponse> {
     return this.http
-      .post<EmailVerificationResponse>(`${this.apiUrl}/verify-email`, {
+      .post<EmailVerificationResponse>(`${this.userMgmtApiUrl}/verify-otp`, {
         email,
         otp,
-        activationToken,
       })
       .pipe(
         tap((response) => {
-          // Store tokens on successful verification
-          if (response.accessToken && response.refreshToken) {
-            this.storeTokens(response.accessToken, response.refreshToken, true);
-
-            // Parse the token for user info
-            this.loadUserFromTokens();
-          }
+          console.log('Email verified successfully:', response.message);
         }),
         catchError((error) => {
           const errorMessage =
@@ -172,16 +179,15 @@ export class AuthService {
       );
   }
 
-  // Resend verification code
-  resendVerificationCode(
-    email: string,
-    activationToken: string
-  ): Observable<RegistrationResponse> {
+  // Resend verification code - Now handled by User Management Service
+  resendVerificationCode(email: string): Observable<RegistrationResponse> {
     return this.http
-      .post<RegistrationResponse>(`${this.apiUrl}/resend-verification`, {
-        email,
-        activationToken,
-      })
+      .post<RegistrationResponse>(
+        `${this.userMgmtApiUrl}/resend-verification`,
+        {
+          email,
+        }
+      )
       .pipe(
         catchError((error) => {
           const errorMessage =
@@ -191,29 +197,32 @@ export class AuthService {
       );
   }
 
-  // Login user with email and password
+  // Login user - Still handled by Authentication Service
   login(
     email: string,
     password: string,
     rememberMe: boolean = false
-  ): Observable<any> {
+  ): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/login`, { email, password })
+      .post<AuthResponse>(`${this.authApiUrl}/login`, {
+        email,
+        password,
+        rememberMe,
+      })
       .pipe(
         tap((response) => {
-          // Store tokens
+          // Store tokens with rememberMe preference
           this.storeTokens(
             response.accessToken,
             response.refreshToken,
-            rememberMe
+            rememberMe || response.rememberMe || false
           );
 
           // Parse the token for user info
           this.loadUserFromTokens();
 
-          // Route the user based on their role (moved from AuthGuard)
+          // Route the user based on their role
           const userRole = this.getCurrentUser()?.role;
-
           if (userRole === 'candidate') {
             this.router.navigate(['/home']);
           } else if (
@@ -221,7 +230,6 @@ export class AuthService {
           ) {
             this.router.navigate(['/dashboard']);
           } else {
-            // Default fallback
             this.router.navigate(['/home']);
           }
         }),
@@ -232,12 +240,15 @@ export class AuthService {
       );
   }
 
-  // Request password reset (sends OTP)
+  // Request password reset - Now handled by User Management Service
   requestPasswordReset(email: string): Observable<PasswordResetResponse> {
     return this.http
-      .post<PasswordResetResponse>(`${this.apiUrl}/request-password-reset`, {
-        email,
-      })
+      .post<PasswordResetResponse>(
+        `${this.userMgmtApiUrl}/request-password-reset`,
+        {
+          email,
+        }
+      )
       .pipe(
         catchError((error) => {
           const errorMessage =
@@ -247,17 +258,15 @@ export class AuthService {
       );
   }
 
-  // Verify OTP for password reset
+  // Verify OTP for password reset - Now handled by User Management Service
   verifyResetOTP(
     email: string,
-    otp: string,
-    resetToken: string
+    otp: string
   ): Observable<PasswordResetResponse> {
     return this.http
-      .post<PasswordResetResponse>(`${this.apiUrl}/verify-reset-otp`, {
+      .post<PasswordResetResponse>(`${this.userMgmtApiUrl}/verify-reset-otp`, {
         email,
         otp,
-        resetToken,
       })
       .pipe(
         catchError((error) => {
@@ -268,16 +277,14 @@ export class AuthService {
       );
   }
 
-  // Reset password with new password
+  // Reset password - Now handled by User Management Service
   resetPassword(
     email: string,
-    resetToken: string,
     newPassword: string
-  ): Observable<any> {
+  ): Observable<PasswordResetResponse> {
     return this.http
-      .post(`${this.apiUrl}/reset-password`, {
+      .post<PasswordResetResponse>(`${this.userMgmtApiUrl}/reset-password`, {
         email,
-        resetToken,
         newPassword,
       })
       .pipe(
@@ -288,41 +295,38 @@ export class AuthService {
       );
   }
 
-  // Request login with OTP
-  requestLoginOTP(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/request-login-otp`, { email }).pipe(
-      catchError((error) => {
-        const errorMessage = error.error?.message || 'OTP request failed';
-        return throwError(() => new Error(errorMessage));
-      })
-    );
-  }
-
-  // Verify login OTP
-  verifyLoginOTP(email: string, otp: string): Observable<AuthResponse> {
-    return this.http
-      .post<AuthResponse>(`${this.apiUrl}/verify-login-otp`, { email, otp })
-      .pipe(
-        tap((response) => {
-          // Store tokens
-          this.storeTokens(response.accessToken, response.refreshToken);
-
-          // Parse the token for user info
-          this.loadUserFromTokens();
+  // Logout - Still handled by Authentication Service
+  logout(): Observable<any> {
+    // Make a call to the logout endpoint if user is logged in
+    if (this.isLoggedIn()) {
+      return this.http.post(`${this.authApiUrl}/logout`, {}).pipe(
+        tap(() => {
+          this.clearAuthData();
         }),
         catchError((error) => {
-          const errorMessage =
-            error.error?.message || 'OTP verification failed';
-          return throwError(() => new Error(errorMessage));
+          // Still clear auth data even if logout API call fails
+          this.clearAuthData();
+          return throwError(
+            () => new Error('Logout failed on server but cleared locally')
+          );
         })
       );
+    } else {
+      // If no user is logged in, just clear local data
+      this.clearAuthData();
+      return new Observable((observer) => {
+        observer.next({ success: true });
+        observer.complete();
+      });
+    }
   }
 
-  // Logout user
-  logout(): void {
+  // Helper method to clear auth data
+  private clearAuthData(): void {
     // Clear tokens from storage
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('rememberMe');
     sessionStorage.removeItem('access_token');
     sessionStorage.removeItem('refresh_token');
 
@@ -367,10 +371,10 @@ export class AuthService {
 
   getCurrentUserId(): string {
     const currentUser = this.getCurrentUser();
-    return currentUser ? currentUser.id : 'guest-user';
+    return currentUser ? currentUser.id : '';
   }
 
-  // Store tokens in local/session storage
+  // Store tokens in local/session storage based on rememberMe option
   private storeTokens(
     accessToken: string,
     refreshToken: string,
@@ -381,12 +385,14 @@ export class AuthService {
     // Clear any existing tokens
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('rememberMe');
     sessionStorage.removeItem('access_token');
     sessionStorage.removeItem('refresh_token');
 
     // Store new tokens
     storage.setItem('access_token', accessToken);
     storage.setItem('refresh_token', refreshToken);
+    storage.setItem('rememberMe', String(rememberMe));
   }
 
   // Set timer for auto logout when token expires
@@ -400,25 +406,26 @@ export class AuthService {
     }, expiryDuration);
   }
 
-  // Add this method to your AuthService class
+  // Refresh token - Still handled by Authentication Service
   refreshTokenRequest(): Observable<AuthResponse> {
     const refreshToken = this.getRefreshToken();
+    const rememberMe = localStorage.getItem('rememberMe') === 'true';
 
     if (!refreshToken) {
       return throwError(() => new Error('No refresh token available'));
     }
 
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/refresh-token`, {
+      .post<AuthResponse>(`${this.authApiUrl}/refresh-token`, {
         refreshToken,
       })
       .pipe(
         tap((response) => {
-          // Store the new tokens
+          // Store the new tokens, preserving the original rememberMe setting
           this.storeTokens(
             response.accessToken,
-            response.refreshToken || refreshToken, // Use new refresh token if provided, otherwise keep the old one
-            localStorage.getItem('access_token') !== null // Keep in localStorage if it was there before
+            response.refreshToken || refreshToken,
+            response.rememberMe !== undefined ? response.rememberMe : rememberMe
           );
 
           // Parse the new token for user info
@@ -426,6 +433,9 @@ export class AuthService {
         }),
         catchError((error) => {
           const errorMessage = error.error?.message || 'Token refresh failed';
+          if (error.status === 401) {
+            this.clearAuthData(); // Clear auth data on unauthorized error
+          }
           return throwError(() => new Error(errorMessage));
         })
       );

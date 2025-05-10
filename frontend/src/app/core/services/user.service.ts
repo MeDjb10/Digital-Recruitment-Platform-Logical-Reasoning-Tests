@@ -104,7 +104,7 @@ export class UserService {
       .pipe(catchError(this.handleError));
   }
 
-  // Update the updateProfilePicture method to handle file uploads correctly
+  // Update profile picture - Fix the endpoint path
   updateProfilePicture(userId: string, file: File): Observable<UserResponse> {
     if (!this.isValidObjectId(userId)) {
       return throwError(() => new Error('Invalid user ID format'));
@@ -122,7 +122,6 @@ export class UserService {
     const formData = new FormData();
 
     // Add the file to the FormData object
-    // The field name MUST match what the server expects (profilePicture)
     formData.append('profilePicture', file, file.name);
 
     // Log the FormData entries (for debugging)
@@ -130,26 +129,21 @@ export class UserService {
       `FormData created with file: ${file.name} (${file.size} bytes)`
     );
 
-    // Return the HTTP request, without setting Content-Type
-    // The browser will set the correct Content-Type with boundary
     return this.http
       .post<UserResponse>(
-        `${this.apiUrl}/${userId}/profile-picture`,
+        `${this.apiUrl}/${userId}/picture`,
         formData,
         {
-          // Important: Do NOT set Content-Type header here
           reportProgress: true,
           observe: 'events',
         }
       )
       .pipe(
-        // Filter for the final response event
         filter((event: any) => event.type === HttpEventType.Response),
         map((event: HttpResponse<UserResponse>) => event.body as UserResponse),
         tap((response) => {
           console.log('Profile picture upload successful:', response);
           if (response.user?.profilePicture) {
-            // Update the profile picture URL to use the full path
             response.user.profilePicture = this.getFullProfilePictureUrl(
               response.user.profilePicture
             );
@@ -162,14 +156,14 @@ export class UserService {
       );
   }
 
-  // Add a method to delete profile picture
+  // Delete profile picture - Fix the endpoint path
   deleteProfilePicture(userId: string): Observable<UserResponse> {
     if (!this.isValidObjectId(userId)) {
       return throwError(() => new Error('Invalid user ID format'));
     }
 
     return this.http
-      .delete<UserResponse>(`${this.apiUrl}/${userId}/profile-picture`)
+      .delete<UserResponse>(`${this.apiUrl}/${userId}/picture`)
       .pipe(
         tap((response) => console.log('Profile picture deleted successfully')),
         catchError(this.handleError)
@@ -193,8 +187,7 @@ export class UserService {
     return url;
   }
 
-  // Submit test authorization request
-  // Submit test authorization request
+  // Submit test authorization request - Fix the endpoint path
   submitTestAuthorizationRequest(
     request: TestAuthorizationRequest,
     profilePicture?: File
@@ -233,7 +226,7 @@ export class UserService {
     });
 
     return this.http
-      .post<UserResponse>(`${this.apiUrl}/test-authorization`, formData)
+      .post<UserResponse>(`${this.apiUrl}/test-auth/request`, formData)
       .pipe(
         tap((response) =>
           console.log('Test authorization request submitted:', response)
@@ -242,7 +235,7 @@ export class UserService {
       );
   }
 
-  // Get test authorization requests (for admin/moderator/psychologist)
+  // Get test authorization requests - Fix the endpoint path
   getTestAuthorizationRequests(
     params: any = {}
   ): Observable<TestAuthorizationRequestsResponse> {
@@ -256,49 +249,63 @@ export class UserService {
 
     return this.http
       .get<TestAuthorizationRequestsResponse>(
-        `${this.apiUrl}/test-authorization-requests`,
+        `${this.apiUrl}/test-auth/requests`,
         { params: httpParams }
       )
       .pipe(catchError(this.handleError));
   }
 
-  // Update test authorization status
+  // Update test authorization status - Fix the endpoint path
   updateTestAuthorizationStatus(
     userId: string,
-    status: 'approved' | 'rejected'
+    status: 'approved' | 'rejected',
+    examDate?: Date
   ): Observable<UserResponse> {
     if (!this.isValidObjectId(userId)) {
       return throwError(() => new Error('Invalid user ID format'));
     }
 
+    const payload = {
+      status,
+      ...(examDate && { examDate: examDate.toISOString() })
+    };
+
     return this.http
-      .put<UserResponse>(`${this.apiUrl}/${userId}/test-authorization`, {
-        status,
-      })
-      .pipe(catchError(this.handleError));
+      .put<UserResponse>(`${this.apiUrl}/test-auth/${userId}/status`, payload)
+      .pipe(
+        tap(response => console.log(`User ${userId} test authorization updated to ${status}`)),
+        catchError(this.handleError)
+      );
   }
 
-  // Bulk update test authorization status
+  // Bulk update test authorization status - Fix the endpoint path
   bulkUpdateTestAuthorizationStatus(
     userIds: string[],
-    status: 'approved' | 'rejected'
+    status: 'approved' | 'rejected',
+    examDate?: Date
   ): Observable<{
     success: boolean;
     message: string;
     updatedCount: number;
     totalRequested: number;
   }> {
+    const payload = {
+      userIds,
+      status,
+      ...(examDate && { examDate: examDate.toISOString() })
+    };
+
     return this.http
       .put<{
         success: boolean;
         message: string;
         updatedCount: number;
         totalRequested: number;
-      }>(`${this.apiUrl}/test-authorization/bulk`, { userIds, status })
+      }>(`${this.apiUrl}/test-auth/bulk-update`, payload)
       .pipe(catchError(this.handleError));
   }
 
-  // Manual test assignment for approved candidates
+  // Manual test assignment for approved candidates - Fix the endpoint path
   manualTestAssignment(
     userId: string,
     assignmentData: {
@@ -313,7 +320,7 @@ export class UserService {
 
     return this.http
       .put<UserResponse>(
-        `${this.apiUrl}/${userId}/test-assignment`,
+        `${this.apiUrl}/test-auth/${userId}/assign`,
         assignmentData
       )
       .pipe(
@@ -322,7 +329,7 @@ export class UserService {
       );
   }
 
-  // Assign role (admin/moderator)
+  // Assign role (admin/moderator) - Fix the endpoint path
   assignRole(userId: string, role: string): Observable<UserResponse> {
     // Check if the userId is in valid MongoDB ObjectId format
     if (!this.isValidObjectId(userId)) {
@@ -330,8 +337,11 @@ export class UserService {
     }
 
     return this.http
-      .put<UserResponse>(`${this.apiUrl}/role`, { userId, role })
-      .pipe(catchError(this.handleError));
+      .put<UserResponse>(`${this.apiUrl}/role/assign`, { userId, role })
+      .pipe(
+        tap(response => console.log(`User ${userId} role updated to ${role}`)),
+        catchError(this.handleError)
+      );
   }
 
   // Delete user (admin only)

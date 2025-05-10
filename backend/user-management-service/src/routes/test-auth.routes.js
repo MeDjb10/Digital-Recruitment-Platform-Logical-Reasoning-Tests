@@ -13,7 +13,7 @@ const {
 
 // Test authorization routes
 router.post(
-  "/request",
+  "/test-auth/request",
   verifyToken(["candidate"]),
   uploadMiddleware,
   validateTestAuthRequest,
@@ -21,13 +21,13 @@ router.post(
 );
 
 router.get(
-  "/requests",
+  "/test-auth/requests",
   verifyToken(["admin", "moderator", "psychologist"]),
   testAuthController.getTestAuthorizationRequests
 );
 
 router.put(
-  "/:userId/status",
+  "/test-auth/:userId/status",
   verifyToken(["admin", "moderator", "psychologist"]),
   validateUserId,
   validateTestAuthStatusUpdate,
@@ -35,7 +35,7 @@ router.put(
 );
 
 router.put(
-  "/:userId/assign",
+  "/test-auth/:userId/assign",
   verifyToken(["admin", "psychologist"]),
   validateUserId,
   validateManualTestAssignment,
@@ -43,7 +43,7 @@ router.put(
 );
 
 router.put(
-  "/bulk-update",
+  "/test-auth/bulk-update",
   verifyToken(["admin", "moderator", "psychologist"]),
   validateBulkTestAuthStatusUpdate,
   testAuthController.bulkUpdateTestAuthorizationStatus

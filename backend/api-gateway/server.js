@@ -109,7 +109,7 @@ app.use(
 
 // Special handling for file upload routes
 app.use(
-  ["/api/users/:userId/profile-picture", "/api/users/test-authorization"],
+  ["/api/users/:userId/picture", "/api/users/test-auth/request"],
   (req, res, next) => {
     if (isMultipartFormData(req)) {
       // Log detailed information about the request
