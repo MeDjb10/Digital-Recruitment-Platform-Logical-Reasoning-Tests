@@ -488,7 +488,7 @@ export class UsersListComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (response) => {
-          // Update user in the list
+          // Update user in the list  
           const index = this.users.findIndex(
             (u) => u.id === this.selectedUser?.id
           );

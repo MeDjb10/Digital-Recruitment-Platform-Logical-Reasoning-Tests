@@ -1,7 +1,7 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { User } from '../../../../core/models/user.model';
+import { User, UserResponse } from '../../../../core/models/user.model';
 import { UserService } from '../../../../core/services/user.service';
 import { ToastModule } from 'primeng/toast';
 import { ButtonModule } from 'primeng/button';
@@ -39,7 +39,7 @@ import { environment } from '../../../../../environments/environment';
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css']
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   
   @ViewChild('fileInput') fileInput!: ElementRef;
 
@@ -72,6 +72,12 @@ export class ProfileComponent implements OnInit {
   passwordStrengthText = 'Password strength';
   isChangingPassword = false;
 
+  dialogStyle = {
+    width: '90vw',
+    maxWidth: '500px',
+    margin: '20px'
+  };
+
   constructor(
     private authService: AuthService,
     private userService: UserService,
@@ -80,7 +86,40 @@ export class ProfileComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.loadUserProfile();
+    // Initial load from auth service
+    const authUser = this.authService.getCurrentUser();
+    if (authUser?.id) {
+      // Force immediate profile load
+      this.userService.getUserById(authUser.id).subscribe({
+        next: (response: UserResponse) => {
+           const user = response.user;
+          this.currentUser = user;
+          this.userContextService.updateUserProfile(user);
+          this.updateUserDisplay(user);
+        },
+        error: (error) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load profile information'
+          });
+        }
+      });
+    }
+
+    // Subscribe to future updates
+    this.userContextService.userProfile$.subscribe(user => {
+      if (user) {
+        this.currentUser = user;
+        this.updateUserDisplay(user);
+      }
+    });
+  }
+
+  private updateUserDisplay(user: User) {
+    this.userInitials = this.getInitials(user.firstName || '', user.lastName || '');
+    this.updateAvatar(user);
+    this.hasFilledAdditionalInfo = this.checkAdditionalInfo(user);
   }
 
   private loadUserProfile() {
@@ -195,30 +234,75 @@ export class ProfileComponent implements OnInit {
     }
   }
   
+  showEditInfo() {
+    if (!this.currentUser?.id) {
+      const authUser = this.authService.getCurrentUser();
+      if (!authUser?.id) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Please login again to continue'
+        });
+        return;
+      }
+      // Load full user data before showing dialog
+      this.userService.getUserById(authUser.id).subscribe({
+         next: (response: UserResponse) => {
+           const user = response.user;
+          this.currentUser = user;
+          this.userContextService.updateUserProfile(user);
+          this.showEditProfile = true;
+        },
+        error: (error) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load user data'
+          });
+        }
+      });
+    } else {
+      this.showEditProfile = true;
+    }
+    this.updateDialogStyle();
+  }
+
+  private updateDialogStyle() {
+    if (window.innerWidth < 768) {
+      this.dialogStyle = {
+        width: '90vw',
+        maxWidth: '500px',
+        margin: '20px'
+      };
+    } else {
+      this.dialogStyle = {
+        width: '500px',
+        maxWidth: '90vw',
+        margin: '0'
+      };
+    }
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.updateDialogStyle();
+  }
+
   handleProfileUpdate(updatedUser: User) {
-    this.currentUser = updatedUser;
+    this.currentUser = { ...updatedUser };
+    this.updateUserDisplay(updatedUser);
     this.showEditProfile = false;
   }
 
-  showEditInfo() {
-    if (!this.currentUser?.id) {
-      // Try to get user from auth service as fallback
-      const authUser = this.authService.getCurrentUser();
-      if (authUser?.id) {
-          this.currentUser = authUser;
-      } else {
-          this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Please login again to continue'
-          });
-          return;
-      }
-  }
-  this.showEditProfile = true;
-}
+  // private updateUserDisplay(user: User) {
+  //   if (user) {
+  //     this.userInitials = this.getInitials(user.firstName || '', user.lastName || '');
+  //     this.updateAvatar(user);
+  //     this.hasFilledAdditionalInfo = this.checkAdditionalInfo(user);
+  //   }
+  // }
 
-// Update your user loading logic
+  // Update your user loading logic
 
   // saveProfileChanges() {
   //   if (!this.editedUser) return;
@@ -243,4 +327,7 @@ export class ProfileComponent implements OnInit {
   //   });
   // }
 
+  ngOnDestroy() {
+    // Clean up subscriptions if needed
+  }
 }
