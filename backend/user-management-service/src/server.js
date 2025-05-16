@@ -2,8 +2,7 @@ const app = require("./app");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const logger = require("./utils/logger.util");
-const { initBrokerConnection } = require("./utils/message-broker");
-
+const { initBrokerConnection, getChannel } = require("./utils/message-broker");
 // Load environment variables
 dotenv.config();
 
@@ -25,13 +24,15 @@ async function startServer() {
     logger.info(
       `Connected to MongoDB at ${MONGODB_URI.split("@")[1] || MONGODB_URI}`
     );
-    
+
     // Try to connect to RabbitMQ but don't block server startup
     try {
       await initBrokerConnection();
     } catch (error) {
       logger.warn(`RabbitMQ connection failed: ${error.message}`);
-      logger.info('Service will continue without RabbitMQ - message publishing will retry later');
+      logger.info(
+        "Service will continue without RabbitMQ - message publishing will retry later"
+      );
     }
 
     // Start HTTP server
@@ -65,3 +66,18 @@ process.on("uncaughtException", (err) => {
   // Close server & exit process
   process.exit(1);
 });
+
+// Log RabbitMQ connection status on startup
+
+setTimeout(async () => {
+  try {
+    const channel = await getChannel();
+    if (channel) {
+      console.log("RabbitMQ connection is active");
+    } else {
+      console.log("RabbitMQ connection not established");
+    }
+  } catch (error) {
+    console.error("Error checking RabbitMQ connection status:", error);
+  }
+}, 5000);

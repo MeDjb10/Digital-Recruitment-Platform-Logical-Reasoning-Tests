@@ -11,6 +11,7 @@ const helmet = require("helmet");
 const compression = require("compression");
 const { errorHandler } = require("./utils/error-handler.util");
 const logger = require("./utils/logger.util");
+const messageBrokerService = require('./services/message-broker.service');
 
 // Import routes
 const authRoutes = require("./routes/auth.routes");
@@ -190,5 +191,15 @@ app.use((req, res) => {
 
 // Global error handler
 app.use(errorHandler);
+
+// Initialize message broker consumers
+(async () => {
+  try {
+    await messageBrokerService.initConsumers();
+    console.log('Message broker consumers initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize message broker consumers:', error);
+  }
+})();
 
 module.exports = app;

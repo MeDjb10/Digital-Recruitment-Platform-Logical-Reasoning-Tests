@@ -53,4 +53,16 @@ const start = async () => {
 
 start();
 
+const messageBrokerService = require('./services/message-broker');
+
+// Initialize message broker consumers
+(async () => {
+  try {
+    await messageBrokerService.initConsumers();
+    console.log('Message broker consumers initialized for test service');
+  } catch (error) {
+    console.error('Failed to initialize message broker consumers:', error);
+  }
+})();
+
 module.exports = app; // For testing purposes

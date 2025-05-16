@@ -34,19 +34,19 @@ router.put(
   testAuthController.updateTestAuthorizationStatus
 );
 
-router.put(
-  "/test-auth/:userId/assign",
-  verifyToken(["admin", "psychologist"]),
-  validateUserId,
-  validateManualTestAssignment,
-  testAuthController.manualTestAssignment
-);
+// router.put(
+//   "/test-auth/:userId/assign",
+//   verifyToken(["admin", "psychologist"]),
+//   validateUserId,
+//   validateManualTestAssignment,
+//   testAuthController.manualTestAssignment
+// );
 
-router.put(
-  "/test-auth/bulk-update",
-  verifyToken(["admin", "moderator", "psychologist"]),
-  validateBulkTestAuthStatusUpdate,
-  testAuthController.bulkUpdateTestAuthorizationStatus
-);
+// router.put(
+//   "/test-auth/bulk-update",
+//   verifyToken(["admin", "moderator", "psychologist"]),
+//   validateBulkTestAuthStatusUpdate,
+//   testAuthController.bulkUpdateTestAuthorizationStatus
+// );
 
 module.exports = router;

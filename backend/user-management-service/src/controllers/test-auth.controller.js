@@ -59,46 +59,46 @@ exports.updateTestAuthorizationStatus = asyncHandler(async (req, res) => {
   });
 });
 
-/**
- * @desc    Manually assign tests to an approved candidate
- * @route   PUT /api/test-auth/:userId/assign
- * @access  Private (Psychologist only)
- */
-exports.manualTestAssignment = asyncHandler(async (req, res) => {
-  const { assignedTest, additionalTests, examDate } = req.body;
+// /**
+//  * @desc    Manually assign tests to an approved candidate
+//  * @route   PUT /api/test-auth/:userId/assign
+//  * @access  Private (Psychologist only)
+//  */
+// exports.manualTestAssignment = asyncHandler(async (req, res) => {
+//   const { assignedTest, additionalTests, examDate } = req.body;
 
-  const updatedUser = await userService.manualTestAssignment(
-    req.params.userId,
-    { assignedTest, additionalTests, examDate },
-    req.userId
-  );
+//   const updatedUser = await userService.manualTestAssignment(
+//     req.params.userId,
+//     { assignedTest, additionalTests, examDate },
+//     req.userId
+//   );
 
-  res.status(200).json({
-    success: true,
-    message: "Test assignment updated successfully",
-    user: updatedUser,
-  });
-});
+//   res.status(200).json({
+//     success: true,
+//     message: "Test assignment updated successfully",
+//     user: updatedUser,
+//   });
+// });
 
-/**
- * @desc    Bulk update test authorization statuses with optional exam date
- * @route   PUT /api/test-auth/bulk-update
- * @access  Private (Admin, Moderator, Psychologist)
- */
-exports.bulkUpdateTestAuthorizationStatus = asyncHandler(async (req, res) => {
-  const { userIds, status, examDate } = req.body;
+// /**
+//  * @desc    Bulk update test authorization statuses with optional exam date
+//  * @route   PUT /api/test-auth/bulk-update
+//  * @access  Private (Admin, Moderator, Psychologist)
+//  */
+// exports.bulkUpdateTestAuthorizationStatus = asyncHandler(async (req, res) => {
+//   const { userIds, status, examDate } = req.body;
 
-  const result = await userService.bulkUpdateTestAuthorizationStatus(
-    userIds,
-    status,
-    req.userId,
-    examDate
-  );
+//   const result = await userService.bulkUpdateTestAuthorizationStatus(
+//     userIds,
+//     status,
+//     req.userId,
+//     examDate
+//   );
 
-  res.status(200).json({
-    success: true,
-    message: `Bulk updated ${result.modifiedCount} test authorization requests to ${status}`,
-    updatedCount: result.modifiedCount,
-    totalRequested: userIds.length,
-  });
-});
+//   res.status(200).json({
+//     success: true,
+//     message: `Bulk updated ${result.modifiedCount} test authorization requests to ${status}`,
+//     updatedCount: result.modifiedCount,
+//     totalRequested: userIds.length,
+//   });
+// });

@@ -128,10 +128,20 @@ const userSchema = new mongoose.Schema({
       enum: ["D-70", "D-2000", "none"],
       default: "none",
     },
+    assignedTestId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Test",
+    },
     additionalTests: [
       {
         type: String,
         enum: ["logique_des_propositions"],
+      },
+    ],
+    additionalTestIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Test",
       },
     ],
     isManualAssignment: {

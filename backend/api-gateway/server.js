@@ -301,6 +301,25 @@ app.use(
   })
 );
 
+// Add to your API Gateway configuration
+app.use(
+  "/api/assignments",
+  proxy("http://localhost:3006", {
+    timeout: 5000,
+    proxyReqPathResolver: (req) => {
+      console.log(`Proxying to test assignment service: ${req.originalUrl}`);
+      return req.originalUrl;
+    },
+    proxyErrorHandler: (err, res, next) => {
+      console.error("Test assignment proxy error:", err.message);
+      res.status(500).json({
+        status: "error",
+        message: "Error connecting to test assignment service",
+        error: process.env.NODE_ENV === "development" ? err.message : undefined,
+      });
+    },
+  })
+);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error("Gateway error:", err);

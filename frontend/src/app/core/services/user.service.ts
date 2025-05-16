@@ -6,8 +6,8 @@ import {
   HttpEventType,
   HttpResponse,
 } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import { Observable, throwError, forkJoin, of } from 'rxjs';
+import { catchError, filter, map, tap, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   User,
@@ -16,6 +16,8 @@ import {
   TestAuthorizationRequest,
   TestAuthorizationRequestsResponse,
 } from '../models/user.model';
+import { TestAssignmentService } from './test-assignment.service';
+import { TestLookupService } from './test-lookup.service';
 
 // Update UserFilter interface to match backend filtering capabilities
 export interface UserFilters {
@@ -43,7 +45,11 @@ export interface UserFilters {
 export class UserService {
   private apiUrl = `${environment.apiUrl}/users`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private testAssignmentService: TestAssignmentService,
+    private testLookupService: TestLookupService // Add this
+  ) {}
 
   // Get current user profile
   getMyProfile(): Observable<UserResponse> {
@@ -130,14 +136,10 @@ export class UserService {
     );
 
     return this.http
-      .post<UserResponse>(
-        `${this.apiUrl}/${userId}/picture`,
-        formData,
-        {
-          reportProgress: true,
-          observe: 'events',
-        }
-      )
+      .post<UserResponse>(`${this.apiUrl}/${userId}/picture`, formData, {
+        reportProgress: true,
+        observe: 'events',
+      })
       .pipe(
         filter((event: any) => event.type === HttpEventType.Response),
         map((event: HttpResponse<UserResponse>) => event.body as UserResponse),
@@ -267,18 +269,74 @@ export class UserService {
 
     const payload = {
       status,
-      ...(examDate && { examDate: examDate.toISOString() })
+      ...(examDate && { examDate: examDate.toISOString() }),
     };
 
     return this.http
       .put<UserResponse>(`${this.apiUrl}/test-auth/${userId}/status`, payload)
       .pipe(
-        tap(response => console.log(`User ${userId} test authorization updated to ${status}`)),
+        tap((response) =>
+          console.log(`User ${userId} test authorization updated to ${status}`)
+        ),
         catchError(this.handleError)
       );
   }
 
-  // Bulk update test authorization status - Fix the endpoint path
+  manualTestAssignment(
+    userId: string,
+    assignmentData: {
+      assignedTest: 'D-70' | 'D-2000';
+      additionalTests?: string[];
+      examDate?: Date | string;
+    }
+  ): Observable<{ success: boolean; message: string }> {
+    if (!this.isValidObjectId(userId)) {
+      return throwError(() => new Error('Invalid user ID format'));
+    }
+
+    // Use the TestLookupService to get test IDs dynamically
+    return forkJoin({
+      mainTestId: this.testLookupService.getTestIdByName(
+        assignmentData.assignedTest
+      ),
+      additionalTestIds:
+        assignmentData.additionalTests &&
+        assignmentData.additionalTests.length > 0
+          ? this.testLookupService.getTestIdsByNames(
+              assignmentData.additionalTests
+            )
+          : of([]),
+    }).pipe(
+      switchMap(({ mainTestId, additionalTestIds }) => {
+        if (!mainTestId) {
+          return throwError(
+            () =>
+              new Error(
+                `Test "${assignmentData.assignedTest}" not found. Please try again later or contact support.`
+              )
+          );
+        }
+
+        return this.testAssignmentService.manualTestAssignment(userId, {
+          assignedTestId: mainTestId,
+          additionalTestIds,
+          examDate: assignmentData.examDate,
+        });
+      }),
+      map((response) => ({
+        success: response.success,
+        message: response.message,
+      })),
+      catchError((error) => {
+        console.error('Error in test assignment:', error);
+        return throwError(
+          () => new Error(error.message || 'Failed to assign test')
+        );
+      })
+    );
+  }
+
+  // Modified to delegate to TestAssignmentService
   bulkUpdateTestAuthorizationStatus(
     userIds: string[],
     status: 'approved' | 'rejected',
@@ -289,43 +347,18 @@ export class UserService {
     updatedCount: number;
     totalRequested: number;
   }> {
-    const payload = {
-      userIds,
-      status,
-      ...(examDate && { examDate: examDate.toISOString() })
-    };
-
-    return this.http
-      .put<{
-        success: boolean;
-        message: string;
-        updatedCount: number;
-        totalRequested: number;
-      }>(`${this.apiUrl}/test-auth/bulk-update`, payload)
-      .pipe(catchError(this.handleError));
-  }
-
-  // Manual test assignment for approved candidates - Fix the endpoint path
-  manualTestAssignment(
-    userId: string,
-    assignmentData: {
-      assignedTest: 'D-70' | 'D-2000';
-      additionalTests?: string[];
-      examDate?: Date | string;
-    }
-  ): Observable<UserResponse> {
-    if (!this.isValidObjectId(userId)) {
-      return throwError(() => new Error('Invalid user ID format'));
-    }
-
-    return this.http
-      .put<UserResponse>(
-        `${this.apiUrl}/test-auth/${userId}/assign`,
-        assignmentData
-      )
+    // Simply delegate to the TestAssignmentService
+    return this.testAssignmentService
+      .bulkAssignment(userIds, status, examDate)
       .pipe(
-        tap((response) => console.log('Test assignment updated successfully')),
-        catchError(this.handleError)
+        map((response) => ({
+          success: response.success,
+          message:
+            response.message ||
+            `${response.successCount} users updated successfully`,
+          updatedCount: response.successCount,
+          totalRequested: response.totalRequested,
+        }))
       );
   }
 
@@ -339,7 +372,9 @@ export class UserService {
     return this.http
       .put<UserResponse>(`${this.apiUrl}/role/assign`, { userId, role })
       .pipe(
-        tap(response => console.log(`User ${userId} role updated to ${role}`)),
+        tap((response) =>
+          console.log(`User ${userId} role updated to ${role}`)
+        ),
         catchError(this.handleError)
       );
   }

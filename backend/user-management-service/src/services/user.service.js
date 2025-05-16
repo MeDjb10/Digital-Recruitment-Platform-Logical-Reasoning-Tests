@@ -7,7 +7,9 @@ const {
   deleteOldProfilePicture,
 } = require("../utils/file-upload.util");
 const logger = require("../utils/logger.util");
-
+// Add these imports to the top of the file
+const { publishMessage } = require('../utils/message-broker');
+const { EXCHANGES, ROUTING_KEYS } = require('../config/rabbit.config');
 /**
  * Get users with pagination and filtering
  */
@@ -636,250 +638,254 @@ exports.updateTestAuthorizationStatus = async (
     authorizedBy: authorizedById,
   };
 
-  // If approved, automatically assign a test based on education level
-  if (status === "approved") {
-    // Determine education level and assign appropriate test
-    const educationLevel = user.educationLevel || "";
-    const lowerEducationLevels = ["high_school", "vocational", "some_college"];
-
-    // Default test assignment logic
-    const assignedTest = lowerEducationLevels.some((level) =>
-      educationLevel.toLowerCase().includes(level)
-    )
-      ? "D-70"
-      : "D-2000";
-
-    updateData.testAssignment = {
-      assignedTest,
-      additionalTests: [],
-      isManualAssignment: false,
-      assignmentDate: new Date(),
-      assignedBy: authorizedById,
-    };
-
-    // Add exam date if provided
-    if (examDate) {
-      updateData.testAssignment.examDate = new Date(examDate);
-    }
+  // Add exam date if provided
+  const additionalData = {};
+  if (examDate) {
+    additionalData.examDate = new Date(examDate);
   }
 
+  // Update the user with status change only
   const updatedUser = await User.findByIdAndUpdate(
     userId,
-    {
-      $set: updateData,
-    },
+    { $set: updateData },
     { new: true }
   ).select("-password");
+
+  // If approved, publish an event for test assignment
+  if (status === "approved") {
+    await publishMessage(
+      EXCHANGES.USER_EVENTS,
+      ROUTING_KEYS.CANDIDATE_APPROVED,
+      {
+        userId: userId,
+        educationLevel: updatedUser.educationLevel || "",
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        authorizedById: authorizedById,
+        additionalData,
+      }
+    );
+
+    logger.info(`Published candidate approved event for user ${userId}`);
+  }
 
   // Send status change email with test assignment info if approved
   try {
+    await publishMessage(
+      "notification_events", // Use the notification exchange
+      "notification.email.test_auth",
+      {
+        user: updatedUser,
+        status: status,
+      }
+    );
+
     logger.info(
-      `Sending status change email to user ${userId} with status ${status}`
+      `Published email notification request for user ${userId} with status ${status}`
     );
-    await emailUtil.sendStatusChangeEmail(updatedUser, status);
-  } catch (emailError) {
-    logger.error(`Failed to send status change email to user ${userId}`, {
-      error: emailError.message,
+  } catch (error) {
+    logger.error(`Failed to publish email notification for user ${userId}`, {
+      error: error.message,
     });
-    // Continue execution - don't fail the update due to email issues
   }
 
   return updatedUser;
 };
 
-/**
- * Manually assign tests to approved candidates
- */
-exports.manualTestAssignment = async (
-  userId,
-  assignmentData,
-  psychologistId
-) => {
-  const { assignedTest, additionalTests, examDate } = assignmentData;
+// /**
+//  * Manually assign tests to approved candidates
+//  */
+// exports.manualTestAssignment = async (
+//   userId,
+//   assignmentData,
+//   psychologistId
+// ) => {
+//   const { assignedTest, additionalTests, examDate } = assignmentData;
 
-  // Validate input
-  if (!["D-70", "D-2000"].includes(assignedTest)) {
-    throw new ErrorResponse("Invalid test assignment", 400);
-  }
+//   // Validate input
+//   if (!["D-70", "D-2000"].includes(assignedTest)) {
+//     throw new ErrorResponse("Invalid test assignment", 400);
+//   }
 
-  // Validate additionalTests if provided
-  if (additionalTests && !Array.isArray(additionalTests)) {
-    throw new ErrorResponse("Additional tests must be an array", 400);
-  }
+//   // Validate additionalTests if provided
+//   if (additionalTests && !Array.isArray(additionalTests)) {
+//     throw new ErrorResponse("Additional tests must be an array", 400);
+//   }
 
-  if (additionalTests) {
-    for (const test of additionalTests) {
-      if (test !== "logique_des_propositions") {
-        throw new ErrorResponse(`Invalid additional test: ${test}`, 400);
-      }
-    }
-  }
+//   if (additionalTests) {
+//     for (const test of additionalTests) {
+//       if (test !== "logique_des_propositions") {
+//         throw new ErrorResponse(`Invalid additional test: ${test}`, 400);
+//       }
+//     }
+//   }
 
-  // Get the user
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new ErrorResponse("User not found", 404);
-  }
+//   // Get the user
+//   const user = await User.findById(userId);
+//   if (!user) {
+//     throw new ErrorResponse("User not found", 404);
+//   }
 
-  // Verify that the user is approved for testing
-  if (user.testAuthorizationStatus !== "approved") {
-    throw new ErrorResponse(
-      "Cannot assign tests to users who haven't been approved",
-      400
-    );
-  }
+//   // Verify that the user is approved for testing
+//   if (user.testAuthorizationStatus !== "approved") {
+//     throw new ErrorResponse(
+//       "Cannot assign tests to users who haven't been approved",
+//       400
+//     );
+//   }
 
-  // Create the test assignment
-  const testAssignment = {
-    assignedTest,
-    additionalTests: additionalTests || [],
-    isManualAssignment: true,
-    assignmentDate: new Date(),
-    assignedBy: psychologistId,
-  };
+//   // Create the test assignment
+//   const testAssignment = {
+//     assignedTest,
+//     additionalTests: additionalTests || [],
+//     isManualAssignment: true,
+//     assignmentDate: new Date(),
+//     assignedBy: psychologistId,
+//   };
 
-  // Add exam date if provided
-  if (examDate) {
-    testAssignment.examDate = new Date(examDate);
-  }
+//   // Add exam date if provided
+//   if (examDate) {
+//     testAssignment.examDate = new Date(examDate);
+//   }
 
-  // Update the user
-  const updatedUser = await User.findByIdAndUpdate(
-    userId,
-    {
-      $set: { testAssignment },
-    },
-    { new: true }
-  ).select("-password");
+//   // Update the user
+//   const updatedUser = await User.findByIdAndUpdate(
+//     userId,
+//     {
+//       $set: { testAssignment },
+//     },
+//     { new: true }
+//   ).select("-password");
 
-  // Send email notification about test assignment
-  try {
-    logger.info(`Sending test assignment email to user ${userId}`);
-    await emailUtil.sendTestAssignmentEmail(updatedUser);
-  } catch (emailError) {
-    logger.error(`Failed to send test assignment email to user ${userId}`, {
-      error: emailError.message,
-    });
-    // Continue execution - don't fail the update due to email issues
-  }
+//   // Send email notification about test assignment
+//   try {
+//     logger.info(`Sending test assignment email to user ${userId}`);
+//     await emailUtil.sendTestAssignmentEmail(updatedUser);
+//   } catch (emailError) {
+//     logger.error(`Failed to send test assignment email to user ${userId}`, {
+//       error: emailError.message,
+//     });
+//     // Continue execution - don't fail the update due to email issues
+//   }
 
-  return updatedUser;
-};
+//   return updatedUser;
+// };
 
-/**
- * Bulk update test authorization statuses with optional test assignment
- */
-exports.bulkUpdateTestAuthorizationStatus = async (
-  userIds,
-  status,
-  authorizedById,
-  examDate = null
-) => {
-  // Validate input
-  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
-    throw new ErrorResponse("User IDs array is required", 400);
-  }
+// /**
+//  * Bulk update test authorization statuses with optional test assignment
+//  */
+// exports.bulkUpdateTestAuthorizationStatus = async (
+//   userIds,
+//   status,
+//   authorizedById,
+//   examDate = null
+// ) => {
+//   // Validate input
+//   if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+//     throw new ErrorResponse("User IDs array is required", 400);
+//   }
 
-  if (!["approved", "rejected"].includes(status)) {
-    throw new ErrorResponse("Invalid status value", 400);
-  }
+//   if (!["approved", "rejected"].includes(status)) {
+//     throw new ErrorResponse("Invalid status value", 400);
+//   }
 
-  // Validate all user IDs
-  for (const userId of userIds) {
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      throw new ErrorResponse(`Invalid user ID format: ${userId}`, 400);
-    }
-  }
+//   // Validate all user IDs
+//   for (const userId of userIds) {
+//     if (!mongoose.Types.ObjectId.isValid(userId)) {
+//       throw new ErrorResponse(`Invalid user ID format: ${userId}`, 400);
+//     }
+//   }
 
-  // For approved candidates, we need to find them first to assign tests based on education level
-  if (status === "approved") {
-    // Get all users to be approved
-    const usersToApprove = await User.find({
-      _id: { $in: userIds },
-      testAuthorizationStatus: { $ne: "not_submitted" },
-    });
+//   // For approved candidates, we need to find them first to assign tests based on education level
+//   if (status === "approved") {
+//     // Get all users to be approved
+//     const usersToApprove = await User.find({
+//       _id: { $in: userIds },
+//       testAuthorizationStatus: { $ne: "not_submitted" },
+//     });
 
-    // Process each user individually to assign appropriate tests
-    const updatePromises = usersToApprove.map(async (user) => {
-      // Determine education level and assign appropriate test
-      const educationLevel = user.educationLevel || "";
-      const lowerEducationLevels = [
-        "high_school",
-        "vocational",
-        "some_college",
-      ];
+//     // Process each user individually to assign appropriate tests
+//     const updatePromises = usersToApprove.map(async (user) => {
+//       // Determine education level and assign appropriate test
+//       const educationLevel = user.educationLevel || "";
+//       const lowerEducationLevels = [
+//         "high_school",
+//         "vocational",
+//         "some_college",
+//       ];
 
-      const assignedTest = lowerEducationLevels.some((level) =>
-        educationLevel.toLowerCase().includes(level)
-      )
-        ? "D-70"
-        : "D-2000";
+//       const assignedTest = lowerEducationLevels.some((level) =>
+//         educationLevel.toLowerCase().includes(level)
+//       )
+//         ? "D-70"
+//         : "D-2000";
 
-      const testAssignment = {
-        assignedTest,
-        additionalTests: [],
-        isManualAssignment: false,
-        assignmentDate: new Date(),
-        assignedBy: authorizedById,
-      };
+//       const testAssignment = {
+//         assignedTest,
+//         additionalTests: [],
+//         isManualAssignment: false,
+//         assignmentDate: new Date(),
+//         assignedBy: authorizedById,
+//       };
 
-      // Add exam date if provided
-      if (examDate) {
-        testAssignment.examDate = new Date(examDate);
-      }
+//       // Add exam date if provided
+//       if (examDate) {
+//         testAssignment.examDate = new Date(examDate);
+//       }
 
-      // Update each user with appropriate test assignment
-      return User.findByIdAndUpdate(user._id, {
-        $set: {
-          testAuthorizationStatus: status,
-          testAuthorizationDate: new Date(),
-          authorizedBy: authorizedById,
-          testAssignment,
-        },
-      });
-    });
+//       // Update each user with appropriate test assignment
+//       return User.findByIdAndUpdate(user._id, {
+//         $set: {
+//           testAuthorizationStatus: status,
+//           testAuthorizationDate: new Date(),
+//           authorizedBy: authorizedById,
+//           testAssignment,
+//         },
+//       });
+//     });
 
-    // Execute all updates
-    await Promise.all(updatePromises);
-  } else {
-    // For rejected candidates, a simple bulk update is sufficient
-    await User.updateMany(
-      {
-        _id: { $in: userIds },
-        testAuthorizationStatus: { $ne: "not_submitted" },
-      },
-      {
-        testAuthorizationStatus: status,
-        testAuthorizationDate: new Date(),
-        authorizedBy: authorizedById,
-      }
-    );
-  }
+//     // Execute all updates
+//     await Promise.all(updatePromises);
+//   } else {
+//     // For rejected candidates, a simple bulk update is sufficient
+//     await User.updateMany(
+//       {
+//         _id: { $in: userIds },
+//         testAuthorizationStatus: { $ne: "not_submitted" },
+//       },
+//       {
+//         testAuthorizationStatus: status,
+//         testAuthorizationDate: new Date(),
+//         authorizedBy: authorizedById,
+//       }
+//     );
+//   }
 
-  // Find the updated users to send emails
-  const updatedUsers = await User.find({
-    _id: { $in: userIds },
-    testAuthorizationStatus: status,
-  });
+//   // Find the updated users to send emails
+//   const updatedUsers = await User.find({
+//     _id: { $in: userIds },
+//     testAuthorizationStatus: status,
+//   });
 
-  // Send emails to all updated users
-  logger.info(
-    `Sending status change emails to ${updatedUsers.length} users with status ${status}`
-  );
+//   // Send emails to all updated users
+//   logger.info(
+//     `Sending status change emails to ${updatedUsers.length} users with status ${status}`
+//   );
 
-  const emailPromises = updatedUsers.map((user) =>
-    emailUtil.sendStatusChangeEmail(user, status).catch((error) => {
-      logger.error(`Failed to send status change email to user ${user._id}`, {
-        error: error.message,
-      });
-      return false; // Prevent Promise.allSettled from failing
-    })
-  );
+//   const emailPromises = updatedUsers.map((user) =>
+//     emailUtil.sendStatusChangeEmail(user, status).catch((error) => {
+//       logger.error(`Failed to send status change email to user ${user._id}`, {
+//         error: error.message,
+//       });
+//       return false; // Prevent Promise.allSettled from failing
+//     })
+//   );
 
-  // Wait for all emails to be sent
-  await Promise.allSettled(emailPromises);
+//   // Wait for all emails to be sent
+//   await Promise.allSettled(emailPromises);
 
-  return {
-    modifiedCount: updatedUsers.length,
-  };
-};
+//   return {
+//     modifiedCount: updatedUsers.length,
+//   };
+// };
