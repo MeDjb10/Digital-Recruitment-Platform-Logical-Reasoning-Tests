@@ -1,10 +1,11 @@
+from typing import Dict, Any
+import logging
 import os
 import joblib
 import pandas as pd
 import numpy as np
 import json
 from pathlib import Path
-import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -100,6 +101,52 @@ class PerformancePredictor:
         except Exception as e:
             logging.error(f"Error making prediction: {e}")
             raise
+
+    def basic_predict(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Predict performance category based on metrics.
+        Currently uses a simple rule-based approach.
+        """
+        try:
+            # Extract key metrics
+            questions_answered = metrics.get('questionsAnswered', 0)
+            correct_answers = metrics.get('correct answers', 0)
+            time_spent = metrics.get('timeSpent', 0)
+            
+            # Calculate basic metrics
+            accuracy = correct_answers / questions_answered if questions_answered > 0 else 0
+            completion_rate = questions_answered / 44  # Assuming D70 test with 44 questions
+            
+            # Simple rule-based categorization
+            if accuracy >= 0.8 and completion_rate >= 0.9:
+                category = "Excellent"
+                confidence = 0.9
+            elif accuracy >= 0.6 and completion_rate >= 0.7:
+                category = "Good"
+                confidence = 0.8
+            elif accuracy >= 0.4 and completion_rate >= 0.5:
+                category = "Average"
+                confidence = 0.7
+            else:
+                category = "Below Average"
+                confidence = 0.6
+                
+            return {
+                "predicted_category": category,
+                "confidence": confidence,
+                "metrics": {
+                    "accuracy": accuracy,
+                    "completion_rate": completion_rate
+                }
+            }
+            
+        except Exception as e:
+            logging.error(f"Prediction failed: {e}")
+            return {
+                "predicted_category": "Unable to predict",
+                "confidence": 0.0,
+                "error": str(e)
+            }
 
 def main():
     try:
