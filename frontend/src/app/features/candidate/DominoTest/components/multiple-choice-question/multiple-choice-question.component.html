@@ -1,0 +1,43 @@
+<div class="p-6 bg-white rounded-lg shadow-sm max-w-5xl mx-auto my-5">
+    <div *ngIf="question && question.propositions">
+        <div *ngFor="let prop of question.propositions; let i = index" class="mb-4 last:mb-0">
+            <div class="flex items-center justify-between gap-8">
+                <p class="text-lg text-gray-700 min-w-[50%] max-w-[50%] flex-shrink-0">
+                    {{ i + 1 }}. {{ prop.text }}
+                </p>
+                <div class="flex gap-3 justify-end min-w-[45%]">
+                    <label *ngFor="let option of evaluationOptions" 
+                           class="flex items-center px-3 py-1 border-2 border-gray-300 rounded-full cursor-pointer transition-colors duration-200 ease-in-out hover:bg-gray-50"
+                           [ngClass]="{
+                               'bg-blue-600 !border-blue-600 !text-white hover:bg-blue-700': responses[i].candidateEvaluation === option.value,
+                               'bg-white': responses[i].candidateEvaluation !== option.value
+                           }">
+                        <input type="radio" 
+                               [name]="'prop_' + i" 
+                               [value]="option.value"
+                               [(ngModel)]="responses[i].candidateEvaluation" 
+                               (change)="onSelectionChange(i, option.value)"
+                               class="hidden" />
+                        <span class="inline-flex items-center gap-1 text-sm">
+                            <svg *ngIf="responses[i].candidateEvaluation === option.value" 
+                                 class="w-4 h-4" 
+                                 fill="none" 
+                                 stroke="currentColor" 
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round" 
+                                      stroke-linejoin="round" 
+                                      stroke-width="2" 
+                                      d="M5 13l4 4L19 7">
+                                </path>
+                            </svg>
+                            {{ option.label }}
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="!question || !question.propositions">
+        <p>Question data is missing propositions.</p>
+    </div>
+</div>

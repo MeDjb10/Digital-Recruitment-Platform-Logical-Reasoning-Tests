@@ -1,61 +1,35 @@
 <!-- Add the modal component at the top level -->
 
 <!-- Only render the main test container if the modal is closed -->
-<div class="test-container" >
+<div class="test-container">
   <!-- Compact Header Component -->
-  <app-test-header
-    [testName]="testName"
-    [formattedTime]="formattedTime"
-    [isTimerWarning]="isTimerWarning"
-    [isTimerCritical]="isTimerCritical"
-    [currentQuestionIndex]="currentQuestionIndex"
-    [totalQuestions]="questions.length"
-    [answeredCount]="answeredCount"
-    [flaggedCount]="flaggedCount"
-    [progressPercentage]="progressPercentage"
-    [progressMarkers]="getProgressMarkers()"
-    [animate]="true"
-  >
+  <app-test-header [testName]="testName" [formattedTime]="formattedTime" [isTimerWarning]="isTimerWarning"
+    [isTimerCritical]="isTimerCritical" [currentQuestionIndex]="currentQuestionIndex"
+    [totalQuestions]="questions.length" [answeredCount]="answeredCount" [flaggedCount]="flaggedCount"
+    [progressPercentage]="progressPercentage" [progressMarkers]="getProgressMarkers()" [animate]="true">
   </app-test-header>
 
   <!-- Help tooltip - Conditionally show based on question type? -->
   <div class="tooltip-container">
-    <app-help-tooltip
-      *ngIf="currentQuestion?.questionType === 'DominoQuestion'"
-      [show]="showTooltip && hasEditableDominos"
-      [animate]="animateTooltip"
-      [title]="'How to Answer'"
-      [description]="'Click on the highlighted domino to edit its values.'"
-      [instructions]="tooltipInstructions"
-      (close)="dismissTooltip()"
-    >
+    <app-help-tooltip *ngIf="currentQuestion?.questionType === 'DominoQuestion'"
+      [show]="showTooltip && hasEditableDominos" [animate]="animateTooltip" [title]="'How to Answer'"
+      [description]="'Click on the highlighted domino to edit its values.'" [instructions]="tooltipInstructions"
+      (close)="dismissTooltip()">
     </app-help-tooltip>
     <!-- Add a tooltip for MCQ if needed -->
-     <app-help-tooltip
-      *ngIf="currentQuestion?.questionType === 'MultipleChoiceQuestion'"
-      [show]="showTooltip"
-      [animate]="animateTooltip"
-      [title]="'How to Answer'"
+    <app-help-tooltip *ngIf="currentQuestion?.questionType === 'MultipleChoiceQuestion'" [show]="showTooltip"
+      [animate]="animateTooltip" [title]="'How to Answer'"
       [description]="'Select True (V), False (F), Cannot Know (?), or Don\'t Understand (X) for each proposition.'"
       [instructions]="['Select one option for each statement.', 'Your answer is saved automatically.']"
-      (close)="dismissTooltip()"
-    >
+      (close)="dismissTooltip()">
     </app-help-tooltip>
   </div>
 
   <main class="test-body">
     <!-- Sidebar Component with navigation & Submit Button -->
-    <app-test-sidebar
-      [questions]="questions"
-      [currentQuestion]="currentQuestionIndex"
-      [isCollapsed]="sidebarCollapsed"
-      [answeredCount]="answeredCount"
-      [showReset]="true"
-      (questionSelected)="goToQuestion($event)"
-      (toggleCollapse)="toggleSidebar()"
-      (finishTest)="finishTest()"
-      (resetTest)="resetTest()"
-    >
+    <app-test-sidebar [questions]="questions" [currentQuestion]="currentQuestionIndex" [isCollapsed]="sidebarCollapsed"
+      [answeredCount]="answeredCount" [showReset]="true" (questionSelected)="goToQuestion($event)"
+      (toggleCollapse)="toggleSidebar()" (finishTest)="finishTest()" (resetTest)="resetTest()">
     </app-test-sidebar>
 
     <section class="question-area">
@@ -65,12 +39,8 @@
           <h2>Question {{ currentQuestionIndex + 1 }}</h2>
           <p class="instruction-text">{{ currentQuestion?.instruction || '' }}</p>
         </div>
-        <button
-          class="flag-button"
-          [class.flagged]="currentQuestion?.flaggedForReview || false"
-          (click)="toggleFlag()"
-          [attr.title]="(currentQuestion?.flaggedForReview || false) ? 'Remove flag' : 'Flag for review'"
-        >
+        <button class="flag-button" [class.flagged]="currentQuestion?.flaggedForReview || false" (click)="toggleFlag()"
+          [attr.title]="(currentQuestion?.flaggedForReview || false) ? 'Remove flag' : 'Flag for review'">
           <i class="pi" [ngClass]="(currentQuestion?.flaggedForReview || false) ? 'pi-flag-fill' : 'pi-flag'"></i>
           <span>{{ (currentQuestion?.flaggedForReview || false) ? 'Flagged' : 'Flag' }}</span>
         </button>
@@ -79,30 +49,20 @@
       <!-- Main Content Area - Conditional Rendering -->
       <div class="content-viewport">
         <!-- Domino Grid -->
-        <app-simple-domino-grid
-          *ngIf="currentQuestion && currentQuestion.questionType === 'DominoQuestion'"
-          [dominos]="currentQuestion.dominos"
-          [arrows]="currentQuestion.arrows || []"
-          [gridLayout]="
+        <app-simple-domino-grid *ngIf="currentQuestion && currentQuestion.questionType === 'DominoQuestion'"
+          [dominos]="currentQuestion.dominos" [arrows]="currentQuestion.arrows || []" [gridLayout]="
             currentQuestion.gridLayout || {
               rows: getAutoGridRows(currentQuestion.dominos),
               cols: getAutoGridCols(currentQuestion.dominos)
             }
-          "
-          [animate]="animateDominoGrid"
-          [showGridInfo]="true"
-          (dominoChanged)="onDominoChanged($event)"
-          (dominoSelected)="onDominoSelected($event)"
-          (hasEditableDominosChanged)="onHasEditableDominosChanged($event)"
-        >
+          " [animate]="animateDominoGrid" [showGridInfo]="true" (dominoChanged)="onDominoChanged($event)"
+          (dominoSelected)="onDominoSelected($event)" (hasEditableDominosChanged)="onHasEditableDominosChanged($event)">
         </app-simple-domino-grid>
 
         <!-- Multiple Choice Question -->
         <app-multiple-choice-question
           *ngIf="currentQuestion && currentQuestion.questionType === 'MultipleChoiceQuestion'"
-          [question]="currentQuestion"
-          (answerChanged)="onPropositionAnswerChanged($event)"
-        >
+          [question]="currentQuestion" (answerChanged)="onPropositionAnswerChanged($event)">
         </app-multiple-choice-question>
 
         <!-- Loading/Error State -->
@@ -110,29 +70,20 @@
           <div class="loading-spinner"></div>
           <span>Loading question...</span>
         </div>
-         <div class="error-container" *ngIf="loadingError">
-           <p>{{ loadingError }}</p>
-           <button (click)="loadTestData(testId)">Retry</button>
-         </div>
+        <div class="error-container" *ngIf="loadingError">
+          <p>{{ loadingError }}</p>
+          <button (click)="loadTestData(testId)">Retry</button>
+        </div>
       </div>
 
       <!-- Navigation Controls -->
-      <app-navigation-controls
-        [isFirstQuestion]="currentQuestionIndex === 0"
+      <app-navigation-controls [isFirstQuestion]="currentQuestionIndex === 0"
         [isLastQuestion]="currentQuestionIndex === questions.length - 1"
-        [isFlagged]="currentQuestion?.flaggedForReview || false"
-        [animate]="animateQuestionControls"
-        [shouldPulse]="false"
-        [canFinish]="true"
-        [currentQuestion]="currentQuestionIndex + 1"
-        [totalQuestions]="questions.length"
-        [showKeyboardHints]="true"
-        (prevClicked)="previousQuestion()"
-        (nextClicked)="nextQuestion()"
-        (flagClicked)="toggleFlag()"
-      >
+        [isFlagged]="currentQuestion?.flaggedForReview || false" [animate]="animateQuestionControls"
+        [shouldPulse]="false" [canFinish]="true" [currentQuestion]="currentQuestionIndex + 1"
+        [totalQuestions]="questions.length" [showKeyboardHints]="true" (prevClicked)="previousQuestion()"
+        (nextClicked)="nextQuestion()" (flagClicked)="toggleFlag()">
       </app-navigation-controls>
     </section>
   </main>
 </div>
-
