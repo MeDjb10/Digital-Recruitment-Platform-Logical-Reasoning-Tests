@@ -19,22 +19,23 @@ class RandomForestTrainer:
         
         # Use ordered category mapping
         self.category_mapping = {
-            'Très Faible': 0,
-            'Faible': 1,
-            'Moyen': 2,
-            'Fort': 3,
-            'Très Fort': 4
+            'très faible': 0,
+            'faible': 1,
+            'moyen': 2,
+            'fort': 3,
+            'très fort': 4
         }
         
         # Update features list for new data format
         self.features = [
-            'time_passed', 
-            'answered_questions',
-            'correct_answers',
-            'skips',
-            'spatial',
-            'numeric',
-            'arithmetic'
+            'questionsAnswered',
+            'correct answers',
+            'timeSpent',
+            'halfCorrect',
+            'reversed',
+            'questionsSkipped',
+            'answerChanges',
+            'flaggedQuestions'
         ]
 
     def _load_category_mapping(self):
@@ -58,20 +59,21 @@ class RandomForestTrainer:
         try:
             # Read CSV with new column names
             df = pd.read_csv(self.data_path, names=[
-                'Time Passed (min)',
-                'Answered Questions',
-                'Correct Answers',
-                'Skips',
-                'Spatial',
-                'Numeric',
-                'Arithmetic',
-                'Performance'
+                'questionsAnswered',
+                'correct answers',
+                'timeSpent',
+                'halfCorrect',
+                'reversed',
+                'questionsSkipped',
+                'answerChanges',
+                'flaggedQuestions',
+                'label'
             ])
             
             logging.info(f"Loaded {len(df)} records from {self.data_path}")
 
             # Analyze class distribution
-            class_distribution = df['Performance'].value_counts()
+            class_distribution = df['label'].value_counts()
             logging.info("\nClass distribution:")
             for category, count in class_distribution.items():
                 logging.info(f"{category}: {count} samples")
@@ -83,27 +85,15 @@ class RandomForestTrainer:
                 logging.warning("\nRemoving classes with insufficient samples:")
                 for category, count in small_classes.items():
                     logging.warning(f"{category}: {count} samples")
-                df = df[~df['Performance'].isin(small_classes.index)]
-
-            # Rename columns to match feature names
-            df = df.rename(columns={
-                'Time Passed (min)': 'time_passed',
-                'Answered Questions': 'answered_questions',
-                'Correct Answers': 'correct_answers',
-                'Skips': 'skips',
-                'Spatial': 'spatial',
-                'Numeric': 'numeric',
-                'Arithmetic': 'arithmetic',
-                'Performance': 'category'
-            })
+                df = df[~df['label'].isin(small_classes.index)]
 
             # Create feature matrix X and target vector y
             X = df[self.features]
-            y = df['category']
+            y = df['label']
 
             # Verify remaining data
             logging.info(f"\nFinal dataset size: {len(df)} samples")
-            remaining_distribution = df['category'].value_counts()
+            remaining_distribution = df['label'].value_counts()
             logging.info("\nFinal class distribution:")
             for category, count in remaining_distribution.items():
                 logging.info(f"{category}: {count} samples")
@@ -211,7 +201,7 @@ class RandomForestTrainer:
 
         # Save model
         import joblib
-        model_path = self.output_dir / 'random_forest_model.joblib'
+        model_path = self.output_dir / 'd2000_model.joblib'
         joblib.dump(self.model, model_path)
         logging.info(f"Model saved to {model_path}")
 
@@ -226,8 +216,8 @@ class RandomForestTrainer:
             json.dump(metadata, f, indent=2)
 
 def main():
-    # Update paths for new data file
-    data_path = "../data/d-70_test_dataset_corrected.csv"
+    # Use the d70 dataset
+    data_path = "../data/d2000_dataset_balanced.csv"
     output_dir = "../models"
     
     # Create output directory if it doesn't exist
