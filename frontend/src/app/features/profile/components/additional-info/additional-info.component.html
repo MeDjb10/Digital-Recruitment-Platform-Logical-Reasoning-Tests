@@ -1,0 +1,97 @@
+<div class="bg-white rounded-xl shadow-md p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-900">Additional Information</h2>
+        <div *ngIf="showApplyRedirect">
+            <a routerLink="/apply"
+                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                <i class="pi pi-pencil mr-2"></i>
+                Complete Your Profile
+            </a>
+        </div>
+    </div>
+
+    <ng-container *ngIf="!showApplyRedirect; else emptyState">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Current Position -->
+            <div class="rounded-lg p-4 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-sm">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">Current Position</h3>
+                <p class="text-base text-gray-900 font-medium">{{user?.currentPosition || 'Not specified'}}</p>
+            </div>
+
+            <!-- Desired Position -->
+            <div class="rounded-lg p-4 bg-gradient-to-br from-purple-50 to-pink-50 shadow-sm">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">Desired Position</h3>
+                <p class="text-base text-gray-900 font-medium">{{user?.desiredPosition || 'Not specified'}}</p>
+            </div>
+
+            <!-- Education Level -->
+            <div class="rounded-lg p-4 bg-gradient-to-br from-green-50 to-emerald-50 shadow-sm">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">Education Level</h3>
+                <p class="text-base text-gray-900 font-medium">{{user?.educationLevel}}</p>
+            </div>
+
+            <!-- Gender -->
+            <div class="rounded-lg p-4 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-sm">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">Gender</h3>
+                <p class="text-base text-gray-900 font-medium">{{user?.gender || 'Not specified'}}</p>
+            </div>
+
+            <!-- Date of Birth -->
+            <div class="rounded-lg p-4 bg-gradient-to-br from-red-50 to-orange-50 shadow-sm">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">Date of Birth</h3>
+                <p class="text-base text-gray-900 font-medium">{{user?.dateOfBirth | date:'mediumDate'}}</p>
+            </div>
+
+            <!-- Test Authorization Status
+            <div class="rounded-lg p-4 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-sm">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">Test Status</h3>
+                <div class="flex flex-col">
+                    <span [ngClass]="{
+                        'text-yellow-600': user?.testAuthorizationStatus === 'pending',
+                        'text-green-600': user?.testAuthorizationStatus === 'approved',
+                        'text-red-600': user?.testAuthorizationStatus === 'rejected',
+                        'text-gray-600': user?.testAuthorizationStatus === 'not_submitted'
+                    }" class="text-base font-medium">
+                        {{user?.testAuthorizationStatus || 'Not Submitted'}}
+                    </span>
+                    <span class="text-sm text-gray-500 mt-1" *ngIf="user?.testAuthorizationDate">
+                        {{user?.testAuthorizationDate | date:'mediumDate'}}
+                    </span>
+                </div>
+            </div> -->
+
+            <!-- Job Application Details -->
+            <div class="rounded-lg p-4 bg-gradient-to-br from-indigo-50 to-violet-50 shadow-sm" *ngIf="user?.testEligibilityInfo">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">Application Details</h3>
+                <div class="space-y-1">
+                    <p class="text-base text-gray-900 font-medium">{{user?.testEligibilityInfo?.jobPosition}}</p>
+                    <p class="text-sm text-gray-600">{{user?.testEligibilityInfo?.company}}</p>
+                    <p class="text-sm text-gray-500" *ngIf="user?.testEligibilityInfo?.department">
+                        {{user?.testEligibilityInfo?.department}}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Availability -->
+            <div class="rounded-lg p-4 bg-gradient-to-br from-teal-50 to-emerald-50 shadow-sm" *ngIf="user?.testEligibilityInfo?.availability">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">Availability</h3>
+                <p class="text-base text-gray-900 font-medium">
+                    {{user?.testEligibilityInfo?.availability | titlecase}}
+                </p>
+            </div>
+        </div>
+    </ng-container>
+
+    <ng-template #emptyState>
+        <div class="text-center py-12">
+            <div class="mb-4">
+                <i class="pi pi-user-plus text-6xl text-gray-300"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Complete Your Profile</h3>
+            <p class="text-gray-500 mb-6">
+                Enhance your profile by providing additional information about yourself. This helps us better understand
+                your background and provide a more personalized experience.
+            </p>
+        </div>
+    </ng-template>
+</div>

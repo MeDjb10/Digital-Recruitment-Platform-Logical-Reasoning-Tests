@@ -8,6 +8,7 @@ import { DominoLayoutBuilderComponent } from './features/candidate/canvaTest/dom
 
 import { ApplicationFormComponent } from './features/candidate/testForm/application-form/application-form.component';
 import { TestSelectComponent } from './features/candidate/testForm/test-select/test-select.component';
+import { ProfileComponent } from './features/profile/pages/profile/profile.component';
 
 export const routes: Routes = [
   {
@@ -23,6 +24,10 @@ export const routes: Routes = [
       import('./features/homepage/homepage.module').then(
         (m) => m.HomepageModule
       ),
+  },
+  {
+    path: 'profile',
+   component: ProfileComponent
   },
   {
     path: 'auth',
