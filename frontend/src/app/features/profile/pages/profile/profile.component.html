@@ -1,0 +1,93 @@
+<div class="bg-blue-50 p-4 md:p-10">
+    <!-- Full-width Top Section -->
+    <div class="w-full bg-white py-4 md:py-8 px-4 md:px-16 rounded-xl shadow-md">
+        <div class="flex flex-col md:flex-row gap-4 items-center">
+            <!-- Profile Picture (No Button) -->
+            <div class="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg mb-4 md:mb-6">
+                <img *ngIf="avatarUrl" [src]="avatarUrl" alt="Profile Picture" class="w-full h-full object-cover"
+                    (error)="handleImageError()">
+                <div *ngIf="!avatarUrl" class="w-full h-full bg-blue-100 flex items-center justify-center">
+                    <span class="text-6xl font-semibold text-blue-500">{{userInitials}}</span>
+                </div>
+            </div>
+
+            <!-- Name and Email -->
+            <div class="flex flex-col justify-start items-center md:items-start">
+                <h1 class="text-4xl md:text-8xl font-bold text-gray-900 text-center md:text-left">
+                    {{ (currentUser?.firstName + ' ' + currentUser?.lastName) | titlecase }}
+                </h1>
+                <p class="text-lg md:text-xl text-gray-500 mt-2 text-center md:text-left">{{currentUser?.email}}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Grid Section -->
+    <div class="w-full grid grid-cols-1 lg:grid-cols-5 gap-6 py-6 md:py-10">
+        <!-- Left 2/5: Status, Role, Member Since -->
+        <div class="col-span-1 lg:col-span-1 space-y-4">
+            <div class="bg-white rounded-xl shadow-md p-6 space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 font-medium">Status</span>
+                    <span class="px-3 py-1 rounded-full text-sm" [ngClass]="{
+            'bg-green-100 text-green-800': currentUser?.status === 'active',
+            'bg-red-100 text-red-800': currentUser?.status === 'inactive',
+            'bg-yellow-100 text-yellow-800': currentUser?.status === 'pending'
+          }">
+                        {{currentUser?.status | titlecase}}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 font-medium">Member since</span>
+                    <span class="text-gray-900">{{currentUser?.createdAt | date:'mediumDate'}}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 font-medium">Role:</span>
+                    <span class="text-gray-900">{{formatRole(currentUser?.role || '')}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right 3/5: Buttons and Candidate Info -->
+        <div class="col-span-1 lg:col-span-4 space-y-6">
+            <div class="flex flex-col sm:flex-row gap-4 sm:space-x-4">
+                <button (click)="showEditInfo()"
+                    class="flex md:flex-1 items-center bg-white justify-center border-2 border-blue-500 text-blue-500 font-semibold py-2 px-4 rounded-lg transition duration-200 hover:bg-blue-500 hover:text-white">
+                    <i class="pi pi-pencil mr-2"></i>
+                    Edit Profile
+                </button>
+
+                <!-- Change Password Button -->
+                <button (click)="showChangePasswordD()"
+                    class="flex md:flex-1 items-center bg-white justify-center border-2 border-blue-500 text-blue-500 font-semibold py-2 px-4 rounded-lg transition duration-200 hover:bg-blue-500 hover:text-white">
+                    <i class="pi pi-key mr-2"></i>
+                    Change Password
+                </button>
+            </div>
+
+            <!-- Candidate Additional Info -->
+            <div *ngIf="currentUser?.role === 'candidate'" class="bg-white rounded-xl shadow-md p-6">
+                <app-additional-info [user]="currentUser" [showApplyRedirect]="!hasFilledAdditionalInfo">
+                </app-additional-info>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" #fileInput id="fileInput" (change)="onProfilePictureSelected($event)" accept="image/*"
+        style="display: none" />
+
+    <!-- Toast and Dialogs -->
+    <p-toast></p-toast>
+
+    <p-dialog header="Edit Profile" [(visible)]="showEditProfile" [modal]="true" [style]="{width: '500px'}"
+        [draggable]="false" [resizable]="false" (onHide)="onDialogHide()">
+        <app-change-info [currentUser]="currentUser" (saved)="handleProfileUpdate($event)"
+            (cancelled)="showEditProfile = false">
+        </app-change-info>
+    </p-dialog>
+
+    <p-dialog header="Change Password" [(visible)]="showChangePassword" [modal]="true" [style]="{width: '500px'}"
+        [draggable]="false" [resizable]="false">
+        <app-change-password #changePasswordDialog [currentUser]="currentUser"></app-change-password>
+    </p-dialog>
+</div>

@@ -43,7 +43,8 @@ export class DominoTestSectionComponent implements OnInit {
   inversedAnswers: number = 3;
   skippedQuestions: number = 2;
   timeChartData: any;
-
+  Performance: String= "Fort";
+  isAiAnalysisVisible: boolean = false;
   constructor(private location: Location) {
     this.chartOptions = {
       series: [{
@@ -100,67 +101,67 @@ export class DominoTestSectionComponent implements OnInit {
   initializeTreeMap() {
     this.chartOptions = {
       series: [
-        {
-          data: this.timeChartData.datasets[0].data.map((time: number, index: number) => ({
-            x: `Q${index + 1}`,
-            y: time
-          }))
-        }
+      {
+        data: this.timeChartData.datasets[0].data.map((time: number, index: number) => ({
+        x: `Q${index + 1}`,
+        y: time
+        }))
+      }
       ],
       chart: {
-        height: 450,
-        type: "treemap",
-        toolbar: {
-          show: false
-        }
+      height: 450,
+      type: "treemap",
+      toolbar: {
+        show: false
+      }
       },
       title: {
-        text: "Time Distribution per Question",
-        align: "center",
-        style: {
-          fontSize: '16px',
-          fontWeight: 600
-        }
+      text: "Time Distribution per Question",
+      align: "center",
+      style: {
+        fontSize: '16px',
+        fontWeight: 600
+      }
       },
       colors: this.timeChartData.datasets[0].backgroundColor,
       plotOptions: {
-        treemap: {
-          distributed: true,
-          enableShades: false,
-          colorScale: {
-            ranges: [
-              {
-                from: 0,
-                to: 35,
-                // Green
-              },
-              {
-                from: 36,
-                to: 45,
-                color: '#FFA500' // Orange
-              },
-              {
-                from: 46,
-                to: 100,
-                color: '#F44336' // Red
-              }
-            ]
+      treemap: {
+        distributed: true,
+        enableShades: false,
+        colorScale: {
+        ranges: [
+          {
+          from: 0,
+          to: 35,
+          color: '#4CAF50' // Green
+          },
+          {
+          from: 36,
+          to: 45,
+          color: '#FFA500' // Orange
+          },
+          {
+          from: 46,
+          to: 100,
+          color: '#F44336' // Red
           }
+        ]
         }
+      }
       },
       dataLabels: {
-        enabled: true,
-        style: {
-          fontSize: '12px',
-          fontFamily: 'sans-serif',
-          fontWeight: 'bold'
-        },
-        formatter: function (text: string, op: any): string {
-          return text + ' - ' + Math.round(op.value) + 's';
-        }
+      enabled: true,
+      style: {
+        fontSize: '12px',
+        fontFamily: 'sans-serif',
+        fontWeight: 'bold'
+      },
+      formatter: function (text: string, op: any): string {
+        return text + ' - ' + Math.round(op.value) + 's';
+      }
       },
       legend: {
-        show: false
+      show: false
       }
     };
   }
