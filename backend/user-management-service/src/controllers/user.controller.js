@@ -196,3 +196,24 @@ exports.getUserRole = asyncHandler(async (req, res) => {
     role: user.role
   });
 });
+
+/**
+ * @desc    Get test assignment for a user
+ * @route   GET /api/users/:userId/test-assignment
+ * @access  Private (User themselves, Admin, Moderator, Psychologist)
+ */
+exports.getUserTestAssignment = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  // Check if user is accessing their own test assignment or has appropriate permissions
+  if (userId !== req.userId && !["admin", "moderator", "psychologist"].includes(req.userRole)) {
+    throw new ErrorResponse("Not authorized to access this test assignment", 403);
+  }
+
+  const testAssignment = await userService.getUserTestAssignment(userId);
+
+  res.status(200).json({
+    success: true,
+    data: testAssignment,
+  });
+});

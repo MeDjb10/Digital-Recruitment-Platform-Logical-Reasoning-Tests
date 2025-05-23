@@ -31,6 +31,14 @@ router.get(
   userController.getUserById
 );
 
+// Test assignment route
+router.get(
+  "/:userId/test-assignment",
+  verifyToken(),
+  validateUserId,
+  userController.getUserTestAssignment
+);
+
 // User management routes
 router.post("/create", verifyServiceToken, userController.createUser);
 

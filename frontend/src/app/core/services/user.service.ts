@@ -403,6 +403,61 @@ export class UserService {
       .pipe(catchError(this.handleError));
   }
 
+  // Add this method after the updateUserStatus method
+
+  // Get user test assignment
+  getUserTestAssignment(userId: string): Observable<{
+    success: boolean;
+    data: {
+      assignedTest: string;
+      assignedTestId?: string;
+      additionalTests: string[];
+      additionalTestIds: string[];
+      isManualAssignment: boolean;
+      assignmentDate?: Date;
+      examDate?: Date;
+      assignedBy?: {
+        _id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+      };
+    };
+  }> {
+    if (!this.isValidObjectId(userId)) {
+      return throwError(() => new Error('Invalid user ID format'));
+    }
+
+    return this.http
+      .get<{
+        success: boolean;
+        data: {
+          assignedTest: string;
+          assignedTestId?: string;
+          additionalTests: string[];
+          additionalTestIds: string[];
+          isManualAssignment: boolean;
+          assignmentDate?: Date;
+          examDate?: Date;
+          assignedBy?: {
+            _id: string;
+            firstName: string;
+            lastName: string;
+            email: string;
+          };
+        };
+      }>(`${this.apiUrl}/${userId}/test-assignment`)
+      .pipe(
+        tap((response) =>
+          console.log(
+            `Retrieved test assignment for user ${userId}:`,
+            response.data
+          )
+        ),
+        catchError(this.handleError)
+      );
+  }
+
   // Error handler
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An unknown error occurred';
