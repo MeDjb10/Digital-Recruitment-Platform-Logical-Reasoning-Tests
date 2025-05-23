@@ -7,6 +7,7 @@ import {
   AfterViewInit,
   ViewChild,
   HostListener,
+  SimpleChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -38,7 +39,6 @@ import { MultipleChoiceQuestionComponent } from '../../components/multiple-choic
     NavigationControlsComponent,
     HelpTooltipComponent,
     MultipleChoiceQuestionComponent, // Add the new component here
-    
   ],
   templateUrl: './domino-test-modern.component.html',
   styleUrls: ['./domino-test-modern.component.css'],
@@ -98,7 +98,10 @@ export class DominoTestModernComponent
   isTestComplete: boolean = false;
   loading: boolean = true; // Loading state for the test data
 
- 
+  // New properties for instruction handling
+  instructionExpanded: boolean = false;
+  isInstructionLong: boolean = false;
+  private readonly INSTRUCTION_LENGTH_THRESHOLD = 120; // characters
 
   // Progress percentage
   get progressPercentage(): number {
@@ -133,7 +136,14 @@ export class DominoTestModernComponent
       console.log('testId', this.testId);
       this.loadTestData(this.testId);
     });
+  }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    // Check instruction length when question changes
+    if (changes['currentQuestion']) {
+      this.checkInstructionLength();
+      this.instructionExpanded = false; // Reset expansion state
+    }
   }
 
   ngAfterViewInit(): void {
@@ -146,6 +156,7 @@ export class DominoTestModernComponent
       this.animateTooltip = true;
       this.cdr.detectChanges();
     }, 100);
+    this.checkInstructionLength();
   }
 
   ngOnDestroy(): void {
@@ -160,11 +171,7 @@ export class DominoTestModernComponent
     this.trackingService.cleanup();
   }
 
-
-
   loadTestData(testId: string): void {
-
-
     this.loading = true;
     this.loadingError = null;
     console.log('[ModernTest] Loading test data for ID:', testId); // DEBUG
@@ -180,7 +187,10 @@ export class DominoTestModernComponent
     // Load fresh data from backend
     this.dominoTestService.getTest(testId).subscribe({
       next: (testData) => {
-        console.log('[ModernTest] Raw test data loaded from backend:', testData); // DEBUG
+        console.log(
+          '[ModernTest] Raw test data loaded from backend:',
+          testData
+        ); // DEBUG
 
         if (testData) {
           // Store test data
@@ -201,12 +211,14 @@ export class DominoTestModernComponent
           }
 
           // Process questions - handle both _id and id formats, and questionType
-          this.questions = testData.questions.map((q: any, index: number) => ({ // Added index for logging
+          this.questions = testData.questions.map((q: any, index: number) => ({
+            // Added index for logging
             id: q._id || q.id, // Support both formats
             questionType: q.questionType || 'DominoQuestion', // Default to Domino if missing
             title: q.title || '',
             instruction:
-              q.instruction || 'Answer the question based on the information provided', // More generic default
+              q.instruction ||
+              'Answer the question based on the information provided', // More generic default
             // Domino specific fields
             dominos: q.dominos || [],
             arrows: q.arrows || [],
@@ -224,7 +236,10 @@ export class DominoTestModernComponent
             questionNumber: index + 1, // Add question number for easier debugging
           }));
 
-          console.log('[ModernTest] Mapped questions after loading:', JSON.stringify(this.questions, null, 2)); // DEBUG - Log mapped questions
+          console.log(
+            '[ModernTest] Mapped questions after loading:',
+            JSON.stringify(this.questions, null, 2)
+          ); // DEBUG - Log mapped questions
 
           // Set first question as visited and start tracking it
           if (this.questions.length > 0) {
@@ -236,9 +251,8 @@ export class DominoTestModernComponent
             }
           }
 
-       
           this.startTimer();
-          
+
           this.recalculateProgress();
           this.cdr.markForCheck();
         } else {
@@ -255,7 +269,10 @@ export class DominoTestModernComponent
   }
 
   handleSavedProgress(savedProgress: any): void {
-    console.log('[ModernTest] Handling saved progress. Raw saved data:', JSON.stringify(savedProgress, null, 2)); // DEBUG
+    console.log(
+      '[ModernTest] Handling saved progress. Raw saved data:',
+      JSON.stringify(savedProgress, null, 2)
+    ); // DEBUG
 
     this.testId = savedProgress.testId;
     this.testName = savedProgress.testName;
@@ -269,7 +286,9 @@ export class DominoTestModernComponent
       id: q.id, // Assuming ID is saved correctly
       questionType: q.questionType || 'DominoQuestion', // Default if missing in saved data
       title: q.title || '',
-      instruction: q.instruction || 'Answer the question based on the information provided',
+      instruction:
+        q.instruction ||
+        'Answer the question based on the information provided',
       // Domino specific fields
       dominos: q.dominos || [],
       arrows: q.arrows || [],
@@ -288,7 +307,10 @@ export class DominoTestModernComponent
     }));
     this.currentQuestionIndex = savedProgress.currentQuestionIndex || 0;
 
-    console.log('[ModernTest] Mapped questions after loading saved progress (Refined):', JSON.stringify(this.questions, null, 2)); // DEBUG
+    console.log(
+      '[ModernTest] Mapped questions after loading saved progress (Refined):',
+      JSON.stringify(this.questions, null, 2)
+    ); // DEBUG
 
     if (this.questions.length > 0) {
       this.currentQuestion = this.questions[this.currentQuestionIndex];
@@ -301,8 +323,8 @@ export class DominoTestModernComponent
     }
 
     this.recalculateProgress();
-      this.startTimer(); // Resume timer
-  
+    this.startTimer(); // Resume timer
+
     this.loading = false;
     this.cdr.markForCheck();
 
@@ -312,7 +334,9 @@ export class DominoTestModernComponent
 
   saveProgress(): void {
     if (!this.testId || !this.questions || this.questions.length === 0) {
-      console.warn('[ModernTest] Attempted to save progress with invalid data.');
+      console.warn(
+        '[ModernTest] Attempted to save progress with invalid data.'
+      );
       return;
     }
 
@@ -328,15 +352,24 @@ export class DominoTestModernComponent
     };
 
     // DEBUG: Log the data being saved
-    console.log('[ModernTest] Saving progress. Data:', JSON.stringify(progressData.questions.map(q => ({ id: q.id, type: q.questionType, props: q.propositions?.length })), null, 2));
+    console.log(
+      '[ModernTest] Saving progress. Data:',
+      JSON.stringify(
+        progressData.questions.map((q) => ({
+          id: q.id,
+          type: q.questionType,
+          props: q.propositions?.length,
+        })),
+        null,
+        2
+      )
+    );
 
     this.dominoTestService.saveProgress(this.testId, progressData);
   }
 
   startTimer(): void {
-    if ( this.timerSubscription) return; // Ensure modal closed and timer not running
-
-   
+    if (this.timerSubscription) return; // Ensure modal closed and timer not running
 
     // Start a new timer
     this.timerSubscription = interval(1000).subscribe(() => {
@@ -392,8 +425,13 @@ export class DominoTestModernComponent
 
   // Navigation methods
   goToQuestion(index: number): void {
+    // Reset instruction state when changing questions
+    this.instructionExpanded = false;
+
     if (index < 0 || index >= this.questions.length) {
-      console.warn(`[ModernTest] Attempted to navigate to invalid index: ${index}`); // DEBUG
+      console.warn(
+        `[ModernTest] Attempted to navigate to invalid index: ${index}`
+      ); // DEBUG
       return;
     }
 
@@ -407,30 +445,59 @@ export class DominoTestModernComponent
     if (this.currentQuestion) {
       this.trackingService.startQuestionVisit(String(this.currentQuestion.id));
       this.currentQuestion.visited = true;
-      console.log(`[ModernTest] Navigated to question ${index + 1}. Current Question Data (Post-Fix Check):`, JSON.stringify(this.currentQuestion, null, 2)); // DEBUG
-      console.log(`[ModernTest] Question Type (Post-Fix Check): ${this.currentQuestion.questionType}`); // DEBUG
-      console.log(`[ModernTest] Propositions (Post-Fix Check): ${JSON.stringify(this.currentQuestion.propositions)}`); // DEBUG
+      console.log(
+        `[ModernTest] Navigated to question ${
+          index + 1
+        }. Current Question Data (Post-Fix Check):`,
+        JSON.stringify(this.currentQuestion, null, 2)
+      ); // DEBUG
+      console.log(
+        `[ModernTest] Question Type (Post-Fix Check): ${this.currentQuestion.questionType}`
+      ); // DEBUG
+      console.log(
+        `[ModernTest] Propositions (Post-Fix Check): ${JSON.stringify(
+          this.currentQuestion.propositions
+        )}`
+      ); // DEBUG
     } else {
-      console.error(`[ModernTest] Error: currentQuestion is null after navigating to index ${index}`); // DEBUG
+      console.error(
+        `[ModernTest] Error: currentQuestion is null after navigating to index ${index}`
+      ); // DEBUG
     }
-
 
     this.resetAnimations();
     this.startAnimations();
     this.saveProgress(); // Save progress on navigation
-    this.cdr.markForCheck();
+    setTimeout(() => {
+      this.checkInstructionLength();
+      this.cdr.detectChanges();
+    }, 100);
   }
 
   previousQuestion(): void {
+    // Reset instruction state
+    this.instructionExpanded = false;
+
     if (this.currentQuestionIndex > 0) {
       this.goToQuestion(this.currentQuestionIndex - 1);
     }
+    setTimeout(() => {
+      this.checkInstructionLength();
+      this.cdr.detectChanges();
+    }, 100);
   }
 
   nextQuestion(): void {
+    // Reset instruction state
+    this.instructionExpanded = false;
+
     if (this.currentQuestionIndex < this.questions.length - 1) {
       this.goToQuestion(this.currentQuestionIndex + 1);
     }
+    setTimeout(() => {
+      this.checkInstructionLength();
+      this.cdr.detectChanges();
+    }, 100);
   }
 
   // UI interaction methods
@@ -475,7 +542,11 @@ export class DominoTestModernComponent
   }
 
   onDominoChanged(change: DominoChange): void {
-    if (!this.currentQuestion || this.currentQuestion.questionType !== 'DominoQuestion') return;
+    if (
+      !this.currentQuestion ||
+      this.currentQuestion.questionType !== 'DominoQuestion'
+    )
+      return;
 
     const dominoIndex = this.currentQuestion.dominos.findIndex(
       (d) => d.id === change.id
@@ -530,12 +601,16 @@ export class DominoTestModernComponent
 
   // New handler for MCQ answers
   onPropositionAnswerChanged(responses: PropositionResponse[]): void {
-    if (!this.currentQuestion || this.currentQuestion.questionType !== 'MultipleChoiceQuestion') return;
+    if (
+      !this.currentQuestion ||
+      this.currentQuestion.questionType !== 'MultipleChoiceQuestion'
+    )
+      return;
 
     // Store the responses in the question object
     this.currentQuestion.userAnswer = responses;
     // Mark as answered if all propositions have a response other than 'X' (or decide your own logic)
-    const allAnswered = responses.every(r => r.candidateEvaluation !== 'X');
+    const allAnswered = responses.every((r) => r.candidateEvaluation !== 'X');
     this.currentQuestion.answered = allAnswered; // Or simply true once any interaction happens
 
     console.log('Submitting proposition answers:', responses);
@@ -546,11 +621,15 @@ export class DominoTestModernComponent
         .submitAnswer(String(this.currentQuestion.id), responses) // Send the array
         .subscribe({
           next: (response) => {
-            console.log('Proposition answers submitted successfully:', response);
+            console.log(
+              'Proposition answers submitted successfully:',
+              response
+            );
             this.recalculateProgress();
             this.saveProgress(); // Save progress after answering
           },
-          error: (err) => console.error('Error submitting proposition answers:', err),
+          error: (err) =>
+            console.error('Error submitting proposition answers:', err),
         });
     } else {
       console.error('Cannot submit answer: No attempt ID available');
@@ -808,5 +887,47 @@ export class DominoTestModernComponent
       ...dominos.map((d) => (d.col !== undefined ? d.col : 0))
     );
     return maxCol + 1; // Add 1 because cols are 0-indexed
+  }
+
+  /**
+   * Check if the current question's instruction is long enough to need truncation
+   */
+  private checkInstructionLength(): void {
+    if (this.currentQuestion?.instruction) {
+      this.isInstructionLong =
+        this.currentQuestion.instruction.length >
+        this.INSTRUCTION_LENGTH_THRESHOLD;
+    } else {
+      this.isInstructionLong = false;
+    }
+  }
+
+  /**
+   * Toggle the expansion state of the instruction text
+   */
+  toggleInstructionExpanded(): void {
+    this.instructionExpanded = !this.instructionExpanded;
+
+    // Optional: Track analytics for UX improvement
+    if (this.instructionExpanded) {
+      console.log(
+        'User expanded instruction for question:',
+        this.currentQuestionIndex + 1
+      );
+    }
+  }
+
+  /**
+   * Auto-expand instruction if user stays on question for a while
+   */
+  private autoExpandInstruction(): void {
+    if (this.isInstructionLong && !this.instructionExpanded) {
+      setTimeout(() => {
+        if (!this.instructionExpanded && this.isInstructionLong) {
+          this.instructionExpanded = true;
+          this.cdr.detectChanges();
+        }
+      }, 5000); // Auto-expand after 5 seconds
+    }
   }
 }

@@ -145,7 +145,7 @@ export class DominoLayoutBuilderComponent
   validationWarnings: string[] = [];
 
   // Available values for domino halves
-  dominoValueOptions = [1, 2, 3, 4, 5, 6];
+  dominoValueOptions = [0,1, 2, 3, 4, 5, 6];
 
   /* Add this to the component */
   gridJustApplied = false;

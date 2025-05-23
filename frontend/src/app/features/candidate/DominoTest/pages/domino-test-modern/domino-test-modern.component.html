@@ -1,7 +1,7 @@
 <!-- Add the modal component at the top level -->
 
 <!-- Only render the main test container if the modal is closed -->
-<div class="test-container" >
+<div class="test-container">
   <!-- Compact Header Component -->
   <app-test-header
     [testName]="testName"
@@ -31,13 +31,18 @@
     >
     </app-help-tooltip>
     <!-- Add a tooltip for MCQ if needed -->
-     <app-help-tooltip
+    <app-help-tooltip
       *ngIf="currentQuestion?.questionType === 'MultipleChoiceQuestion'"
       [show]="showTooltip"
       [animate]="animateTooltip"
       [title]="'How to Answer'"
-      [description]="'Select True (V), False (F), Cannot Know (?), or Don\'t Understand (X) for each proposition.'"
-      [instructions]="['Select one option for each statement.', 'Your answer is saved automatically.']"
+      [description]="
+        'Select True (V), False (F), Cannot Know (?), or Don\'t Understand (X) for each proposition.'
+      "
+      [instructions]="[
+        'Select one option for each statement.',
+        'Your answer is saved automatically.'
+      ]"
       (close)="dismissTooltip()"
     >
     </app-help-tooltip>
@@ -59,80 +64,192 @@
     </app-test-sidebar>
 
     <section class="question-area">
-      <!-- Compact Question Info Bar -->
+      <!-- Enhanced Compact Question Info Bar with Instruction -->
       <div class="question-info-bar">
-        <div class="question-title">
-          <h2>Question {{ currentQuestionIndex + 1 }}</h2>
-          <p class="instruction-text">{{ currentQuestion?.instruction || '' }}</p>
+        <div class="question-meta-enhanced">
+          <div class="question-number-wrapper">
+            <span class="question-number"
+              >{{ currentQuestionIndex + 1 }}/{{ questions.length }}</span
+            >
+            <div class="question-type-indicator" *ngIf="currentQuestion">
+              <i
+                class="pi"
+                [ngClass]="
+                  currentQuestion.questionType === 'DominoQuestion'
+                    ? 'pi-th-large'
+                    : 'pi-list'
+                "
+                [title]="
+                  currentQuestion.questionType === 'DominoQuestion'
+                    ? 'Domino Logic Question'
+                    : 'Multiple Choice Question'
+                "
+              >
+              </i>
+            </div>
+          </div>
+
+          <!-- Enhanced Instruction Display with Expandable Text -->
+          <div class="instruction-content" *ngIf="currentQuestion?.instruction">
+            <i class="pi pi-info-circle instruction-icon"></i>
+            <div class="instruction-text-wrapper">
+              <span
+                class="instruction-text"
+                [class.expanded]="instructionExpanded"
+                [class.truncated]="!instructionExpanded && isInstructionLong"
+              >
+                {{ currentQuestion?.instruction }}
+              </span>
+              <button
+                *ngIf="isInstructionLong"
+                class="instruction-toggle"
+                (click)="toggleInstructionExpanded()"
+                [attr.aria-label]="
+                  instructionExpanded
+                    ? 'Show less instruction text'
+                    : 'Show more instruction text'
+                "
+              >
+                <i
+                  class="pi"
+                  [ngClass]="
+                    instructionExpanded ? 'pi-chevron-up' : 'pi-chevron-down'
+                  "
+                ></i>
+                <span class="toggle-text">{{
+                  instructionExpanded ? "Less" : "More"
+                }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Fallback when no instruction -->
+          <div
+            class="instruction-placeholder"
+            *ngIf="!currentQuestion?.instruction"
+          >
+            <span class="placeholder-text"
+              >Question {{ currentQuestionIndex + 1 }}</span
+            >
+          </div>
         </div>
-        <button
-          class="flag-button"
-          [class.flagged]="currentQuestion?.flaggedForReview || false"
-          (click)="toggleFlag()"
-          [attr.title]="(currentQuestion?.flaggedForReview || false) ? 'Remove flag' : 'Flag for review'"
-        >
-          <i class="pi" [ngClass]="(currentQuestion?.flaggedForReview || false) ? 'pi-flag-fill' : 'pi-flag'"></i>
-          <span>{{ (currentQuestion?.flaggedForReview || false) ? 'Flagged' : 'Flag' }}</span>
-        </button>
+
+        <div class="question-actions">
+          <button
+            class="flag-button-compact"
+            [class.flagged]="currentQuestion?.flaggedForReview || false"
+            (click)="toggleFlag()"
+            [attr.title]="
+              currentQuestion?.flaggedForReview || false
+                ? 'Remove flag'
+                : 'Flag for review'
+            "
+            [attr.aria-label]="
+              currentQuestion?.flaggedForReview || false
+                ? 'Remove flag from question'
+                : 'Flag question for review'
+            "
+          >
+            <i
+              class="pi"
+              [ngClass]="
+                currentQuestion?.flaggedForReview || false
+                  ? 'pi-flag-fill'
+                  : 'pi-flag'
+              "
+            ></i>
+          </button>
+        </div>
       </div>
 
-      <!-- Main Content Area - Conditional Rendering -->
-      <div class="content-viewport">
-        <!-- Domino Grid -->
-        <app-simple-domino-grid
-          *ngIf="currentQuestion && currentQuestion.questionType === 'DominoQuestion'"
-          [dominos]="currentQuestion.dominos"
-          [arrows]="currentQuestion.arrows || []"
-          [gridLayout]="
-            currentQuestion.gridLayout || {
-              rows: getAutoGridRows(currentQuestion.dominos),
-              cols: getAutoGridCols(currentQuestion.dominos)
-            }
-          "
-          [animate]="animateDominoGrid"
-          [showGridInfo]="true"
-          (dominoChanged)="onDominoChanged($event)"
-          (dominoSelected)="onDominoSelected($event)"
-          (hasEditableDominosChanged)="onHasEditableDominosChanged($event)"
-        >
-        </app-simple-domino-grid>
+      <!-- MAIN CONTENT AREA - Now Gets Maximum Space -->
+      <div class="content-container">
+        <div class="content-viewport">
+          <!-- Domino Grid - Full Focus -->
+          <div
+            class="question-content"
+            *ngIf="
+              currentQuestion &&
+              currentQuestion.questionType === 'DominoQuestion'
+            "
+          >
+            <app-simple-domino-grid
+              [dominos]="currentQuestion.dominos"
+              [arrows]="currentQuestion.arrows || []"
+              [gridLayout]="
+                currentQuestion.gridLayout || {
+                  rows: getAutoGridRows(currentQuestion.dominos),
+                  cols: getAutoGridCols(currentQuestion.dominos)
+                }
+              "
+              [animate]="animateDominoGrid"
+              [showGridInfo]="false"
+              (dominoChanged)="onDominoChanged($event)"
+              (dominoSelected)="onDominoSelected($event)"
+              (hasEditableDominosChanged)="onHasEditableDominosChanged($event)"
+            >
+            </app-simple-domino-grid>
+          </div>
 
-        <!-- Multiple Choice Question -->
-        <app-multiple-choice-question
-          *ngIf="currentQuestion && currentQuestion.questionType === 'MultipleChoiceQuestion'"
-          [question]="currentQuestion"
-          (answerChanged)="onPropositionAnswerChanged($event)"
-        >
-        </app-multiple-choice-question>
+          <!-- Multiple Choice Question - Full Focus -->
+          <div
+            class="question-content"
+            *ngIf="
+              currentQuestion &&
+              currentQuestion.questionType === 'MultipleChoiceQuestion'
+            "
+          >
+            <app-multiple-choice-question
+              [question]="currentQuestion"
+              (answerChanged)="onPropositionAnswerChanged($event)"
+            >
+            </app-multiple-choice-question>
+          </div>
 
-        <!-- Loading/Error State -->
-        <div class="loading-container" *ngIf="!currentQuestion">
-          <div class="loading-spinner"></div>
-          <span>Loading question...</span>
+          <!-- Loading/Error States -->
+          <div
+            class="state-container loading-container"
+            *ngIf="!currentQuestion && !loadingError"
+          >
+            <div class="state-content">
+              <div class="loading-spinner"></div>
+              <h3>Loading Question...</h3>
+              <p>Please wait while we prepare your question.</p>
+            </div>
+          </div>
+
+          <div class="state-container error-container" *ngIf="loadingError">
+            <div class="state-content">
+              <i class="pi pi-exclamation-triangle error-icon"></i>
+              <h3>Unable to Load Question</h3>
+              <p>{{ loadingError }}</p>
+              <button class="retry-button" (click)="loadTestData(testId)">
+                <i class="pi pi-refresh"></i>
+                Try Again
+              </button>
+            </div>
+          </div>
         </div>
-         <div class="error-container" *ngIf="loadingError">
-           <p>{{ loadingError }}</p>
-           <button (click)="loadTestData(testId)">Retry</button>
-         </div>
       </div>
 
-      <!-- Navigation Controls -->
-      <app-navigation-controls
-        [isFirstQuestion]="currentQuestionIndex === 0"
-        [isLastQuestion]="currentQuestionIndex === questions.length - 1"
-        [isFlagged]="currentQuestion?.flaggedForReview || false"
-        [animate]="animateQuestionControls"
-        [shouldPulse]="false"
-        [canFinish]="true"
-        [currentQuestion]="currentQuestionIndex + 1"
-        [totalQuestions]="questions.length"
-        [showKeyboardHints]="true"
-        (prevClicked)="previousQuestion()"
-        (nextClicked)="nextQuestion()"
-        (flagClicked)="toggleFlag()"
-      >
-      </app-navigation-controls>
+      <!-- Compact Navigation - Bottom -->
+      <div class="navigation-container">
+        <app-navigation-controls
+          [isFirstQuestion]="currentQuestionIndex === 0"
+          [isLastQuestion]="currentQuestionIndex === questions.length - 1"
+          [isFlagged]="currentQuestion?.flaggedForReview || false"
+          [animate]="animateQuestionControls"
+          [shouldPulse]="false"
+          [canFinish]="true"
+          [currentQuestion]="currentQuestionIndex + 1"
+          [totalQuestions]="questions.length"
+          [showKeyboardHints]="false"
+          (prevClicked)="previousQuestion()"
+          (nextClicked)="nextQuestion()"
+          (flagClicked)="toggleFlag()"
+        >
+        </app-navigation-controls>
+      </div>
     </section>
   </main>
 </div>
-

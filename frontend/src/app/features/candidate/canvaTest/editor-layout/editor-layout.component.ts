@@ -86,7 +86,7 @@ export class EditorLayoutComponent implements OnInit, AfterViewInit {
   selectedArrow: ArrowPosition | null = null;
   activePropertyTab: 'position' | 'appearance' | 'values' | 'settings' =
     'position';
-  dominoValueOptions = [1, 2, 3, 4, 5, 6];
+  dominoValueOptions = [0,1, 2, 3, 4, 5, 6];
   dominoIdCounter: number = 1;
   arrowIdCounter: number = 1;
 

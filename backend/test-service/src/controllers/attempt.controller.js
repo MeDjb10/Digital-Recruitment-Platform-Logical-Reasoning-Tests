@@ -814,7 +814,7 @@ const getAttemptResults = async (req, res) => {
   }
 
   // Get all questions for the test
-  const questions = await getQuestionsForTest(attempt.testId);
+  const questions = await getQuestionsForTest(attempt.testId.id);
   // Get all responses for this attempt
   const responses = await QuestionResponse.find({ attemptId: id });
 
@@ -907,45 +907,34 @@ const getQuestionsForTest = async (testId) => {
 // Helper functions for user device/browser detection
 const getUserDevice = (userAgent = "") => {
   if (!userAgent) return "Unknown";
-  userAgent = userAgent.toLowerCase(); // Normalize to lower case
 
-  if (userAgent.includes("android")) return "Android";
-  if (
-    userAgent.includes("iphone") ||
-    userAgent.includes("ipad") ||
-    userAgent.includes("ipod")
-  )
+  const ua = userAgent.toLowerCase();
+
+  if (ua.includes("android")) return "Android";
+  if (ua.includes("iphone") || ua.includes("ipad") || ua.includes("ipod"))
     return "iOS";
-  if (userAgent.includes("windows phone")) return "Windows Phone";
-  // Check for windows platforms more carefully
-  if (userAgent.includes("win")) return "Windows"; // Could be improved (e.g., distinguish win64/32)
-  if (userAgent.includes("macintosh") || userAgent.includes("mac os"))
-    return "Mac";
-  if (userAgent.includes("linux")) return "Linux"; // Could be improved (e.g., exclude android)
-  if (userAgent.includes("cros")) return "Chrome OS";
+  if (ua.includes("windows phone")) return "Windows Phone";
+  if (ua.includes("win")) return "Windows";
+  if (ua.includes("macintosh") || ua.includes("mac os")) return "Mac";
+  if (ua.includes("linux") && !ua.includes("android")) return "Linux";
+  if (ua.includes("cros")) return "Chrome OS";
 
   return "Unknown";
 };
 
 const getUserBrowser = (userAgent = "") => {
   if (!userAgent) return "Unknown";
-  userAgent = userAgent.toLowerCase();
 
-  // Order matters: Edge often includes Chrome/Safari strings
-  if (userAgent.includes("edg")) return "Edge"; // Modern Edge (Chromium based)
-  if (userAgent.includes("opr") || userAgent.includes("opera")) return "Opera";
-  if (userAgent.includes("chrome") && !userAgent.includes("chromium"))
-    return "Chrome";
-  if (userAgent.includes("firefox")) return "Firefox";
-  // Safari should be checked after Chrome/Edge
-  if (
-    userAgent.includes("safari") &&
-    !userAgent.includes("chrome") &&
-    !userAgent.includes("edg")
-  )
+  const ua = userAgent.toLowerCase();
+
+  // Order matters for accurate detection
+  if (ua.includes("edg")) return "Edge";
+  if (ua.includes("opr") || ua.includes("opera")) return "Opera";
+  if (ua.includes("chrome") && !ua.includes("chromium")) return "Chrome";
+  if (ua.includes("firefox")) return "Firefox";
+  if (ua.includes("safari") && !ua.includes("chrome") && !ua.includes("edg"))
     return "Safari";
-  if (userAgent.includes("msie") || userAgent.includes("trident"))
-    return "Internet Explorer"; // Older IE
+  if (ua.includes("msie") || ua.includes("trident")) return "Internet Explorer";
 
   return "Unknown";
 };
