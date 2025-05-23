@@ -1,6 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  FormGroup,
+  FormBuilder,
+  Validators,
+} from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { DialogModule } from 'primeng/dialog';
@@ -17,9 +23,9 @@ import { User } from '../../../../core/models/user.model';
     ReactiveFormsModule,
     ButtonModule,
     InputTextModule,
-    DialogModule
+    DialogModule,
   ],
-  templateUrl:'change-password.component.html',
+  templateUrl: 'change-password.component.html',
   styleUrls: ['change-password.component.css'],
 })
 export class ChangePasswordComponent {
@@ -27,13 +33,12 @@ export class ChangePasswordComponent {
   visible = false;
   step: 'request' | 'verify' | 'reset' = 'request';
   isProcessing = false;
-  resetToken = '';
   otp = '';
   email = '';
 
   passwordData = {
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
   };
 
   hideCurrentPassword = true;
@@ -62,11 +67,10 @@ export class ChangePasswordComponent {
   resetForm() {
     this.passwordData = {
       newPassword: '',
-      confirmPassword: ''
+      confirmPassword: '',
     };
     this.step = 'request';
     this.otp = '';
-    this.resetToken = '';
   }
 
   calculatePasswordStrength(password: string) {
@@ -110,70 +114,79 @@ export class ChangePasswordComponent {
     this.isProcessing = true;
     this.authService.requestPasswordReset(this.email).subscribe({
       next: (response) => {
-        this.resetToken = response.resetToken;
+        // No longer storing resetToken
         this.step = 'verify';
         this.messageService.add({
           severity: 'info',
           summary: 'OTP Sent',
-          detail: 'Please check your email for the verification code'
+          detail: 'Please check your email for the verification code',
         });
       },
       error: (error) => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: error.message
+          detail: error.message,
         });
       },
       complete: () => {
         this.isProcessing = false;
-      }
+      },
     });
   }
 
   verifyOTP() {
     this.isProcessing = true;
-    this.authService.verifyResetOTP(this.email, this.otp, this.resetToken).subscribe({
+    // Updated to match the forgot password component pattern
+    this.authService.verifyResetOTP(this.email, this.otp).subscribe({
       next: () => {
         this.step = 'reset';
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'OTP verified successfully',
+        });
       },
       error: (error) => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Invalid OTP. Please try again.'
+          detail: 'Invalid OTP. Please try again.',
         });
       },
       complete: () => {
         this.isProcessing = false;
-      }
+      },
     });
   }
 
   changePassword() {
     if (!this.isPasswordValid()) return;
-    
+
     this.isProcessing = true;
-    this.authService.resetPassword(this.email, this.resetToken, this.passwordData.newPassword).subscribe({
-      next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Password changed successfully'
-        });
-        this.hideDialog();
-      },
-      error: (error) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.message
-        });
-      },
-      complete: () => {
-        this.isProcessing = false;
-      }
-    });
+    // Updated to match the forgot password component pattern - no resetToken needed
+    this.authService
+      .resetPassword(this.email, this.passwordData.newPassword)
+      .subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Password changed successfully',
+          });
+          this.hideDialog();
+        },
+        error: (error) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: error.message,
+          });
+        },
+        complete: () => {
+          this.isProcessing = false;
+        },
+      });
   }
 
   isPasswordValid(): boolean {
