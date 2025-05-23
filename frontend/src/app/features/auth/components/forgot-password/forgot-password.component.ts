@@ -128,8 +128,7 @@ export class ForgotPasswordComponent implements OnDestroy {
     this.authService.requestPasswordReset(email).subscribe({
       next: (response) => {
         this.isProcessing = false;
-        // Store the reset token from response
-        this.resetToken = response.resetToken;
+      
 
         // Move to next step
         this.stepper.next();
@@ -154,6 +153,7 @@ export class ForgotPasswordComponent implements OnDestroy {
     });
   }
 
+  // Update verifyCode method:
   verifyCode() {
     if (this.codeFormGroup.invalid) {
       this.codeSubmitted = true;
@@ -164,14 +164,13 @@ export class ForgotPasswordComponent implements OnDestroy {
     const otp = this.codeFormGroup.get('code')?.value;
 
     this.authService
-      .verifyResetOTP(this.userEmail, otp, this.resetToken)
+      .verifyResetOTP(this.userEmail, otp)
       .subscribe({
         next: (response) => {
           this.isProcessing = false;
-
-          // Store the reset token (it might be updated)
-          this.resetToken = response.resetToken;
-
+          
+          // No need to store reset token anymore
+          
           // Move to next step
           this.stepper.next();
 
@@ -194,6 +193,7 @@ export class ForgotPasswordComponent implements OnDestroy {
       });
   }
 
+  // Update resetPassword method:
   resetPassword() {
     if (this.passwordFormGroup.invalid) {
       this.passwordSubmitted = true;
@@ -204,7 +204,7 @@ export class ForgotPasswordComponent implements OnDestroy {
     const newPassword = this.passwordFormGroup.get('password')?.value;
 
     this.authService
-      .resetPassword(this.userEmail, this.resetToken, newPassword)
+      .resetPassword(this.userEmail, newPassword)
       .subscribe({
         next: () => {
           this.isProcessing = false;
@@ -240,8 +240,7 @@ export class ForgotPasswordComponent implements OnDestroy {
       next: (response) => {
         this.isProcessing = false;
 
-        // Update the reset token
-        this.resetToken = response.resetToken;
+      
 
         // Start cooldown timer
         this.startCooldownTimer();

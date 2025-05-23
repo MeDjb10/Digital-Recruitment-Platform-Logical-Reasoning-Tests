@@ -6,8 +6,8 @@ import {
   HttpEventType,
   HttpResponse,
 } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import { Observable, throwError, forkJoin, of } from 'rxjs';
+import { catchError, filter, map, tap, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   User,
@@ -16,6 +16,8 @@ import {
   TestAuthorizationRequest,
   TestAuthorizationRequestsResponse,
 } from '../models/user.model';
+import { TestAssignmentService } from './test-assignment.service';
+import { TestLookupService } from './test-lookup.service';
 
 // Update UserFilter interface to match backend filtering capabilities
 export interface UserFilters {
@@ -43,7 +45,11 @@ export interface UserFilters {
 export class UserService {
   private apiUrl = `${environment.apiUrl}/users`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private testAssignmentService: TestAssignmentService,
+    private testLookupService: TestLookupService // Add this
+  ) {}
 
   // Get current user profile
   getMyProfile(): Observable<UserResponse> {
@@ -104,7 +110,7 @@ export class UserService {
       .pipe(catchError(this.handleError));
   }
 
-  // Update the updateProfilePicture method to handle file uploads correctly
+  // Update profile picture - Fix the endpoint path
   updateProfilePicture(userId: string, file: File): Observable<UserResponse> {
     if (!this.isValidObjectId(userId)) {
       return throwError(() => new Error('Invalid user ID format'));
@@ -122,7 +128,6 @@ export class UserService {
     const formData = new FormData();
 
     // Add the file to the FormData object
-    // The field name MUST match what the server expects (profilePicture)
     formData.append('profilePicture', file, file.name);
 
     // Log the FormData entries (for debugging)
@@ -130,26 +135,17 @@ export class UserService {
       `FormData created with file: ${file.name} (${file.size} bytes)`
     );
 
-    // Return the HTTP request, without setting Content-Type
-    // The browser will set the correct Content-Type with boundary
     return this.http
-      .post<UserResponse>(
-        `${this.apiUrl}/${userId}/profile-picture`,
-        formData,
-        {
-          // Important: Do NOT set Content-Type header here
-          reportProgress: true,
-          observe: 'events',
-        }
-      )
+      .post<UserResponse>(`${this.apiUrl}/${userId}/picture`, formData, {
+        reportProgress: true,
+        observe: 'events',
+      })
       .pipe(
-        // Filter for the final response event
         filter((event: any) => event.type === HttpEventType.Response),
         map((event: HttpResponse<UserResponse>) => event.body as UserResponse),
         tap((response) => {
           console.log('Profile picture upload successful:', response);
           if (response.user?.profilePicture) {
-            // Update the profile picture URL to use the full path
             response.user.profilePicture = this.getFullProfilePictureUrl(
               response.user.profilePicture
             );
@@ -162,14 +158,14 @@ export class UserService {
       );
   }
 
-  // Add a method to delete profile picture
+  // Delete profile picture - Fix the endpoint path
   deleteProfilePicture(userId: string): Observable<UserResponse> {
     if (!this.isValidObjectId(userId)) {
       return throwError(() => new Error('Invalid user ID format'));
     }
 
     return this.http
-      .delete<UserResponse>(`${this.apiUrl}/${userId}/profile-picture`)
+      .delete<UserResponse>(`${this.apiUrl}/${userId}/picture`)
       .pipe(
         tap((response) => console.log('Profile picture deleted successfully')),
         catchError(this.handleError)
@@ -193,8 +189,7 @@ export class UserService {
     return url;
   }
 
-  // Submit test authorization request
-  // Submit test authorization request
+  // Submit test authorization request - Fix the endpoint path
   submitTestAuthorizationRequest(
     request: TestAuthorizationRequest,
     profilePicture?: File
@@ -233,7 +228,7 @@ export class UserService {
     });
 
     return this.http
-      .post<UserResponse>(`${this.apiUrl}/test-authorization`, formData)
+      .post<UserResponse>(`${this.apiUrl}/test-auth/request`, formData)
       .pipe(
         tap((response) =>
           console.log('Test authorization request submitted:', response)
@@ -242,7 +237,7 @@ export class UserService {
       );
   }
 
-  // Get test authorization requests (for admin/moderator/psychologist)
+  // Get test authorization requests - Fix the endpoint path
   getTestAuthorizationRequests(
     params: any = {}
   ): Observable<TestAuthorizationRequestsResponse> {
@@ -256,49 +251,37 @@ export class UserService {
 
     return this.http
       .get<TestAuthorizationRequestsResponse>(
-        `${this.apiUrl}/test-authorization-requests`,
+        `${this.apiUrl}/test-auth/requests`,
         { params: httpParams }
       )
       .pipe(catchError(this.handleError));
   }
 
-  // Update test authorization status
+  // Update test authorization status - Fix the endpoint path
   updateTestAuthorizationStatus(
     userId: string,
-    status: 'approved' | 'rejected'
+    status: 'approved' | 'rejected',
+    examDate?: Date
   ): Observable<UserResponse> {
     if (!this.isValidObjectId(userId)) {
       return throwError(() => new Error('Invalid user ID format'));
     }
 
+    const payload = {
+      status,
+      ...(examDate && { examDate: examDate.toISOString() }),
+    };
+
     return this.http
-      .put<UserResponse>(`${this.apiUrl}/${userId}/test-authorization`, {
-        status,
-      })
-      .pipe(catchError(this.handleError));
+      .put<UserResponse>(`${this.apiUrl}/test-auth/${userId}/status`, payload)
+      .pipe(
+        tap((response) =>
+          console.log(`User ${userId} test authorization updated to ${status}`)
+        ),
+        catchError(this.handleError)
+      );
   }
 
-  // Bulk update test authorization status
-  bulkUpdateTestAuthorizationStatus(
-    userIds: string[],
-    status: 'approved' | 'rejected'
-  ): Observable<{
-    success: boolean;
-    message: string;
-    updatedCount: number;
-    totalRequested: number;
-  }> {
-    return this.http
-      .put<{
-        success: boolean;
-        message: string;
-        updatedCount: number;
-        totalRequested: number;
-      }>(`${this.apiUrl}/test-authorization/bulk`, { userIds, status })
-      .pipe(catchError(this.handleError));
-  }
-
-  // Manual test assignment for approved candidates
   manualTestAssignment(
     userId: string,
     assignmentData: {
@@ -306,23 +289,80 @@ export class UserService {
       additionalTests?: string[];
       examDate?: Date | string;
     }
-  ): Observable<UserResponse> {
+  ): Observable<{ success: boolean; message: string }> {
     if (!this.isValidObjectId(userId)) {
       return throwError(() => new Error('Invalid user ID format'));
     }
 
-    return this.http
-      .put<UserResponse>(
-        `${this.apiUrl}/${userId}/test-assignment`,
-        assignmentData
-      )
+    // Use the TestLookupService to get test IDs dynamically
+    return forkJoin({
+      mainTestId: this.testLookupService.getTestIdByName(
+        assignmentData.assignedTest
+      ),
+      additionalTestIds:
+        assignmentData.additionalTests &&
+        assignmentData.additionalTests.length > 0
+          ? this.testLookupService.getTestIdsByNames(
+              assignmentData.additionalTests
+            )
+          : of([]),
+    }).pipe(
+      switchMap(({ mainTestId, additionalTestIds }) => {
+        if (!mainTestId) {
+          return throwError(
+            () =>
+              new Error(
+                `Test "${assignmentData.assignedTest}" not found. Please try again later or contact support.`
+              )
+          );
+        }
+
+        return this.testAssignmentService.manualTestAssignment(userId, {
+          assignedTestId: mainTestId,
+          additionalTestIds,
+          examDate: assignmentData.examDate,
+        });
+      }),
+      map((response) => ({
+        success: response.success,
+        message: response.message,
+      })),
+      catchError((error) => {
+        console.error('Error in test assignment:', error);
+        return throwError(
+          () => new Error(error.message || 'Failed to assign test')
+        );
+      })
+    );
+  }
+
+  // Modified to delegate to TestAssignmentService
+  bulkUpdateTestAuthorizationStatus(
+    userIds: string[],
+    status: 'approved' | 'rejected',
+    examDate?: Date
+  ): Observable<{
+    success: boolean;
+    message: string;
+    updatedCount: number;
+    totalRequested: number;
+  }> {
+    // Simply delegate to the TestAssignmentService
+    return this.testAssignmentService
+      .bulkAssignment(userIds, status, examDate)
       .pipe(
-        tap((response) => console.log('Test assignment updated successfully')),
-        catchError(this.handleError)
+        map((response) => ({
+          success: response.success,
+          message:
+            response.message ||
+            `${response.successCount} users updated successfully`,
+          updatedCount: response.successCount,
+          totalRequested: response.totalRequested,
+        }))
       );
   }
 
-  // Assign role (admin/moderator)
+  // Assign role (admin/moderator) - Fix the endpoint path
   assignRole(userId: string, role: string): Observable<UserResponse> {
     // Check if the userId is in valid MongoDB ObjectId format
     if (!this.isValidObjectId(userId)) {
@@ -330,8 +370,13 @@ export class UserService {
     }
 
     return this.http
-      .put<UserResponse>(`${this.apiUrl}/role`, { userId, role })
-      .pipe(catchError(this.handleError));
+      .put<UserResponse>(`${this.apiUrl}/role/assign`, { userId, role })
+      .pipe(
+        tap((response) =>
+          console.log(`User ${userId} role updated to ${role}`)
+        ),
+        catchError(this.handleError)
+      );
   }
 
   // Delete user (admin only)
@@ -356,6 +401,61 @@ export class UserService {
     return this.http
       .patch<UserResponse>(`${this.apiUrl}/${userId}/status`, { status })
       .pipe(catchError(this.handleError));
+  }
+
+  // Add this method after the updateUserStatus method
+
+  // Get user test assignment
+  getUserTestAssignment(userId: string): Observable<{
+    success: boolean;
+    data: {
+      assignedTest: string;
+      assignedTestId?: string;
+      additionalTests: string[];
+      additionalTestIds: string[];
+      isManualAssignment: boolean;
+      assignmentDate?: Date;
+      examDate?: Date;
+      assignedBy?: {
+        _id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+      };
+    };
+  }> {
+    if (!this.isValidObjectId(userId)) {
+      return throwError(() => new Error('Invalid user ID format'));
+    }
+
+    return this.http
+      .get<{
+        success: boolean;
+        data: {
+          assignedTest: string;
+          assignedTestId?: string;
+          additionalTests: string[];
+          additionalTestIds: string[];
+          isManualAssignment: boolean;
+          assignmentDate?: Date;
+          examDate?: Date;
+          assignedBy?: {
+            _id: string;
+            firstName: string;
+            lastName: string;
+            email: string;
+          };
+        };
+      }>(`${this.apiUrl}/${userId}/test-assignment`)
+      .pipe(
+        tap((response) =>
+          console.log(
+            `Retrieved test assignment for user ${userId}:`,
+            response.data
+          )
+        ),
+        catchError(this.handleError)
+      );
   }
 
   // Error handler

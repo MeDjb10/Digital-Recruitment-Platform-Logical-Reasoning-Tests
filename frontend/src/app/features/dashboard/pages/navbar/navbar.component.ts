@@ -397,7 +397,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     });
 
     // Use HttpClient directly to have more control
-    const uploadUrl = `${environment.apiUrl}/users/${this.currentUser.id}/profile-picture`;
+    const uploadUrl = `${environment.apiUrl}/users/${this.currentUser.id}/picture`;
     console.log('Upload URL:', uploadUrl);
 
     // Use XMLHttpRequest for more debugging visibility
@@ -662,8 +662,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   // Logout function that calls the AuthService
+  // Logout user
   logout(): void {
-    this.authService.logout();
-    // The AuthService.logout already handles the navigation to login page
+    this.authService.logout().subscribe({
+      next: () => {
+        console.log('Logout successful');
+        // Navigation is already handled in the AuthService.clearAuthData method
+      },
+      error: (error) => {
+        console.error('Logout error:', error);
+        // Even on error, the AuthService.clearAuthData method will handle navigation
+      },
+    });
   }
 }
