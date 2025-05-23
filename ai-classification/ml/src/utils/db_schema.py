@@ -2,14 +2,17 @@ from typing import TypedDict, List, Optional
 from datetime import datetime
 
 class PerformanceMetrics(TypedDict):
-    time_passed: float
     answered_questions: int
     correct_answers: int
-    skips: int
-    spatial: int
-    numeric: int
-    arithmetic: int
-    timestamp: datetime
+    timeSpent: int
+    halfCorrect: int
+    reversed: int
+    questionsSkipped: int
+    answerChanges: int
+    flaggedQuestions: int
+    timestamp: str
+    desired_position: Optional[str]
+    education_level: Optional[str]
     
 class FeedbackEntry(TypedDict):
     metrics_id: str

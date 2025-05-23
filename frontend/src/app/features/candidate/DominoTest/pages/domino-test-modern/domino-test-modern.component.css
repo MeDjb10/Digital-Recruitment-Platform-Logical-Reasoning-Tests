@@ -2,86 +2,976 @@
   --transition-speed: 0.3s;
   --primary-color: #4f46e5;
   --accent-color: #a2cdf6;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --background-soft: #f8fafc;
+  --border-light: #e2e8f0;
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background-color: #f8fafc;
+  background-color: var(--background-soft);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .test-body {
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-height: 0; /* Important for proper flexbox sizing */
 }
 
+/* Question Area - Content-First Layout */
 .question-area {
   flex: 1;
-  padding: 10px 20px; /* Adjusted padding */
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Adjusted gap */
-  /* Add a minimum height to ensure footer is visible */
-  min-height: 500px;
-  transition: padding var(--transition-speed) ease;
+  overflow: hidden;
+  background-color: white;
+  border-radius: var(--radius-lg) 0 0 0;
+  box-shadow: var(--shadow-medium);
+  margin: var(--spacing-sm);
+  margin-left: 0;
+  min-height: 0; /* Prevent flex item from growing beyond container */
 }
 
-/* Style for the main content viewport */
-.content-viewport {
-  flex: 1; /* Allow this area to grow */
+/* ENHANCED Question Info Bar - Now with Instruction */
+.question-info-bar {
   display: flex;
-  flex-direction: column;
-  justify-content: center; /* Center content vertically */
-  align-items: center; /* Center content horizontally */
-  position: relative;
-  width: 100%; /* Ensure it takes available width */
-  margin: 0 auto;
-  padding: 20px 0;
-  min-height: 350px; /* Ensure minimum height */
-  max-height: calc(100vh - 250px); /* Limit height based on viewport */
-  overflow: visible; /* Allow potential overflow like tooltips */
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg); /* Slightly increased for better content */
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom: 1px solid var(--border-light);
+  border-radius: var(--radius-lg) 0 0 0;
+  min-height: 56px; /* Slightly increased for instruction content */
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* Make grid wrapper have proper spacing and dimensions */
-/* This class might not be needed anymore if content-viewport handles sizing */
-/* .domino-grid-wrapper { ... } */
+.question-meta-enhanced {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-right: var(--spacing-md);
+  min-height: 40px;
+}
 
-/* Adjust domino-viewport if it's still used specifically for the grid */
-.domino-viewport {
-  /* Rename or merge into content-viewport */
-  width: 100%; /* Take full width of parent container */
-  transition: all var(--transition-speed) ease;
-  padding-bottom: 0; /* Remove bottom padding */
-  margin-bottom: 0; /* Remove bottom margin */
-  display: flex; /* Ensure flex properties for centering */
+.question-number-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.question-number {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: #f1f5f9;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  border: 1px solid #e2e8f0;
+}
+
+.question-type-indicator {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.3);
+}
+
+/* Enhanced Instruction Content - Light Background & Dark Text */
+.instruction-content {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  min-height: 32px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: #ffffff !important; /* Force white background */
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  overflow: visible;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.instruction-content:hover {
+  background: #f9fafb !important; /* Force light gray on hover */
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.instruction-icon {
+  color: #6b7280 !important; /* Force gray icon */
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: color 0.2s ease;
+}
+
+.instruction-content:hover .instruction-icon {
+  color: #4f46e5 !important; /* Force primary color on hover */
+}
+
+/* Enhanced instruction text wrapper */
+.instruction-text-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0; /* Important for text wrapping */
+}
+
+.instruction-text {
+  font-size: 0.875rem;
+  color: #1f2937 !important; /* Force dark text */
+  font-weight: 500;
+  line-height: 1.5; /* Improved line height for readability */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  margin: 0;
+  transition: all 0.3s ease;
+}
+
+/* Truncated state - shows only 2 lines */
+.instruction-text.truncated {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Expanded state - shows full text */
+.instruction-text.expanded {
+  display: block;
+  overflow: visible;
+  white-space: normal;
+}
+
+/* Toggle button for long instructions */
+.instruction-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6 !important; /* Force light gray background */
+  border: 1px solid #d1d5db;
+  color: #374151 !important; /* Force dark text */
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.instruction-toggle:hover {
+  background-color: #e5e7eb !important; /* Force darker gray on hover */
+  border-color: #9ca3af;
+  color: #111827 !important; /* Force even darker text */
+  transform: translateY(-1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments for instruction content */
+@media (max-width: 768px) {
+  .instruction-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .instruction-icon {
+    align-self: center;
+    margin-top: 0;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .instruction-text {
+    text-align: center;
+    font-size: 0.8rem;
+  }
+
+  .instruction-text.truncated {
+    line-clamp: 3;
+
+    -webkit-line-clamp: 3; /* Show more lines on mobile */
+  }
+
+  .instruction-toggle {
+    align-self: center;
+    background-color: rgba(0, 179, 255, 0.1);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .instruction-content {
+    padding: var(--spacing-xs);
+  }
+
+  .instruction-text {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .instruction-text.truncated {
+    line-clamp: 4;
+    -webkit-line-clamp: 4; /* Even more lines on very small screens */
+  }
+
+  .instruction-toggle {
+    font-size: 0.7rem;
+  }
+
+  .toggle-text {
+    font-size: 0.65rem;
+  }
+}
+
+/* Enhanced animations for instruction content */
+@keyframes instruction-expand {
+  from {
+    max-height: 48px;
+    opacity: 0.8;
+  }
+  to {
+    max-height: 200px;
+    opacity: 1;
+  }
+}
+
+@keyframes instruction-collapse {
+  from {
+    max-height: 200px;
+    opacity: 1;
+  }
+  to {
+    max-height: 48px;
+    opacity: 0.8;
+  }
+}
+
+.instruction-content.expanding {
+  animation: instruction-expand 0.3s ease-out;
+}
+
+.instruction-content.collapsing {
+  animation: instruction-collapse 0.3s ease-out;
+}
+
+/* Enhanced focus states for accessibility */
+.instruction-toggle:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+  background-color: rgba(56, 189, 248, 0.2);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .instruction-content {
+    border-width: 2px;
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .instruction-text {
+    color: #000000;
+  }
+
+  .instruction-icon {
+    color: #0000ff;
+  }
+
+  .instruction-toggle {
+    color: #0000ff;
+    border: 1px solid #0000ff;
+  }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .instruction-content {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-color: #475569;
+    color: #e2e8f0;
+  }
+
+  .instruction-content:hover {
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
+    border-color: #64748b;
+  }
+
+  .instruction-icon {
+    color: #7dd3fc;
+  }
+
+  .instruction-text {
+    color: #e2e8f0;
+  }
+
+  .instruction-toggle {
+    color: #7dd3fc;
+  }
+
+  .instruction-toggle:hover {
+    background-color: rgba(125, 211, 252, 0.1);
+    color: #a5f3fc;
+  }
+}
+
+/* Smooth transitions for all instruction states */
+.instruction-text,
+.instruction-content,
+.instruction-toggle {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced tooltip styling for very long instructions */
+.instruction-content[data-long="true"] {
+  background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+  border-color: #f59e0b;
+}
+
+.instruction-content[data-long="true"] .instruction-icon {
+  color: #d97706;
+}
+
+.instruction-content[data-long="true"] .instruction-text {
+  color: #92400e;
+}
+
+.instruction-content[data-long="true"] .instruction-toggle {
+  color: #d97706;
+  background-color: rgba(217, 119, 6, 0.1);
+}
+
+/* Fallback placeholder */
+.instruction-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.placeholder-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Enhanced Flag Button */
+.flag-button-compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: white;
+  color: var(--text-secondary);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-soft);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.flag-button-compact::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.flag-button-compact:hover::before {
+  left: 100%;
+}
+
+.flag-button-compact:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+  border-color: #cbd5e1;
+}
+
+.flag-button-compact:active {
+  transform: translateY(0);
+}
+
+.flag-button-compact.flagged {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-color: var(--warning-color);
+  color: #92400e;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.flag-button-compact.flagged:hover {
+  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.flag-button-compact i {
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.flag-button-compact:hover i {
+  transform: scale(1.1);
+}
+
+.flag-button-compact.flagged i {
+  animation: flag-wave 0.6s ease-in-out;
+}
+
+/* ENHANCED Content Container - Now Gets More Space */
+.content-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+  background: linear-gradient(135deg, #fafbff 0%, #f8fafc 100%);
+}
+
+.content-viewport {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-lg); /* Increased padding for better spacing */
+  overflow: auto;
+  min-height: 450px; /* Increased minimum height */
+  position: relative;
+}
+
+.question-content {
+  width: 100%;
+  max-width: 1400px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  animation: content-slide-in 0.4s ease-out;
+}
+
+/* Remove the old instruction-bar styles since we're not using it anymore */
+
+/* Enhanced Animations */
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes flag-wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes content-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design - Enhanced Mobile Experience */
+@media (max-width: 768px) {
+  .question-area {
+    margin: var(--spacing-xs);
+    margin-left: 0;
+  }
+
+  .question-info-bar {
+    padding: var(--spacing-sm) var(--spacing-md);
+    min-height: 52px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+
+  .question-meta-enhanced {
+    margin-right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+
+  .question-number-wrapper {
+    justify-content: center;
+  }
+
+  .instruction-content {
+    padding: var(--spacing-sm);
+  }
+
+  .instruction-text {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    text-align: center;
+    font-size: 0.8rem;
+  }
+
+  .flag-button-compact {
+    align-self: center;
+    width: 36px;
+    height: 36px;
+  }
+
+  .content-viewport {
+    padding: var(--spacing-md);
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .question-info-bar {
+    min-height: 48px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .question-number-wrapper {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .instruction-content {
+    padding: var(--spacing-xs);
+  }
+
+  .instruction-text {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .flag-button-compact {
+    width: 32px;
+    height: 32px;
+  }
+
+  .flag-button-compact i {
+    font-size: 0.875rem;
+  }
+}
+
+/* Enhanced focus states for accessibility */
+.flag-button-compact:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.question-type-indicator:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 1px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .question-info-bar {
+    border-bottom-width: 2px;
+  }
+
+  .instruction-content {
+    border-width: 2px;
+  }
+
+  .flag-button-compact {
+    border-width: 3px;
+  }
+
+  .question-type-indicator {
+    border: 2px solid white;
+  }
+}
+
+/* Dark theme support (if needed) */
+@media (prefers-color-scheme: dark) {
+  .instruction-content {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-color: #475569;
+    color: #e2e8f0;
+  }
+
+  .instruction-icon {
+    color: #7dd3fc;
+  }
+
+  .instruction-text {
+    color: #e2e8f0;
+  }
+}
+
+/* Make sure child components get the enhanced space */
+:host ::ng-deep app-simple-domino-grid {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+:host ::ng-deep app-simple-domino-grid .domino-test-container {
+  height: 100%;
+  min-height: 450px; /* Increased minimum height */
+}
+
+:host ::ng-deep app-multiple-choice-question {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+:host ::ng-deep app-multiple-choice-question .mcq-container {
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 450px; /* Increased minimum height */
+}
+
+/* Progress Dots - Visual Progress Indicator */
+.progress-indicator {
+  display: flex;
+  gap: 3px;
   align-items: center;
 }
 
-/* Ensure the MCQ component fits well */
-app-multiple-choice-question {
-  width: 100%;
-  max-width: 800px; /* Or adjust as needed */
+.progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-/* Add this new tooltip container styling */
+.progress-dot.current {
+  background-color: var(--primary-color);
+  transform: scale(1.3);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3);
+}
+
+.progress-dot.answered {
+  background-color: var(--success-color);
+}
+
+.progress-dot.flagged {
+  background-color: var(--warning-color);
+}
+
+.progress-dot.answered.current {
+  background-color: var(--success-color);
+}
+
+.progress-dot.flagged.current {
+  background-color: var(--warning-color);
+}
+
+/* Compact Instruction Bar - Only When Needed */
+.instruction-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: #f8fafc;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  min-height: 40px; /* Small fixed height */
+  flex-shrink: 0;
+}
+
+.instruction-bar i {
+  color: var(--primary-color);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* MAIN CONTENT CONTAINER - Maximum Space */
+.content-container {
+  flex: 1; /* Take up all available space */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+}
+
+.content-viewport {
+  flex: 1; /* Take up all available space */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-md); /* Minimal padding */
+  overflow: auto;
+  min-height: 400px; /* Ensure good minimum height */
+  position: relative;
+}
+
+.question-content {
+  width: 100%;
+  max-width: 1400px; /* Increased max width */
+  height: 100%; /* Take full height */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* Enhanced State Containers */
+.state-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+}
+
+.state-content {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-medium);
+  max-width: 400px;
+  width: 100%;
+}
+
+.loading-container .state-content {
+  border: 2px dashed var(--border-light);
+}
+
+.error-container .state-content {
+  border: 2px solid #fee2e2;
+  background-color: #fef2f2;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto var(--spacing-md);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.state-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-sm);
+}
+
+.state-content p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0 0 var(--spacing-lg);
+  line-height: 1.5;
+}
+
+.error-icon {
+  font-size: 3rem;
+  color: var(--error-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.retry-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.retry-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
+}
+
+.retry-button:active {
+  transform: translateY(0);
+}
+
+/* Compact Navigation Container */
+.navigation-container {
+  padding: var(--spacing-sm) var(--spacing-lg); /* Reduced padding */
+  background-color: white;
+  border-top: 1px solid var(--border-light);
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+  min-height: 60px; /* Fixed small height */
+}
+
+/* Enhanced Tooltip Container */
 .tooltip-container {
   position: absolute;
-  top: 80px; /* Position below the header */
+  top: 60px; /* Reduced top offset */
   left: 0;
   right: 0;
   display: flex;
   justify-content: center;
   z-index: 100;
-  pointer-events: none; /* Allow clicks through */
+  pointer-events: none;
+  padding: 0 var(--spacing-lg);
 }
 
-/* Ensure tooltip itself allows pointer events */
 .tooltip-container > app-help-tooltip {
   pointer-events: auto;
+  max-width: 500px;
+  width: 100%;
 }
 
+/* Responsive Design - Content Priority */
+@media (max-width: 768px) {
+  .question-area {
+    margin: var(--spacing-xs);
+    margin-left: 0;
+  }
+
+  .question-info-bar {
+    padding: var(--spacing-xs) var(--spacing-md);
+    min-height: 44px;
+  }
+
+  .progress-indicator {
+    display: none; /* Hide dots on small screens */
+  }
+
+  .instruction-bar {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: 0.8rem;
+    min-height: 36px;
+  }
+
+  .content-viewport {
+    padding: var(--spacing-sm);
+  }
+
+  .navigation-container {
+    padding: var(--spacing-xs) var(--spacing-md);
+    min-height: 56px;
+  }
+}
+
+@media (max-width: 480px) {
+  .question-info-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-xs);
+    min-height: 40px;
+  }
+
+  .question-meta-compact {
+    justify-content: center;
+  }
+
+  .flag-button-compact {
+    align-self: center;
+    width: 32px;
+    height: 32px;
+  }
+
+  .instruction-bar {
+    flex-direction: column;
+    text-align: center;
+    min-height: 32px;
+  }
+}
+
+/* Focus and Accessibility */
+.flag-button-compact:focus-visible,
+.retry-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.progress-dot:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
+}
+
+/* Animation Classes */
 @keyframes fadeSlideIn {
   from {
     opacity: 0;
@@ -93,124 +983,64 @@ app-multiple-choice-question {
   }
 }
 
-/* Question Info Bar Styles */
-.question-info-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start; /* Align items to the top */
-  padding: 10px 0; /* Reduced padding */
-  background-color: #fff; /* Optional: background */
-  border-radius: 8px; /* Optional: rounded corners */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); /* Subtle shadow */
-  margin-bottom: 10px; /* Space below */
+.animate {
+  animation: fadeSlideIn 0.3s ease;
 }
 
-.question-title {
-  flex-grow: 1;
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .question-info-bar {
+    border-bottom-width: 2px;
+  }
+
+  .flag-button-compact {
+    border-width: 3px;
+  }
+
+  .progress-dot {
+    border: 1px solid var(--text-primary);
+  }
 }
 
-.question-title h2 {
-  font-size: 1.1rem; /* Slightly smaller */
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 5px 0; /* Reduced margin */
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .loading-spinner {
+    animation: none;
+    border-top-color: transparent;
+  }
 }
 
-.instruction-text {
-  font-size: 0.9rem; /* Slightly smaller */
-  color: #475569;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.flag-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #f1f5f9;
-  color: #475569;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: background-color 0.2s, color 0.2s;
-  margin-left: 15px; /* Space from instructions */
-  white-space: nowrap; /* Prevent wrapping */
-}
-
-.flag-button:hover {
-  background-color: #e2e8f0;
-  color: #1e293b;
-}
-
-.flag-button.flagged {
-  background-color: #fef9c3; /* Light yellow */
-  color: #a16207; /* Dark yellow */
-}
-
-.flag-button.flagged:hover {
-  background-color: #fde68a;
-}
-
-.flag-button i {
-  font-size: 1rem;
-}
-
-/* Loading and Error States */
-.loading-container,
-.error-container {
+/* Make sure the SimpleDominoGrid gets full space */
+:host ::ng-deep app-simple-domino-grid {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  text-align: center;
-  color: #64748b;
 }
 
-.loading-spinner {
-  width: 30px;
-  height: 30px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 10px;
+:host ::ng-deep app-simple-domino-grid .domino-test-container {
+  height: 100%;
+  min-height: 400px;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+/* Make sure MCQ component gets full space */
+:host ::ng-deep app-multiple-choice-question {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.error-container {
-  color: #dc2626;
-}
-
-.error-container button {
-  margin-top: 15px;
-  padding: 8px 16px;
-  /* Add button styling */
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .question-area {
-    padding: 10px;
-  }
-  .question-info-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .flag-button {
-    margin-top: 10px;
-    margin-left: 0;
-    align-self: flex-start;
-  }
-  .content-viewport {
-    max-height: calc(100vh - 280px); /* Adjust max height on smaller screens */
-  }
+:host ::ng-deep app-multiple-choice-question .mcq-container {
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
 }

@@ -122,7 +122,7 @@ export class SignupComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           this.registeredEmail = response.email;
-          this.activationToken = response.activationToken;
+          // No need for activation token anymore
 
           this.isLoading = false;
           this.showVerificationDialog = true;
@@ -272,12 +272,11 @@ export class SignupComponent implements OnInit, OnDestroy {
     this.verificationError = null;
 
     this.authService
-      .resendVerificationCode(this.registeredEmail, this.activationToken)
+      .resendVerificationCode(this.registeredEmail)
       .pipe(finalize(() => (this.isProcessing = false)))
       .subscribe({
         next: (response) => {
-          // Update activation token if it changed
-          this.activationToken = response.activationToken;
+          // No need to update activation token
 
           this.startCooldown();
           this.snackBar.open(
@@ -315,20 +314,22 @@ export class SignupComponent implements OnInit, OnDestroy {
     this.verificationError = null;
 
     this.authService
-      .verifyEmail(this.registeredEmail, fullCode, this.activationToken)
+      .verifyEmail(this.registeredEmail, fullCode)
       .pipe(finalize(() => (this.isProcessing = false)))
       .subscribe({
         next: (response) => {
           this.showVerificationDialog = false;
 
           this.snackBar.open(
-            'Email verified! You are now logged in.',
+            'Email verified successfully! Please login.',
             'Close',
             { duration: 3000, panelClass: ['success-snackbar'] }
           );
 
-          // Navigate to dashboard after successful verification
-          this.router.navigate(['/dashboard']);
+          // Navigate to login instead of dashboard since auto-login no longer happens
+          this.router.navigate(['/auth/login'], {
+            queryParams: { verified: 'true', email: this.registeredEmail }
+          });
         },
         error: (error) => {
           this.verificationError = error.message || 'Verification failed';

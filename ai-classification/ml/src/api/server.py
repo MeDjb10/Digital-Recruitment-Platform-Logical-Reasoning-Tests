@@ -27,13 +27,17 @@ model_dir = str(Path(__file__).parent.parent / "Models")
 analyzer = PerformanceAnalyzer(model_dir)
 
 class MetricsRequest(BaseModel):
-    time_passed: float
-    answered_questions: int
+    test_type: str
+    questionsAnswered: int
     correct_answers: int
-    skips: int
-    spatial: int
-    numeric: int
-    arithmetic: int
+    timeSpent: float
+    halfCorrect: int
+    reversed: int
+    questionsSkipped: int
+    answerChanges: int
+    flaggedQuestions: int
+    desired_position: str
+    education_level: str
 
 class FeedbackRequest(BaseModel):
     metrics: MetricsRequest
@@ -51,11 +55,15 @@ async def analyze_performance(metrics: MetricsRequest):
         # Convert to PerformanceMetrics with timestamp
         performance_metrics: PerformanceMetrics = {
             **metrics.dict(),
-            "timestamp": datetime.now()
+            "timestamp": datetime.now().isoformat()
         }
         
-        # Get analysis
-        result = analyzer.analyze(performance_metrics)
+        # Get analysis with position and education
+        result = analyzer.analyze(
+            performance_metrics,
+            metrics.desired_position,
+            metrics.education_level
+        )
         return result
     
     except Exception as e:

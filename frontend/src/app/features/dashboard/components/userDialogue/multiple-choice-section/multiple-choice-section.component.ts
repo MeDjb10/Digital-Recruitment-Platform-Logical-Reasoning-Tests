@@ -46,9 +46,7 @@ export class MultipleChoiceSectionComponent implements OnInit {
 
   aiComments: AIComment[] = [
     { text: 'The candidate shows strong analytical skills in comprehension questions.' },
-    { text: 'Performance in logical reasoning questions indicates above-average problem-solving abilities.' },
-    { text: 'Time management could be improved for better overall results.' }
-  ];
+   ];
 
   chartOptions = {
     series: [{

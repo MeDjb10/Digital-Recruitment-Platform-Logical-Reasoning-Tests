@@ -1,39 +1,58 @@
+from typing import Dict, Any
+import logging
 import os
 import joblib
 import pandas as pd
 import numpy as np
 import json
 from pathlib import Path
-import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class PerformancePredictor:
     def __init__(self, model_dir: str):
-        self.model_dir = Path(model_dir)
+        # Set absolute model paths
+        self.d70_path = r"C:\Users\tbfee\OneDrive\Desktop\pfe\Digital-Recruitment-Platform-Logical-Reasoning-Tests\ai-classification\ml\src\models\d70_model.joblib"
+        self.d2000_path = r"C:\Users\tbfee\OneDrive\Desktop\pfe\Digital-Recruitment-Platform-Logical-Reasoning-Tests\ai-classification\ml\src\models\d2000_model.joblib"
+        self.metadata_path = Path(self.d70_path).parent / "model_metadata.json"
+        # Features match the metadata
         self.features = [
-            'time_passed', 
-            'answered_questions',
-            'correct_answers',
-            'skips',
-            'spatial',
-            'numeric',
-            'arithmetic'
+            'questionsAnswered',
+            'correct answers', 
+            'timeSpent',
+            'halfCorrect',
+            'reversed',
+            'questionsSkipped',
+            'answerChanges',
+            'flaggedQuestions'
         ]
+        # Initialize both models as None
+        self.d70_model = None
+        self.d2000_model = None
+        self.metadata = None
         self.load_resources()
 
     def load_resources(self):
-        """Load model and metadata"""
+        """Load models and metadata"""
         try:
-            model_path = self.model_dir / 'random_forest_model.joblib'
-            print(f"Looking for model at: {model_path} (Exists: {os.path.exists(model_path)})")
-            # Load model
-            self.model = joblib.load("C:/Users/tbfee/OneDrive/Desktop/pfe/Digital-Recruitment-Platform-Logical-Reasoning-Tests/ai-classification/ml/src/utils/random_forest_model.joblib")
+            # Load d70 model
+            if os.path.exists(self.d70_path):
+                self.d70_model = joblib.load(self.d70_path)
+                logging.info("D70 model loaded successfully")
             
-            logging.info("Model loaded successfully")
+            # Load d2000 model
+            if os.path.exists(self.d2000_path):
+                self.d2000_model = joblib.load(self.d2000_path)
+                logging.info("D2000 model loaded successfully")
+
+            if not self.d70_model and not self.d2000_model:
+                raise FileNotFoundError("No models found!")
 
             # Load metadata
-            with open(self.model_dir / "C:/Users/tbfee/OneDrive/Desktop/pfe/Digital-Recruitment-Platform-Logical-Reasoning-Tests/ai-classification/ml/src/utils/model_metadata.json", 'r', encoding='utf-8') as f:
+            if not os.path.exists(self.metadata_path):
+                raise FileNotFoundError(f"Metadata file not found at {self.metadata_path}")
+            
+            with open(self.metadata_path, 'r', encoding='utf-8') as f:
                 self.metadata = json.load(f)
                 self.category_mapping = self.metadata['category_mapping']
             logging.info("Metadata loaded successfully")
@@ -45,36 +64,37 @@ class PerformancePredictor:
     def predict(self, features: dict) -> dict:
         """Make a prediction based on test performance metrics"""
         try:
-            # Calculate derived metrics
-            features['accuracy'] = (
-                (features['correct_answers'] / features['answered_questions']) * 100 
-                if features['answered_questions'] > 0 else 0
-            )
-            features['speed'] = (
-                features['answered_questions'] / features['time_passed'] 
-                if features['time_passed'] > 0 else 0
-            )
+            # Determine which model to use based on test type
+            test_type = features.get('test_type', '').lower()
+            if test_type == 'd70':
+                model = self.d70_model
+            elif test_type == 'd2000':
+                model = self.d2000_model
+            else:
+                raise ValueError(f"Unknown test type: {test_type}")
+
+            if not model:
+                raise ValueError(f"Model for test type {test_type} not loaded")
 
             # Create DataFrame with required features
-            input_df = pd.DataFrame([{k: features[k] for k in self.features}])
+            input_features = {k: features[k] for k in self.features if k in features}
+            input_df = pd.DataFrame([input_features])
             
             # Make prediction
-            prediction = self.model.predict(input_df)[0]
-            probabilities = self.model.predict_proba(input_df)[0]
+            prediction = model.predict(input_df)[0]
+            probabilities = model.predict_proba(input_df)[0]
             
             # Debug logging
+            logging.info(f"Test type: {test_type}")
             logging.info(f"Raw prediction: {prediction}")
             logging.info(f"Category mapping: {self.category_mapping}")
             
             # Generate comprehensive result
             result = {
+                'test_type': test_type,
                 'predicted_category': prediction,
-                #confidence of the ai getting the right prediction
                 'confidence': float(max(probabilities)),
-                'metrics': {
-                    'accuracy': features['accuracy'],
-                    'speed': features['speed'],
-                },
+                'raw_features': features
             }
             return result
 
@@ -82,19 +102,67 @@ class PerformancePredictor:
             logging.error(f"Error making prediction: {e}")
             raise
 
+    def basic_predict(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Predict performance category based on metrics.
+        Currently uses a simple rule-based approach.
+        """
+        try:
+            # Extract key metrics
+            questions_answered = metrics.get('questionsAnswered', 0)
+            correct_answers = metrics.get('correct answers', 0)
+            time_spent = metrics.get('timeSpent', 0)
+            
+            # Calculate basic metrics
+            accuracy = correct_answers / questions_answered if questions_answered > 0 else 0
+            completion_rate = questions_answered / 44  # Assuming D70 test with 44 questions
+            
+            # Simple rule-based categorization
+            if accuracy >= 0.8 and completion_rate >= 0.9:
+                category = "Excellent"
+                confidence = 0.9
+            elif accuracy >= 0.6 and completion_rate >= 0.7:
+                category = "Good"
+                confidence = 0.8
+            elif accuracy >= 0.4 and completion_rate >= 0.5:
+                category = "Average"
+                confidence = 0.7
+            else:
+                category = "Below Average"
+                confidence = 0.6
+                
+            return {
+                "predicted_category": category,
+                "confidence": confidence,
+                "metrics": {
+                    "accuracy": accuracy,
+                    "completion_rate": completion_rate
+                }
+            }
+            
+        except Exception as e:
+            logging.error(f"Prediction failed: {e}")
+            return {
+                "predicted_category": "Unable to predict",
+                "confidence": 0.0,
+                "error": str(e)
+            }
+
 def main():
     try:
         predictor = PerformancePredictor("")
         
-        # Example test data
+        # Example test data matching the features from metadata
         test_features = {
-            'time_passed': 15,
-            'answered_questions': 44,
-            'correct_answers': 30,
-            'skips':0,
-            'spatial':10,
-            'numeric': 10,
-            'arithmetic': 10
+            'test_type': 'd2000',  # or 'd2000'
+            'questionsAnswered':40,
+            'correct answers': 20,
+            'timeSpent': 20,
+            'halfCorrect': 0,
+            'reversed': 0,
+            'questionsSkipped': 0,
+            'answerChanges': 3,
+            'flaggedQuestions': 2
         }
         
         result = predictor.predict(test_features)
@@ -103,10 +171,6 @@ def main():
         print("\n=== Performance Analysis ===")
         print(f"\nPredicted Level: {result['predicted_category']}")
         print(f"Confidence: {result['confidence']:.1%}")
-        
-        print("\nPerformance Metrics:")
-        print(f"Accuracy: {result['metrics']['accuracy']:.1f}%")
-        print(f"Speed: {result['metrics']['speed']:.2f} questions/minute")
         
     except Exception as e:
         logging.error(f"Prediction failed: {str(e)}")

@@ -11,7 +11,6 @@ import { User } from '../models/user.model';
 export class UserContextService {
   private userProfileSubject = new BehaviorSubject<User | null>(null);
   public userProfile$ = this.userProfileSubject.asObservable();
-
   private profileLoaded = false;
 
   constructor(

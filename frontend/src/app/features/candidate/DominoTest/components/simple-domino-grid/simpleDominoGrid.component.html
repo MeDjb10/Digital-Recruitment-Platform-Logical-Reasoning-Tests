@@ -1,0 +1,220 @@
+<div class="domino-test-container" [class.animate]="animate">
+  <!-- Main grid container -->
+  <div class="domino-grid-container" #dominoContainer>
+    <!-- Grid information and zoom controls -->
+    <div class="grid-controls">
+      <div class="grid-info" *ngIf="showGridInfo">
+        <span>{{ gridLayout.rows }}×{{ gridLayout.cols }} Grid</span>
+      </div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" (click)="zoomOut()">−</button>
+        <span class="zoom-level">{{ (zoomLevel * 100).toFixed(0) }}%</span>
+        <button class="zoom-btn" (click)="zoomIn()">+</button>
+        <button class="zoom-reset" (click)="zoomReset()">Reset</button>
+      </div>
+    </div>
+
+    <div class="grid-viewport">
+      <!-- Custom layout with absolute positioning -->
+      <div
+        *ngIf="isCustomLayout"
+        class="custom-layout"
+        [style.transform]="'scale(' + zoomLevel + ')'"
+        [style.width.px]="customLayoutWidth"
+        [style.height.px]="customLayoutHeight"
+      >
+        <!-- Render arrows first (so dominos appear on top) -->
+        <div
+          *ngFor="let arrow of arrows; trackBy: trackByArrowId"
+          class="arrow-wrapper"
+          [style.transform]="getArrowTransform(arrow)"
+        >
+          <app-interactive-arrow
+            [id]="arrow.id"
+            [length]="arrow.length"
+            [angle]="0"
+            [scale]="arrow.scale || 1.0"
+            [arrowColor]="arrow.arrowColor"
+            [headSize]="arrow.headSize"
+            [curved]="arrow.curved"
+            [curvature]="arrow.curvature"
+          ></app-interactive-arrow>
+        </div>
+
+        <!-- Render dominos -->
+        <div
+          *ngFor="let domino of dominos; trackBy: trackByDominoId"
+          class="domino-wrapper"
+          [class.editable]="domino.isEditable"
+          [class.selected]="selectedDomino?.id === domino.id"
+          [style.transform]="getDominoTransform(domino)"
+          (click)="selectDomino(domino)"
+        >
+          <app-interactive-domino
+            #dominoComponent
+            [id]="domino.id"
+            [width]="getDominoWidth()"
+            [height]="getDominoHeight()"
+            [initialTopValue]="domino.topValue"
+            [initialBottomValue]="domino.bottomValue"
+            [isVertical]="domino.isVertical ?? false"
+            [isEditable]="domino.isEditable"
+            (valueChanged)="onDominoChanged($event)"
+            (dominoClicked)="onDominoClicked($event)"
+            (dominoRotated)="onDominoRotated($event)"
+          >
+          </app-interactive-domino>
+        </div>
+      </div>
+
+      <!-- Standard grid layout -->
+      <div
+        *ngIf="!isCustomLayout"
+        class="grid-layout"
+        [style.transform]="'scale(' + zoomLevel + ')'"
+        [style.grid-template-columns]="getGridTemplateColumns()"
+        [style.grid-template-rows]="getGridTemplateRows()"
+        [style.gap.px]="getGridGap()"
+      >
+        <!-- For grid layout, arrows need to be positioned absolutely over the grid -->
+        <div class="arrows-overlay">
+          <div
+            *ngFor="let arrow of arrows; trackBy: trackByArrowId"
+            class="arrow-wrapper"
+            [style.transform]="getArrowTransform(arrow)"
+          >
+            <app-interactive-arrow
+              [id]="arrow.id"
+              [length]="arrow.length"
+              [angle]="0"
+              [scale]="arrow.scale || 1.0"
+              [arrowColor]="arrow.arrowColor"
+              [headSize]="arrow.headSize"
+              [curved]="arrow.curved"
+              [curvature]="arrow.curvature"
+            ></app-interactive-arrow>
+          </div>
+        </div>
+
+        <!-- Render dominos in the grid -->
+        <ng-container *ngFor="let domino of dominos; trackBy: trackByDominoId">
+          <div
+            class="grid-cell"
+            [style.grid-row]="(domino.row || 0) + 1"
+            [style.grid-column]="(domino.col || 0) + 1"
+            [class.editable]="domino.isEditable"
+            [class.selected]="selectedDomino?.id === domino.id"
+            (click)="selectDomino(domino)"
+          >
+            <app-interactive-domino
+              #dominoComponent
+              [id]="domino.id"
+              [width]="getDominoWidth()"
+              [height]="getDominoHeight()"
+              [initialTopValue]="domino.topValue"
+              [initialBottomValue]="domino.bottomValue"
+              [isVertical]="domino.isVertical ?? false"
+              [isEditable]="domino.isEditable"
+              (valueChanged)="onDominoChanged($event)"
+              (dominoClicked)="onDominoClicked($event)"
+              (dominoRotated)="onDominoRotated($event)"
+            >
+            </app-interactive-domino>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <!-- Value selection panel for editable dominos -->
+  <div
+    class="value-selection-panel"
+    *ngIf="hasEditableDominos && selectedDomino?.isEditable"
+  >
+    <div class="panel-header">
+      <h3>Set Domino Values</h3>
+      <div class="domino-indicator">
+        <span class="domino-id">Domino #{{ selectedDomino?.id }}</span>
+      </div>
+    </div>
+
+    <div class="panel-content">
+      <div class="value-section">
+        <div class="value-half">
+          <label for="topValues">Top Half:</label>
+          <div class="value-selector">
+            <button
+              *ngFor="let val of dominoValueOptions"
+              class="value-btn"
+              [class.active]="selectedDomino?.topValue === val"
+              [class.null-value]="val === null"
+              (click)="setDominoValue('top', val)"
+              [attr.aria-label]="
+                val === null ? 'Clear top value' : 'Set top value to ' + val
+              "
+            >
+              {{ val === null ? "?" : val }}
+            </button>
+          </div>
+        </div>
+
+        <div class="value-half">
+          <label for="bottomValues">Bottom Half:</label>
+          <div class="value-selector">
+            <button
+              *ngFor="let val of dominoValueOptions"
+              class="value-btn"
+              [class.active]="selectedDomino?.bottomValue === val"
+              [class.null-value]="val === null"
+              (click)="setDominoValue('bottom', val)"
+              [attr.aria-label]="
+                val === null
+                  ? 'Clear bottom value'
+                  : 'Set bottom value to ' + val
+              "
+            >
+              {{ val === null ? "?" : val }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="current-values" *ngIf="selectedDomino">
+        <div class="value-display">
+          <span class="label">Current:</span>
+          <div class="domino-preview">
+            <div class="half top">{{ selectedDomino.topValue ?? "?" }}</div>
+            <div class="divider"></div>
+            <div class="half bottom">
+              {{ selectedDomino.bottomValue ?? "?" }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-actions">
+        <button class="action-btn clear-btn" (click)="clearDominoValues()">
+          <i class="pi pi-times"></i> Clear Values
+        </button>
+        <button class="action-btn close-btn" (click)="deselectDomino()">
+          <i class="pi pi-check"></i> Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Instructions when no editable domino is selected -->
+  <div
+    class="instruction-panel"
+    *ngIf="hasEditableDominos && !selectedDomino?.isEditable"
+  >
+    <div class="instruction-content">
+      <i class="pi pi-info-circle"></i>
+      <h4>Answer the Question</h4>
+      <p>Click on the highlighted domino to set its values.</p>
+      <p class="hint">
+        Look for the domino with the question mark (?) or blue border.
+      </p>
+    </div>
+  </div>
+</div>

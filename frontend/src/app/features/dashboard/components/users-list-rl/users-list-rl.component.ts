@@ -28,6 +28,10 @@ import {
 } from '../../../../core/services/user.service';
 import { BadgeModule } from 'primeng/badge';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { TestAssignmentService } from '../../../../core/services/test-assignment.service';
+import { TestLookupService } from '../../../../core/services/test-lookup.service';
+import { forkJoin, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-users-list-rl',
@@ -112,7 +116,9 @@ export class UsersListRLComponent implements OnInit {
     private router: Router,
     private fb: FormBuilder,
     private confirmationService: ConfirmationService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private testAssignmentService: TestAssignmentService,
+    private testLookupService: TestLookupService // Add this
   ) {
     this.assignmentForm = this.fb.group({
       assignedTest: ['D-70', Validators.required],
@@ -128,6 +134,7 @@ export class UsersListRLComponent implements OnInit {
 
   ngOnInit() {
     this.loadCandidates();
+    this.loadTests(); // Add this to load tests on component init
 
     // Setup debounce for search
     this.searchTerms
@@ -550,7 +557,6 @@ export class UsersListRLComponent implements OnInit {
       });
   }
 
-  // Assign a test to a candidate
   assignTest() {
     if (!this.selectedCandidate || !this.assignmentForm.valid) {
       this.messageService.add({
@@ -562,8 +568,6 @@ export class UsersListRLComponent implements OnInit {
     }
 
     const formData = this.assignmentForm.value;
-
-    // Determine which ID to use - prefer _id if id is not valid
     let userId = this.selectedCandidate.id;
 
     // If the backend model is using _id instead of id, use that property
@@ -575,12 +579,29 @@ export class UsersListRLComponent implements OnInit {
       userId = this.selectedCandidate._id;
     }
 
-    this.userService
-      .manualTestAssignment(userId, {
-        assignedTest: formData.assignedTest,
-        additionalTests: formData.additionalTests,
-        examDate: formData.examDate,
-      })
+    // Use TestLookupService to get the test IDs
+    forkJoin({
+      mainTestId: this.testLookupService.getTestIdByName(formData.assignedTest),
+      additionalTestIds:
+        formData.additionalTests && formData.additionalTests.length > 0
+          ? this.testLookupService.getTestIdsByNames(formData.additionalTests)
+          : of([]),
+    })
+      .pipe(
+        switchMap(({ mainTestId, additionalTestIds }) => {
+          if (!mainTestId) {
+            throw new Error(
+              `Test "${formData.assignedTest}" not found. Please refresh the page and try again.`
+            );
+          }
+
+          return this.testAssignmentService.manualTestAssignment(userId, {
+            assignedTestId: mainTestId,
+            additionalTestIds: additionalTestIds,
+            examDate: formData.examDate,
+          });
+        })
+      )
       .subscribe({
         next: (response) => {
           this.messageService.add({
@@ -597,7 +618,7 @@ export class UsersListRLComponent implements OnInit {
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Failed to assign test. Please try again.',
+            detail: error.message || 'Failed to assign test. Please try again.',
           });
         },
       });
@@ -741,5 +762,23 @@ export class UsersListRLComponent implements OnInit {
       limit: 10,
     };
     this.loadCandidates();
+  }
+
+  // Add this method to load tests
+  loadTests() {
+    this.testLookupService.getAllTests().subscribe({
+      next: (tests) => {
+        console.log('Loaded available tests:', tests);
+      },
+      error: (error) => {
+        console.error('Error loading tests:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail:
+            'Failed to load tests. Test assignment might not work properly.',
+        });
+      },
+    });
   }
 }

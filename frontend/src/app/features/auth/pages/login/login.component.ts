@@ -59,7 +59,17 @@ export class LoginComponent implements OnInit {
       rememberMe: [false],
     });
 
-   
+    // Pre-fill email if coming from verification
+    const verified = this.route.snapshot.queryParams['verified'];
+    const email = this.route.snapshot.queryParams['email'];
+    
+    if (verified === 'true' && email) {
+      this.loginForm.get('email')?.setValue(email);
+      this.snackBar.open('Email verified successfully! You can now log in.', 'Close', {
+        duration: 5000,
+        panelClass: ['success-snackbar']
+      });
+    }
 
     // Show message if there was an auth error
     const authError = this.route.snapshot.queryParams['authError'];
@@ -74,7 +84,9 @@ export class LoginComponent implements OnInit {
     }
 
     // Check if user is already logged in
-   
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/dashboard']);
+    }
   }
 
   onSubmit() {
@@ -108,35 +120,5 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  // Option for OTP login
-  requestOTPLogin() {
-    const email = this.loginForm.get('email')?.value;
-
-    if (!email || !this.loginForm.get('email')?.valid) {
-      this.loginForm.get('email')?.markAsTouched();
-      this.snackBar.open('Please enter a valid email address', 'Close', {
-        duration: 3000,
-      });
-      return;
-    }
-
-    this.isLoading = true;
-
-    this.authService.requestLoginOTP(email).subscribe({
-      next: () => {
-        this.isLoading = false;
-        // Navigate to OTP verification page with email parameter
-        this.router.navigate(['/auth/verify-otp'], {
-          queryParams: { email, isLogin: true },
-        });
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.snackBar.open(error.message || 'Failed to send OTP', 'Close', {
-          duration: 5000,
-          panelClass: ['error-snackbar'],
-        });
-      },
-    });
-  }
+  
 }

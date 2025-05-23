@@ -302,8 +302,16 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
 
   // Logout user
   logout(): void {
-    this.authService.logout();
-    // The AuthService already handles navigation to login
+    this.authService.logout().subscribe({
+      next: () => {
+        console.log('Logout successful');
+        // Navigation is already handled in the AuthService.clearAuthData method
+      },
+      error: (error) => {
+        console.error('Logout error:', error);
+        // Even on error, the AuthService.clearAuthData method will handle navigation
+      }
+    });
   }
 
   switchLanguage(lang: string): void {
