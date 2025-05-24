@@ -130,3 +130,8 @@ dist
 
 
 uploads/
+api-gateway/.env
+authentification-service/.env
+test-service/.env
+user-management-service/.env
+test-service/package-lock.json
