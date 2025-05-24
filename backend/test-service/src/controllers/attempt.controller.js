@@ -19,100 +19,136 @@ const startTestAttempt = async (req, res) => {
   const { testId } = req.params;
   const { candidateId } = req.body;
 
-  // Check if test exists and is active
-  const test = await Test.findById(testId);
-  if (!test) {
-    throw new AppError(
-      `Test with ID ${testId} not found`,
-      StatusCodes.NOT_FOUND
-    );
-  }
-  if (!test.isActive) {
-    throw new AppError(
-      `Test with ID ${testId} is not active`,
-      StatusCodes.FORBIDDEN // Or BAD_REQUEST
-    );
-  }
+  try {
+    // Check if test exists and is active
+    const test = await Test.findById(testId);
+    if (!test) {
+      throw new AppError(
+        `Test with ID ${testId} not found`,
+        StatusCodes.NOT_FOUND
+      );
+    }
+    if (!test.isActive) {
+      throw new AppError(
+        `Test with ID ${testId} is not active`,
+        StatusCodes.FORBIDDEN
+      );
+    }
 
-  // Check if candidate has an in-progress attempt for this test
-  const existingAttempt = await TestAttempt.findOne({
-    testId,
-    candidateId,
-    status: "in-progress",
-  });
-
-  if (existingAttempt) {
-    logger.info(
-      `Resuming existing test attempt ${existingAttempt._id} for candidate ${candidateId} on test ${testId}`
-    );
-    // Update last activity time on resume
-    existingAttempt.lastActivityAt = new Date();
-    await existingAttempt.save();
-
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      message: "Resuming existing test attempt",
-      data: existingAttempt,
-    });
-  }
-
-  // Check if candidate has already completed this test
-  const completedAttempt = await TestAttempt.findOne({
-    testId,
-    candidateId,
-    status: "completed",
-  });
-  if (completedAttempt) {
-    throw new AppError(
-      `Candidate ${candidateId} has already completed test ${testId}`,
-      StatusCodes.CONFLICT // 409 Conflict
-    );
-  }
-
-  // Get client information
-  const userAgent = req.headers["user-agent"] || "";
-  const ipAddress =
-    req.headers["x-forwarded-for"]?.split(",").shift() ||
-    req.socket?.remoteAddress ||
-    "Unknown";
-
-  // Create new test attempt
-  const attempt = await TestAttempt.create({
-    testId,
-    candidateId,
-    device: getUserDevice(userAgent),
-    browser: getUserBrowser(userAgent),
-    ipAddress,
-    startTime: new Date(), // Explicitly set start time
-    lastActivityAt: new Date(), // Initialize last activity
-  });
-
-  // Initialize question responses for all questions in the test
-  const questions = await getQuestionsForTest(testId);
-
-  if (questions.length === 0) {
-    logger.warn(
-      `Test ${testId} has no questions. Attempt ${attempt._id} created but may be problematic.`
-    );
-    // Optionally, handle this case differently, maybe prevent attempt start
-  }
-
-  const responsePromises = questions.map((question) =>
-    QuestionResponse.create({
-      attemptId: attempt._id,
-      questionId: question._id,
+    // Check if candidate has an in-progress attempt for this test
+    const existingAttempt = await TestAttempt.findOne({
+      testId,
       candidateId,
-    })
-  );
-  await Promise.all(responsePromises);
+      status: "in-progress",
+    });
 
-  logger.info(
-    `New test attempt ${attempt._id} created for candidate ${candidateId} on test ${testId}`
-  );
-  res.status(StatusCodes.CREATED).json({
-    success: true,
-    data: attempt,
-  });
+    if (existingAttempt) {
+      logger.info(
+        `Resuming existing test attempt ${existingAttempt._id} for candidate ${candidateId} on test ${testId}`
+      );
+      // Update last activity time on resume
+      existingAttempt.lastActivityAt = new Date();
+      await existingAttempt.save();
+
+      return res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Resuming existing test attempt",
+        data: existingAttempt,
+      });
+    }
+
+    // Check if candidate has already completed this test
+    const completedAttempt = await TestAttempt.findOne({
+      testId,
+      candidateId,
+      status: "completed",
+    });
+    if (completedAttempt) {
+      throw new AppError(
+        `Candidate ${candidateId} has already completed test ${testId}`,
+        StatusCodes.CONFLICT
+      );
+    }
+
+    // Get client information
+    const userAgent = req.headers["user-agent"] || "";
+    const ipAddress =
+      req.headers["x-forwarded-for"]?.split(",").shift() ||
+      req.socket?.remoteAddress ||
+      "Unknown";
+
+    // Create new test attempt
+    logger.info(
+      `Creating new test attempt for candidate ${candidateId} on test ${testId}`
+    );
+
+    const attempt = await TestAttempt.create({
+      testId,
+      candidateId,
+      device: getUserDevice(userAgent),
+      browser: getUserBrowser(userAgent),
+      ipAddress,
+      startTime: new Date(),
+      lastActivityAt: new Date(),
+    });
+
+    logger.info(`Test attempt ${attempt._id} created successfully`);
+
+    // Initialize question responses for all questions in the test
+    const questions = await getQuestionsForTest(testId);
+
+    if (questions.length === 0) {
+      logger.warn(
+        `Test ${testId} has no questions. Attempt ${attempt._id} created but may be problematic.`
+      );
+      // You might want to prevent attempt start or handle this differently
+    }
+
+    logger.info(`Initializing ${questions.length} question responses`);
+
+    // Create responses in smaller batches to avoid overwhelming the database
+    const batchSize = 10;
+    for (let i = 0; i < questions.length; i += batchSize) {
+      const batch = questions.slice(i, i + batchSize);
+      const responsePromises = batch.map((question) =>
+        QuestionResponse.create({
+          attemptId: attempt._id,
+          questionId: question._id,
+          candidateId,
+        }).catch((error) => {
+          logger.error(
+            `Failed to create response for question ${question._id}:`,
+            error
+          );
+          throw error;
+        })
+      );
+
+      try {
+        await Promise.all(responsePromises);
+        logger.info(
+          `Created responses for batch ${
+            Math.floor(i / batchSize) + 1
+          }/${Math.ceil(questions.length / batchSize)}`
+        );
+      } catch (error) {
+        logger.error(`Failed to create response batch:`, error);
+        throw error;
+      }
+    }
+
+    logger.info(
+      `New test attempt ${attempt._id} created successfully for candidate ${candidateId} on test ${testId}`
+    );
+
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      data: attempt,
+    });
+  } catch (error) {
+    logger.error(`Error in startTestAttempt:`, error);
+    throw error; // Let the error handler middleware handle it
+  }
 };
 
 /**
@@ -390,8 +426,7 @@ const toggleQuestionFlag = async (req, res) => {
  */
 const visitQuestion = async (req, res) => {
   const { attemptId, questionId } = req.params;
-  // timeSpentOnPrevious is optional: time spent on the *previous* question before navigating to this one
-  const { candidateId, timeSpentOnPrevious } = req.body;
+  const { candidateId } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(attemptId)) {
     throw new AppError("Invalid attempt ID format", StatusCodes.BAD_REQUEST);
@@ -402,16 +437,6 @@ const visitQuestion = async (req, res) => {
   if (!candidateId) {
     throw new AppError(
       "Candidate ID is required in the request body",
-      StatusCodes.BAD_REQUEST
-    );
-  }
-  const timeToAdd = Number(timeSpentOnPrevious);
-  if (
-    timeSpentOnPrevious !== undefined &&
-    (isNaN(timeToAdd) || timeToAdd < 0)
-  ) {
-    throw new AppError(
-      "Invalid timeSpentOnPrevious value",
       StatusCodes.BAD_REQUEST
     );
   }
@@ -441,11 +466,10 @@ const visitQuestion = async (req, res) => {
     );
   }
 
-  // Find the question response for the *current* question being visited
+  // Find the question response
   let response = await QuestionResponse.findOne({
     attemptId,
     questionId,
-    // candidateId, // Verified
   });
 
   if (!response) {
@@ -459,44 +483,136 @@ const visitQuestion = async (req, res) => {
     });
   }
 
-  // Record the visit on the current question's response
+  // Record the visit
   await response.recordVisit();
 
-  // --- Update Time Spent Metrics ---
-  // This logic assumes the frontend sends the time spent on the *previous* question
-  // when the user navigates *to* the current question.
-
-  // Initialize maps if they don't exist
-  if (!attempt.metrics.visitCounts) attempt.metrics.visitCounts = new Map();
-  if (!attempt.metrics.timePerQuestion)
-    attempt.metrics.timePerQuestion = new Map();
-
-  // Update visit count metric for the current question
+  // Update visit count metrics
+  if (!attempt.metrics.visitCounts) {
+    attempt.metrics.visitCounts = new Map();
+  }
   attempt.metrics.visitCounts.set(questionId.toString(), response.visitCount);
 
-  // If timeSpentOnPrevious was provided, update the time metric for *that* previous question
-  // This requires knowing the ID of the previous question, which is complex to manage here.
-  // A better approach might be for the frontend to send { questionId, timeDelta } periodically or on blur.
-
-  // Alternative: Update timeSpent on the response object directly (simpler if FE sends time for *current* question visit)
-  // if (timeToAdd > 0) {
-  //    response.timeSpent = (response.timeSpent || 0) + timeToAdd;
-  //    await response.save();
-  //    attempt.metrics.timePerQuestion.set(questionId.toString(), response.timeSpent);
-  // }
-
-  // Update the timestamp for the last activity on the attempt
+  // Update last activity time
   attempt.lastActivityAt = new Date();
-  // Mark modified if updating sub-documents/maps directly
   attempt.markModified("metrics");
   await attempt.save();
 
   logger.info(
     `Visit recorded for question ${questionId} in attempt ${attemptId}. Visit count: ${response.visitCount}`
   );
+
   res.status(StatusCodes.OK).json({
     success: true,
-    data: response.toObject(),
+    data: {
+      questionId,
+      visitCount: response.visitCount,
+      message: "Visit recorded successfully",
+    },
+  });
+};
+
+/**
+ * Update time spent on a specific question
+ * This should be called periodically or when leaving a question
+ */
+const updateTimeSpent = async (req, res) => {
+  const { attemptId, questionId } = req.params;
+  const { candidateId, timeSpent } = req.body; // timeSpent in milliseconds
+
+  if (!mongoose.Types.ObjectId.isValid(attemptId)) {
+    throw new AppError("Invalid attempt ID format", StatusCodes.BAD_REQUEST);
+  }
+  if (!mongoose.Types.ObjectId.isValid(questionId)) {
+    throw new AppError("Invalid question ID format", StatusCodes.BAD_REQUEST);
+  }
+  if (!candidateId) {
+    throw new AppError(
+      "Candidate ID is required in the request body",
+      StatusCodes.BAD_REQUEST
+    );
+  }
+  if (typeof timeSpent !== "number" || timeSpent < 0) {
+    throw new AppError(
+      "Valid timeSpent (in milliseconds) is required",
+      StatusCodes.BAD_REQUEST
+    );
+  }
+
+  // Find the test attempt
+  const attempt = await TestAttempt.findById(attemptId);
+  if (!attempt) {
+    throw new AppError(
+      `Attempt with ID ${attemptId} not found`,
+      StatusCodes.NOT_FOUND
+    );
+  }
+
+  // Check if test is still in progress
+  if (attempt.status !== "in-progress") {
+    throw new AppError(
+      `Cannot update time for a test attempt with status: ${attempt.status}`,
+      StatusCodes.BAD_REQUEST
+    );
+  }
+
+  // Verify the candidateId matches the attempt
+  if (attempt.candidateId !== candidateId) {
+    throw new AppError(
+      "Unauthorized: Candidate ID does not match the attempt",
+      StatusCodes.FORBIDDEN
+    );
+  }
+
+  // Find the question response
+  let response = await QuestionResponse.findOne({
+    attemptId,
+    questionId,
+  });
+
+  if (!response) {
+    logger.error(
+      `QuestionResponse not found for attempt ${attemptId}, question ${questionId} during time update. Creating.`
+    );
+    response = await QuestionResponse.create({
+      attemptId,
+      questionId,
+      candidateId: attempt.candidateId,
+    });
+  }
+
+  // Add time spent to the existing time
+  response.timeSpent = (response.timeSpent || 0) + timeSpent;
+  await response.save();
+
+  // Update attempt metrics
+  if (!attempt.metrics.timePerQuestion) {
+    attempt.metrics.timePerQuestion = new Map();
+  }
+
+  const currentTime =
+    attempt.metrics.timePerQuestion.get(questionId.toString()) || 0;
+  attempt.metrics.timePerQuestion.set(
+    questionId.toString(),
+    currentTime + timeSpent
+  );
+
+  // Update last activity time
+  attempt.lastActivityAt = new Date();
+  attempt.markModified("metrics");
+  await attempt.save();
+
+  logger.info(
+    `Time updated for question ${questionId} in attempt ${attemptId}. Added: ${timeSpent}ms, Total: ${response.timeSpent}ms`
+  );
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    data: {
+      questionId,
+      timeAdded: timeSpent,
+      totalTimeSpent: response.timeSpent,
+      message: "Time spent updated successfully",
+    },
   });
 };
 
@@ -585,7 +701,7 @@ const skipQuestion = async (req, res) => {
  */
 const completeAttempt = async (req, res) => {
   const { id } = req.params;
-  const { candidateId } = req.body; // Ensure candidateId is passed for verification
+  const { candidateId } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new AppError("Invalid attempt ID format", StatusCodes.BAD_REQUEST);
@@ -608,7 +724,6 @@ const completeAttempt = async (req, res) => {
 
   // Check if test is still in progress
   if (attempt.status !== "in-progress") {
-    // If already completed, just return the existing attempt data
     if (attempt.status === "completed") {
       logger.info(
         `Attempt ${id} was already completed. Returning existing data.`
@@ -619,7 +734,6 @@ const completeAttempt = async (req, res) => {
         data: attempt.toObject(),
       });
     }
-    // Handle other statuses like 'timed-out' or 'abandoned' if needed
     throw new AppError(
       `Test attempt status is already ${attempt.status}`,
       StatusCodes.BAD_REQUEST
@@ -634,20 +748,95 @@ const completeAttempt = async (req, res) => {
     );
   }
 
-  // Mark the test as completed and set endTime/timeSpent
-  await attempt.finishAttempt("completed");
+  try {
+    // STEP 1: Mark as completed first
+    console.log(`🔄 Step 1: Marking attempt ${id} as completed...`);
+    await attempt.finishAttempt("completed");
+    console.log(`✅ Step 1 completed: Attempt marked as completed`);indbyidandupdate:
 
-  // Calculate the final score and update metrics
-  await attempt.calculateScore();
+    // STEP 2: Calculate score and update metrics using direct database update
+    console.log(`🔄 Step 2: Starting score calculation for attempt ${id}...`);
 
-  logger.info(
-    `Test attempt ${id} completed by candidate ${candidateId}. Score: ${attempt.score}`
-  );
-  res.status(StatusCodes.OK).json({
-    success: true,
-    message: "Test attempt completed successfully",
-    data: attempt.toObject(), // Return the final attempt data with score
-  });
+    // Calculate metrics (keep the existing calculation logic)
+    const updatedAttempt = await attempt.calculateScore();
+
+    // STEP 2.5: Force update using findByIdAndUpdate as backup
+    console.log(`🔄 Step 2.5: Force updating metrics directly in database...`);
+
+    const forceUpdate = await TestAttempt.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          "metrics.questionsAnswered": updatedAttempt.metrics.questionsAnswered,
+          "metrics.questionsSkipped": updatedAttempt.metrics.questionsSkipped,
+          "metrics.questionsTotal": updatedAttempt.metrics.questionsTotal,
+          "metrics.answerChanges": updatedAttempt.metrics.answerChanges,
+          "metrics.flaggedQuestions": updatedAttempt.metrics.flaggedQuestions,
+          "metrics.correctAnswers": updatedAttempt.metrics.correctAnswers,
+          "metrics.halfCorrectAnswers":
+            updatedAttempt.metrics.halfCorrectAnswers,
+          "metrics.reversedAnswers": updatedAttempt.metrics.reversedAnswers,
+          "metrics.totalPropositionsCorrect":
+            updatedAttempt.metrics.totalPropositionsCorrect,
+          "metrics.totalPropositionsAttempted":
+            updatedAttempt.metrics.totalPropositionsAttempted,
+          "metrics.propositionAccuracy":
+            updatedAttempt.metrics.propositionAccuracy,
+          "metrics.completionRate": updatedAttempt.metrics.completionRate,
+          "metrics.averageTimePerQuestion":
+            updatedAttempt.metrics.averageTimePerQuestion,
+          "metrics.totalTimeSpent": updatedAttempt.metrics.totalTimeSpent,
+          "metrics.averageVisitsPerQuestion":
+            updatedAttempt.metrics.averageVisitsPerQuestion,
+          score: updatedAttempt.score,
+          percentageScore: updatedAttempt.percentageScore,
+        },
+      },
+      { new: true }
+    );
+
+    console.log(`✅ Step 2.5 completed: Force update successful`);
+
+    // STEP 3: Force reload from database to verify save
+    console.log(`🔄 Step 3: Reloading attempt from database...`);
+    const finalAttempt = await TestAttempt.findById(id);
+    console.log(
+      `📊 Final metrics from DB:`,
+      JSON.stringify(finalAttempt.metrics, null, 2)
+    );
+    console.log(`✅ Step 3 completed: Reloaded from database`);
+
+    logger.info(
+      `Test attempt ${id} completed by candidate ${candidateId}. Score: ${finalAttempt.score}/${finalAttempt.percentageScore}%`
+    );
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Test attempt completed successfully",
+      data: finalAttempt.toObject(),
+    });
+  } catch (error) {
+    console.error(`❌ ERROR in completeAttempt for ${id}:`, error);
+    console.error(`❌ Error stack:`, error.stack);
+
+    logger.error(`Error completing attempt ${id}:`, error);
+
+    // FIXED: Ensure the attempt is marked as completed even if score calculation fails
+    if (attempt.status === "in-progress") {
+      await attempt.finishAttempt("completed");
+    }
+
+    // FIXED: Get the final attempt data from database
+    const finalAttempt = await TestAttempt.findById(id);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Test attempt completed but score calculation failed",
+      data: finalAttempt.toObject(), // ← Return the database version
+      warning: "Metrics may not be accurate due to calculation error",
+      error: error.message, // Include error for debugging
+    });
+  }
 };
 
 /**
@@ -777,10 +966,10 @@ const getTestAttempts = async (req, res) => {
 };
 
 /**
- * Get result details for a completed attempt
+ * Get comprehensive result details for a completed attempt
  */
 const getAttemptResults = async (req, res) => {
-  const { id } = req.params; // Attempt ID
+  const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new AppError("Invalid attempt ID format", StatusCodes.BAD_REQUEST);
@@ -795,7 +984,7 @@ const getAttemptResults = async (req, res) => {
     );
   }
 
-  // Check if the attempt is completed or timed-out (results might be available for timed-out too)
+  // Check if the attempt is completed or timed-out
   if (!["completed", "timed-out"].includes(attempt.status)) {
     throw new AppError(
       `Results are only available for completed or timed-out tests. Current status: ${attempt.status}`,
@@ -803,22 +992,19 @@ const getAttemptResults = async (req, res) => {
     );
   }
 
-  // Get the test (already populated)
   const test = attempt.testId;
   if (!test) {
-    // Should not happen if population worked, but good practice to check
     throw new AppError(
       `Test associated with attempt ${id} not found`,
       StatusCodes.INTERNAL_SERVER_ERROR
     );
   }
 
-  // Get all questions for the test
+  // Get all questions and responses
   const questions = await getQuestionsForTest(attempt.testId.id);
-  // Get all responses for this attempt
   const responses = await QuestionResponse.find({ attemptId: id });
 
-  // Organize results by question
+  // Organize results by question with comprehensive data
   const questionResults = questions.map((question) => {
     const response = responses.find(
       (r) => r.questionId.toString() === question._id.toString()
@@ -829,7 +1015,6 @@ const getAttemptResults = async (req, res) => {
     if (question.questionType === "DominoQuestion") {
       correctAnswerDetails = question.correctAnswer;
     } else if (question.questionType === "MultipleChoiceQuestion") {
-      // Return the propositions with their correct evaluations
       correctAnswerDetails = {
         propositions:
           question.propositions?.map((p) => ({
@@ -839,54 +1024,333 @@ const getAttemptResults = async (req, res) => {
       };
     }
 
+    // Enhanced question data
+    const questionData = {
+      _id: question._id,
+      title: question.title,
+      instruction: question.instruction,
+      questionNumber: question.questionNumber,
+      questionType: question.questionType,
+      difficulty: question.difficulty,
+      layoutType: question.layoutType, // For domino questions
+      pattern: question.pattern, // For domino questions
+    };
+
+    // Enhanced response data with ALL fields
+    const responseData = response
+      ? {
+          _id: response._id,
+
+          // Answer data
+          dominoAnswer: response.dominoAnswer,
+          propositionResponses: response.propositionResponses,
+
+          // Correctness indicators
+          isCorrect: response.isCorrect,
+          isHalfCorrect: response.isHalfCorrect, // Added this
+          isReversed: response.isReversed, // Added this
+          isSkipped: response.isSkipped,
+          isFlagged: response.isFlagged,
+
+          // Timing and interaction data
+          timeSpent: response.timeSpent,
+          visitCount: response.visitCount,
+          answerChanges: response.answerChanges,
+
+          // Timestamps
+          firstVisitAt: response.firstVisitAt,
+          lastVisitAt: response.lastVisitAt,
+          answeredAt: response.answeredAt,
+
+          // Events log (full interaction history)
+          events: response.events,
+
+          // Calculated fields for analysis
+          averageTimePerVisit:
+            response.visitCount > 0
+              ? response.timeSpent / response.visitCount
+              : 0,
+          wasAnswered:
+            !response.isSkipped &&
+            (response.dominoAnswer ||
+              (response.propositionResponses &&
+                response.propositionResponses.length > 0)),
+
+          // Question-specific analysis
+          ...(question.questionType === "DominoQuestion" &&
+          response.dominoAnswer
+            ? {
+                dominoAnalysis: {
+                  providedTopValue: response.dominoAnswer.topValue,
+                  providedBottomValue: response.dominoAnswer.bottomValue,
+                  correctTopValue: question.correctAnswer?.topValue,
+                  correctBottomValue: question.correctAnswer?.bottomValue,
+                  isExactMatch: response.isCorrect,
+                  isReversedMatch: response.isReversed,
+                  isPartialMatch: response.isHalfCorrect,
+                },
+              }
+            : {}),
+
+          ...(question.questionType === "MultipleChoiceQuestion" &&
+          response.propositionResponses
+            ? {
+                propositionAnalysis: {
+                  totalPropositions: question.propositions?.length || 0,
+                  answeredPropositions: response.propositionResponses.length,
+                  correctPropositions: response.propositionResponses.filter(
+                    (p) => p.isCorrect
+                  ).length,
+                  skippedPropositions: response.propositionResponses.filter(
+                    (p) => p.candidateEvaluation === "X"
+                  ).length,
+                  accuracyRate:
+                    response.propositionResponses.length > 0
+                      ? (response.propositionResponses.filter(
+                          (p) => p.isCorrect
+                        ).length /
+                          response.propositionResponses.length) *
+                        100
+                      : 0,
+                },
+              }
+            : {}),
+        }
+      : null;
+
     return {
-      question: {
-        // Basic question info
-        _id: question._id,
-        title: question.title,
-        instruction: question.instruction,
-        questionNumber: question.questionNumber,
-        questionType: question.questionType,
-        difficulty: question.difficulty,
-      },
-      response: response // Include the full response document (or selected fields)
-        ? {
-            _id: response._id,
-            dominoAnswer: response.dominoAnswer,
-            propositionResponses: response.propositionResponses, // Include new field
-            isCorrect: response.isCorrect, // Overall correctness for the question
-            isSkipped: response.isSkipped,
-            isFlagged: response.isFlagged,
-            timeSpent: response.timeSpent,
-            visitCount: response.visitCount,
-            answeredAt: response.answeredAt,
-            answerChanges: response.answerChanges,
-          }
-        : null, // Handle case where response might be missing
-      correctAnswer: correctAnswerDetails, // Include the structured correct answer
+      question: questionData,
+      response: responseData,
+      correctAnswer: correctAnswerDetails,
     };
   });
 
-  // Consolidate final results object
-  const results = {
-    attempt: {
-      // Include relevant attempt details
-      _id: attempt._id,
-      testId: attempt.testId._id, // Use populated testId object
-      testName: test.name,
-      candidateId: attempt.candidateId,
-      startTime: attempt.startTime,
-      endTime: attempt.endTime,
-      timeSpent: attempt.timeSpent,
-      status: attempt.status,
-      score: attempt.score,
-      percentageScore: attempt.percentageScore,
-      metrics: attempt.metrics, // Include metrics like visits, time per question etc.
-      device: attempt.device,
-      browser: attempt.browser,
-      ipAddress: attempt.ipAddress,
+  // Calculate comprehensive performance analytics
+  const performanceAnalytics = {
+    // Basic stats
+    totalQuestions: questions.length,
+    questionsAnswered: responses.filter((r) => {
+      if (r.isSkipped) return false;
+
+      // For domino questions: check if dominoAnswer has actual values
+      if (r.dominoAnswer && typeof r.dominoAnswer === "object") {
+        return (
+          r.dominoAnswer.dominoId !== undefined &&
+          r.dominoAnswer.topValue !== undefined &&
+          r.dominoAnswer.bottomValue !== undefined &&
+          r.dominoAnswer.dominoId !== null
+        );
+      }
+
+      // For MCQ questions: check if propositionResponses exist and have content
+      if (r.propositionResponses && Array.isArray(r.propositionResponses)) {
+        return r.propositionResponses.length > 0;
+      }
+
+      return false;
+    }).length,
+    questionsSkipped: responses.filter((r) => r.isSkipped).length,
+    questionsFlagged: responses.filter((r) => r.isFlagged).length,
+
+    // Correctness breakdown
+    correctAnswers: responses.filter((r) => r.isCorrect).length,
+    halfCorrectAnswers: responses.filter((r) => r.isHalfCorrect).length,
+    reversedAnswers: responses.filter((r) => r.isReversed).length,
+    incorrectAnswers: responses.filter((r) => {
+      // Count as incorrect if: not skipped, not correct, but has an actual answer
+      if (r.isSkipped || r.isCorrect) return false;
+
+      // Has domino answer
+      if (r.dominoAnswer && typeof r.dominoAnswer === "object") {
+        return (
+          r.dominoAnswer.dominoId !== undefined &&
+          r.dominoAnswer.topValue !== undefined &&
+          r.dominoAnswer.bottomValue !== undefined &&
+          r.dominoAnswer.dominoId !== null
+        );
+      }
+
+      // Has MCQ answer
+      if (r.propositionResponses && Array.isArray(r.propositionResponses)) {
+        return r.propositionResponses.length > 0;
+      }
+
+      return false;
+    }).length,
+
+    // Timing analytics
+    totalTimeSpent: responses.reduce((sum, r) => sum + (r.timeSpent || 0), 0),
+    averageTimePerQuestion:
+      responses.length > 0
+        ? responses.reduce((sum, r) => sum + (r.timeSpent || 0), 0) /
+          responses.length
+        : 0,
+    fastestQuestion:
+      responses.length > 0
+        ? Math.min(...responses.map((r) => r.timeSpent || 0))
+        : 0,
+    slowestQuestion:
+      responses.length > 0
+        ? Math.max(...responses.map((r) => r.timeSpent || 0))
+        : 0,
+
+    // Interaction analytics
+    totalVisits: responses.reduce((sum, r) => sum + (r.visitCount || 0), 0),
+    averageVisitsPerQuestion:
+      responses.length > 0
+        ? responses.reduce((sum, r) => sum + (r.visitCount || 0), 0) /
+          responses.length
+        : 0,
+    totalAnswerChanges: responses.reduce(
+      (sum, r) => sum + (r.answerChanges || 0),
+      0
+    ),
+
+    // Question type specific analytics
+    dominoQuestionStats: {
+      total: questions.filter((q) => q.questionType === "DominoQuestion")
+        .length,
+      correct: responses.filter((r) => {
+        const q = questions.find(
+          (question) => question._id.toString() === r.questionId.toString()
+        );
+        return q?.questionType === "DominoQuestion" && r.isCorrect;
+      }).length,
+      halfCorrect: responses.filter((r) => {
+        const q = questions.find(
+          (question) => question._id.toString() === r.questionId.toString()
+        );
+        return q?.questionType === "DominoQuestion" && r.isHalfCorrect;
+      }).length,
+      reversed: responses.filter((r) => {
+        const q = questions.find(
+          (question) => question._id.toString() === r.questionId.toString()
+        );
+        return q?.questionType === "DominoQuestion" && r.isReversed;
+      }).length,
     },
-    questions: questionResults, // Array of question results
+
+    mcqQuestionStats: {
+      total: questions.filter(
+        (q) => q.questionType === "MultipleChoiceQuestion"
+      ).length,
+      totalPropositions: questions
+        .filter((q) => q.questionType === "MultipleChoiceQuestion")
+        .reduce((sum, q) => sum + (q.propositions?.length || 0), 0),
+      correctPropositions: responses
+        .filter((r) => r.propositionResponses)
+        .reduce(
+          (sum, r) =>
+            sum +
+            (r.propositionResponses?.filter((p) => p.isCorrect).length || 0),
+          0
+        ),
+    },
+
+    // Difficulty performance
+    difficultyPerformance: {
+      easy: {
+        total: questions.filter((q) => q.difficulty === "easy").length,
+        correct: responses.filter((r) => {
+          const q = questions.find(
+            (question) => question._id.toString() === r.questionId.toString()
+          );
+          return q?.difficulty === "easy" && r.isCorrect;
+        }).length,
+      },
+      medium: {
+        total: questions.filter((q) => q.difficulty === "medium").length,
+        correct: responses.filter((r) => {
+          const q = questions.find(
+            (question) => question._id.toString() === r.questionId.toString()
+          );
+          return q?.difficulty === "medium" && r.isCorrect;
+        }).length,
+      },
+      hard: {
+        total: questions.filter((q) => q.difficulty === "hard").length,
+        correct: responses.filter((r) => {
+          const q = questions.find(
+            (question) => question._id.toString() === r.questionId.toString()
+          );
+          return q?.difficulty === "hard" && r.isCorrect;
+        }).length,
+      },
+    },
+  };
+
+  // Enhanced attempt data with properly serialized metrics
+  const attemptData = {
+    _id: attempt._id,
+    testId: attempt.testId._id,
+    testName: test.name,
+    testDescription: test.description,
+    testDuration: test.duration,
+    testDifficulty: test.difficulty,
+    testType: test.type,
+    testCategory: test.category,
+
+    candidateId: attempt.candidateId,
+
+    // Timing
+    startTime: attempt.startTime,
+    endTime: attempt.endTime,
+    timeSpent: attempt.timeSpent,
+
+    // Status and scoring
+    status: attempt.status,
+    score: attempt.score,
+    percentageScore: attempt.percentageScore,
+
+    // Enhanced metrics with proper Map conversion
+    metrics: {
+      ...attempt.metrics,
+      // Convert Maps to Objects for proper JSON serialization
+      visitCounts:
+        attempt.metrics.visitCounts instanceof Map
+          ? Object.fromEntries(attempt.metrics.visitCounts)
+          : attempt.metrics.visitCounts || {},
+      timePerQuestion:
+        attempt.metrics.timePerQuestion instanceof Map
+          ? Object.fromEntries(attempt.metrics.timePerQuestion)
+          : attempt.metrics.timePerQuestion || {},
+    },
+
+    // Technical details
+    device: attempt.device,
+    browser: attempt.browser,
+    ipAddress: attempt.ipAddress,
+
+    // Additional metadata
+    createdAt: attempt.createdAt,
+    updatedAt: attempt.updatedAt,
+  };
+
+  // Final comprehensive results object
+  const results = {
+    attempt: attemptData,
+    questions: questionResults,
+    analytics: performanceAnalytics,
+    summary: {
+      completionRate:
+        (performanceAnalytics.questionsAnswered /
+          performanceAnalytics.totalQuestions) *
+        100,
+      accuracyRate:
+        performanceAnalytics.questionsAnswered > 0
+          ? (performanceAnalytics.correctAnswers /
+              performanceAnalytics.questionsAnswered) *
+            100
+          : 0,
+      efficiencyScore:
+        performanceAnalytics.averageTimePerQuestion > 0
+          ? (performanceAnalytics.correctAnswers * 1000) /
+            performanceAnalytics.averageTimePerQuestion
+          : 0,
+      engagementScore:
+        performanceAnalytics.totalVisits +
+        performanceAnalytics.questionsFlagged,
+    },
   };
 
   res.status(StatusCodes.OK).json({
@@ -946,13 +1410,10 @@ module.exports = {
   submitAnswer,
   toggleQuestionFlag,
   visitQuestion,
+  updateTimeSpent, // Add this new method
   skipQuestion,
   completeAttempt,
   getCandidateAttempts,
   getTestAttempts,
   getAttemptResults,
-  // Export helpers only if needed externally, otherwise keep them internal
-  // getUserDevice,
-  // getUserBrowser,
-  // getQuestionsForTest,
 };

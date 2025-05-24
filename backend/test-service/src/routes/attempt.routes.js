@@ -12,6 +12,7 @@ const {
   getCandidateAttempts,
   getTestAttempts,
   getAttemptResults,
+  updateTimeSpent,
 } = require("../controllers/attempt.controller");
 const { verifyToken, authorize } = require("../middleware/auth.middleware");
 const {
@@ -46,6 +47,11 @@ router.post(
   "/:attemptId/questions/:questionId/visit",
   verifyToken,
   visitQuestion
+);
+router.post(
+  "/:attemptId/questions/:questionId/time",
+  verifyToken,
+  updateTimeSpent
 );
 router.post(
   "/:attemptId/questions/:questionId/skip",
