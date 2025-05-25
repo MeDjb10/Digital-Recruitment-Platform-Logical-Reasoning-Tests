@@ -306,18 +306,50 @@ export class TestService {
   }
 
   /**
-   * Mark a question as visited
+   * Update time spent on a question
    */
-  visitQuestion(
+  updateTimeSpent(
     attemptId: string,
     questionId: string,
-    timeSpent?: number
+    timeSpent: number
   ): Observable<any> {
     const candidateId = this.authService.getCurrentUserId();
 
     const payload = {
       candidateId,
-      timeSpent: timeSpent || 0,
+      timeSpent: timeSpent,
+    };
+
+    this.logApiInteraction('updateTimeSpent-payload', payload);
+
+    return this.http
+      .post(
+        `${this.attemptApiUrl}/${attemptId}/questions/${questionId}/time`,
+        payload
+      )
+      .pipe(
+        tap((response) => {
+          this.logApiInteraction(
+            'updateTimeSpent-response',
+            { timeSpent },
+            response
+          );
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  /**
+   * Mark a question as visited
+   */
+  visitQuestion(
+    attemptId: string,
+    questionId: string
+  ): Observable<any> {
+    const candidateId = this.authService.getCurrentUserId();
+
+    const payload = {
+      candidateId,
     };
 
     this.logApiInteraction('visitQuestion-payload', payload);
@@ -331,7 +363,7 @@ export class TestService {
         tap((response) => {
           this.logApiInteraction(
             'visitQuestion-response',
-            { timeSpent },
+            {},
             response
           );
         }),

@@ -109,6 +109,14 @@ export class SimpleDominoGridComponent implements OnChanges, AfterViewInit {
       }
 
       this.setInitialZoom();
+
+      // AUTO-SELECT: Automatically select editable domino when dominos change
+      if (changes['dominos'] && hasEditables) {
+        // Use setTimeout to ensure the view is updated first
+        setTimeout(() => {
+          this.autoSelectEditableDomino();
+        }, 0);
+      }
     }
 
     if (changes['arrows']) {
@@ -123,6 +131,11 @@ export class SimpleDominoGridComponent implements OnChanges, AfterViewInit {
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.adjustSizesForViewport();
+
+      // Auto-select editable domino on initial load
+      if (this.hasEditableDominos) {
+        this.autoSelectEditableDomino();
+      }
     }, 0);
   }
 
@@ -217,6 +230,20 @@ export class SimpleDominoGridComponent implements OnChanges, AfterViewInit {
     );
     if (component) {
       component.setValues(topValue, bottomValue);
+    }
+  }
+
+  // Add this method to automatically select the first editable domino
+  private autoSelectEditableDomino(): void {
+    // Find the first editable domino
+    const editableDomino = this.dominos.find((d) => d.isEditable);
+
+    if (
+      editableDomino &&
+      (!this.selectedDomino || this.selectedDomino.id !== editableDomino.id)
+    ) {
+      console.log('Auto-selecting editable domino:', editableDomino.id);
+      this.selectDomino(editableDomino);
     }
   }
 

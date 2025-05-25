@@ -431,43 +431,31 @@ export class DominoTestModernComponent
     if (index < 0 || index >= this.questions.length) {
       console.warn(
         `[ModernTest] Attempted to navigate to invalid index: ${index}`
-      ); // DEBUG
+      );
       return;
     }
 
-    // End visit tracking for the previous question
+    // End time tracking for the current question FIRST
     this.trackingService.endCurrentQuestionVisit();
 
+    // Update current question
     this.currentQuestionIndex = index;
     this.currentQuestion = this.questions[this.currentQuestionIndex];
 
-    // Start visit tracking for the new question
+    // Start time tracking for the new question
     if (this.currentQuestion) {
       this.trackingService.startQuestionVisit(String(this.currentQuestion.id));
       this.currentQuestion.visited = true;
-      console.log(
-        `[ModernTest] Navigated to question ${
-          index + 1
-        }. Current Question Data (Post-Fix Check):`,
-        JSON.stringify(this.currentQuestion, null, 2)
-      ); // DEBUG
-      console.log(
-        `[ModernTest] Question Type (Post-Fix Check): ${this.currentQuestion.questionType}`
-      ); // DEBUG
-      console.log(
-        `[ModernTest] Propositions (Post-Fix Check): ${JSON.stringify(
-          this.currentQuestion.propositions
-        )}`
-      ); // DEBUG
-    } else {
-      console.error(
-        `[ModernTest] Error: currentQuestion is null after navigating to index ${index}`
-      ); // DEBUG
+    }
+
+    // Reset any existing selection in the domino grid
+    if (this.dominoGrid) {
+      this.dominoGrid.deselectDomino();
     }
 
     this.resetAnimations();
     this.startAnimations();
-    this.saveProgress(); // Save progress on navigation
+
     setTimeout(() => {
       this.checkInstructionLength();
       this.cdr.detectChanges();
@@ -506,6 +494,7 @@ export class DominoTestModernComponent
     this.cdr.markForCheck();
   }
 
+  // Update the flagging logic to use trackingService directly:
   toggleFlag(): void {
     if (!this.currentQuestion) return;
 
@@ -599,7 +588,7 @@ export class DominoTestModernComponent
     }
   }
 
-  // New handler for MCQ answers
+  // Update onPropositionAnswerChanged to use trackingService directly:
   onPropositionAnswerChanged(responses: PropositionResponse[]): void {
     if (
       !this.currentQuestion ||
