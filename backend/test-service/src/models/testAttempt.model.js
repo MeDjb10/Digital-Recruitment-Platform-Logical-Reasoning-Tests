@@ -266,6 +266,35 @@ TestAttemptSchema.methods.calculateScore = async function () {
     const currentVisitCounts = this.metrics?.visitCounts || {};
     const currentTimePerQuestion = this.metrics?.timePerQuestion || {};
 
+    // FIXED: Ensure ALL questions are included in timePerQuestion
+    const timePerQuestionMap = new Map();
+
+    // First, get the current timePerQuestion data
+    const currentTimePerQuestionObj =
+      this.metrics?.timePerQuestion instanceof Map
+        ? Object.fromEntries(this.metrics.timePerQuestion)
+        : this.metrics?.timePerQuestion || {};
+
+    // Then, sync with actual response times for ALL responses
+    responses.forEach((response) => {
+      if (response.questionId) {
+        const questionIdStr = response.questionId._id.toString();
+
+        // Use the response's actual timeSpent as the source of truth
+        timePerQuestionMap.set(questionIdStr, response.timeSpent || 0);
+
+        console.log(
+          `⏱️ Question ${questionIdStr}: ${response.timeSpent || 0}ms`
+        );
+      }
+    });
+
+    console.log(`📊 TimePerQuestion map entries: ${timePerQuestionMap.size}`);
+    console.log(
+      `📊 TimePerQuestion data:`,
+      Object.fromEntries(timePerQuestionMap)
+    );
+
     // Create a completely new metrics object
     const newMetrics = {
       questionsAnswered: answeredResponses.length,
@@ -290,9 +319,9 @@ TestAttemptSchema.methods.calculateScore = async function () {
           ? (totalPropositionsCorrect / totalPropositionsAttempted) * 100
           : 0,
 
-      // Time and visit metrics (preserve existing data)
+      // FIXED: Use the synced time data
       visitCounts: currentVisitCounts,
-      timePerQuestion: currentTimePerQuestion,
+      timePerQuestion: timePerQuestionMap, // Use the synced map
 
       // Additional calculated metrics
       completionRate:

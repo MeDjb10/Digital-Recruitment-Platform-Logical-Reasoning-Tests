@@ -1,10 +1,5 @@
 const mongoose = require("mongoose");
-const {
-  TestAttempt,
-  QuestionResponse,
-  Test,
-  Question,
-} = require("../models");
+const { TestAttempt, QuestionResponse, Test, Question } = require("../models");
 const { AppError } = require("../middleware/errorHandler");
 const logger = require("../utils/logger");
 
@@ -53,7 +48,8 @@ class AttemptService {
     if (ua.includes("firefox")) return "Firefox";
     if (ua.includes("safari") && !ua.includes("chrome") && !ua.includes("edg"))
       return "Safari";
-    if (ua.includes("msie") || ua.includes("trident")) return "Internet Explorer";
+    if (ua.includes("msie") || ua.includes("trident"))
+      return "Internet Explorer";
 
     return "Unknown";
   }
@@ -102,7 +98,7 @@ class AttemptService {
    */
   async createQuestionResponses(attemptId, candidateId, questions) {
     const batchSize = 10;
-    
+
     for (let i = 0; i < questions.length; i += batchSize) {
       const batch = questions.slice(i, i + batchSize);
       const responsePromises = batch.map((question) =>
@@ -138,7 +134,8 @@ class AttemptService {
    */
   async startTestAttempt(testId, candidateId, userAgent, ipAddress) {
     const test = await this.validateTestExists(testId);
-    const { existingAttempt, completedAttempt } = await this.checkExistingAttempts(testId, candidateId);
+    const { existingAttempt, completedAttempt } =
+      await this.checkExistingAttempts(testId, candidateId);
 
     if (existingAttempt) {
       logger.info(
@@ -195,7 +192,7 @@ class AttemptService {
    */
   async getAttemptById(id, populate = null) {
     const query = TestAttempt.findById(id);
-    
+
     if (populate) {
       query.populate(populate);
     }
@@ -288,7 +285,11 @@ class AttemptService {
   /**
    * Validate attempt access
    */
-  async validateAttemptAccess(attemptId, candidateId, allowedStatuses = ["in-progress"]) {
+  async validateAttemptAccess(
+    attemptId,
+    candidateId,
+    allowedStatuses = ["in-progress"]
+  ) {
     const attempt = await this.getAttemptById(attemptId);
 
     if (!allowedStatuses.includes(attempt.status)) {
@@ -313,7 +314,11 @@ class AttemptService {
    */
   async submitAnswer(attemptId, questionId, candidateId, answer) {
     const attempt = await this.validateAttemptAccess(attemptId, candidateId);
-    const response = await this.findOrCreateQuestionResponse(attemptId, questionId, attempt.candidateId);
+    const response = await this.findOrCreateQuestionResponse(
+      attemptId,
+      questionId,
+      attempt.candidateId
+    );
 
     await response.recordAnswer(answer);
 
@@ -332,7 +337,11 @@ class AttemptService {
    */
   async toggleQuestionFlag(attemptId, questionId, candidateId) {
     const attempt = await this.validateAttemptAccess(attemptId, candidateId);
-    const response = await this.findOrCreateQuestionResponse(attemptId, questionId, attempt.candidateId);
+    const response = await this.findOrCreateQuestionResponse(
+      attemptId,
+      questionId,
+      attempt.candidateId
+    );
 
     await response.toggleFlag();
 
@@ -351,7 +360,11 @@ class AttemptService {
    */
   async visitQuestion(attemptId, questionId, candidateId) {
     const attempt = await this.validateAttemptAccess(attemptId, candidateId);
-    const response = await this.findOrCreateQuestionResponse(attemptId, questionId, attempt.candidateId);
+    const response = await this.findOrCreateQuestionResponse(
+      attemptId,
+      questionId,
+      attempt.candidateId
+    );
 
     await response.recordVisit();
 
@@ -380,20 +393,25 @@ class AttemptService {
    */
   async updateTimeSpent(attemptId, questionId, candidateId, timeSpent) {
     const attempt = await this.validateAttemptAccess(attemptId, candidateId);
-    const response = await this.findOrCreateQuestionResponse(attemptId, questionId, attempt.candidateId);
+    const response = await this.findOrCreateQuestionResponse(
+      attemptId,
+      questionId,
+      attempt.candidateId
+    );
 
+    // Update the response time
     response.timeSpent = (response.timeSpent || 0) + timeSpent;
     await response.save();
 
+    // Initialize metrics if needed
     if (!attempt.metrics.timePerQuestion) {
       attempt.metrics.timePerQuestion = new Map();
     }
 
-    const currentTime =
-      attempt.metrics.timePerQuestion.get(questionId.toString()) || 0;
+    // FIXED: Always sync with the response's total time
     attempt.metrics.timePerQuestion.set(
       questionId.toString(),
-      currentTime + timeSpent
+      response.timeSpent
     );
 
     attempt.lastActivityAt = new Date();
@@ -417,7 +435,11 @@ class AttemptService {
    */
   async skipQuestion(attemptId, questionId, candidateId) {
     const attempt = await this.validateAttemptAccess(attemptId, candidateId);
-    const response = await this.findOrCreateQuestionResponse(attemptId, questionId, attempt.candidateId);
+    const response = await this.findOrCreateQuestionResponse(
+      attemptId,
+      questionId,
+      attempt.candidateId
+    );
 
     await response.skipQuestion();
 
@@ -456,6 +478,9 @@ class AttemptService {
     }
 
     try {
+      // ADDED: Ensure all question times are synced before completion
+      await this.syncAllQuestionTimes(attemptId);
+
       await attempt.finishAttempt("completed");
       const updatedAttempt = await attempt.calculateScore();
 
@@ -464,21 +489,28 @@ class AttemptService {
         attemptId,
         {
           $set: {
-            "metrics.questionsAnswered": updatedAttempt.metrics.questionsAnswered,
+            "metrics.questionsAnswered":
+              updatedAttempt.metrics.questionsAnswered,
             "metrics.questionsSkipped": updatedAttempt.metrics.questionsSkipped,
             "metrics.questionsTotal": updatedAttempt.metrics.questionsTotal,
             "metrics.answerChanges": updatedAttempt.metrics.answerChanges,
             "metrics.flaggedQuestions": updatedAttempt.metrics.flaggedQuestions,
             "metrics.correctAnswers": updatedAttempt.metrics.correctAnswers,
-            "metrics.halfCorrectAnswers": updatedAttempt.metrics.halfCorrectAnswers,
+            "metrics.halfCorrectAnswers":
+              updatedAttempt.metrics.halfCorrectAnswers,
             "metrics.reversedAnswers": updatedAttempt.metrics.reversedAnswers,
-            "metrics.totalPropositionsCorrect": updatedAttempt.metrics.totalPropositionsCorrect,
-            "metrics.totalPropositionsAttempted": updatedAttempt.metrics.totalPropositionsAttempted,
-            "metrics.propositionAccuracy": updatedAttempt.metrics.propositionAccuracy,
+            "metrics.totalPropositionsCorrect":
+              updatedAttempt.metrics.totalPropositionsCorrect,
+            "metrics.totalPropositionsAttempted":
+              updatedAttempt.metrics.totalPropositionsAttempted,
+            "metrics.propositionAccuracy":
+              updatedAttempt.metrics.propositionAccuracy,
             "metrics.completionRate": updatedAttempt.metrics.completionRate,
-            "metrics.averageTimePerQuestion": updatedAttempt.metrics.averageTimePerQuestion,
+            "metrics.averageTimePerQuestion":
+              updatedAttempt.metrics.averageTimePerQuestion,
             "metrics.totalTimeSpent": updatedAttempt.metrics.totalTimeSpent,
-            "metrics.averageVisitsPerQuestion": updatedAttempt.metrics.averageVisitsPerQuestion,
+            "metrics.averageVisitsPerQuestion":
+              updatedAttempt.metrics.averageVisitsPerQuestion,
             score: updatedAttempt.score,
             percentageScore: updatedAttempt.percentageScore,
           },
@@ -492,12 +524,11 @@ class AttemptService {
         `Test attempt ${attemptId} completed by candidate ${candidateId}. Score: ${finalAttempt.score}/${finalAttempt.percentageScore}%`
       );
 
-      return { 
-        attempt: finalAttempt.toObject(), 
+      return {
+        attempt: finalAttempt.toObject(),
         wasAlreadyCompleted: false,
-        success: true 
+        success: true,
       };
-
     } catch (error) {
       logger.error(`Error completing attempt ${attemptId}:`, error);
 
@@ -512,8 +543,45 @@ class AttemptService {
         wasAlreadyCompleted: false,
         success: false,
         error: error.message,
-        warning: "Metrics may not be accurate due to calculation error"
+        warning: "Metrics may not be accurate due to calculation error",
       };
+    }
+  }
+
+  /**
+   * NEW METHOD: Sync time data for all questions before completion
+   */
+  async syncAllQuestionTimes(attemptId) {
+    try {
+      const responses = await QuestionResponse.find({ attemptId });
+      const attempt = await TestAttempt.findById(attemptId);
+
+      if (!attempt.metrics.timePerQuestion) {
+        attempt.metrics.timePerQuestion = new Map();
+      }
+
+      // Sync ALL question times from responses
+      responses.forEach((response) => {
+        if (response.questionId && response.timeSpent >= 0) {
+          attempt.metrics.timePerQuestion.set(
+            response.questionId.toString(),
+            response.timeSpent
+          );
+        }
+      });
+
+      attempt.markModified("metrics");
+      await attempt.save();
+
+      logger.info(
+        `Synced time data for ${responses.length} questions in attempt ${attemptId}`
+      );
+    } catch (error) {
+      logger.error(
+        `Error syncing question times for attempt ${attemptId}:`,
+        error
+      );
+      // Don't throw - this is not critical enough to fail the completion
     }
   }
 
@@ -575,7 +643,7 @@ class AttemptService {
       "status",
       "candidateId",
     ];
-    
+
     if (validSortFields.includes(sort)) {
       sortOptions[sort] = order === "asc" ? 1 : -1;
     } else {
@@ -604,7 +672,7 @@ class AttemptService {
    */
   async getAttemptResults(attemptId) {
     const attempt = await TestAttempt.findById(attemptId).populate("testId");
-    
+
     if (!attempt) {
       throw new AppError(
         `Attempt with ID ${attemptId} not found`,
@@ -632,7 +700,10 @@ class AttemptService {
 
     // Build comprehensive results
     const questionResults = this.buildQuestionResults(questions, responses);
-    const performanceAnalytics = this.calculatePerformanceAnalytics(questions, responses);
+    const performanceAnalytics = this.calculatePerformanceAnalytics(
+      questions,
+      responses
+    );
     const attemptData = this.buildAttemptData(attempt, test);
 
     const results = {
@@ -678,7 +749,9 @@ class AttemptService {
         pattern: question.pattern,
       };
 
-      const responseData = response ? this.buildResponseData(response, question) : null;
+      const responseData = response
+        ? this.buildResponseData(response, question)
+        : null;
 
       return {
         question: questionData,
@@ -713,7 +786,8 @@ class AttemptService {
       wasAnswered:
         !response.isSkipped &&
         (response.dominoAnswer ||
-          (response.propositionResponses && response.propositionResponses.length > 0)),
+          (response.propositionResponses &&
+            response.propositionResponses.length > 0)),
     };
 
     // Add question-specific analysis
@@ -729,18 +803,24 @@ class AttemptService {
       };
     }
 
-    if (question.questionType === "MultipleChoiceQuestion" && response.propositionResponses) {
+    if (
+      question.questionType === "MultipleChoiceQuestion" &&
+      response.propositionResponses
+    ) {
       baseResponseData.propositionAnalysis = {
         totalPropositions: question.propositions?.length || 0,
         answeredPropositions: response.propositionResponses.length,
-        correctPropositions: response.propositionResponses.filter((p) => p.isCorrect).length,
+        correctPropositions: response.propositionResponses.filter(
+          (p) => p.isCorrect
+        ).length,
         skippedPropositions: response.propositionResponses.filter(
           (p) => p.candidateEvaluation === "X"
         ).length,
         accuracyRate:
           response.propositionResponses.length > 0
             ? (response.propositionResponses.filter((p) => p.isCorrect).length /
-                response.propositionResponses.length) * 100
+                response.propositionResponses.length) *
+              100
             : 0,
       };
     }
@@ -802,21 +882,33 @@ class AttemptService {
       totalTimeSpent: responses.reduce((sum, r) => sum + (r.timeSpent || 0), 0),
       averageTimePerQuestion:
         responses.length > 0
-          ? responses.reduce((sum, r) => sum + (r.timeSpent || 0), 0) / responses.length
+          ? responses.reduce((sum, r) => sum + (r.timeSpent || 0), 0) /
+            responses.length
           : 0,
       fastestQuestion:
-        responses.length > 0 ? Math.min(...responses.map((r) => r.timeSpent || 0)) : 0,
+        responses.length > 0
+          ? Math.min(...responses.map((r) => r.timeSpent || 0))
+          : 0,
       slowestQuestion:
-        responses.length > 0 ? Math.max(...responses.map((r) => r.timeSpent || 0)) : 0,
+        responses.length > 0
+          ? Math.max(...responses.map((r) => r.timeSpent || 0))
+          : 0,
       totalVisits: responses.reduce((sum, r) => sum + (r.visitCount || 0), 0),
       averageVisitsPerQuestion:
         responses.length > 0
-          ? responses.reduce((sum, r) => sum + (r.visitCount || 0), 0) / responses.length
+          ? responses.reduce((sum, r) => sum + (r.visitCount || 0), 0) /
+            responses.length
           : 0,
-      totalAnswerChanges: responses.reduce((sum, r) => sum + (r.answerChanges || 0), 0),
+      totalAnswerChanges: responses.reduce(
+        (sum, r) => sum + (r.answerChanges || 0),
+        0
+      ),
       dominoQuestionStats: this.calculateDominoStats(questions, responses),
       mcqQuestionStats: this.calculateMcqStats(questions, responses),
-      difficultyPerformance: this.calculateDifficultyPerformance(questions, responses),
+      difficultyPerformance: this.calculateDifficultyPerformance(
+        questions,
+        responses
+      ),
     };
   }
 
@@ -825,17 +917,24 @@ class AttemptService {
    */
   calculateDominoStats(questions, responses) {
     return {
-      total: questions.filter((q) => q.questionType === "DominoQuestion").length,
+      total: questions.filter((q) => q.questionType === "DominoQuestion")
+        .length,
       correct: responses.filter((r) => {
-        const q = questions.find((question) => question._id.toString() === r.questionId.toString());
+        const q = questions.find(
+          (question) => question._id.toString() === r.questionId.toString()
+        );
         return q?.questionType === "DominoQuestion" && r.isCorrect;
       }).length,
       halfCorrect: responses.filter((r) => {
-        const q = questions.find((question) => question._id.toString() === r.questionId.toString());
+        const q = questions.find(
+          (question) => question._id.toString() === r.questionId.toString()
+        );
         return q?.questionType === "DominoQuestion" && r.isHalfCorrect;
       }).length,
       reversed: responses.filter((r) => {
-        const q = questions.find((question) => question._id.toString() === r.questionId.toString());
+        const q = questions.find(
+          (question) => question._id.toString() === r.questionId.toString()
+        );
         return q?.questionType === "DominoQuestion" && r.isReversed;
       }).length,
     };
@@ -846,7 +945,9 @@ class AttemptService {
    */
   calculateMcqStats(questions, responses) {
     return {
-      total: questions.filter((q) => q.questionType === "MultipleChoiceQuestion").length,
+      total: questions.filter(
+        (q) => q.questionType === "MultipleChoiceQuestion"
+      ).length,
       totalPropositions: questions
         .filter((q) => q.questionType === "MultipleChoiceQuestion")
         .reduce((sum, q) => sum + (q.propositions?.length || 0), 0),
@@ -854,7 +955,8 @@ class AttemptService {
         .filter((r) => r.propositionResponses)
         .reduce(
           (sum, r) =>
-            sum + (r.propositionResponses?.filter((p) => p.isCorrect).length || 0),
+            sum +
+            (r.propositionResponses?.filter((p) => p.isCorrect).length || 0),
           0
         ),
     };
@@ -871,7 +973,9 @@ class AttemptService {
       performance[difficulty] = {
         total: questions.filter((q) => q.difficulty === difficulty).length,
         correct: responses.filter((r) => {
-          const q = questions.find((question) => question._id.toString() === r.questionId.toString());
+          const q = questions.find(
+            (question) => question._id.toString() === r.questionId.toString()
+          );
           return q?.difficulty === difficulty && r.isCorrect;
         }).length,
       };
@@ -924,7 +1028,8 @@ class AttemptService {
    */
   calculateSummaryMetrics(analytics) {
     return {
-      completionRate: (analytics.questionsAnswered / analytics.totalQuestions) * 100,
+      completionRate:
+        (analytics.questionsAnswered / analytics.totalQuestions) * 100,
       accuracyRate:
         analytics.questionsAnswered > 0
           ? (analytics.correctAnswers / analytics.questionsAnswered) * 100

@@ -10,7 +10,6 @@ export class TestAttemptTrackingService {
   private currentQuestionId: string | null = null;
   private questionStartTime: number = 0;
   private attemptId: string | null = null;
-  private timeSpentMap: Map<string, number> = new Map();
   private currentAnswer: any = null;
 
   // Event streams
@@ -49,6 +48,9 @@ export class TestAttemptTrackingService {
     this.currentQuestionId = questionId;
     this.questionStartTime = Date.now();
     console.log(`Started tracking visit for question ${questionId}`);
+
+    // Record the visit start on the server
+    this.recordVisitStart(questionId);
   }
 
   /**
@@ -60,49 +62,65 @@ export class TestAttemptTrackingService {
       this.attemptId &&
       this.questionStartTime > 0
     ) {
-      const timeSpent = Math.floor(
-        (Date.now() - this.questionStartTime) / 1000
-      ); // Convert to seconds
+      const timeSpent = Math.floor(Date.now() - this.questionStartTime); // Time in milliseconds
 
-      // Add to our local tracking
-      const previousTime = this.timeSpentMap.get(this.currentQuestionId) || 0;
-      this.timeSpentMap.set(this.currentQuestionId, previousTime + timeSpent);
-
-      // Send to server
-      this.recordVisit(this.currentQuestionId, timeSpent);
+      // Send to server using the new updateTimeSpent endpoint
+      this.updateTimeSpent(this.currentQuestionId, timeSpent);
 
       console.log(
-        `Ended visit for question ${
-          this.currentQuestionId
-        }. Time spent: ${timeSpent}s. Total: ${previousTime + timeSpent}s`
+        `Ended visit for question ${this.currentQuestionId}. Time spent: ${timeSpent}ms`
       );
 
       // Reset tracking
+      this.currentQuestionId = null;
       this.questionStartTime = 0;
     }
   }
 
   /**
-   * Record a visit with time spent
+   * Record visit start on the server
    */
-  private recordVisit(questionId: string, timeSpent: number): void {
+  private recordVisitStart(questionId: string): void {
     if (!this.attemptId) {
       console.error('Cannot record visit: No active attempt');
       return;
     }
 
     this.testService
-      .visitQuestion(this.attemptId, questionId, timeSpent)
+      .visitQuestion(this.attemptId, questionId)
+      .pipe(
+        tap((response) => {
+          console.log(`Visit started for question ${questionId}`, response);
+        }),
+        catchError((error) => {
+          console.error('Error recording visit start:', error);
+          return of(null);
+        })
+      )
+      .subscribe();
+  }
+
+  /**
+   * Update time spent on a question
+   */
+  private updateTimeSpent(questionId: string, timeSpent: number): void {
+    if (!this.attemptId) {
+      console.error('Cannot update time spent: No active attempt');
+      return;
+    }
+
+    this.testService
+      .updateTimeSpent(this.attemptId, questionId, timeSpent)
       .pipe(
         tap((response) => {
           console.log(
-            `Visit recorded for question ${questionId}, time spent: ${timeSpent}s`,
+            `Time updated for question ${questionId}: ${timeSpent}ms`,
             response
           );
           this.visitRecordedSubject.next({ questionId, timeSpent });
         }),
         catchError((error) => {
-          console.error('Error recording visit:', error);
+          console.error('Error updating time spent:', error);
           return of(null);
         })
       )
@@ -201,13 +219,5 @@ export class TestAttemptTrackingService {
     this.endCurrentQuestionVisit();
     this.currentQuestionId = null;
     this.attemptId = null;
-    this.timeSpentMap.clear();
-  }
-
-  /**
-   * Get total time spent on a question
-   */
-  getTimeSpentOnQuestion(questionId: string): number {
-    return this.timeSpentMap.get(questionId) || 0;
   }
 }

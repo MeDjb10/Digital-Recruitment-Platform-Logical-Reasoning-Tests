@@ -53,7 +53,6 @@ export class DominoTestService {
    * Submit an answer for a question
    */
   submitAnswer(questionId: string, answer: any): Observable<any> {
-    // Use the tracking service to submit answers which will handle the API call
     return this.trackingService.submitAnswer(questionId, answer).pipe(
       tap((response) => {
         console.log(`Answer submitted for question ${questionId}:`, response);
@@ -69,7 +68,6 @@ export class DominoTestService {
    * Toggle flag for a question
    */
   toggleQuestionFlag(questionId: string): Observable<any> {
-    // Use the tracking service to toggle flags
     return this.trackingService.toggleQuestionFlag(questionId).pipe(
       tap((response) => {
         console.log(`Flag toggled for question ${questionId}:`, response);
@@ -85,7 +83,6 @@ export class DominoTestService {
    * Skip the current question
    */
   skipQuestion(questionId: string): Observable<any> {
-    // Use the tracking service to record a skip
     return this.trackingService.skipQuestion(questionId).pipe(
       tap((response) => {
         console.log(`Question ${questionId} skipped:`, response);
@@ -98,15 +95,14 @@ export class DominoTestService {
   }
 
   /**
-   * Start tracking a question visit - call this when a user navigates to a question
+   * Start tracking a question visit
    */
   startQuestionVisit(questionId: string): void {
     this.trackingService.startQuestionVisit(questionId);
   }
 
   /**
-   * End tracking a question visit - call this when a user navigates away from a question
-   * This automatically sends the time spent to the backend
+   * End tracking a question visit
    */
   endQuestionVisit(): void {
     this.trackingService.endCurrentQuestionVisit();
@@ -134,13 +130,6 @@ export class DominoTestService {
         return of(null);
       })
     );
-  }
-
-  /**
-   * Get the total time spent on a specific question
-   */
-  getTimeSpentOnQuestion(questionId: string): number {
-    return this.trackingService.getTimeSpentOnQuestion(questionId);
   }
 
   /**
@@ -204,7 +193,6 @@ export class DominoTestService {
 
   /**
    * Evaluate an answer to check if it's correct
-   * This is a utility method that can be used client-side to show immediate feedback
    */
   evaluateAnswer(
     userAnswer: { topValue: number | null; bottomValue: number | null },
@@ -258,14 +246,11 @@ export class DominoTestService {
     return `${this.STORAGE_KEY_PREFIX}${testId}`;
   }
 
-  // Get available tests for candidates
   getAvailableTests(): Observable<any[]> {
-    // Use TestService to get ALL active tests (remove type filter)
     return this.testService
       .getAllTests({
         isActive: true,
-        // Remove type: 'domino' to get all types
-        category: 'logical', // Keep category if needed
+        category: 'logical',
       })
       .pipe(
         map((response) => {
@@ -273,7 +258,6 @@ export class DominoTestService {
             return [];
           }
 
-          // Map all test types
           return response.data.map((test) => ({
             id: test._id,
             name: test.name,
@@ -281,7 +265,7 @@ export class DominoTestService {
             duration: test.duration,
             totalQuestions: test.totalQuestions || 0,
             difficulty: test.difficulty,
-            type: test.type || 'unknown', // Include type if available
+            type: test.type || 'unknown',
           }));
         }),
         catchError((error) => {
