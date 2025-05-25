@@ -438,6 +438,7 @@ export class DominoTestModernComponent
     // End time tracking for the current question FIRST
     this.trackingService.endCurrentQuestionVisit();
 
+    // Update current question
     this.currentQuestionIndex = index;
     this.currentQuestion = this.questions[this.currentQuestionIndex];
 
@@ -445,21 +446,16 @@ export class DominoTestModernComponent
     if (this.currentQuestion) {
       this.trackingService.startQuestionVisit(String(this.currentQuestion.id));
       this.currentQuestion.visited = true;
-      console.log(
-        `[ModernTest] Navigated to question ${
-          index + 1
-        }. Current Question Data (Post-Fix Check):`,
-        JSON.stringify(this.currentQuestion, null, 2)
-      );
-    } else {
-      console.error(
-        `[ModernTest] Error: currentQuestion is null after navigating to index ${index}`
-      );
+    }
+
+    // Reset any existing selection in the domino grid
+    if (this.dominoGrid) {
+      this.dominoGrid.deselectDomino();
     }
 
     this.resetAnimations();
     this.startAnimations();
-    this.saveProgress(); // Save progress on navigation
+
     setTimeout(() => {
       this.checkInstructionLength();
       this.cdr.detectChanges();
