@@ -1,249 +1,258 @@
-<div class="test-dashboard-container">
-  <div class="test-dashboard-wrapper">
+<div class="min-h-screen bg-gradient-to-br from-blue-200 via-blue-100 to-blue-50 px-4 py-6 flex justify-center items-center font-[Segoe UI] relative overflow-hidden">
+  <div class="w-full  max-h-[95vh] bg-white rounded-2xl shadow-xl overflow-hidden relative z-10 border border-blue-500/10 flex flex-col">
+    <!-- Top gradient border -->
+    <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-600 via-red-500 to-blue-800 z-10"></div>
+
     <!-- Decorative Elements -->
-    <div class="bg-decoration bg-circle-1"></div>
-    <div class="bg-decoration bg-circle-2"></div>
-    <div class="bg-decoration bg-dots"></div>
+    <div class="absolute -top-[250px] -right-[200px] w-[600px] h-[600px] rounded-full bg-radial-red pointer-events-none z-1"></div>
+    <div class="absolute -bottom-[350px] -left-[250px] w-[800px] h-[800px] rounded-full bg-radial-blue pointer-events-none z-1"></div>
+    <div class="absolute inset-0 bg-dots opacity-70 pointer-events-none"></div>
     
-    <div class="dashboard-content">
-      <!-- Left Side: Company Info and Recruitment Process -->
-      <div class="info-section">
+    <div class="flex flex-col lg:flex-row p-6 lg:p-8 gap-8 flex-grow overflow-auto">
+      <!-- Left Side -->
+      <div class="flex-1">
         <!-- Company header -->
-        <div class="company-header">
-          <h2 class="company-name">COFAT</h2>
+        <div class="flex items-center mb-6">
+          <h2 class="text-2xl font-extrabold text-blue-900 tracking-wide">COFAT</h2>
         </div>
         
         <!-- Dashboard header -->
-        <div class="dashboard-header">
-          <span class="dashboard-badge">
-            <i class="fas fa-clipboard-check"></i>
+        <div class="mb-8">
+          <span class="inline-flex items-center bg-gradient-to-r from-red-50 to-blue-50 text-blue-800 font-semibold text-sm px-5 py-2 rounded-full shadow-sm border border-blue-300/30 relative overflow-hidden">
+            <i class="fas fa-clipboard-check mr-2 text-red-600"></i>
             Assessment Portal
-            <div class="badge-shine"></div>
+            <div class="absolute inset-0 animate-shine"></div>
           </span>
-          <h1 class="dashboard-title">Your Assessment Journey</h1>
-          <p class="dashboard-subtitle">Complete these tests to showcase your talents</p>
+          <h1 class="mt-4 text-2xl font-extrabold bg-gradient-to-r from-blue-800 to-red-600 bg-clip-text text-transparent tracking-tight">Your Assessment Journey</h1>
+          <p class="text-gray-600 text-[0.95rem] mt-2">Complete these tests to showcase your talents</p>
         </div>
 
-        <!-- Enhanced Recruitment Process -->
-        <div class="recruitment-process">
-          <h3 class="process-title">
-            <i class="fas fa-building-user"></i>
-            Recruitment Process
-          </h3>
-          
-          <div class="process-description">
-            <p>Welcome to COFAT's digital assessment platform. These tests are an essential part of our talent acquisition process, designed to identify candidates who align with our company values and possess the skills needed for success.</p>
-          </div>
-          
-          <!-- Toggle button for showing/hiding details -->
-          <button class="toggle-details" (click)="toggleProcessDetails()">
-            <span *ngIf="!showProcessDetails">Show Process Details</span>
-            <span *ngIf="showProcessDetails">Hide Process Details</span>
-            <i class="fas" [ngClass]="showProcessDetails ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-          </button>
-          
-          <!-- Collapsible content -->
-          <div class="process-details" [ngClass]="{'process-details-visible': showProcessDetails}">
-            <div class="process-timeline">
-              <div class="timeline-step current">
-                <div class="step-indicator">
-                  <div class="step-icon">
-                    <i class="fas fa-laptop-code"></i>
-                  </div>
-                  <div class="step-connector"></div>
-                </div>
-                <div class="step-details">
-                  <h4>Online Assessment</h4>
-                  <p>Complete a series of tests to showcase your abilities</p>
-                  <span class="step-status">You are here</span>
-                </div>
-              </div>
-              
-              <div class="timeline-step">
-                <div class="step-indicator">
-                  <div class="step-icon">
-                    <i class="fas fa-user-group"></i>
-                  </div>
-                  <div class="step-connector"></div>
-                </div>
-                <div class="step-details">
-                  <h4>Interview Phase</h4>
-                  <p>Meet with our team to discuss your experience</p>
-                </div>
-              </div>
-              
-              <div class="timeline-step">
-                <div class="step-indicator">
-                  <div class="step-icon">
-                    <i class="fas fa-file-signature"></i>
-                  </div>
-                </div>
-                <div class="step-details">
-                  <h4>Final Decision</h4>
-                  <p>Selected candidates receive an offer</p>
-                </div>
-              </div>
+        <!-- Recruitment Process -->
+        <div class="bg-gray-50 rounded-2xl shadow-lg p-6 border border-black/5">
+          <!-- Enhanced Recruitment Process -->
+          <div class="recruitment-process">
+            <h3 class="process-title">
+              <i class="fas fa-building-user"></i>
+              Recruitment Process
+            </h3>
+            
+            <div class="process-description">
+              <p>Welcome to COFAT's digital assessment platform. These tests are an essential part of our talent acquisition process, designed to identify candidates who align with our company values and possess the skills needed for success.</p>
             </div>
             
-            <!-- Brief instructions -->
-            <div class="brief-instructions">
-              <div class="instruction-item">
-                <i class="fas fa-arrow-right-long"></i>
-                <span>Complete tests in sequential order</span>
+            <!-- Toggle button for showing/hiding details -->
+            <button class="toggle-details" (click)="toggleProcessDetails()">
+              <span *ngIf="!showProcessDetails">Show Process Details</span>
+              <span *ngIf="showProcessDetails">Hide Process Details</span>
+              <i class="fas" [ngClass]="showProcessDetails ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+            </button>
+            
+            <!-- Collapsible content -->
+            <div class="process-details" [ngClass]="{'process-details-visible': showProcessDetails}">
+              <div class="process-timeline">
+                <div class="timeline-step current">
+                  <div class="step-indicator">
+                    <div class="step-icon">
+                      <i class="fas fa-laptop-code"></i>
+                    </div>
+                    <div class="step-connector"></div>
+                  </div>
+                  <div class="step-details">
+                    <h4>Online Assessment</h4>
+                    <p>Complete a series of tests to showcase your abilities</p>
+                    <span class="step-status">You are here</span>
+                  </div>
+                </div>
+                
+                <div class="timeline-step">
+                  <div class="step-indicator">
+                    <div class="step-icon">
+                      <i class="fas fa-user-group"></i>
+                    </div>
+                    <div class="step-connector"></div>
+                  </div>
+                  <div class="step-details">
+                    <h4>Interview Phase</h4>
+                    <p>Meet with our team to discuss your experience</p>
+                  </div>
+                </div>
+                
+                <div class="timeline-step">
+                  <div class="step-indicator">
+                    <div class="step-icon">
+                      <i class="fas fa-file-signature"></i>
+                    </div>
+                  </div>
+                  <div class="step-details">
+                    <h4>Final Decision</h4>
+                    <p>Selected candidates receive an offer</p>
+                  </div>
+                </div>
               </div>
-              <div class="instruction-item">
-                <i class="fas fa-arrow-right-long"></i>
-                <span>Each test has a specific time limit</span>
-              </div>
-              <div class="instruction-item">
-                <i class="fas fa-arrow-right-long"></i>
-                <span>Ensure a stable internet connection</span>
+              
+              <!-- Brief instructions -->
+              <div class="brief-instructions">
+                <div class="instruction-item">
+                  <i class="fas fa-arrow-right-long"></i>
+                  <span>Complete tests in sequential order</span>
+                </div>
+                <div class="instruction-item">
+                  <i class="fas fa-arrow-right-long"></i>
+                  <span>Each test has a specific time limit</span>
+                </div>
+                <div class="instruction-item">
+                  <i class="fas fa-arrow-right-long"></i>
+                  <span>Ensure a stable internet connection</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Right Side: Test Cards -->
-      <div class="tests-section">
-        <h2 class="section-title">
-          <i class="fas fa-list-check section-icon"></i>
-          Assessment Tests
-        </h2>
+      <!-- Right Side -->
+      <div class="flex-[1.1]">
+        <!-- Assessment Tests -->
+        <div class="tests-section">
+          <h2 class="section-title">
+            <i class="fas fa-list-check section-icon"></i>
+            Assessment Tests
+          </h2>
 
-        <div class="tests-grid">
-          <!-- Personality Test Card (Active) -->
-          <div class="test-card active" (click)="startTest('personality')">
-            <div class="test-card-inner">
-              <div class="test-badge available">Available Now</div>
-              <div class="test-card-icon-wrapper personality-icon">
-                <i class="fas fa-user-gear"></i>
-                <div class="icon-glow"></div>
-              </div>
-              <div class="test-card-content">
-                <div class="test-card-header">
-                  <h3>Personality Assessment</h3>
+          <div class="tests-grid">
+            <!-- Logical Test Card (Active) -->
+            <div class="test-card active" (click)="startTest('logical')">
+              <div class="test-card-inner">
+                <div class="test-badge available">Available Now</div>
+                <div class="test-card-icon-wrapper logical-icon">
+                  <i class="fas fa-brain"></i>
+                  <div class="icon-glow"></div>
                 </div>
-                <div class="test-stats">
-                  <div class="test-stat">
-                    <i class="fas fa-clock"></i>
-                    <span>25 min</span>
+                <div class="test-card-content">
+                  <div class="test-card-header">
+                    <h3>Logical Reasoning</h3>
                   </div>
-                  <div class="test-stat">
-                    <i class="fas fa-question-circle"></i>
-                    <span>50 questions</span>
+                  <div class="test-stats">
+                    <div class="test-stat">
+                      <i class="fas fa-clock"></i>
+                      <span>35 min</span>
+                    </div>
+                    <div class="test-stat">
+                      <i class="fas fa-question-circle"></i>
+                      <span>30 questions</span>
+                    </div>
                   </div>
+                  <button class="start-button">
+                    <i class="fas fa-play-circle"></i>
+                    Start Test
+                  </button>
                 </div>
-                <button class="start-button">
-                  <i class="fas fa-play-circle"></i>
-                  Start Test
-                </button>
+                <div class="test-card-status active-status">1</div>
               </div>
-              <div class="test-card-status active-status">1</div>
             </div>
-          </div>
 
-          <!-- Logical Test Card (Disabled) -->
-          <div class="test-card disabled">
-            <div class="test-card-inner">
-              <div class="test-badge locked">Locked</div>
-              <div class="lock-overlay">
-                <i class="fas fa-lock lock-icon"></i>
-              </div>
-              <div class="test-card-icon-wrapper logical-icon">
-                <i class="fas fa-brain"></i>
-              </div>
-              <div class="test-card-content">
-                <div class="test-card-header">
-                  <h3>Logical Reasoning</h3>
+            <!-- Personality Test Card (Disabled) -->
+            <div class="test-card disabled">
+              <div class="test-card-inner">
+                <div class="test-badge locked">Locked</div>
+                <div class="lock-overlay">
+                  <i class="fas fa-lock lock-icon"></i>
                 </div>
-                <div class="test-stats">
-                  <div class="test-stat">
-                    <i class="fas fa-clock"></i>
-                    <span>35 min</span>
+                <div class="test-card-icon-wrapper personality-icon">
+                  <i class="fas fa-user-gear"></i>
+                </div>
+                <div class="test-card-content">
+                  <div class="test-card-header">
+                    <h3>Personality Assessment</h3>
                   </div>
-                  <div class="test-stat">
-                    <i class="fas fa-question-circle"></i>
-                    <span>30 questions</span>
+                  <div class="test-stats">
+                    <div class="test-stat">
+                      <i class="fas fa-clock"></i>
+                      <span>25 min</span>
+                    </div>
+                    <div class="test-stat">
+                      <i class="fas fa-question-circle"></i>
+                      <span>50 questions</span>
+                    </div>
+                  </div>
+                  <div class="locked-message">
+                    Complete previous test first
                   </div>
                 </div>
-                <div class="locked-message">
-                  Complete previous test first
-                </div>
+                <div class="test-card-status">2</div>
               </div>
-              <div class="test-card-status">2</div>
             </div>
-          </div>
 
-          <!-- Verbal Test Card (Disabled) -->
-          <div class="test-card disabled">
-            <div class="test-card-inner">
-              <div class="test-badge locked">Locked</div>
-              <div class="lock-overlay">
-                <i class="fas fa-lock lock-icon"></i>
-              </div>
-              <div class="test-card-icon-wrapper verbal-icon">
-                <i class="fas fa-comment-dots"></i>
-              </div>
-              <div class="test-card-content">
-                <div class="test-card-header">
-                  <h3>Verbal Reasoning</h3>
+            <!-- Verbal Test Card (Disabled) -->
+            <div class="test-card disabled">
+              <div class="test-card-inner">
+                <div class="test-badge locked">Locked</div>
+                <div class="lock-overlay">
+                  <i class="fas fa-lock lock-icon"></i>
                 </div>
-                <div class="test-stats">
-                  <div class="test-stat">
-                    <i class="fas fa-clock"></i>
-                    <span>30 min</span>
+                <div class="test-card-icon-wrapper verbal-icon">
+                  <i class="fas fa-comment-dots"></i>
+                </div>
+                <div class="test-card-content">
+                  <div class="test-card-header">
+                    <h3>Verbal Reasoning</h3>
                   </div>
-                  <div class="test-stat">
-                    <i class="fas fa-question-circle"></i>
-                    <span>25 questions</span>
+                  <div class="test-stats">
+                    <div class="test-stat">
+                      <i class="fas fa-clock"></i>
+                      <span>30 min</span>
+                    </div>
+                    <div class="test-stat">
+                      <i class="fas fa-question-circle"></i>
+                      <span>25 questions</span>
+                    </div>
+                  </div>
+                  <div class="locked-message">
+                    Complete previous tests first
                   </div>
                 </div>
-                <div class="locked-message">
-                  Complete previous tests first
-                </div>
+                <div class="test-card-status">3</div>
               </div>
-              <div class="test-card-status">3</div>
             </div>
-          </div>
 
-          <!-- Cognitive Test Card (Disabled) -->
-          <div class="test-card disabled">
-            <div class="test-card-inner">
-              <div class="test-badge locked">Locked</div>
-              <div class="lock-overlay">
-                <i class="fas fa-lock lock-icon"></i>
-              </div>
-              <div class="test-card-icon-wrapper cognitive-icon">
-                <i class="fas fa-lightbulb"></i>
-              </div>
-              <div class="test-card-content">
-                <div class="test-card-header">
-                  <h3>Cognitive Ability</h3>
+            <!-- Cognitive Test Card (Disabled) -->
+            <div class="test-card disabled">
+              <div class="test-card-inner">
+                <div class="test-badge locked">Locked</div>
+                <div class="lock-overlay">
+                  <i class="fas fa-lock lock-icon"></i>
                 </div>
-                <div class="test-stats">
-                  <div class="test-stat">
-                    <i class="fas fa-clock"></i>
-                    <span>40 min</span>
+                <div class="test-card-icon-wrapper cognitive-icon">
+                  <i class="fas fa-lightbulb"></i>
+                </div>
+                <div class="test-card-content">
+                  <div class="test-card-header">
+                    <h3>Cognitive Ability</h3>
                   </div>
-                  <div class="test-stat">
-                    <i class="fas fa-question-circle"></i>
-                    <span>35 questions</span>
+                  <div class="test-stats">
+                    <div class="test-stat">
+                      <i class="fas fa-clock"></i>
+                      <span>40 min</span>
+                    </div>
+                    <div class="test-stat">
+                      <i class="fas fa-question-circle"></i>
+                      <span>35 questions</span>
+                    </div>
+                  </div>
+                  <div class="locked-message">
+                    Complete previous tests first
                   </div>
                 </div>
-                <div class="locked-message">
-                  Complete previous tests first
-                </div>
+                <div class="test-card-status">4</div>
               </div>
-              <div class="test-card-status">4</div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Footer with progress -->
-    <div class="dashboard-footer">
+    <!-- Footer -->
+    <div class="bg-gray-50 px-8 py-5 border-t border-black/10 flex-shrink-0">
       <div class="progress-container">
         <div class="progress-label">
           <span>Your Progress: </span>
@@ -257,15 +266,15 @@
       <div class="progress-steps">
         <div class="progress-step active">
           <div class="step-icon">
-            <i class="fas fa-user-gear"></i>
-          </div>
-          <div class="step-label">Personality</div>
-        </div>
-        <div class="progress-step">
-          <div class="step-icon">
             <i class="fas fa-brain"></i>
           </div>
           <div class="step-label">Logical</div>
+        </div>
+        <div class="progress-step">
+          <div class="step-icon">
+            <i class="fas fa-user-gear"></i>
+          </div>
+          <div class="step-label">Personality</div>
         </div>
         <div class="progress-step">
           <div class="step-icon">

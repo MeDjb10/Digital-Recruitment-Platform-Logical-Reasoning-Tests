@@ -2,32 +2,9 @@
 <div class="bg-gradient-to-b from-blue-50 to-white min-h-screen overflow-x-hidden">
   <!-- Navbar -->
   <app-homepage-navbar></app-homepage-navbar>
+<div class="mt-10">
+   <router-outlet></router-outlet>
+</div>
+ 
 
-  <!-- Hero Section -->
-  <div class="lg:mt-10">
-    <app-hero-section class="block"></app-hero-section>
-  </div>
-  
-  <!-- Add a proper spacing div between sections -->
-  <div class="relative w-full py-8 mt-4">
-    <div class="container mx-auto px-4">
-      <div class="flex justify-center items-center">
-        <div class="h-1 w-24 bg-gradient-to-r from-blue-500 to-red-500 rounded-full"></div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Rest of your sections -->
-  <div class="relative z-10 overflow-hidden w-full"> <!-- Added overflow-hidden and w-full -->
-    <app-numbers></app-numbers>
-    <app-processus></app-processus>
-    <app-about-us></app-about-us>
-    <app-about-us2></app-about-us2>
-    <app-about-us3></app-about-us3>
-    <app-map-section></app-map-section>
-    
-    <!-- Remove extra dividers that might cause scroll issues -->
-    <app-emailer></app-emailer>
-    <app-footer></app-footer>
-  </div>
 </div>
