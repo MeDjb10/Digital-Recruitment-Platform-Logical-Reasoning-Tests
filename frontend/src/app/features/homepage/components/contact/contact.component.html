@@ -1,0 +1,113 @@
+<div class="relative z-10 overflow-hidden w-full">
+    <div class="min-h-screen bg-gradient-to-br from-white via-gray-50 to-red-50">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="fixed inset-0 bg-white bg-opacity-90 z-50 flex items-center justify-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+    </div>
+
+    <!-- Content (will be visible after loading) -->
+    <div [class.opacity-0]="isLoading" [class.opacity-100]="!isLoading" class="transition-opacity duration-500">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-red-600 text-white py-20 px-6 md:px-12 relative overflow-hidden" data-aos="fade-down">
+            <div class="max-w-6xl mx-auto relative z-10">
+                <h1 class="text-5xl font-bold mb-6">Contactez-nous</h1>
+                <p class="text-xl text-blue-100 max-w-2xl">
+                    Découvrez comment COFAT façonne l'avenir de l'industrie automobile
+                </p>
+            </div>
+        </div>
+
+        <div class="max-w-6xl mx-auto py-16 px-6 md:px-12">
+            <!-- Main Office Section -->
+            <div class="grid md:grid-cols-2 gap-12 mb-16" data-aos="fade-up">
+                <div class="bg-white p-8 rounded-xl shadow-lg border border-red-100">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Siège Principal</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-map-marker-alt text-red-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-700">Adresse</h3>
+                                <p class="text-gray-600">Zone Industrielle Borj Cedria, Ben Arous, Tunisie</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-phone text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-700">Téléphone</h3>
+                                <p class="text-gray-600">+216 79 352 333</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-envelope text-red-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-700">Email</h3>
+                                <a href="mailto:recrutementcentral@cofat.com" class="text-blue-600 hover:text-blue-700">recrutementcentral&#64;cofat.com</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-8">
+                    <div class="bg-gradient-to-br from-white to-red-50 p-6 rounded-xl shadow-lg" data-aos="fade-left" data-aos-delay="100">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Heures d'ouverture</h3>
+                        <div class="space-y-2 text-gray-600">
+                            <p>Lundi - Vendredi: 8:00 - 17:00</p>
+                            <p>Samedi: 8:00 - 12:00</p>
+                            <p>Dimanche: Fermé</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-lg" data-aos="fade-left" data-aos-delay="200">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Service Recrutement</h3>
+                        <p class="text-gray-600">
+                            Notre équipe de recrutement est disponible pour répondre à vos questions 
+                            concernant les opportunités de carrière chez COFAT.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Info Section -->
+            <div class="grid md:grid-cols-3 gap-8 mb-16" data-aos="fade-up" data-aos-delay="300">
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Sites de Production</h3>
+                    <ul class="space-y-2 text-gray-600">
+                        <li>• Borj Cedria</li>
+                        <li>• Zaghouan</li>
+                        <li>• Bizerte</li>
+                    </ul>
+                </div>
+                <div class="bg-gradient-to-br from-white to-red-50 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Certifications</h3>
+                    <ul class="space-y-2 text-gray-600">
+                        <li>• ISO 9001:2015</li>
+                        <li>• IATF 16949:2016</li>
+                        <li>• ISO 14001:2015</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Relations Internationales</h3>
+                    <p class="text-gray-600">
+                        Partenariats avec plus de 20 constructeurs automobiles dans le monde entier.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <app-footer></app-footer>
+    </div>
+</div>
+
+<!-- Add this at the end of your file -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    AOS.refresh();
+  });
+</script>
+</div>

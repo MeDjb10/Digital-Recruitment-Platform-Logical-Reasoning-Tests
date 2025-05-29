@@ -12,150 +12,158 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TestQuestion, PropositionResponse } from '../../models/domino.model';
+import { ButtonModule } from 'primeng/button';
+import { ProgressBarModule } from 'primeng/progressbar';
 
 @Component({
   selector: 'app-multiple-choice-question',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
-    <div class="mcq-container">
-      <!-- Enhanced Header Section -->
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonModule,
+    ProgressBarModule
+  ],
+  templateUrl: 'multiple-choice-question.component.html',
+  // template: `
+  //   <div class="mcq-container">
+  //     <!-- Enhanced Header Section -->
    
 
-      <!-- Main Content Area -->
-      <div class="mcq-content" *ngIf="question && question.propositions">
-        <!-- Propositions Grid Layout -->
-        <div class="propositions-grid">
-          <div
-            *ngFor="let prop of question.propositions; let i = index"
-            class="proposition-card"
-            [class.answered]="responses[i].candidateEvaluation !== 'X'"
-            [class.current-focus]="currentFocusedProposition === i"
-          >
-            <!-- Proposition Header -->
-            <div class="proposition-header">
-              <div class="proposition-number">
-                <span class="number">{{ i + 1 }}</span>
-              </div>
-              <div class="proposition-status">
-                <i
-                  *ngIf="responses[i].candidateEvaluation !== 'X'"
-                  class="pi pi-check-circle status-answered"
-                  title="Answered"
-                ></i>
-                <i
-                  *ngIf="responses[i].candidateEvaluation === 'X'"
-                  class="pi pi-circle status-pending"
-                  title="Not answered"
-                ></i>
-              </div>
-            </div>
+  //     <!-- Main Content Area -->
+  //     <div class="mcq-content" *ngIf="question && question.propositions">
+  //       <!-- Propositions Grid Layout -->
+  //       <div class="propositions-grid">
+  //         <div
+  //           *ngFor="let prop of question.propositions; let i = index"
+  //           class="proposition-card"
+  //           [class.answered]="responses[i].candidateEvaluation !== 'X'"
+  //           [class.current-focus]="currentFocusedProposition === i"
+  //         >
+  //           <!-- Proposition Header -->
+  //           <div class="proposition-header">
+  //             <div class="proposition-number">
+  //               <span class="number">{{ i + 1 }}</span>
+  //             </div>
+  //             <div class="proposition-status">
+  //               <i
+  //                 *ngIf="responses[i].candidateEvaluation !== 'X'"
+  //                 class="pi pi-check-circle status-answered"
+  //                 title="Answered"
+  //               ></i>
+  //               <i
+  //                 *ngIf="responses[i].candidateEvaluation === 'X'"
+  //                 class="pi pi-circle status-pending"
+  //                 title="Not answered"
+  //               ></i>
+  //             </div>
+  //           </div>
 
-            <!-- Proposition Text -->
-            <div class="proposition-content">
-              <p class="proposition-text">{{ prop.text }}</p>
-            </div>
+  //           <!-- Proposition Text -->
+  //           <div class="proposition-content">
+  //             <p class="proposition-text">{{ prop.text }}</p>
+  //           </div>
 
-            <!-- Enhanced Options Layout -->
-            <div class="options-container">
-              <div class="options-grid">
-                <label
-                  *ngFor="let option of evaluationOptions"
-                  class="option-card"
-                  [class.selected]="
-                    responses[i].candidateEvaluation === option.value
-                  "
-                  [class.option-true]="option.value === 'V'"
-                  [class.option-false]="option.value === 'F'"
-                  [class.option-unknown]="option.value === '?'"
-                  [class.option-confused]="option.value === 'X'"
-                  (click)="onOptionClick(i, option.value)"
-                >
-                  <input
-                    type="radio"
-                    [name]="'prop_' + i"
-                    [value]="option.value"
-                    [(ngModel)]="responses[i].candidateEvaluation"
-                    (change)="onSelectionChange(i, option.value)"
-                    (focus)="onPropositionFocus(i)"
-                    (blur)="onPropositionBlur()"
-                  />
+  //           <!-- Enhanced Options Layout -->
+  //           <div class="options-container">
+  //             <div class="options-grid">
+  //               <label
+  //                 *ngFor="let option of evaluationOptions"
+  //                 class="option-card"
+  //                 [class.selected]="
+  //                   responses[i].candidateEvaluation === option.value
+  //                 "
+  //                 [class.option-true]="option.value === 'V'"
+  //                 [class.option-false]="option.value === 'F'"
+  //                 [class.option-unknown]="option.value === '?'"
+  //                 [class.option-confused]="option.value === 'X'"
+  //                 (click)="onOptionClick(i, option.value)"
+  //               >
+  //                 <input
+  //                   type="radio"
+  //                   [name]="'prop_' + i"
+  //                   [value]="option.value"
+  //                   [(ngModel)]="responses[i].candidateEvaluation"
+  //                   (change)="onSelectionChange(i, option.value)"
+  //                   (focus)="onPropositionFocus(i)"
+  //                   (blur)="onPropositionBlur()"
+  //                 />
 
-                  <!-- Option Icon -->
-                  <div class="option-icon">
-                    <i
-                      class="pi"
-                      [ngClass]="{
-                        'pi-check': option.value === 'V',
-                        'pi-times': option.value === 'F',
-                        'pi-question': option.value === '?',
-                        'pi-exclamation': option.value === 'X'
-                      }"
-                    ></i>
-                  </div>
+  //                 <!-- Option Icon -->
+  //                 <div class="option-icon">
+  //                   <i
+  //                     class="pi"
+  //                     [ngClass]="{
+  //                       'pi-check': option.value === 'V',
+  //                       'pi-times': option.value === 'F',
+  //                       'pi-question': option.value === '?',
+  //                       'pi-exclamation': option.value === 'X'
+  //                     }"
+  //                   ></i>
+  //                 </div>
 
-                  <!-- Option Content -->
-                  <div class="option-content">
-                    <span class="option-label">{{ option.label }}</span>
-                    <span class="option-description">{{
-                      getOptionDescription(option.value)
-                    }}</span>
-                  </div>
+  //                 <!-- Option Content -->
+  //                 <div class="option-content">
+  //                   <span class="option-label">{{ option.label }}</span>
+  //                   <span class="option-description">{{
+  //                     getOptionDescription(option.value)
+  //                   }}</span>
+  //                 </div>
 
-                  <!-- Selection Indicator -->
-                  <div class="selection-indicator">
-                    <div class="radio-custom"></div>
-                  </div>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
+  //                 <!-- Selection Indicator -->
+  //                 <div class="selection-indicator">
+  //                   <div class="radio-custom"></div>
+  //                 </div>
+  //               </label>
+  //             </div>
+  //           </div>
+  //         </div>
+  //       </div>
 
-        <!-- Progress Summary -->
-        <div class="progress-summary">
-          <div class="progress-info">
-            <span class="progress-text">
-              Progress: {{ getAnsweredCount() }}/{{
-                question.propositions.length
-              }}
-              answered
-            </span>
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                [style.width.%]="getProgressPercentage()"
-              ></div>
-            </div>
-          </div>
+  //       <!-- Progress Summary -->
+  //       <div class="progress-summary">
+  //         <div class="progress-info">
+  //           <span class="progress-text">
+  //             Progress: {{ getAnsweredCount() }}/{{
+  //               question.propositions.length
+  //             }}
+  //             answered
+  //           </span>
+  //           <div class="progress-bar">
+  //             <div
+  //               class="progress-fill"
+  //               [style.width.%]="getProgressPercentage()"
+  //             ></div>
+  //           </div>
+  //         </div>
 
-          <!-- Quick Navigation -->
-          <div class="quick-nav" *ngIf="question.propositions.length > 3">
-            <span class="nav-label">Quick jump:</span>
-            <button
-              *ngFor="let prop of question.propositions; let i = index"
-              class="nav-dot"
-              [class.answered]="responses[i].candidateEvaluation !== 'X'"
-              [class.current]="currentFocusedProposition === i"
-              (click)="scrollToProposition(i)"
-              [attr.aria-label]="'Go to proposition ' + (i + 1)"
-            >
-              {{ i + 1 }}
-            </button>
-          </div>
-        </div>
-      </div>
+  //         <!-- Quick Navigation -->
+  //         <div class="quick-nav" *ngIf="question.propositions.length > 3">
+  //           <span class="nav-label">Quick jump:</span>
+  //           <button
+  //             *ngFor="let prop of question.propositions; let i = index"
+  //             class="nav-dot"
+  //             [class.answered]="responses[i].candidateEvaluation !== 'X'"
+  //             [class.current]="currentFocusedProposition === i"
+  //             (click)="scrollToProposition(i)"
+  //             [attr.aria-label]="'Go to proposition ' + (i + 1)"
+  //           >
+  //             {{ i + 1 }}
+  //           </button>
+  //         </div>
+  //       </div>
+  //     </div>
 
-      <!-- Error/Empty State -->
-      <div class="mcq-empty-state" *ngIf="!question || !question.propositions">
-        <div class="empty-content">
-          <i class="pi pi-exclamation-triangle empty-icon"></i>
-          <h3>Question Data Missing</h3>
-          <p>Unable to load the propositions for this question.</p>
-        </div>
-      </div>
-    </div>
-  `,
+  //     <!-- Error/Empty State -->
+  //     <div class="mcq-empty-state" *ngIf="!question || !question.propositions">
+  //       <div class="empty-content">
+  //         <i class="pi pi-exclamation-triangle empty-icon"></i>
+  //         <h3>Question Data Missing</h3>
+  //         <p>Unable to load the propositions for this question.</p>
+  //       </div>
+  //     </div>
+  //   </div>
+  // `,
   styles: [
     `
       .mcq-container {
@@ -385,12 +393,6 @@ import { TestQuestion, PropositionResponse } from '../../models/domino.model';
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         border-color: #f59e0b;
         color: #92400e;
-      }
-
-      .option-card.option-confused.selected {
-        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-        border-color: #6366f1;
-        color: #3730a3;
       }
 
       /* Option Icon */
@@ -749,8 +751,7 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnChanges {
   evaluationOptions = [
     { value: 'V', label: 'True' },
     { value: 'F', label: 'False' },
-    { value: '?', label: 'Cannot Know' },
-    { value: 'X', label: "Don't Understand" },
+    { value: '?', label: 'Cannot Know' }
   ];
 
   // Enhanced keyboard support
@@ -767,9 +768,6 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnChanges {
         break;
       case '3':
         this.selectOption(this.currentFocusedProposition, '?');
-        break;
-      case '4':
-        this.selectOption(this.currentFocusedProposition, 'X');
         break;
       case 'ArrowUp':
         event.preventDefault();
@@ -853,8 +851,6 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnChanges {
         return 'This statement is false';
       case '?':
         return 'Cannot determine from given information';
-      case 'X':
-        return 'Statement is unclear or confusing';
       default:
         return '';
     }
@@ -866,12 +862,12 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnChanges {
   }
 
   selectOption(propositionIndex: number, value: string): void {
-    if (value === 'V' || value === 'F' || value === '?' || value === 'X') {
+    if (value === 'V' || value === 'F' || value === '?' ) {
       this.responses[propositionIndex].candidateEvaluation = value as
         | 'V'
         | 'F'
         | '?'
-        | 'X';
+        ;
       this.answerChanged.emit(this.responses);
     }
   }

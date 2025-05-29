@@ -9,6 +9,7 @@ import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { User, UserResponse } from '../../../../core/models/user.model';
+import { TestsListComponent } from "../../DominoTest/pages/tests-list/tests-list.component";
 
 @Component({
   imports: [
@@ -17,8 +18,9 @@ import { User, UserResponse } from '../../../../core/models/user.model';
     ButtonModule,
     ToastModule,
     DialogModule,
-    ProgressSpinnerModule
-  ],
+    ProgressSpinnerModule,
+    TestsListComponent
+],
   selector: 'app-test-select',
   templateUrl: './test-select.component.html',
   styleUrls: ['./test-select.component.css'],

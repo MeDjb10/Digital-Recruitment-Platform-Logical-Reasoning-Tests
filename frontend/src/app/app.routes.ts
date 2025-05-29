@@ -30,6 +30,13 @@ export const routes: Routes = [
     title: 'Dashboard - Digital Recruitment Platform',
   },
   {
+        path: 'tests',
+        loadChildren: () =>
+          import('./features/candidate/DominoTest/domino-test.module').then(
+            (m) => m.DominoTestModule
+          ),
+      },
+  {
     path: 'admin/layout-builder',
     component: DominoLayoutBuilderComponent,
   },

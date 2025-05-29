@@ -121,7 +121,7 @@
 
           <div class="tests-grid">
             <!-- Logical Test Card (Active) -->
-            <div class="test-card active" (click)="startTest('logical')">
+            <div class="test-card active" >
               <div class="test-card-inner">
                 <div class="test-badge available">Available Now</div>
                 <div class="test-card-icon-wrapper logical-icon">
@@ -142,7 +142,7 @@
                       <span>30 questions</span>
                     </div>
                   </div>
-                  <button class="start-button">
+                  <button class="start-button" (click)="openTestList()">
                     <i class="fas fa-play-circle"></i>
                     Start Test
                   </button>
@@ -292,3 +292,7 @@
     </div>
   </div>
 </div>
+
+<p-dialog [(visible)]="showTestListDialog" [modal]="true" [style]="{width: '70vw'}"  [closeOnEscape]="true" (onHide)="showTestListDialog = false">
+  <app-tests-list></app-tests-list>
+</p-dialog>

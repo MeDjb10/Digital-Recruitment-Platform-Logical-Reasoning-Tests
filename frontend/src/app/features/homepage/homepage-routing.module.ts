@@ -5,6 +5,8 @@ import { HomeComponent } from './pages/home/home.component';
 import { AccueilComponent } from './pages/accueil/accueil.component';
 import { ProfileComponent } from '../profile/pages/profile/profile.component';
 import { TestSelectComponent } from '../candidate/testForm/test-select/test-select.component';
+import { AProposComponent } from './components/a-propos/a-propos.component';
+import { ContactComponent } from './components/contact/contact.component';
 
 const routes: Routes = [
   {
@@ -23,12 +25,13 @@ const routes: Routes = [
         path: 'select',
         component: TestSelectComponent,
       },
-      {
-        path: 'tests',
-        loadChildren: () =>
-          import('../candidate/DominoTest/domino-test.module').then(
-            (m) => m.DominoTestModule
-          ),
+       {
+        path: 'about',
+        component: AProposComponent,
+      },
+       {
+        path: 'contact',
+        component: ContactComponent, 
       },
     ],
   },
