@@ -31,210 +31,238 @@
       ></button>
     </div>
   </div>
-
   <!-- KPI Summary Cards -->
   <div class="kpi-grid">
-    <!-- Total Candidates Card -->
-    <div class="kpi-card">
-      <div class="card-content">
-        <div class="metric-header">
-          <h3 class="metric-title">
-            {{ "DASHBOARD.ANALYTICS.KPI.CANDIDATES" | translate }}
-          </h3>
-          <div
-            class="status-badge"
-            [ngClass]="{ positive: kpis.candidates.trend > 0 }"
-          >
-            <i
-              class="pi"
-              [ngClass]="
-                kpis.candidates.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'
-              "
-            ></i>
-            {{ Math.abs(kpis.candidates.trend) }}%
-          </div>
-        </div>
-
-        <div class="metric-value-container">
-          <h2 class="metric-value">{{ kpis.candidates.value | number }}</h2>
-          <div class="metric-icon candidates-icon">
-            <i class="pi pi-users"></i>
-          </div>
-        </div>
-
-        <p class="metric-description">
-          {{
-            (kpis.candidates.trend > 0
-              ? "DASHBOARD.ANALYTICS.KPI.INCREASE"
-              : "DASHBOARD.ANALYTICS.KPI.DECREASE"
-            ) | translate
-          }}
-        </p>
-      </div>
-      <div class="card-footer">
-        <div class="metric-sparkline">
-          <!-- Small chart placeholder - will be replaced by actual chart -->
-          <div
-            class="sparkline-chart candidates-sparkline"
-            #candidatesSparkline
-          ></div>
-        </div>
-        <a class="view-details">
-          {{ "DASHBOARD.ANALYTICS.KPI.VIEW_DETAILS" | translate }}
-          <i class="pi pi-arrow-right"></i>
-        </a>
+    <!-- Loading State for KPIs -->
+    <div *ngIf="isLoadingKpis" class="col-span-4">
+      <div class="loading-state text-center p-8">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+        <p class="mt-2">{{ "DASHBOARD.ANALYTICS.LOADING_KPI" | translate }}</p>
       </div>
     </div>
 
-    <!-- Test Completions Card -->
-    <div class="kpi-card">
-      <div class="card-content">
-        <div class="metric-header">
-          <h3 class="metric-title">
-            {{ "DASHBOARD.ANALYTICS.KPI.TEST_COMPLETIONS" | translate }}
-          </h3>
-          <div
-            class="status-badge"
-            [ngClass]="{ positive: kpis.completions.trend > 0 }"
-          >
-            <i
-              class="pi"
-              [ngClass]="
-                kpis.completions.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'
-              "
-            ></i>
-            {{ Math.abs(kpis.completions.trend) }}%
-          </div>
-        </div>
-
-        <div class="metric-value-container">
-          <h2 class="metric-value">{{ kpis.completions.value | number }}</h2>
-          <div class="metric-icon completions-icon">
-            <i class="pi pi-check-circle"></i>
-          </div>
-        </div>
-
-        <p class="metric-description">
-          {{
-            (kpis.completions.trend > 0
-              ? "DASHBOARD.ANALYTICS.KPI.GROWTH"
-              : "DASHBOARD.ANALYTICS.KPI.DECLINE"
-            ) | translate
-          }}
-        </p>
-      </div>
-      <div class="card-footer">
-        <div class="metric-sparkline">
-          <div
-            class="sparkline-chart completions-sparkline"
-            #completionsSparkline
-          ></div>
-        </div>
-        <a class="view-details">
-          {{ "DASHBOARD.ANALYTICS.KPI.VIEW_DETAILS" | translate }}
-          <i class="pi pi-arrow-right"></i>
-        </a>
+    <!-- Error State for KPIs -->
+    <div *ngIf="kpisError && !isLoadingKpis" class="col-span-4">
+      <div class="error-state text-center p-8">
+        <i
+          class="pi pi-exclamation-triangle"
+          style="font-size: 2rem; color: #ef4444"
+        ></i>
+        <p class="mt-2 text-red-600">{{ kpisError }}</p>
+        <button
+          pButton
+          label="Retry"
+          icon="pi pi-refresh"
+          class="p-button-sm p-button-outlined mt-2"
+          (click)="loadKpiData()"
+        ></button>
       </div>
     </div>
 
-    <!-- Average Score Card -->
-    <div class="kpi-card">
-      <div class="card-content">
-        <div class="metric-header">
-          <h3 class="metric-title">
-            {{ "DASHBOARD.ANALYTICS.KPI.AVG_SCORE" | translate }}
-          </h3>
-          <div
-            class="status-badge"
-            [ngClass]="{ positive: kpis.avgScore.trend > 0 }"
-          >
-            <i
-              class="pi"
-              [ngClass]="
-                kpis.avgScore.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'
-              "
-            ></i>
-            {{ Math.abs(kpis.avgScore.trend) }}%
+    <!-- KPI Cards - Show when data is loaded -->
+    <ng-container *ngIf="!isLoadingKpis && !kpisError">
+      <!-- Total Candidates Card -->
+      <div class="kpi-card">
+        <div class="card-content">
+          <div class="metric-header">
+            <h3 class="metric-title">
+              {{ "DASHBOARD.ANALYTICS.KPI.CANDIDATES" | translate }}
+            </h3>
+            <div
+              class="status-badge"
+              [ngClass]="{ positive: kpis.candidates.trend > 0 }"
+            >
+              <i
+                class="pi"
+                [ngClass]="
+                  kpis.candidates.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'
+                "
+              ></i>
+              {{ Math.abs(kpis.candidates.trend) }}%
+            </div>
           </div>
-        </div>
 
-        <div class="metric-value-container">
-          <h2 class="metric-value">{{ kpis.avgScore.value }}%</h2>
-          <div class="metric-icon score-icon">
-            <i class="pi pi-chart-line"></i>
+          <div class="metric-value-container">
+            <h2 class="metric-value">{{ kpis.candidates.value | number }}</h2>
+            <div class="metric-icon candidates-icon">
+              <i class="pi pi-users"></i>
+            </div>
           </div>
-        </div>
 
-        <p class="metric-description">
-          {{
-            (kpis.avgScore.trend > 0
-              ? "DASHBOARD.ANALYTICS.KPI.IMPROVED"
-              : "DASHBOARD.ANALYTICS.KPI.DECREASED"
-            ) | translate
-          }}
-        </p>
-      </div>
-      <div class="card-footer">
-        <div class="metric-sparkline">
-          <div class="sparkline-chart score-sparkline" #scoreSparkline></div>
+          <p class="metric-description">
+            {{
+              (kpis.candidates.trend > 0
+                ? "DASHBOARD.ANALYTICS.KPI.INCREASE"
+                : "DASHBOARD.ANALYTICS.KPI.DECREASE"
+              ) | translate
+            }}
+          </p>
         </div>
-        <a class="view-details">
-          {{ "DASHBOARD.ANALYTICS.KPI.VIEW_DETAILS" | translate }}
-          <i class="pi pi-arrow-right"></i>
-        </a>
-      </div>
-    </div>
-
-    <!-- Conversion Rate Card -->
-    <div class="kpi-card">
-      <div class="card-content">
-        <div class="metric-header">
-          <h3 class="metric-title">
-            {{ "DASHBOARD.ANALYTICS.KPI.CONVERSION_RATE" | translate }}
-          </h3>
-          <div
-            class="status-badge"
-            [ngClass]="{ positive: kpis.conversion.trend > 0 }"
-          >
-            <i
-              class="pi"
-              [ngClass]="
-                kpis.conversion.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'
-              "
-            ></i>
-            {{ Math.abs(kpis.conversion.trend) }}%
+        <div class="card-footer">
+          <div class="metric-sparkline">
+            <!-- Small chart placeholder - will be replaced by actual chart -->
+            <div
+              class="sparkline-chart candidates-sparkline"
+              #candidatesSparkline
+            ></div>
           </div>
+          <a class="view-details">
+            {{ "DASHBOARD.ANALYTICS.KPI.VIEW_DETAILS" | translate }}
+            <i class="pi pi-arrow-right"></i>
+          </a>
         </div>
+      </div>
 
-        <div class="metric-value-container">
-          <h2 class="metric-value">{{ kpis.conversion.value }}%</h2>
-          <div class="metric-icon conversion-icon">
-            <i class="pi pi-percentage"></i>
+      <!-- Test Completions Card -->
+      <div class="kpi-card">
+        <div class="card-content">
+          <div class="metric-header">
+            <h3 class="metric-title">
+              {{ "DASHBOARD.ANALYTICS.KPI.TEST_COMPLETIONS" | translate }}
+            </h3>
+            <div
+              class="status-badge"
+              [ngClass]="{ positive: kpis.completions.trend > 0 }"
+            >
+              <i
+                class="pi"
+                [ngClass]="
+                  kpis.completions.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'
+                "
+              ></i>
+              {{ Math.abs(kpis.completions.trend) }}%
+            </div>
           </div>
-        </div>
 
-        <p class="metric-description">
-          {{
-            (kpis.conversion.trend > 0
-              ? "DASHBOARD.ANALYTICS.KPI.IMPROVED"
-              : "DASHBOARD.ANALYTICS.KPI.DECREASED"
-            ) | translate
-          }}
-        </p>
-      </div>
-      <div class="card-footer">
-        <div class="metric-sparkline">
-          <div
-            class="sparkline-chart conversion-sparkline"
-            #conversionSparkline
-          ></div>
+          <div class="metric-value-container">
+            <h2 class="metric-value">{{ kpis.completions.value | number }}</h2>
+            <div class="metric-icon completions-icon">
+              <i class="pi pi-check-circle"></i>
+            </div>
+          </div>
+
+          <p class="metric-description">
+            {{
+              (kpis.completions.trend > 0
+                ? "DASHBOARD.ANALYTICS.KPI.GROWTH"
+                : "DASHBOARD.ANALYTICS.KPI.DECLINE"
+              ) | translate
+            }}
+          </p>
         </div>
-        <a class="view-details">
-          {{ "DASHBOARD.ANALYTICS.KPI.VIEW_DETAILS" | translate }}
-          <i class="pi pi-arrow-right"></i>
-        </a>
+        <div class="card-footer">
+          <div class="metric-sparkline">
+            <div
+              class="sparkline-chart completions-sparkline"
+              #completionsSparkline
+            ></div>
+          </div>
+          <a class="view-details">
+            {{ "DASHBOARD.ANALYTICS.KPI.VIEW_DETAILS" | translate }}
+            <i class="pi pi-arrow-right"></i>
+          </a>
+        </div>
       </div>
-    </div>
+
+      <!-- Average Score Card -->
+      <div class="kpi-card">
+        <div class="card-content">
+          <div class="metric-header">
+            <h3 class="metric-title">
+              {{ "DASHBOARD.ANALYTICS.KPI.AVG_SCORE" | translate }}
+            </h3>
+            <div
+              class="status-badge"
+              [ngClass]="{ positive: kpis.avgScore.trend > 0 }"
+            >
+              <i
+                class="pi"
+                [ngClass]="
+                  kpis.avgScore.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'
+                "
+              ></i>
+              {{ Math.abs(kpis.avgScore.trend) }}%
+            </div>
+          </div>
+
+          <div class="metric-value-container">
+            <h2 class="metric-value">{{ kpis.avgScore.value }}%</h2>
+            <div class="metric-icon score-icon">
+              <i class="pi pi-chart-line"></i>
+            </div>
+          </div>
+
+          <p class="metric-description">
+            {{
+              (kpis.avgScore.trend > 0
+                ? "DASHBOARD.ANALYTICS.KPI.IMPROVED"
+                : "DASHBOARD.ANALYTICS.KPI.DECREASED"
+              ) | translate
+            }}
+          </p>
+        </div>
+        <div class="card-footer">
+          <div class="metric-sparkline">
+            <div class="sparkline-chart score-sparkline" #scoreSparkline></div>
+          </div>
+          <a class="view-details">
+            {{ "DASHBOARD.ANALYTICS.KPI.VIEW_DETAILS" | translate }}
+            <i class="pi pi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Conversion Rate Card -->
+      <div class="kpi-card">
+        <div class="card-content">
+          <div class="metric-header">
+            <h3 class="metric-title">
+              {{ "DASHBOARD.ANALYTICS.KPI.CONVERSION_RATE" | translate }}
+            </h3>
+            <div
+              class="status-badge"
+              [ngClass]="{ positive: kpis.conversion.trend > 0 }"
+            >
+              <i
+                class="pi"
+                [ngClass]="
+                  kpis.conversion.trend > 0 ? 'pi-arrow-up' : 'pi-arrow-down'
+                "
+              ></i>
+              {{ Math.abs(kpis.conversion.trend) }}%
+            </div>
+          </div>
+
+          <div class="metric-value-container">
+            <h2 class="metric-value">{{ kpis.conversion.value }}%</h2>
+            <div class="metric-icon conversion-icon">
+              <i class="pi pi-percentage"></i>
+            </div>
+          </div>
+
+          <p class="metric-description">
+            {{
+              (kpis.conversion.trend > 0
+                ? "DASHBOARD.ANALYTICS.KPI.IMPROVED"
+                : "DASHBOARD.ANALYTICS.KPI.DECREASED"
+              ) | translate
+            }}
+          </p>
+        </div>
+        <div class="card-footer">
+          <div class="metric-sparkline">
+            <div
+              class="sparkline-chart conversion-sparkline"
+              #conversionSparkline
+            ></div>
+          </div>
+          <a class="view-details">
+            {{ "DASHBOARD.ANALYTICS.KPI.VIEW_DETAILS" | translate }}
+            <i class="pi pi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </ng-container>
   </div>
 
   <!-- Main Charts Section with Tabs -->
@@ -334,9 +362,37 @@
         styleClass="activity-filter"
       ></p-dropdown>
     </div>
-
     <div class="activity-table-container">
+      <!-- Loading State -->
+      <div *ngIf="isLoadingActivities" class="loading-state text-center p-4">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+        <p class="mt-2">
+          {{ "DASHBOARD.ANALYTICS.LOADING_ACTIVITIES" | translate }}
+        </p>
+      </div>
+
+      <!-- Error State -->
+      <div
+        *ngIf="activitiesError && !isLoadingActivities"
+        class="error-state text-center p-4"
+      >
+        <i
+          class="pi pi-exclamation-triangle"
+          style="font-size: 2rem; color: #ef4444"
+        ></i>
+        <p class="mt-2 text-red-600">{{ activitiesError }}</p>
+        <button
+          pButton
+          label="Retry"
+          icon="pi pi-refresh"
+          class="p-button-sm p-button-outlined mt-2"
+          (click)="loadRecentActivities()"
+        ></button>
+      </div>
+
+      <!-- Activities Table -->
       <p-table
+        *ngIf="!isLoadingActivities && !activitiesError"
         [value]="recentActivities"
         styleClass="activity-table p-datatable-sm"
         [paginator]="true"
@@ -347,10 +403,11 @@
           <tr>
             <th>{{ "DASHBOARD.ANALYTICS.ACTIVITY.CANDIDATE" | translate }}</th>
             <th>{{ "DASHBOARD.ANALYTICS.ACTIVITY.ACTION" | translate }}</th>
-            <th>{{ "DASHBOARD.ANALYTICS.ACTIVITY.TEST_TYPE" | translate }}</th>
+            <th>{{ "DASHBOARD.ANALYTICS.ACTIVITY.TEST" | translate }}</th>
             <th>{{ "DASHBOARD.ANALYTICS.ACTIVITY.SCORE" | translate }}</th>
+            <th>{{ "DASHBOARD.ANALYTICS.ACTIVITY.DURATION" | translate }}</th>
+            <th>{{ "DASHBOARD.ANALYTICS.ACTIVITY.QUESTIONS" | translate }}</th>
             <th>{{ "DASHBOARD.ANALYTICS.ACTIVITY.DATE" | translate }}</th>
-            <th>{{ "DASHBOARD.ANALYTICS.ACTIVITY.STATUS" | translate }}</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-activity>
@@ -367,7 +424,14 @@
               </div>
             </td>
             <td>{{ activity.action }}</td>
-            <td>{{ activity.testType }}</td>
+            <td>
+              <div class="test-info">
+                <div class="test-name">{{ activity.testName }}</div>
+                <div class="test-type text-sm text-gray-500">
+                  {{ activity.testType }}
+                </div>
+              </div>
+            </td>
             <td>
               <div *ngIf="activity.score !== null" class="score-display">
                 <div class="score-bar">
@@ -380,15 +444,33 @@
               </div>
               <span *ngIf="activity.score === null">-</span>
             </td>
-            <td>{{ activity.date | date : "medium" }}</td>
             <td>
-              <p-tag [value]="activity.status"></p-tag>
+              <span *ngIf="activity.duration !== null" class="duration-display">
+                {{ activity.duration }}
+              </span>
+              <span *ngIf="activity.duration === null" class="text-gray-400"
+                >-</span
+              >
             </td>
+            <td>
+              <span
+                *ngIf="activity.questionsCount !== null"
+                class="questions-count"
+              >
+                {{ activity.questionsCount }}
+              </span>
+              <span
+                *ngIf="activity.questionsCount === null"
+                class="text-gray-400"
+                >-</span
+              >
+            </td>
+            <td>{{ activity.date | date : "medium" }}</td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="6" class="text-center p-4">
+            <td colspan="7" class="text-center p-4">
               <div class="empty-state">
                 <i class="pi pi-calendar-times empty-icon"></i>
                 <p>

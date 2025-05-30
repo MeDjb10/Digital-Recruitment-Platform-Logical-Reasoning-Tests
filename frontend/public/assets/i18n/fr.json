@@ -333,6 +333,8 @@
       "OVERVIEW": "Aperçu des Analyses",
       "MONITOR": "Suivez les métriques clés de recrutement et les activités",
       "EXPORT": "Exporter",
+      "LOADING_KPI": "Chargement des données KPI...",
+      "LOADING_ACTIVITIES": "Chargement des activités récentes...",
       "TIME_PERIODS": {
         "LAST_7_DAYS": "7 derniers jours",
         "LAST_30_DAYS": "30 derniers jours",
@@ -369,10 +371,11 @@
         "RECENT": "Activité Récente",
         "CANDIDATE": "Candidat",
         "ACTION": "Action",
-        "TEST_TYPE": "Type de Test",
+        "TEST": "Test",
         "SCORE": "Score",
+        "DURATION": "Durée",
+        "QUESTIONS": "Questions",
         "DATE": "Date",
-        "STATUS": "Statut",
         "NO_ACTIVITY": "Aucune activité récente trouvée"
       }
     },

@@ -324,10 +324,11 @@
       "OVERVIEW": "Analytics Overview",
       "MONITOR": "Monitor key recruitment metrics and activities",
       "EXPORT": "Export",
+      "LOADING_KPI": "Loading KPI data...",
+      "LOADING_ACTIVITIES": "Loading recent activities...",
       "TIME_PERIODS": {
         "LAST_7_DAYS": "Last 7 days",
         "LAST_30_DAYS": "Last 30 days",
-        "THIS_MONTH": "This month",
         "LAST_QUARTER": "Last quarter",
         "YEAR_TO_DATE": "Year to date"
       },
@@ -360,10 +361,11 @@
         "RECENT": "Recent Activity",
         "CANDIDATE": "Candidate",
         "ACTION": "Action",
-        "TEST_TYPE": "Test Type",
+        "TEST": "Test",
         "SCORE": "Score",
+        "DURATION": "Duration",
+        "QUESTIONS": "Questions",
         "DATE": "Date",
-        "STATUS": "Status",
         "NO_ACTIVITY": "No recent activities found"
       }
     },
