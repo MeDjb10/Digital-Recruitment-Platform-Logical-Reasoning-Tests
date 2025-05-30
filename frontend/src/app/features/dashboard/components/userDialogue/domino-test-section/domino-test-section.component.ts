@@ -157,6 +157,7 @@ export class DominoTestSectionComponent implements OnInit {
         },
       });
     }
+    console.log('test details aaaaaaaaaaaaaaaaaaaaaa:' , this.testAnalytics);
   }
 
   private initializeData(data: any) {
@@ -208,6 +209,8 @@ export class DominoTestSectionComponent implements OnInit {
       fastestQuestion: this.getFastestQuestion(questions),
       slowestQuestion: this.getSlowestQuestion(questions),
     };
+    console.log("aaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA23:",this.testAnalytics);
+    
 
     // Calculate performance level based on percentage score
     this.calculatePerformanceLevel();
