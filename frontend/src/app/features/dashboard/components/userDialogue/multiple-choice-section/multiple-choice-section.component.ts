@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { trigger, transition, style, animate, stagger, query } from '@angular/animations';
+import { TestService } from 'src/app/services/test.service';
 
 interface AIComment {
   text: string;
@@ -36,6 +37,8 @@ interface AIComment {
   ]
 })
 export class MultipleChoiceSectionComponent implements OnInit {
+  @Input() attemptId!: string;
+
   testType: string = 'Multiple Choice Test';
   timeSpent: string = '25:30';
   score: number = 32;
@@ -70,13 +73,53 @@ export class MultipleChoiceSectionComponent implements OnInit {
     colors: ['#4F46E5']
   };
 
-  constructor() { }
+  constructor(private testService: TestService) { }
 
   ngOnInit(): void {
-    // Simulate loading time
-    setTimeout(() => {
-      this.isLoading = false;
-    }, 1500);
+    if (this.attemptId) {
+      this.testService.getAttemptResults(this.attemptId).subscribe({
+        next: (response) => {
+          console.log('MCQ test results:', response);
+          this.initializeData(response.data);
+        },
+        error: (error) => {
+          console.error('Error loading MCQ results:', error);
+          this.isLoading = false;
+        }
+      });
+    }
+  }
+
+  private initializeData(data: any) {
+    if (!data || !data.results) return;
+
+    const results = data.results;
+    
+    // Update component properties with actual data
+    this.timeSpent = this.formatTimeSpent(data.attempt.timeSpent);
+    this.score = results.attempt.score;
+    this.correctAnswers = results.questions.filter((q: any) => q.response?.isCorrect).length;
+    this.wrongAnswers = results.questions.filter((q: any) => !q.response?.isCorrect).length;
+    
+    // Initialize chart with actual data
+    this.updateChartData(results.questions);
+  }
+
+  private formatTimeSpent(ms: number): string {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  private updateChartData(questions: any[]) {
+    // Update chart data based on actual results
+    this.chartOptions = {
+      ...this.chartOptions,
+      series: [{
+        name: 'Performance',
+        data: questions.map((q: any) => q.response?.score || 0)
+      }]
+    };
   }
 
   handleReaction(index: number, isPositive: boolean): void {

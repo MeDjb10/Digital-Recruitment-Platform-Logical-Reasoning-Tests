@@ -19,6 +19,7 @@ import { CalendarModule } from 'primeng/calendar';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { map, catchError } from 'rxjs/operators';
 
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { User } from '../../../../core/models/user.model';
@@ -32,6 +33,7 @@ import { TestAssignmentService } from '../../../../core/services/test-assignment
 import { TestLookupService } from '../../../../core/services/test-lookup.service';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import { TestService } from '../../../../core/services/test.service';
 
 @Component({
   selector: 'app-users-list-rl',
@@ -78,6 +80,15 @@ export class UsersListRLComponent implements OnInit {
     { label: 'Not Submitted', value: 'not_submitted', severity: 'secondary' },
   ];
 
+  testProgressStatuses: any[] = [
+    { label: 'Not Started', value: 'not_started', severity: 'secondary' },
+    { label: 'In Progress', value: 'in_progress', severity: 'info' },
+    { label: 'Completed', value: 'completed', severity: 'success' },
+  ];
+
+  // Add new property to track which view is active
+  activeView: 'auth_requests' | 'test_progress' = 'auth_requests';
+
   // Dialog visibility flags
   detailsDialogVisible: boolean = false;
   assignmentDialogVisible: boolean = false;
@@ -111,6 +122,13 @@ export class UsersListRLComponent implements OnInit {
   // Add variables to track filter state
   filterValues: any = {};
 
+  testStatusOptions = [
+    { label: 'Completed', value: 'completed', severity: 'success' },
+    { label: 'In Progress', value: 'in-progress', severity: 'info' }, // Match database value
+    { label: 'Timed Out', value: 'timed-out', severity: 'warning' },
+    { label: 'Abandoned', value: 'abandoned', severity: 'danger' },
+  ];
+
   constructor(
     private userService: UserService,
     private router: Router,
@@ -118,7 +136,8 @@ export class UsersListRLComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     private testAssignmentService: TestAssignmentService,
-    private testLookupService: TestLookupService // Add this
+    private testLookupService: TestLookupService, // Add this
+    private testService: TestService
   ) {
     this.assignmentForm = this.fb.group({
       assignedTest: ['D-70', Validators.required],
@@ -274,76 +293,103 @@ export class UsersListRLComponent implements OnInit {
   // Improved to handle the right event type
   loadCandidates(event?: any) {
     this.loading = true;
+    
+    if (this.activeView === 'test_progress') {
+      this.userService.getUsers(this.filters).pipe(
+        catchError(error => {
+          console.error('Error loading users:', error);
+          return of({ users: [], pagination: { total: 0 } });
+        }),
+        switchMap(response => {
+          const candidates = response.users;
+          
+          // Use individual attempts instead of getting all at once
+          const attemptRequests = candidates.map(candidate => {
+            if (!candidate._id) {
+              return of({ ...candidate, testProgress: null });
+            }
+            return this.testService.getCandidateAttempts(candidate._id).pipe(
+              map(attemptsResponse => {
+                const sortedAttempts = attemptsResponse.data.sort((a, b) => 
+                  new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+                );
+                const latestAttempt = sortedAttempts[0];
+                console.log(`Latest attempt for candidate ${candidate._id}:`, latestAttempt);
+                
+                return {
+                  ...candidate,
+                  testProgress: latestAttempt ? {
+                    status: latestAttempt.status,
+                    percentageScore: latestAttempt.percentageScore,
+                    timeSpent: latestAttempt.timeSpent,
+                    lastActive: latestAttempt.lastActivityAt,
+                    completedAt: latestAttempt.endTime
+                  } : null
+                };
+              }),
+              catchError(error => {
+                console.error(`Error loading attempts for candidate ${candidate.id}:`, error);
+                return of({
+                  ...candidate,
+                  testProgress: null
+                });
+              })
+            )}
+          );
 
-    // Reset filters if not set
-    if (!this.filters) {
-      this.filters = {
-        role: 'candidate',
-        page: 1,
-        limit: 10,
-      };
-    }
-
-    // If we have a lazy loading event, update pagination and sorting
-    if (event) {
-      this.filters.page = event.first / event.rows + 1;
-      this.filters.limit = event.rows;
-
-      // Handle sorting
-      if (event.sortField) {
-        const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
-        this.filters.sortBy = `${event.sortField}:${sortOrder}`;
-      } else {
-        delete this.filters.sortBy;
-      }
-
-      // Handle filters from PrimeNG table only if they're present in the event
-      if (event.filters) {
-        // Process global filter
-        if (event.filters.global) {
-          this.filters.search = event.filters.global.value;
-          this.globalFilterValue = event.filters.global.value;
+          return forkJoin(attemptRequests).pipe(
+            map(candidatesWithProgress => ({
+              candidates: candidatesWithProgress,
+              totalRecords: response.pagination.total
+            }))
+          );
+        })
+      ).subscribe({
+        next: (result) => {
+          this.candidates = result.candidates;
+          this.totalRecords = result.totalRecords;
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load data'
+          });
+          this.loading = false;
+          this.candidates = [];
+          this.totalRecords = 0;
         }
+      });
+    } else {
+      this.userService.getUsers(this.filters).subscribe({
+        next: (response) => {
+          console.log('Response from server:', response);
+          console.log('Total records:', response.pagination.total);
 
-        // We'll avoid processing column filters here since we're handling them
-        // directly with our custom handlers (onColumnFilterChange, onStatusFilterChange, etc.)
-      }
+          // Map users to ensure each has a consistent identifier property for table selection
+          this.candidates = response.users.map((user) => {
+            // If _id exists but id doesn't, assign _id to id for consistency
+            if (user._id && !user.id) {
+              user.id = user._id;
+            }
+            return user;
+          });
+          this.totalRecords = response.pagination.total;
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error loading candidates:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load candidates. Please try again.',
+          });
+          this.loading = false;
+        },
+      });
     }
-
-    // Ensure global filter is included if set
-    if (this.globalFilterValue && !this.filters.search) {
-      this.filters.search = this.globalFilterValue;
-    }
-
-    console.log('Sending filters to server:', this.filters);
-    console.log('Active filter values:', this.filterValues);
-
-    this.userService.getUsers(this.filters).subscribe({
-      next: (response) => {
-        console.log('Response from server:', response);
-        console.log('Total records:', response.pagination.total);
-
-        // Map users to ensure each has a consistent identifier property for table selection
-        this.candidates = response.users.map((user) => {
-          // If _id exists but id doesn't, assign _id to id for consistency
-          if (user._id && !user.id) {
-            user.id = user._id;
-          }
-          return user;
-        });
-        this.totalRecords = response.pagination.total;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading candidates:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load candidates. Please try again.',
-        });
-        this.loading = false;
-      },
-    });
   }
 
   // Make formatDateForApi more robust with better error handling
@@ -426,9 +472,28 @@ export class UsersListRLComponent implements OnInit {
     });
   }
 
-  getSeverity(
-    status: string
-  ): 'info' | 'success' | 'danger' | 'secondary' | 'warn' {
+  // Update return type to match PrimeNG's p-tag severity options
+  getTestProgressSeverity(status: string | undefined): 'info' | 'success' | 'warn' | 'danger' | 'secondary' {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return 'success';
+      case 'in-progress':  // Add this case
+      case 'in_progress':  // Keep this for backward compatibility
+        return 'info';
+      case 'timed-out':
+      case 'timed_out':
+        return 'warn';
+      case 'abandoned':
+        return 'danger';
+      case 'not_started':
+      case 'not-started':
+      default:
+        return 'secondary';
+    }
+  }
+
+  // Update getSeverity method to match PrimeNG's p-tag severity options
+  getSeverity(status: string): 'info' | 'success' | 'warn' | 'danger' | 'secondary' {
     switch (status) {
       case 'pending':
         return 'warn';
@@ -780,5 +845,25 @@ export class UsersListRLComponent implements OnInit {
         });
       },
     });
+  }
+
+  // Method to switch between views
+  switchView(view: 'auth_requests' | 'test_progress') {
+    this.activeView = view;
+    this.clearSelection();
+    this.loadCandidates();
+  }
+
+  // Format time spent in a human-readable way
+  formatTimeSpent(timeSpent: number): string {
+    const minutes = Math.floor(timeSpent / 60000);
+    const seconds = Math.floor((timeSpent % 60000) / 1000);
+    return `${minutes}m ${seconds}s`;
+  }
+
+  // Add new method to view attempt details
+  viewAttemptDetails(candidateId: string) {
+    // Navigate to the details page with the candidate ID
+    this.router.navigate(['/dashboard/RaisonnementLogique/Users/completed', candidateId]);
   }
 }

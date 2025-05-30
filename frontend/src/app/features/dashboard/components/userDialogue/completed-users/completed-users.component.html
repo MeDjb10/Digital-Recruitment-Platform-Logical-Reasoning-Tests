@@ -1,4 +1,4 @@
-<div class="p-4 bg-white grid grid-cols-5 gap-4 rounded-lg shadow-md ">
+<div class="p-4 bg-white grid grid-cols-5 gap-4 rounded-lg shadow-md">
     <div class="col-span-5 ">
         <button pButton icon="pi pi-arrow-left" label="Back to Users List" class="p-button-secondary"
             (click)="goBack()">
@@ -6,28 +6,25 @@
         <button pButton icon="pi pi-download" label="Download Report" class="p-button-secondary ml-2" (click)="print()">
         </button>
     </div>
-    <div class="col-span-5 grid-cols-5" id="printJS-div">
-
-
+    <div class="col-span-5 grid-cols-5" id="printJS-div" *ngIf="!loading">
         <div class="col-span-1 p-4 border-r border-gray-200">
             <div class="flex flex-col items-center">
-                <img src="assets/images/testimonial-avatar.jpg" alt="User Profile"
-                    class="w-32 h-32 rounded-full mb-4 border-2 border-blue-500">
-                <h3 class="text-xl font-bold text-gray-800">John Doe</h3>
-                <p class="text-gray-600 mb-4">john.doe&#64;example.com</p>
+                <img [src]="userDetails?.profilePicture || 'assets/images/testimonial-avatar.jpg'"
+                     [alt]="userDetails?.firstName + ' ' + userDetails?.lastName"
+                     class="w-32 h-32 rounded-full mb-4 border-2 border-blue-500">
+                <h3 class="text-xl font-bold text-gray-800">
+                    {{userDetails?.firstName}} {{userDetails?.lastName}}
+                </h3>
+                <p class="text-gray-600 mb-4">{{userDetails?.email}}</p>
 
                 <div class="w-full space-y-3">
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Level:</span>
-                        <span class="font-semibold">Master</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Birthday:</span>
-                        <span class="font-semibold">15/03/1995</span>
+                        <span class="text-gray-600">Education Level:</span>
+                        <span class="font-semibold">{{userDetails?.educationLevel || 'N/A'}}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Test Date:</span>
-                        <span class="font-semibold">10/11/2023</span>
+                        <span class="font-semibold">{{testAssignment?.examDate | date:'dd/MM/yyyy'}}</span>
                     </div>
                     <hr class="my-4 w-full border-gray-200">
                     <div class="flex justify-between items-center">
@@ -39,45 +36,86 @@
 
                 <hr class="my-4 w-full border-gray-200">
 
-                <div class="w-full">
-                    <h4 class="text-lg font-semibold mb-2">Psychologist</h4>
+                <div class="w-full" *ngIf="testAssignment?.assignedBy">
+                    <h4 class="text-lg font-semibold mb-2">Assigned By</h4>
                     <div class="flex items-center">
-                        <img src="assets/wom.png" alt="Psychologist" class="w-10 h-10 rounded-full mr-2">
+                        <div *ngIf="!testAssignment.assignedBy.profilePicture" class="w-10 h-10 rounded-full mr-2 bg-blue-500 flex items-center justify-center text-white font-bold">
+                            {{testAssignment.assignedBy.firstName?.charAt(0)}}{{testAssignment.assignedBy.lastName?.charAt(0)}}
+                        </div>
+                        <img *ngIf="testAssignment.assignedBy.profilePicture" [src]="testAssignment.assignedBy.profilePicture"
+                             [alt]="testAssignment.assignedBy.firstName"
+                             class="w-10 h-10 rounded-full mr-2">
                         <div>
-                            <p class="font-medium">Dr. Sarah Smith</p>
-                            <p class="text-sm text-gray-500">Cognitive Specialist</p>
+                            <p class="font-medium">
+                                {{testAssignment.assignedBy.firstName}} {{testAssignment.assignedBy.lastName}}
+                            </p>
+                            <p class="text-sm text-gray-500">{{testAssignment.assignedBy.role | titlecase}}</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-span-4">
-            <p-tabView>
-                <p-tabPanel>
+            <div *ngIf="!hasTestResults()" class="flex flex-col items-center justify-center p-8">
+                <i class="pi pi-info-circle text-4xl text-blue-500 mb-4"></i>
+                <p class="text-lg text-gray-600">No completed test attempts found for this user.</p>
+            </div>
+            
+            <p-tabView *ngIf="hasTestResults()">
+                <p-tabPanel *ngIf="testResults.dominoTest">
                     <ng-template pTemplate="header">
                         <div class="flex items-center gap-2">
                             <i class="pi pi-table"></i>
                             <span>Domino Test</span>
                         </div>
                     </ng-template>
-                    <app-domino-test-section></app-domino-test-section>
+                    <app-domino-test-section [testData]="testResults.dominoTest"></app-domino-test-section>
                 </p-tabPanel>
 
-                <p-tabPanel *ngIf="hasMultipleChoiceTest()">
+                <p-tabPanel *ngIf="testResults.additionalTest">
                     <ng-template pTemplate="header">
                         <div class="flex items-center gap-2">
                             <i class="pi pi-list"></i>
                             <span>Multiple Choice Test</span>
                         </div>
                     </ng-template>
-                    <app-multiple-choice-section></app-multiple-choice-section>
+                    <app-multiple-choice-section [testData]="testResults.additionalTest"></app-multiple-choice-section>
                 </p-tabPanel>
             </p-tabView>
         </div>
+    </div>
+
+    <div *ngIf="loading" class="col-span-5 flex justify-center items-center p-8">
+        <p-progressSpinner></p-progressSpinner>
     </div>
 </div>
 
 <!-- Hidden printable page -->
 <div style="display: none;">
     <app-printable-page id="printable-page"></app-printable-page>
+</div>
+
+<div class="completed-users">
+  <div class="loading-container" *ngIf="loading">
+    <p-progressSpinner></p-progressSpinner>
+  </div>
+
+  <div *ngIf="!loading">
+    <p-tabView>
+      <p-tabPanel header="Domino Test" *ngIf="dominoAttemptId">
+        <app-domino-test-section [attemptId]="dominoAttemptId">
+        </app-domino-test-section>
+      </p-tabPanel>
+      
+      <p-tabPanel header="Multiple Choice Test" *ngIf="mcqAttemptId">
+        <app-multiple-choice-section [attemptId]="mcqAttemptId">
+        </app-multiple-choice-section>
+      </p-tabPanel>
+    </p-tabView>
+
+    <div class="actions mt-4">
+      <p-button (click)="goBack()" label="Back" icon="pi pi-arrow-left"></p-button>
+      <p-button (click)="print()" label="Print" icon="pi pi-print" class="ml-2"></p-button>
+    </div>
+  </div>
 </div>

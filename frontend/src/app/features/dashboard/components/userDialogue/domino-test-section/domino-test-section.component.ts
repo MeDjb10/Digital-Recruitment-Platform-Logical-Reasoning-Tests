@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'primeng/chart';
@@ -15,6 +15,7 @@ import {
   ChartComponent,
   ApexNonAxisChartSeries
 } from "ng-apexcharts";
+import { TestService } from 'src/app/core/services/test.service';
 
 export type ChartOptions = {
   series: ApexAxisChartSeries | ApexNonAxisChartSeries;
@@ -28,12 +29,14 @@ export type ChartOptions = {
 
 @Component({
   selector: 'app-domino-test-section',
+  standalone: true, // Add standalone: true
   imports: [CommonModule, FormsModule, ChartModule, NgApexchartsModule, ButtonModule],
   templateUrl: './domino-test-section.component.html',
   styleUrl: './domino-test-section.component.css'
 })
 export class DominoTestSectionComponent implements OnInit {
   @ViewChild("chart") chart!: ChartComponent;
+  @Input() attemptId!: string;
 
   public chartOptions: Partial<ChartOptions>;
 
@@ -45,7 +48,10 @@ export class DominoTestSectionComponent implements OnInit {
   timeChartData: any;
   Performance: String= "Fort";
   isAiAnalysisVisible: boolean = false;
-  constructor(private location: Location) {
+  constructor(
+    private location: Location,
+    private testService: TestService
+  ) {
     this.chartOptions = {
       series: [{
         data: [] as Array<{
@@ -77,19 +83,46 @@ export class DominoTestSectionComponent implements OnInit {
   psychologistComment: string = '';
 
   ngOnInit() {
-    this.initializeTimeChart();
+    if (this.attemptId) {
+      this.testService.getAttemptResults(this.attemptId).subscribe({
+        next: (response) => {
+          console.log('Domino test results:', response);
+          this.initializeData(response.data);
+        },
+        error: (error) => console.error('Error loading domino results:', error)
+      });
+    }
+  }
+
+  private initializeData(data: any) {
+    const results = data.results;
+    
+    // Update component properties with actual data
+    this.timeSpent = this.formatTimeSpent(data.attempt.timeSpent);
+    this.score = results.attempt.score;
+    this.inversedAnswers = results.questions.filter((q: any) => q.response?.isReversed).length;
+    this.skippedQuestions = results.questions.filter((q: any) => q.response?.isSkipped).length;
+    
+    // Initialize charts with actual data
+    this.initializeTimeChart(results.questions);
     this.initializeTreeMap();
   }
 
-  initializeTimeChart() {
-    const questionCount = 40;
-    const data = Array(questionCount).fill(0).map(() => Math.floor(Math.random() * 30) + 30); // 30-60 seconds
+  private formatTimeSpent(ms: number): string {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  initializeTimeChart(questions: any[]) {
+    const questionCount = questions.length;
+    const data = questions.map(q => q.response?.timeSpent || 0);
     const colors = Array(questionCount).fill(0).map(() =>
       `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.7)`
     );
 
     this.timeChartData = {
-      labels: Array(questionCount).fill(0).map((_, i) => `Q${i + 1}`),
+      labels: questions.map((_, i) => `Q${i + 1}`),
       datasets: [{
         label: 'Time Spent (seconds)',
         data: data,
