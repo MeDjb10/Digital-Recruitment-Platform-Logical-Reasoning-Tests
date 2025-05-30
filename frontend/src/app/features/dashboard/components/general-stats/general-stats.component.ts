@@ -821,10 +821,12 @@ export class GeneralStatsComponent implements OnInit, AfterViewInit {
             action = 'Timed out';
           } else if (attempt.status === 'abandoned') {
             action = 'Abandoned test';
-          }          // Calculate duration if completed
+          } // Calculate duration if completed
           let duration: string | null = null;
           if (attempt.endTime && attempt.startTime) {
-            const durationMs = new Date(attempt.endTime).getTime() - new Date(attempt.startTime).getTime();
+            const durationMs =
+              new Date(attempt.endTime).getTime() -
+              new Date(attempt.startTime).getTime();
             const durationMinutes = Math.round(durationMs / (1000 * 60));
             duration = `${durationMinutes}m`;
           }
@@ -869,7 +871,7 @@ export class GeneralStatsComponent implements OnInit, AfterViewInit {
       error: (error) => {
         console.error('Error loading candidate/test information:', error);
         this.activitiesError = 'Failed to load complete information';
-        this.isLoadingActivities = false;        // Create activities with minimal information
+        this.isLoadingActivities = false; // Create activities with minimal information
         this.recentActivities = attempts.map((attempt, index) => ({
           id: attempt._id,
           candidate: 'Unknown User',
@@ -883,9 +885,14 @@ export class GeneralStatsComponent implements OnInit, AfterViewInit {
               ? Math.round(attempt.percentageScore)
               : null,
           date: new Date(attempt.startTime),
-          duration: attempt.endTime && attempt.startTime 
-            ? `${Math.round((new Date(attempt.endTime).getTime() - new Date(attempt.startTime).getTime()) / (1000 * 60))}m`
-            : null,
+          duration:
+            attempt.endTime && attempt.startTime
+              ? `${Math.round(
+                  (new Date(attempt.endTime).getTime() -
+                    new Date(attempt.startTime).getTime()) /
+                    (1000 * 60)
+                )}m`
+              : null,
           questionsCount: null,
           avatarBg: '#4F46E5',
         }));
@@ -1049,7 +1056,8 @@ export class GeneralStatsComponent implements OnInit, AfterViewInit {
   }
 
   // Generate mock activity data (fallback)
-  private generateMockActivities() {    const actions = [
+  private generateMockActivities() {
+    const actions = [
       'Completed test',
       'Started test',
       'Registered',
@@ -1114,19 +1122,20 @@ export class GeneralStatsComponent implements OnInit, AfterViewInit {
           namesFirst[Math.floor(Math.random() * namesFirst.length)];
         const lastName =
           namesLast[Math.floor(Math.random() * namesLast.length)];
-        const action = actions[Math.floor(Math.random() * actions.length)];        const testType =
+        const action = actions[Math.floor(Math.random() * actions.length)];
+        const testType =
           testTypes[Math.floor(Math.random() * testTypes.length)];
         const daysAgo = Math.floor(Math.random() * 14);
         const hoursAgo = Math.floor(Math.random() * 24);
         const date = new Date();
         date.setDate(date.getDate() - daysAgo);
         date.setHours(date.getHours() - hoursAgo);
-        
+
         // Only include score for completed tests
         const score =
           action === 'Completed test'
             ? Math.floor(50 + Math.random() * 50)
-            : null;        // Generate random duration for completed tests
+            : null; // Generate random duration for completed tests
         const duration =
           action === 'Completed test'
             ? `${Math.floor(10 + Math.random() * 90)}m` // 10-100 minutes

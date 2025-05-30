@@ -34,7 +34,8 @@
   <!-- KPI Summary Cards -->
   <div class="kpi-grid">
     <!-- Loading State for KPIs -->
-    <div *ngIf="isLoadingKpis" class="col-span-4">      <div class="loading-state text-center p-8">
+    <div *ngIf="isLoadingKpis" class="col-span-4">
+      <div class="loading-state text-center p-8">
         <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
         <p class="mt-2">{{ "DASHBOARD.ANALYTICS.LOADING_KPI" | translate }}</p>
       </div>
@@ -362,9 +363,12 @@
       ></p-dropdown>
     </div>
     <div class="activity-table-container">
-      <!-- Loading State -->      <div *ngIf="isLoadingActivities" class="loading-state text-center p-4">
+      <!-- Loading State -->
+      <div *ngIf="isLoadingActivities" class="loading-state text-center p-4">
         <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
-        <p class="mt-2">{{ "DASHBOARD.ANALYTICS.LOADING_ACTIVITIES" | translate }}</p>
+        <p class="mt-2">
+          {{ "DASHBOARD.ANALYTICS.LOADING_ACTIVITIES" | translate }}
+        </p>
       </div>
 
       <!-- Error State -->
@@ -394,7 +398,8 @@
         [paginator]="true"
         [rows]="5"
         responsiveLayout="scroll"
-      >        <ng-template pTemplate="header">
+      >
+        <ng-template pTemplate="header">
           <tr>
             <th>{{ "DASHBOARD.ANALYTICS.ACTIVITY.CANDIDATE" | translate }}</th>
             <th>{{ "DASHBOARD.ANALYTICS.ACTIVITY.ACTION" | translate }}</th>
@@ -426,7 +431,8 @@
                   {{ activity.testType }}
                 </div>
               </div>
-            </td>            <td>
+            </td>
+            <td>
               <div *ngIf="activity.score !== null" class="score-display">
                 <div class="score-bar">
                   <div
@@ -442,17 +448,27 @@
               <span *ngIf="activity.duration !== null" class="duration-display">
                 {{ activity.duration }}
               </span>
-              <span *ngIf="activity.duration === null" class="text-gray-400">-</span>
+              <span *ngIf="activity.duration === null" class="text-gray-400"
+                >-</span
+              >
             </td>
             <td>
-              <span *ngIf="activity.questionsCount !== null" class="questions-count">
+              <span
+                *ngIf="activity.questionsCount !== null"
+                class="questions-count"
+              >
                 {{ activity.questionsCount }}
               </span>
-              <span *ngIf="activity.questionsCount === null" class="text-gray-400">-</span>
+              <span
+                *ngIf="activity.questionsCount === null"
+                class="text-gray-400"
+                >-</span
+              >
             </td>
             <td>{{ activity.date | date : "medium" }}</td>
           </tr>
-        </ng-template>        <ng-template pTemplate="emptymessage">
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
           <tr>
             <td colspan="7" class="text-center p-4">
               <div class="empty-state">

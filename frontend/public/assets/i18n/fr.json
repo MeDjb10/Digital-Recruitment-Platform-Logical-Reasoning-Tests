@@ -328,7 +328,8 @@
         "VIEW": "Voir",
         "DISMISS": "Ignorer"
       }
-    },    "ANALYTICS": {
+    },
+    "ANALYTICS": {
       "OVERVIEW": "Aperçu des Analyses",
       "MONITOR": "Suivez les métriques clés de recrutement et les activités",
       "EXPORT": "Exporter",
@@ -365,7 +366,8 @@
         "BY_CATEGORY": "Par Catégorie",
         "BY_STATUS": "Par Statut de Complétion",
         "PERF_TRENDS": "Tendances de Performance"
-      },      "ACTIVITY": {
+      },
+      "ACTIVITY": {
         "RECENT": "Activité Récente",
         "CANDIDATE": "Candidat",
         "ACTION": "Action",

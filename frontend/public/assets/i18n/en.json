@@ -319,7 +319,8 @@
         "VIEW": "View",
         "DISMISS": "Dismiss"
       }
-    },    "ANALYTICS": {
+    },
+    "ANALYTICS": {
       "OVERVIEW": "Analytics Overview",
       "MONITOR": "Monitor key recruitment metrics and activities",
       "EXPORT": "Export",
@@ -355,7 +356,8 @@
         "BY_CATEGORY": "By Category",
         "BY_STATUS": "By Completion Status",
         "PERF_TRENDS": "Performance Trends"
-      },      "ACTIVITY": {
+      },
+      "ACTIVITY": {
         "RECENT": "Recent Activity",
         "CANDIDATE": "Candidate",
         "ACTION": "Action",
