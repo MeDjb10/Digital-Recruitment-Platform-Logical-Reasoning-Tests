@@ -875,3 +875,286 @@ body {
   opacity: 1;
   margin-bottom: 1rem;
 }
+
+/* ---------- New Styles for Test Authorization States ---------- */
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  position: relative;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  z-index: 10;
+}
+
+.content-wrapper {
+  position: relative;
+}
+
+.content-wrapper.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.header-section {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.header-section h1 {
+  font-size: 2.5rem;
+  color: #1a365d;
+  margin-bottom: 0.5rem;
+}
+
+.header-section .description {
+  color: #4a5568;
+  font-size: 1.1rem;
+}
+
+/* Process Overview */
+.process-overview {
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.process-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  cursor: pointer;
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.process-content {
+  padding: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Tests Section */
+.tests-section {
+  margin-top: 2rem;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #2d3748;
+  margin-bottom: 1.5rem;
+}
+
+.section-icon {
+  color: #4299e1;
+}
+
+.tests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Test Card Styles */
+.test-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.test-card.active:hover {
+  transform: translateY(-4px);
+}
+
+.test-card-inner {
+  padding: 1.5rem;
+  position: relative;
+}
+
+.test-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Badge States */
+.test-badge.available {
+  background-color: #c6f6d5;
+  color: #2f855a;
+}
+
+.test-badge.pending {
+  background-color: #feebc8;
+  color: #c05621;
+}
+
+.test-badge.not-available {
+  background-color: #fed7d7;
+  color: #c53030;
+}
+
+/* Test Icon */
+.test-card-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.logical-icon {
+  background-color: #ebf8ff;
+  color: #3182ce;
+}
+
+.icon-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: inherit;
+  filter: blur(8px);
+  opacity: 0.5;
+  z-index: -1;
+}
+
+/* Test Content */
+.test-card-header h3 {
+  font-size: 1.25rem;
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+.test-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.test-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #718096;
+  font-size: 0.875rem;
+}
+
+/* Buttons */
+.start-button {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 6px;
+  background-color: #3182ce;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.start-button:hover {
+  background-color: #2c5282;
+}
+
+.apply-button {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 6px;
+  background-color: #48bb78;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.apply-button:hover {
+  background-color: #2f855a;
+}
+
+/* Status Messages */
+.status-message {
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.status-message.pending {
+  background-color: #feebc8;
+  color: #c05621;
+}
+
+.status-message.rejected {
+  background-color: #fed7d7;
+  color: #c53030;
+}
+
+/* Dialog Styles */
+.test-list-content {
+  padding: 1rem 0;
+}
+
+.test-item {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.test-item:last-child {
+  border-bottom: none;
+}
+
+.test-item h3 {
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.test-item p {
+  color: #718096;
+  margin-bottom: 1rem;
+}
+
+.no-tests-message {
+  text-align: center;
+  padding: 2rem;
+  color: #718096;
+}
+
+.start-test-btn {
+  width: 100%;
+}

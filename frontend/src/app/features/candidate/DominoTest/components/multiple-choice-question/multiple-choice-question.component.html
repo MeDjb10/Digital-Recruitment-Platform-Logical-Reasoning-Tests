@@ -1,16 +1,26 @@
-<div class="p-6 bg-white rounded-lg shadow-sm max-w-5xl mx-auto my-5">
-    <div *ngIf="question && question.propositions">
-        <div *ngFor="let prop of question.propositions; let i = index" class="mb-4 last:mb-0">
-            <div class="flex items-center justify-between gap-8">
-                <p class="text-lg text-gray-700 min-w-[50%] max-w-[50%] flex-shrink-0">
-                    {{ i + 1 }}. {{ prop.text }}
+<div *ngIf="question && question.propositions" class="space-y-6">
+        <div *ngFor="let prop of question.propositions; let i = index" 
+             class="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
+            <div class="flex items-center justify-between gap-8 relative">
+                <!-- Question Number Badge -->
+                <div class="absolute -left-8 -top-4 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold shadow-sm">
+                    {{ i + 1 }}
+                </div>
+                
+                <!-- Question Text -->
+                <p class="text-lg text-gray-700 min-w-[50%] max-w-[50%] flex-shrink-0 pl-2">
+                    {{ prop.text }}
                 </p>
+
+                <!-- Options -->
                 <div class="flex gap-3 justify-end min-w-[45%]">
                     <label *ngFor="let option of evaluationOptions" 
-                           class="flex items-center px-3 py-1 border-2 border-gray-300 rounded-full cursor-pointer transition-colors duration-200 ease-in-out hover:bg-gray-50"
+                           class="flex items-center px-4 py-2 border-2 border-gray-200 rounded-lg cursor-pointer transition-all duration-200 ease-in-out hover:bg-gray-50 hover:scale-105"
                            [ngClass]="{
-                               'bg-blue-600 !border-blue-600 !text-white hover:bg-blue-700': responses[i].candidateEvaluation === option.value,
-                               'bg-white': responses[i].candidateEvaluation !== option.value
+                               'bg-gradient-to-r from-green-500 to-green-600 !border-green-600 !text-white hover:from-green-600 hover:to-green-700': responses[i].candidateEvaluation === option.value && option.value === 'V',
+                               'bg-gradient-to-r from-red-500 to-red-600 !border-red-600 !text-white hover:from-red-600 hover:to-red-700': responses[i].candidateEvaluation === option.value && option.value === 'F',
+                               'bg-gradient-to-r from-yellow-400 to-yellow-500 !border-yellow-500 !text-white hover:from-yellow-500 hover:to-yellow-600': responses[i].candidateEvaluation === option.value && option.value === '?',
+                               'hover:border-blue-300': responses[i].candidateEvaluation !== option.value
                            }">
                         <input type="radio" 
                                [name]="'prop_' + i" 
@@ -18,18 +28,14 @@
                                [(ngModel)]="responses[i].candidateEvaluation" 
                                (change)="onSelectionChange(i, option.value)"
                                class="hidden" />
-                        <span class="inline-flex items-center gap-1 text-sm">
-                            <svg *ngIf="responses[i].candidateEvaluation === option.value" 
-                                 class="w-4 h-4" 
-                                 fill="none" 
-                                 stroke="currentColor" 
-                                 viewBox="0 0 24 24">
-                                <path stroke-linecap="round" 
-                                      stroke-linejoin="round" 
-                                      stroke-width="2" 
-                                      d="M5 13l4 4L19 7">
-                                </path>
-                            </svg>
+                        <span class="inline-flex items-center gap-2 text-sm font-medium">
+                            <!-- Custom Radio Button -->
+                            <span class="w-4 h-4 rounded-full border-2 flex items-center justify-center"
+                                  [ngClass]="{'border-white': responses[i].candidateEvaluation === option.value, 'border-gray-400': responses[i].candidateEvaluation !== option.value}">
+                                <span *ngIf="responses[i].candidateEvaluation === option.value" 
+                                      class="w-2 h-2 rounded-full bg-white animate-scale">
+                                </span>
+                            </span>
                             {{ option.label }}
                         </span>
                     </label>
@@ -37,7 +43,22 @@
             </div>
         </div>
     </div>
-    <div *ngIf="!question || !question.propositions">
-        <p>Question data is missing propositions.</p>
+
+    <!-- Error State -->
+    <div *ngIf="!question || !question.propositions" 
+         class="text-center p-8 bg-red-50 rounded-lg border border-red-100">
+        <svg class="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="text-red-600 font-medium">Question data is missing propositions.</p>
     </div>
-</div>
+
+<style>
+  @keyframes scale {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+  }
+  .animate-scale {
+    animation: scale 0.2s ease-out;
+  }
+</style>

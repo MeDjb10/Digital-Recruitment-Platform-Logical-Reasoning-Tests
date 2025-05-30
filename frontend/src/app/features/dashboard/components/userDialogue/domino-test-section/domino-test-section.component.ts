@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'primeng/chart';
@@ -13,8 +13,9 @@ import {
   ApexLegend,
   NgApexchartsModule,
   ChartComponent,
-  ApexNonAxisChartSeries
-} from "ng-apexcharts";
+  ApexNonAxisChartSeries,
+} from 'ng-apexcharts';
+import { TestService } from '../../../../../core/services/test.service';
 
 export type ChartOptions = {
   series: ApexAxisChartSeries | ApexNonAxisChartSeries;
@@ -28,142 +29,414 @@ export type ChartOptions = {
 
 @Component({
   selector: 'app-domino-test-section',
-  imports: [CommonModule, FormsModule, ChartModule, NgApexchartsModule, ButtonModule],
+  standalone: true, // Add standalone: true
+  imports: [
+    CommonModule,
+    FormsModule,
+    ChartModule,
+    NgApexchartsModule,
+    ButtonModule,
+  ],
   templateUrl: './domino-test-section.component.html',
-  styleUrl: './domino-test-section.component.css'
+  styleUrl: './domino-test-section.component.css',
 })
 export class DominoTestSectionComponent implements OnInit {
-  @ViewChild("chart") chart!: ChartComponent;
+  @ViewChild('chart') chart!: ChartComponent;
+  @Input() attemptId!: string;
 
   public chartOptions: Partial<ChartOptions>;
-
+  // Enhanced properties based on backend data
   testType: string = 'Logical Reasoning Assessment';
-  timeSpent: string = '20:52';
-  score: number = 32;
-  inversedAnswers: number = 3;
-  skippedQuestions: number = 2;
+  testName: string = '';
+  timeSpent: string = '0:00';
+  score: number = 0;
+  totalQuestions: number = 0;
+  percentageScore: number = 0;
+  questionsAnswered: number = 0;
+  skippedQuestions: number = 0;
+  inversedAnswers: number = 0;
+  averageTimePerQuestion: number = 0;
+  completionRate: number = 0;
+  accuracyRate: number = 0;
+  efficiencyScore: number = 0;
+  difficulty: string = '';
+  testDuration: number = 0;
+  testCategory: string = '';
+
+  // Performance metrics
+  performance: {
+    level: string;
+    color: string;
+    description: string;
+    score: number;
+    recommendation: string;
+  } = {
+    level: 'Calculating...',
+    color: '#6b7280',
+    description: 'Performance analysis in progress',
+    score: 0,
+    recommendation: 'Analysis in progress...',
+  };
+  // Detailed analytics
+  testAnalytics: {
+    startTime: string;
+    endTime: string;
+    totalDuration: number;
+    browser: string;
+    device: string;
+    screenResolution: string;
+    averageQuestionTime: string;
+    questionsRevisited: number;
+    fastestQuestion: { number: number; time: string };
+    slowestQuestion: { number: number; time: string };
+  } = {
+    startTime: '',
+    endTime: '',
+    totalDuration: 0,
+    browser: '',
+    device: '',
+    screenResolution: '',
+    averageQuestionTime: '',
+    questionsRevisited: 0,
+    fastestQuestion: { number: 0, time: '0:00' },
+    slowestQuestion: { number: 0, time: '0:00' },
+  };
+
   timeChartData: any;
-  Performance: String= "Fort";
   isAiAnalysisVisible: boolean = false;
-  constructor(private location: Location) {
+  isLoading: boolean = true;
+  chartInitialized: boolean = false;
+  constructor(private location: Location, private testService: TestService) {
     this.chartOptions = {
-      series: [{
-        data: [] as Array<{
-          x: string;
-          y: number;
-        }>
-      }],
+      series: [
+        {
+          data: [] as Array<{
+            x: string;
+            y: number;
+          }>,
+        },
+      ],
       chart: {
         height: 450,
-        type: "treemap",
-        toolbar: { show: false }
+        type: 'treemap',
+        toolbar: { show: false },
       },
       dataLabels: { enabled: true },
-      title: { text: "" },
+      title: { text: '' },
       plotOptions: {
         treemap: {
           distributed: true,
-          enableShades: false
-        }
+          enableShades: false,
+        },
       } as ApexPlotOptions,
       colors: [],
-      legend: { show: false }
+      legend: { show: false },
     };
   }
 
   aiComments = [
-    { text: 'Candidate performed well in logical reasoning. Lorem ipsum dolor sit amet consectetur adipisicing elit. Sunt neque, recusandae ut illum accusantium tempore hic aperiam quidem dolore et excepturi eveniet voluptatum cumque rem qui voluptatibus assumenda culpa ea!', reaction: true, likes: 0, dislikes: 0, feedback: '' },
+    {
+      text: 'Candidate performed well in logical reasoning. Lorem ipsum dolor sit amet consectetur adipisicing elit. Sunt neque, recusandae ut illum accusantium tempore hic aperiam quidem dolore et excepturi eveniet voluptatum cumque rem qui voluptatibus assumenda culpa ea!',
+      reaction: true,
+      likes: 0,
+      dislikes: 0,
+      feedback: '',
+    },
   ];
   psychologistComment: string = '';
-
   ngOnInit() {
-    this.initializeTimeChart();
-    this.initializeTreeMap();
+    if (this.attemptId) {
+      this.testService.getAttemptResults(this.attemptId).subscribe({
+        next: (response) => {
+          console.log('Domino test results:', response);
+          this.initializeData(response.data);
+        },
+        error: (error) => {
+          console.error('Error loading domino results:', error);
+          this.isLoading = false;
+        },
+      });
+    }
   }
 
-  initializeTimeChart() {
-    const questionCount = 40;
-    const data = Array(questionCount).fill(0).map(() => Math.floor(Math.random() * 30) + 30); // 30-60 seconds
-    const colors = Array(questionCount).fill(0).map(() =>
-      `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.7)`
+  private initializeData(data: any) {
+    console.log('Received data structure:', data);
+
+    if (!data) {
+      console.error('No data received');
+      this.isLoading = false;
+      return;
+    }
+
+    // Backend returns: { attempt, questions, analytics, summary }
+    const { attempt, questions, analytics, summary } = data;
+
+    if (!attempt || !questions) {
+      console.error('Missing attempt or questions data:', {
+        attempt,
+        questions,
+      });
+      this.isLoading = false;
+      return;
+    } // Update component properties with actual data
+    this.testName = attempt.testName || 'D-2000';
+    this.timeSpent = this.formatTimeSpent(attempt.timeSpent);
+    this.score = attempt.score || 0;
+    this.totalQuestions = analytics.totalQuestions || questions.length;
+    this.percentageScore = attempt.percentageScore || 0;
+    this.questionsAnswered = analytics.questionsAnswered || 0;
+    this.skippedQuestions = analytics.questionsSkipped || 0;
+    this.inversedAnswers = questions.filter(
+      (q: any) => q.response?.isReversed
+    ).length;
+    this.completionRate = summary?.completionRate || 0;
+    this.accuracyRate = summary?.accuracyRate || 0;
+    this.efficiencyScore = summary?.efficiencyScore || 0;
+    this.averageTimePerQuestion = attempt.timeSpent / this.totalQuestions;
+    this.difficulty = attempt.difficulty || 'medium'; // Populate detailed analytics
+    this.testAnalytics = {
+      startTime: new Date(attempt.startTime).toLocaleString(),
+      endTime: attempt.endTime
+        ? new Date(attempt.endTime).toLocaleString()
+        : '',
+      totalDuration: attempt.timeSpent,
+      browser: attempt.browser || 'Unknown',
+      device: attempt.device || 'Unknown',
+      screenResolution: attempt.screenResolution || '1920x1080',
+      questionsRevisited: analytics.questionsRevisited || 0,
+      averageQuestionTime: this.formatTimeSpent(this.averageTimePerQuestion),
+      fastestQuestion: this.getFastestQuestion(questions),
+      slowestQuestion: this.getSlowestQuestion(questions),
+    };
+
+    // Calculate performance level based on percentage score
+    this.calculatePerformanceLevel();
+
+    // Initialize charts with actual data
+    this.initializeTimeChart(questions);
+    this.initializeTreeMap();
+    this.isLoading = false;
+  }
+  private calculatePerformanceLevel() {
+    if (this.percentageScore >= 90) {
+      this.performance = {
+        level: 'Excellent',
+        color: '#10b981',
+        description:
+          'Outstanding performance with exceptional logical reasoning skills',
+        score: this.percentageScore,
+        recommendation: 'Continue developing advanced problem-solving skills',
+      };
+    } else if (this.percentageScore >= 80) {
+      this.performance = {
+        level: 'Very Good',
+        color: '#059669',
+        description:
+          'Strong logical reasoning abilities with consistent accuracy',
+        score: this.percentageScore,
+        recommendation:
+          'Focus on speed optimization and complex pattern recognition',
+      };
+    } else if (this.percentageScore >= 70) {
+      this.performance = {
+        level: 'Good',
+        color: '#3b82f6',
+        description: 'Solid logical reasoning skills with room for improvement',
+        score: this.percentageScore,
+        recommendation:
+          'Practice more complex logical sequences and time management',
+      };
+    } else if (this.percentageScore >= 60) {
+      this.performance = {
+        level: 'Average',
+        color: '#f59e0b',
+        description:
+          'Adequate logical reasoning with potential for development',
+        score: this.percentageScore,
+        recommendation:
+          'Regular practice with pattern recognition exercises recommended',
+      };
+    } else if (this.percentageScore >= 40) {
+      this.performance = {
+        level: 'Below Average',
+        color: '#f97316',
+        description: 'Basic logical reasoning skills requiring improvement',
+        score: this.percentageScore,
+        recommendation:
+          'Focus on fundamental logical reasoning concepts and systematic practice',
+      };
+    } else {
+      this.performance = {
+        level: 'Needs Improvement',
+        color: '#ef4444',
+        description:
+          'Significant development needed in logical reasoning abilities',
+        score: this.percentageScore,
+        recommendation:
+          'Consider foundational training in logical thinking and problem-solving',
+      };
+    }
+  }
+  public formatTimeSpent(ms: number): string {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  public getFastestQuestion(questions?: any[]): {
+    number: number;
+    time: string;
+  } {
+    if (!questions) {
+      return this.testAnalytics.fastestQuestion;
+    }
+    let fastest = { number: 0, time: Number.MAX_VALUE };
+    questions.forEach((q, index) => {
+      const timeSpent = q.response?.timeSpent || 0;
+      if (timeSpent < fastest.time && timeSpent > 0) {
+        fastest = { number: index + 1, time: timeSpent };
+      }
+    });
+    return { number: fastest.number, time: this.formatTimeSpent(fastest.time) };
+  }
+
+  public getSlowestQuestion(questions?: any[]): {
+    number: number;
+    time: string;
+  } {
+    if (!questions) {
+      return this.testAnalytics.slowestQuestion;
+    }
+    let slowest = { number: 0, time: 0 };
+    questions.forEach((q, index) => {
+      const timeSpent = q.response?.timeSpent || 0;
+      if (timeSpent > slowest.time) {
+        slowest = { number: index + 1, time: timeSpent };
+      }
+    });
+    return { number: slowest.number, time: this.formatTimeSpent(slowest.time) };
+  }
+  initializeTimeChart(questions: any[]) {
+    const questionCount = questions.length;
+    // Convert milliseconds to seconds for display
+    const data = questions.map((q) =>
+      Math.round((q.response?.timeSpent || 0) / 1000)
     );
+    const colors = Array(questionCount)
+      .fill(0)
+      .map(
+        () =>
+          `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(
+            Math.random() * 255
+          )}, ${Math.floor(Math.random() * 255)}, 0.7)`
+      );
 
     this.timeChartData = {
-      labels: Array(questionCount).fill(0).map((_, i) => `Q${i + 1}`),
-      datasets: [{
-        label: 'Time Spent (seconds)',
-        data: data,
-        backgroundColor: colors
-      }]
+      labels: questions.map(
+        (q, i) => `Q${q.question?.questionNumber || i + 1}`
+      ),
+      datasets: [
+        {
+          label: 'Time Spent (seconds)',
+          data: data,
+          backgroundColor: colors,
+        },
+      ],
     };
   }
 
   initializeTreeMap() {
+    if (!this.timeChartData || !this.timeChartData.datasets[0]) {
+      console.warn('No time chart data available for treemap');
+      return;
+    }
+
+    const chartData = this.timeChartData.datasets[0].data.map(
+      (time: number, index: number) => ({
+        x: `Q${index + 1}`,
+        y: time,
+      })
+    );
+
     this.chartOptions = {
       series: [
-      {
-        data: this.timeChartData.datasets[0].data.map((time: number, index: number) => ({
-        x: `Q${index + 1}`,
-        y: time
-        }))
-      }
+        {
+          data: chartData,
+        },
       ],
       chart: {
-      height: 450,
-      type: "treemap",
-      toolbar: {
-        show: false
-      }
+        height: 450,
+        type: 'treemap',
+        toolbar: {
+          show: false,
+        },
+        animations: {
+          enabled: true,
+          speed: 800,
+          dynamicAnimation: {
+            enabled: true,
+            speed: 350,
+          },
+        },
       },
       title: {
-      text: "Time Distribution per Question",
-      align: "center",
-      style: {
-        fontSize: '16px',
-        fontWeight: 600
-      }
+        text: 'Time Distribution per Question',
+        align: 'center',
+        style: {
+          fontSize: '16px',
+          fontWeight: '600',
+          color: '#374151',
+        },
       },
       colors: this.timeChartData.datasets[0].backgroundColor,
       plotOptions: {
-      treemap: {
-        distributed: true,
-        enableShades: false,
-        colorScale: {
-        ranges: [
-          {
-          from: 0,
-          to: 35,
-          color: '#4CAF50' // Green
+        treemap: {
+          distributed: true,
+          enableShades: false,
+          colorScale: {
+            ranges: [
+              {
+                from: 0,
+                to: 35,
+                color: '#10b981', // Green for fast answers
+              },
+              {
+                from: 36,
+                to: 60,
+                color: '#f59e0b', // Orange for moderate speed
+              },
+              {
+                from: 61,
+                to: 100,
+                color: '#ef4444', // Red for slow answers
+              },
+            ],
           },
-          {
-          from: 36,
-          to: 45,
-          color: '#FFA500' // Orange
-          },
-          {
-          from: 46,
-          to: 100,
-          color: '#F44336' // Red
-          }
-        ]
-        }
-      }
+        },
       },
       dataLabels: {
-      enabled: true,
-      style: {
-        fontSize: '12px',
-        fontFamily: 'sans-serif',
-        fontWeight: 'bold'
-      },
-      formatter: function (text: string, op: any): string {
-        return text + ' - ' + Math.round(op.value) + 's';
-      }
+        enabled: true,
+        style: {
+          fontSize: '12px',
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 'bold',
+          colors: ['#ffffff'],
+        },
+        formatter: function (text: string, op: any): string {
+          return `${text}\n${Math.round(op.value)}s`;
+        },
       },
       legend: {
-      show: false
-      }
+        show: false,
+      },
     };
+
+    // Force chart update after a small delay to ensure DOM is ready
+    setTimeout(() => {
+      if (this.chart) {
+        this.chart.updateOptions(this.chartOptions, true);
+      }
+    }, 100);
   }
 
   handleReaction(commentIndex: number, isLike: boolean) {

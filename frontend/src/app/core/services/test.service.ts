@@ -601,6 +601,19 @@ export class TestService {
     });
   }
 
+  /**
+   * Determine test type from test data
+   */
+  getTestType(test: any): 'domino' | 'mcq' | 'unknown' {
+    const testName = test?.name?.toLowerCase() || '';
+    if (testName.includes('d-70') || testName.includes('d-2000')) {
+      return 'domino';
+    } else if (testName.includes('logique_des_propositions')) {
+      return 'mcq';
+    }
+    return 'unknown';
+  }
+
   // Debug method to log API interactions
   private logApiInteraction(action: string, data: any, response?: any): void {
     console.group(`API: ${action}`);

@@ -20,134 +20,7 @@ import { AuthService } from '../../../../../core/auth/services/auth.service';
   imports: [CommonModule, RouterModule],
   providers: [UserService, TestService, AuthService],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="tests-container">
-      <div class="tests-header">
-        <h1>Your Assigned Tests</h1>
-        <p>Complete your assigned assessment tests</p>
-      </div>
-
-      <div class="loading-indicator" *ngIf="loading">
-        <div class="spinner"></div>
-        <p>Loading your assigned tests...</p>
-      </div>
-
-      <div class="tests-list" *ngIf="!loading && assignedTests.length > 0">
-        <div
-          class="test-card"
-          *ngFor="let test of assignedTests; trackBy: trackByTestId"
-        >
-          <div class="test-info">
-            <h2>{{ test.name }}</h2>
-            <p class="description">{{ test.description }}</p>
-            <div class="test-meta">
-              <div class="meta-item">
-                <i class="pi pi-clock"></i>
-                <span>{{ test.duration }} minutes</span>
-              </div>
-              <div class="meta-item">
-                <i class="pi pi-list"></i>
-                <span>{{ test.totalQuestions }} questions</span>
-              </div>
-              <div class="meta-item" *ngIf="test.difficulty">
-                <i class="pi pi-star"></i>
-                <span>{{ test.difficulty | titlecase }}</span>
-              </div>
-              <div class="meta-item" *ngIf="test.category">
-                <i class="pi pi-tag"></i>
-                <span>{{ test.category | titlecase }}</span>
-              </div>
-              <div class="meta-item" *ngIf="test.isMainTest">
-                <i class="pi pi-bookmark"></i>
-                <span>Main Test</span>
-              </div>
-              <div class="meta-item" *ngIf="!test.isMainTest">
-                <i class="pi pi-plus"></i>
-                <span>Additional Test</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="test-actions">
-            <a
-              [routerLink]="['/tests', test._id || test.id]"
-              class="btn btn-primary"
-            >
-              Start Test
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Assignment Info Display -->
-      <div class="assignment-info" *ngIf="!loading && testAssignment">
-        <div class="info-card">
-          <h3>Assignment Details</h3>
-          <div class="assignment-details">
-            <p>
-              <strong>Assignment Date:</strong>
-              {{ testAssignment.assignmentDate | date : 'medium' }}
-            </p>
-            <p *ngIf="testAssignment.examDate">
-              <strong>Exam Date:</strong>
-              {{ testAssignment.examDate | date : 'medium' }}
-            </p>
-            <p *ngIf="testAssignment.assignedBy">
-              <strong>Assigned By:</strong>
-              {{ testAssignment.assignedBy.firstName }}
-              {{ testAssignment.assignedBy.lastName }}
-            </p>
-            <p>
-              <strong>Assignment Type:</strong>
-              {{
-                testAssignment.isManualAssignment
-                  ? 'Manual Assignment'
-                  : 'Automatic Assignment'
-              }}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- No Tests Message -->
-      <div
-        class="no-tests-message"
-        *ngIf="!loading && assignedTests.length === 0 && !errorMessage"
-      >
-        <div class="message-content">
-          <i class="pi pi-info-circle"></i>
-          <h3>No Tests Assigned</h3>
-          <p *ngIf="authorizationStatus === 'not_submitted'">
-            You haven't submitted a test authorization request yet.
-          </p>
-          <p *ngIf="authorizationStatus === 'pending'">
-            Your test authorization request is pending approval.
-          </p>
-          <p *ngIf="authorizationStatus === 'rejected'">
-            Your test authorization request was rejected. Please contact an
-            administrator.
-          </p>
-          <p *ngIf="authorizationStatus === 'approved'">
-            You are approved for testing, but no tests have been assigned yet.
-            Please contact an administrator.
-          </p>
-          <a routerLink="/dashboard" class="btn btn-secondary"
-            >Return to Dashboard</a
-          >
-        </div>
-      </div>
-
-      <!-- Error Message -->
-      <div class="error-message" *ngIf="errorMessage">
-        <i class="pi pi-exclamation-triangle"></i>
-        <h3>Unable to Load Tests</h3>
-        <p>{{ errorMessage }}</p>
-        <button (click)="loadAssignedTests()" class="btn btn-secondary">
-          Try Again
-        </button>
-      </div>
-    </div>
-  `,
+  templateUrl: 'tests-list.component.html',
   styles: [
     `
       .tests-container {
@@ -361,7 +234,7 @@ import { AuthService } from '../../../../../core/auth/services/auth.service';
         }
 
         .tests-container {
-          padding: 20px 10px;
+          padding: 0px 10px;
         }
       }
     `,

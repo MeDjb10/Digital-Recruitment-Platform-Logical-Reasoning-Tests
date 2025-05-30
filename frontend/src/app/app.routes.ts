@@ -12,39 +12,14 @@ import { ProfileComponent } from './features/profile/pages/profile/profile.compo
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'home',
-    pathMatch: 'full',
-  },
-
-  {
-    path: 'home',
-    title: 'Home - Digital Recruitment Platform',
     loadChildren: () =>
-      import('./features/homepage/homepage.module').then(
-        (m) => m.HomepageModule
-      ),
-  },
-  {
-    path: 'profile',
-   component: ProfileComponent
+      import('./features/homepage/homepage.module').then((m) => m.HomepageModule),
   },
   {
     path: 'auth',
     loadChildren: () =>
       import('./features/auth/auth.module').then((m) => m.AuthModule),
   },
-  {
-    path: 'apply',
-    component: ApplicationFormComponent,
-    canActivate: [AuthGuard],
-    title: 'Application Form - Digital Recruitment Platform',
-  },
-
-  {
-    path:'select',
-    component:TestSelectComponent
-  },
-
   {
     path: 'dashboard',
     canActivate: [DashboardGuard],
@@ -54,26 +29,20 @@ export const routes: Routes = [
       ),
     title: 'Dashboard - Digital Recruitment Platform',
   },
-
-  // Test routes-------------------------------
   {
-    path: 'tests',
-    loadChildren: () =>
-      import('./features/candidate/DominoTest/domino-test.module').then(
-        (m) => m.DominoTestModule
-      ),
-  },
-
+        path: 'tests',
+        loadChildren: () =>
+          import('./features/candidate/DominoTest/domino-test.module').then(
+            (m) => m.DominoTestModule
+          ),
+      },
   {
     path: 'admin/layout-builder',
     component: DominoLayoutBuilderComponent,
   },
- 
-  //----------------------------------------
-
   {
     path: '**',
-    redirectTo: 'home',
+    redirectTo: '',
     pathMatch: 'full',
   },
 ];
