@@ -34,8 +34,9 @@ import { User } from '../../../../../core/models/user.model';
   styleUrl: './completed-users.component.css',
 })
 export class CompletedUsersComponent implements OnInit {
-  @ViewChild(PrintablePageComponent) printablePageComponent!: PrintablePageComponent;
-  
+  @ViewChild(PrintablePageComponent)
+  printablePageComponent!: PrintablePageComponent;
+
   loading = true;
   dominoAttemptId?: string;
   mcqAttemptId?: string;
@@ -124,7 +125,8 @@ export class CompletedUsersComponent implements OnInit {
           this.loading = false;
         },
       });
-  }  goBack(): void {
+  }
+  goBack(): void {
     this.location.back();
   }
   print(): void {
