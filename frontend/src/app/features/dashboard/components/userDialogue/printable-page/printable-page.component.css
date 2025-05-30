@@ -1,252 +1,340 @@
 #printJS-div {
-    padding: 1rem;
-    background-color: white;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  background-color: white;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .col-span-5 {
-    grid-column: span 5 / span 5;
+  grid-column: span 5 / span 5;
 }
 
 .col-span-1 {
-    grid-column: span 1 / span 1;
-    padding: 1rem;
-    border-right: 1px solid #e5e7eb;
-    min-width: 200px; /* Reduced width */
-    max-width: 220px; /* Added max-width */
+  grid-column: span 1 / span 1;
+  padding: 1rem;
+  border-right: 1px solid #e5e7eb;
+  min-width: 200px; /* Reduced width */
+  max-width: 220px; /* Added max-width */
 }
 
 .col-span-4 {
-    grid-column: span 4 / span 4;
+  grid-column: span 4 / span 4;
 }
 
 .flex {
-    display: flex;
+  display: flex;
 }
 
 .flex-col {
-    flex-direction: column;
+  flex-direction: column;
 }
 
 .items-center {
-    align-items: center;
+  align-items: center;
 }
 
 .justify-between {
-    justify-content: space-between;
+  justify-content: space-between;
 }
 
 .w-full {
-    width: 100%;
+  width: 100%;
 }
 
 .w-32 {
-    width: 8rem;
+  width: 8rem;
 }
 
 .h-32 {
-    height: 8rem;
+  height: 8rem;
 }
 
 .w-10 {
-    width: 2.5rem;
+  width: 2.5rem;
 }
 
 .h-10 {
-    height: 2.5rem;
+  height: 2.5rem;
 }
 
 .rounded-full {
-    border-radius: 9999px;
+  border-radius: 9999px;
 }
 
 .mb-4 {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .mb-2 {
-    margin-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .mr-2 {
-    margin-right: 0.5rem;
+  margin-right: 0.5rem;
 }
 
 .ml-2 {
-    margin-left: 0.5rem;
+  margin-left: 0.5rem;
 }
 
 .space-y-3 > * + * {
-    margin-top: 0.75rem;
+  margin-top: 0.75rem;
 }
 
 .border-2 {
-    border-width: 2px;
+  border-width: 2px;
 }
 
 .border-blue-500 {
-    border-color: #3b82f6;
+  border-color: #3b82f6;
 }
 
 .border-gray-200 {
-    border-color: #e5e7eb;
+  border-color: #e5e7eb;
 }
 
 .text-xl {
-    font-size: 1.4rem; /* Larger name */
-    margin-bottom: 8px;
+  font-size: 1.4rem; /* Larger name */
+  margin-bottom: 8px;
 }
 
 .text-lg {
-    font-size: 1.125rem;
+  font-size: 1.125rem;
 }
 
 .text-sm {
-    font-size: 0.875rem;
+  font-size: 0.875rem;
 }
 
 .font-bold {
-    font-weight: 700;
+  font-weight: 700;
 }
 
 .font-semibold {
-    font-weight: 600;
+  font-weight: 600;
 }
 
 .font-medium {
-    font-weight: 500;
+  font-weight: 500;
 }
 
 .text-gray-800 {
-    color: #1f2937;
+  color: #1f2937;
 }
 
 .text-gray-600 {
-    font-size: 0.95rem;
-    white-space: normal; /* Allow text to wrap */
-    flex: 0 0 auto; /* Don't grow or shrink */
+  font-size: 0.95rem;
+  white-space: normal; /* Allow text to wrap */
+  flex: 0 0 auto; /* Don't grow or shrink */
 }
 
 .text-gray-500 {
-    color: #6b7280;
+  color: #6b7280;
 }
 
 .text-green-600 {
-    color: #059669;
+  color: #059669;
 }
 
 .gap-2 {
-    gap: 0.5rem;
+  gap: 0.5rem;
 }
 
 /* PrimeNG button overrides */
 .p-button-secondary {
-    margin-right: 0.5rem;
+  margin-right: 0.5rem;
 }
 
 /* Tab panel styles */
 .p-tabview {
-    width: 100%;
+  width: 100%;
 }
 
 .my-4 {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 hr {
-    border: 0;
-    border-top: 1px solid #e5e7eb;
-    width: 100%;
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  width: 100%;
 }
 
 .page-break {
-    page-break-after: always;
-    break-after: page;
-    height: 0;
-    display: block;
+  page-break-after: always;
+  break-after: page;
+  height: 0;
+  display: block;
 }
 
 .apx-chart {
-    width: 100% !important;
-    height: 300px !important;
+  width: 100% !important;
+  height: 300px !important;
 }
 
 @media print {
-    #printJS-div {
-        padding: 20px;
-        box-shadow: none;
-        gap: 2rem;
-    }
+  #printJS-div {
+    padding: 20px;
+    box-shadow: none;
+    gap: 2rem;
+  }
 
-    .col-span-1 {
-        width: 250px;
-        min-width: 250px;
-        max-width: 250px;
-        padding: 20px;
-    }
-    
-    .profile-info {
-        margin: 35px 0;
-    }
+  .col-span-1 {
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+    padding: 20px;
+  }
 
-    .info-item {
-        padding: 8px 0;
-        border-bottom: 1px solid #f3f4f6;
-    }
+  .profile-info {
+    margin: 35px 0;
+  }
 
-    .info-item:last-child {
-        border-bottom: none;
-    }
+  .info-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
 
-    .info-label {
-        color: #6b7280;
-        font-size: 0.95rem;
-    }
+  .info-item:last-child {
+    border-bottom: none;
+  }
 
-    .info-value {
-        font-weight: 600;
-        color: #1f2937;
-    }
+  .info-label {
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
 
-    hr {
-        margin: 25px 0;
-        border-top: 2px solid #e5e7eb;
-    }
+  .info-value {
+    font-weight: 600;
+    color: #1f2937;
+  }
 
-    .psychologist-section {
-        margin-top: 30px;
-        padding: 15px;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        background-color: #f9fafb;
-    }
+  hr {
+    margin: 25px 0;
+    border-top: 2px solid #e5e7eb;
+  }
 
-    .test-section {
-        page-break-inside: avoid;
-        break-inside: avoid;
-        margin-bottom: 40px;
-    }
+  .psychologist-section {
+    margin-top: 30px;
+    padding: 15px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #f9fafb;
+  }
 
-    .test-section h2 {
-        font-size: 24px;
-        color: #111827;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #3b82f6;
-    }
+  .test-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 40px;
+  }
 
-    img {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
+  .test-section h2 {
+    font-size: 24px;
+    color: #111827;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #3b82f6;
+  }
 
-    @page {
-        margin: 0.5cm;
-        size: A4 portrait;
-    }
+  img {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Print-specific styles for PDF generation */
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+
+  .print\:bg-white {
+    background-color: white !important;
+  }
+
+  .print\:break-before-page {
+    page-break-before: always;
+  }
+
+  .print\:break-after-page {
+    page-break-after: always;
+  }
+
+  .print\:break-inside-avoid {
+    page-break-inside: avoid;
+  }
+
+  /* Ensure charts and images print correctly */
+  canvas,
+  svg,
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+  }
+
+  /* Optimize grid layout for print */
+  .grid {
+    display: grid !important;
+  }
+
+  /* Ensure text remains readable in print */
+  .text-gray-600,
+  .text-gray-700,
+  .text-gray-800 {
+    color: #374151 !important;
+  }
+
+  /* Maintain borders and styling for professional appearance */
+  .border,
+  .border-gray-200 {
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* Ensure rounded corners print */
+  .rounded-lg,
+  .rounded-xl {
+    border-radius: 0.5rem !important;
+  }
+
+  /* Fix any background colors for print */
+  .bg-blue-50,
+  .bg-green-50,
+  .bg-yellow-50,
+  .bg-red-50,
+  .bg-purple-50 {
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+  }
+}
+
+/* Enhanced responsive styles */
+@media (max-width: 1024px) {
+  .lg\:col-span-1 {
+    grid-column: span 5 / span 5;
+  }
+
+  .lg\:col-span-4 {
+    grid-column: span 5 / span 5;
+  }
+
+  .grid.grid-cols-1.lg\:grid-cols-5 {
+    grid-template-columns: 1fr;
+  }
 }

@@ -1,68 +1,154 @@
-<div class="p-4 bg-white grid grid-cols-5 gap-4 rounded-lg shadow-md">
-    <div class="col-span-5 grid-cols-5" id="printJS-div">
-        <div class="col-span-1 p-4 border-r border-gray-200">
-            <div class="flex flex-col items-center">
-                <img src="assets/images/testimonial-avatar.jpg" alt="User Profile"
-                    class="w-32 h-32 rounded-full mb-4 border-2 border-blue-500">
-                <h3 class="text-xl font-bold text-gray-800">John Doe</h3>
-                <p class="text-gray-600 mb-4">john.doe&#64;example.com</p>
+<div *ngIf="isLoading" class="flex justify-center items-center p-8">
+  <div
+    class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"
+  ></div>
+  <span class="ml-3 text-gray-600">Loading test report...</span>
+</div>
 
-                <div class="profile-info w-full space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Level:</span>
-                        <span class="font-semibold">Master</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Birthday:</span>
-                        <span class="font-semibold">15/03/1995</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Test Date:</span>
-                        <span class="font-semibold">10/11/2023</span>
-                    </div>
-                    <hr class="my-4 w-full border-gray-200">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600">Multiple choice</span>
-                        <i *ngIf="hasMultipleChoiceTest" class="fa-solid fa-circle-check text-green-600"></i>
-                        <i *ngIf="!hasMultipleChoiceTest" class="fa-solid fa-circle-xmark text-red-600"></i>
-                    </div>
-                </div>
-
-                <hr class="my-4 w-full border-gray-200">
-
-                <div class="w-full">
-                    <h4 class="text-lg font-semibold mb-2">Psychologist</h4>
-                    <div class="flex items-center">
-                        <img src="assets/wom.png" alt="Psychologist" class="w-10 h-10 rounded-full mr-2">
-                        <div>
-                            <p class="font-medium">Dr. Sarah Smith</p>
-                            <p class="text-sm text-gray-500">Cognitive Specialist</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-span-4">
-            <ng-template pTemplate="header">
-                <div class="flex items-center gap-2">
-                    <i class="pi pi-table"></i>
-                    <span>Domino Test</span>
-                </div>
-            </ng-template>
-            <app-domino-test-section></app-domino-test-section>
-            
-            <!-- Add page break -->
-            <div class="page-break"></div>
-
-            <div *ngIf="hasMultipleChoiceTest">
-                <ng-template pTemplate="header">
-                    <div class="flex items-center gap-2">
-                        <i class="pi pi-list"></i>
-                        <span>Multiple Choice Test</span>
-                    </div>
-                </ng-template>
-                <app-multiple-choice-section></app-multiple-choice-section>
-            </div>
-        </div>
+<div
+  *ngIf="!isLoading"
+  class="p-4 bg-white rounded-lg shadow-md print:shadow-none"
+>
+  <!-- Header Section -->
+  <div class="mb-6 border-b pb-4 print:mb-4">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Test Results Report</h1>
+        <p class="text-gray-600">Generated on {{ candidateInfo.testDate }}</p>
+      </div>
+      <button
+        (click)="generatePDF()"
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors print:hidden"
+      >
+        <i class="pi pi-download mr-2"></i>
+        Export PDF
+      </button>
     </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6" id="printJS-div">
+    <!-- Candidate Information Sidebar -->
+    <div
+      class="lg:col-span-1 p-6 border border-gray-200 rounded-lg bg-gray-50 print:bg-white"
+    >
+      <div class="flex flex-col items-center text-center">
+        <img
+          [src]="candidateInfo.profileImage"
+          [alt]="candidateInfo.name + ' Profile'"
+          class="w-24 h-24 lg:w-32 lg:h-32 rounded-full mb-4 border-2 border-blue-500 object-cover"
+        />
+
+        <h3 class="text-xl font-bold text-gray-800 mb-1">
+          {{ candidateInfo.name }}
+        </h3>
+        <p class="text-gray-600 mb-4 text-sm">{{ candidateInfo.email }}</p>
+
+        <div class="profile-info w-full space-y-3">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Level:</span>
+            <span class="font-semibold">{{ candidateInfo.level }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Birthday:</span>
+            <span class="font-semibold">{{ candidateInfo.birthday }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Test Date:</span>
+            <span class="font-semibold">{{ candidateInfo.testDate }}</span>
+          </div>
+
+          <hr class="my-4 w-full border-gray-200" />
+
+          <div class="space-y-2">
+            <h4 class="font-medium text-gray-700">Tests Completed:</h4>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-gray-600">Domino Test</span>
+              <i
+                [class]="
+                  hasDominoTest
+                    ? 'pi pi-check-circle text-green-600'
+                    : 'pi pi-times-circle text-red-600'
+                "
+              ></i>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-gray-600">Multiple Choice</span>
+              <i
+                [class]="
+                  hasMultipleChoiceTest
+                    ? 'pi pi-check-circle text-green-600'
+                    : 'pi pi-times-circle text-red-600'
+                "
+              ></i>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-6 w-full border-gray-200" />
+
+        <div class="w-full">
+          <h4 class="text-lg font-semibold mb-3 text-gray-700">Evaluator</h4>
+          <div class="flex items-center">
+            <img
+              [src]="psychologistInfo.image"
+              [alt]="psychologistInfo.name"
+              class="w-10 h-10 rounded-full mr-3 object-cover"
+            />
+            <div class="text-left">
+              <p class="font-medium text-sm">{{ psychologistInfo.name }}</p>
+              <p class="text-xs text-gray-500">{{ psychologistInfo.title }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Results Content -->
+    <div class="lg:col-span-4 space-y-8">
+      <!-- Domino Test Section -->
+      <div *ngIf="hasDominoTest" class="print:break-before-page">
+        <div class="border-b border-gray-200 pb-2 mb-6">
+          <h2 class="text-xl font-bold text-gray-800 flex items-center">
+            <i class="pi pi-chart-bar mr-2 text-blue-600"></i>
+            Logical Reasoning Test (Domino)
+          </h2>
+        </div>
+        <app-domino-test-section
+          [attemptId]="attemptId"
+        ></app-domino-test-section>
+      </div>
+
+      <!-- Multiple Choice Test Section -->
+      <div *ngIf="hasMultipleChoiceTest" class="print:break-before-page">
+        <div class="border-b border-gray-200 pb-2 mb-6">
+          <h2 class="text-xl font-bold text-gray-800 flex items-center">
+            <i class="pi pi-list mr-2 text-green-600"></i>
+            Multiple Choice Assessment
+          </h2>
+        </div>
+        <app-multiple-choice-section
+          [attemptId]="attemptId"
+        ></app-multiple-choice-section>
+      </div>
+
+      <!-- Summary Footer -->
+      <div
+        class="mt-8 p-6 bg-gray-50 rounded-lg border border-gray-200 print:bg-white"
+      >
+        <h3 class="text-lg font-semibold mb-3 text-gray-800">Report Summary</h3>
+        <p class="text-gray-600 text-sm">
+          This comprehensive assessment report provides detailed insights into
+          the candidate's cognitive abilities, logical reasoning skills, and
+          analytical thinking capabilities. The results should be interpreted in
+          conjunction with other evaluation methods and professional judgment.
+        </p>
+        <div class="mt-4 pt-4 border-t border-gray-200">
+          <p class="text-xs text-gray-500">
+            Report generated on {{ getCurrentDate() }} | Digital Recruitment
+            Platform v2.0
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
