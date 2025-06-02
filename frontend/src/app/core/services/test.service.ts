@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, of, forkJoin } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Test, TestResponse, TestsResponse } from '../models/test.model';
@@ -10,6 +10,7 @@ import {
   AttemptsResponse,
   AttemptQuestionsResponse,
   AttemptResultsResponse,
+  TestAttempt,
 } from '../models/attempt.model';
 import { AuthService } from '../auth/services/auth.service';
 import {
@@ -342,10 +343,7 @@ export class TestService {
   /**
    * Mark a question as visited
    */
-  visitQuestion(
-    attemptId: string,
-    questionId: string
-  ): Observable<any> {
+  visitQuestion(attemptId: string, questionId: string): Observable<any> {
     const candidateId = this.authService.getCurrentUserId();
 
     const payload = {
@@ -361,11 +359,7 @@ export class TestService {
       )
       .pipe(
         tap((response) => {
-          this.logApiInteraction(
-            'visitQuestion-response',
-            {},
-            response
-          );
+          this.logApiInteraction('visitQuestion-response', {}, response);
         }),
         catchError(this.handleError)
       );
@@ -462,11 +456,13 @@ export class TestService {
   }
 
   /**
-   * Get a test with its questions for the candidate test-taking interface
+   * Get test with its questions for the candidate test-taking interface
    * This combines several API calls to prepare everything needed for the test UI
    */
   getTestWithQuestions(testId: string): Observable<any> {
-    console.log(`[TestService] Getting test with questions for testId: ${testId}`);
+    console.log(
+      `[TestService] Getting test with questions for testId: ${testId}`
+    );
 
     // First get the test details
     return this.getTestById(testId).pipe(
@@ -475,7 +471,10 @@ export class TestService {
       }),
       switchMap((testResponse) => {
         if (!testResponse.success || !testResponse.data) {
-          console.error('[TestService] Test not found or invalid response:', testResponse);
+          console.error(
+            '[TestService] Test not found or invalid response:',
+            testResponse
+          );
           return throwError(() => new Error('Test not found'));
         }
 
@@ -484,7 +483,10 @@ export class TestService {
         if (!candidateId) {
           return throwError(() => new Error('Candidate ID not found'));
         }
-        console.log('[TestService] Starting test attempt for candidate:', candidateId);
+        console.log(
+          '[TestService] Starting test attempt for candidate:',
+          candidateId
+        );
 
         // Start a test attempt
         return this.startTestAttempt(testId, candidateId).pipe(
@@ -493,7 +495,10 @@ export class TestService {
           }),
           switchMap((attemptResponse) => {
             if (!attemptResponse.success || !attemptResponse.data) {
-              console.error('[TestService] Failed to create test attempt:', attemptResponse);
+              console.error(
+                '[TestService] Failed to create test attempt:',
+                attemptResponse
+              );
               return throwError(
                 () => new Error('Failed to create test attempt')
               );
@@ -505,11 +510,17 @@ export class TestService {
             // Get questions for this attempt
             return this.getAttemptQuestions(attemptId).pipe(
               tap((questionsResponse) => {
-                console.log('[TestService] Raw Questions response from attempt:', questionsResponse); // DEBUG: Log raw questions
+                console.log(
+                  '[TestService] Raw Questions response from attempt:',
+                  questionsResponse
+                ); // DEBUG: Log raw questions
               }),
               map((questionsResponse) => {
                 if (!questionsResponse.success || !questionsResponse.data) {
-                  console.error('[TestService] Failed to get attempt questions:', questionsResponse);
+                  console.error(
+                    '[TestService] Failed to get attempt questions:',
+                    questionsResponse
+                  );
                   throw new Error('Failed to load questions for the attempt');
                 }
 
@@ -528,7 +539,10 @@ export class TestService {
                   attemptId: attemptId,
                   questions: mappedQuestions, // Use the correctly mapped questions
                 };
-                console.log('[TestService] Formatted test data for frontend:', formattedData); // DEBUG: Log final formatted data
+                console.log(
+                  '[TestService] Formatted test data for frontend:',
+                  formattedData
+                ); // DEBUG: Log final formatted data
                 return formattedData;
               })
             );
@@ -548,7 +562,10 @@ export class TestService {
   private mapQuestionsForTestInterface(
     backendQuestionsWithResponses: any[]
   ): TestQuestion[] {
-    console.log('[TestService] Mapping backend questions:', backendQuestionsWithResponses); // DEBUG
+    console.log(
+      '[TestService] Mapping backend questions:',
+      backendQuestionsWithResponses
+    ); // DEBUG
     return backendQuestionsWithResponses.map((qwr, index) => {
       // qwr contains the question object and the response object
       const question = qwr; // The backend question data is directly on the object now
@@ -556,9 +573,15 @@ export class TestService {
 
       // Determine user answer based on question type
       let userAnswer: any = undefined;
-      if (question.questionType === 'DominoQuestion' && response?.dominoAnswer) {
+      if (
+        question.questionType === 'DominoQuestion' &&
+        response?.dominoAnswer
+      ) {
         userAnswer = response.dominoAnswer;
-      } else if (question.questionType === 'MultipleChoiceQuestion' && response?.propositionResponses) {
+      } else if (
+        question.questionType === 'MultipleChoiceQuestion' &&
+        response?.propositionResponses
+      ) {
         userAnswer = response.propositionResponses;
       }
 
@@ -568,11 +591,15 @@ export class TestService {
         answered = !!response?.dominoAnswer;
       } else if (question.questionType === 'MultipleChoiceQuestion') {
         // Considered answered if there are responses and not all are 'X' (or adjust logic as needed)
-        answered = !!response?.propositionResponses && response.propositionResponses.length > 0 && response.propositionResponses.some((pr: PropositionResponse) => pr.candidateEvaluation !== 'X');
+        answered =
+          !!response?.propositionResponses &&
+          response.propositionResponses.length > 0 &&
+          response.propositionResponses.some(
+            (pr: PropositionResponse) => pr.candidateEvaluation !== 'X'
+          );
       } else {
         answered = !!response?.answeredAt; // Fallback for other types or if specific answer fields are missing
       }
-
 
       const mappedQuestion: TestQuestion = {
         id: question._id,
@@ -596,7 +623,7 @@ export class TestService {
         correctAnswer: question.correctAnswer, // Keep if needed, but backend might omit it
         questionNumber: question.questionNumber || index + 1, // Use backend number or index
       };
-       // console.log(`[TestService] Mapped question ${index + 1}:`, mappedQuestion); // DEBUG individual mapping
+      // console.log(`[TestService] Mapped question ${index + 1}:`, mappedQuestion); // DEBUG individual mapping
       return mappedQuestion;
     });
   }
@@ -641,5 +668,49 @@ export class TestService {
     }
 
     return throwError(() => new Error(errorMessage));
+  }
+
+  /**
+   * Get recent test attempts across all tests for dashboard
+   */
+  getRecentAttempts(limit: number = 15): Observable<TestAttempt[]> {
+    // First get all tests
+    return this.getAllTests().pipe(
+      switchMap((testsResponse) => {
+        if (!testsResponse.success || !testsResponse.data) {
+          return of([]);
+        }
+
+        // Get attempts for each test and combine them
+        const attemptRequests = testsResponse.data.map((test) =>
+          this.getTestAttempts(test._id, {
+            limit: 5,
+            sortBy: 'startTime',
+            sortOrder: 'desc',
+          }).pipe(
+            catchError(() => of({ success: false, data: [] })),
+            map((response) => (response.success ? response.data : []))
+          )
+        );
+
+        return forkJoin(attemptRequests).pipe(
+          map((allAttempts: TestAttempt[][]) => {
+            // Flatten and sort all attempts by startTime
+            const flattenedAttempts = allAttempts.flat();
+            return flattenedAttempts
+              .sort(
+                (a, b) =>
+                  new Date(b.startTime).getTime() -
+                  new Date(a.startTime).getTime()
+              )
+              .slice(0, limit);
+          })
+        );
+      }),
+      catchError((error) => {
+        console.error('Error fetching recent attempts:', error);
+        return of([]);
+      })
+    );
   }
 }
