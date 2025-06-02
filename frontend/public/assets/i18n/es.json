@@ -1,0 +1,238 @@
+{
+  "HOME": {
+    "TITLE": "Bienvenido a Cofat",
+    "DESCRIPTION": "Plataforma de reclutamiento digital para pruebas de razonamiento lógico",
+    "HERO": {
+      "HEADLINE": "Bienvenido a nuestra plataforma de pruebas psicotécnicas",
+      "PARAGRAPH1": "Nos complace darle la bienvenida a este espacio donde evaluamos e identificamos talentos que ayudarán a dar forma al futuro de nuestra empresa.",
+      "PARAGRAPH2": "En nuestro grupo, la excelencia es nuestro estándar, y creemos que cada candidato tiene el potencial de prosperar dentro de nuestro equipo dinámico.",
+      "CTA_BUTTON": "Comenzar prueba",
+      "DEMO_BUTTON": "Iniciar demostración"
+    },
+    "ABOUT": {
+      "TITLE": "Sobre Nosotros",
+      "INTRO": "Estamos convencidos de que esta etapa de su candidatura le permitirá demostrar su potencial y mostrar sus habilidades únicas.",
+      "POINT1": "Sus resultados en estas pruebas son crucialmente importantes, ya que nos permitirán hacer coincidir mejor el perfil del puesto con su propio perfil.",
+      "POINT2": "Le animamos a abordar estas pruebas con confianza, sabiendo que su desempeño jugará un papel clave en el proceso de reclutamiento.",
+      "POINT3": "Nuestro objetivo es crear coincidencias armoniosas entre los perfiles de los candidatos y los puestos, fomentando el éxito mutuo.",
+      "TEXT1": "En COFAT, la excelencia es nuestra norma. Somos un grupo dinámico, especializado en la fabricación de cableado y arneses eléctricos para la industria automotriz, que cree profundamente en el potencial de cada candidato.",
+      "TEXT2": "Nuestro proceso de reclutamiento busca identificar talentos que prosperarán dentro de nuestro equipo y contribuirán a nuestro éxito colectivo.",
+      "TEXT3": "Valoramos la correspondencia armoniosa entre los perfiles de los candidatos y los puestos disponibles, creando oportunidades para el desarrollo mutuo.",
+      "STATS": {
+        "STAT1": "tasa de éxito",
+        "STAT2": "años de experiencia",
+        "STAT3": "empresas"
+      }
+    },
+    "ABOUT3": {
+      "INFO": "Le animamos a abordar estas pruebas con confianza, sabiendo que su desempeño jugará un papel clave en el proceso de reclutamiento.",
+      "DESCRIPTION": "Su participación es muy apreciada y nos comprometemos a garantizar un proceso de evaluación fluido y seguro.",
+      "THANK_YOU": "Le agradecemos su participación y le deseamos éxito en estas evaluaciones."
+    },
+    "PROCESS": {
+      "TITLE": "Nuestro Proceso de Selección",
+      "STEP1": {
+        "TITLE": "Registro",
+        "DESC": "Cree su perfil y acceda a las pruebas"
+      },
+      "STEP2": {
+        "TITLE": "Pruebas psicotécnicas",
+        "DESC": "Evalúe sus habilidades y adecuación al puesto"
+      },
+      "STEP3": {
+        "TITLE": "Entrevista",
+        "DESC": "Encuentro con nuestros reclutadores"
+      },
+      "STEP4": {
+        "TITLE": "Análisis de resultados y Selección",
+        "DESC": "Nuestros expertos examinan su desempeño"
+      }
+    },
+    "NUMBERS": {
+      "TITLE": "Algunos números sobre nosotros...",
+      "TOTAL_POSTS": "Número total de puestos",
+      "SITES": "Sitios",
+      "EMPLOYEES": "Número de empleados",
+      "NEW_POSTS": "Nuevos puestos disponibles"
+    },
+    "STATISTICS": {
+      "CANDIDATES_COUNT": "Más de 1,000 candidatos",
+      "EVALUATED": "evaluados a través de nuestra plataforma",
+      "PER_YEAR": "por año",
+      "SECURITY_NOTE": "con acceso fácil y confidencialidad de datos segura."
+    },
+    "MAP_SECTION": {
+      "TITLE": "Encuéntrenos fácilmente",
+      "BUTTON": "Obtener direcciones",
+      "DESCRIPTION": "Para facilitar su visita el día de la entrevista, consulte el mapa interactivo a continuación que lo guiará directamente a nuestras instalaciones."
+    },
+    "CONTACT": {
+      "TITLE": "Contáctenos",
+      "DESCRIPTION": "Para cualquier pregunta o información, puede contactarnos a través de este formulario o directamente en: ",
+      "NAME_LABEL": "Nombre",
+      "NAME_PLACEHOLDER": "Su nombre",
+      "NAME_REQUIRED": "El nombre es requerido",
+      "NAME_MIN_LENGTH": "El nombre debe tener al menos 2 caracteres",
+      "EMAIL_LABEL": "Email",
+      "EMAIL_PLACEHOLDER": "Su dirección de email",
+      "EMAIL_REQUIRED": "El email es requerido",
+      "EMAIL_INVALID": "Por favor ingrese una dirección de email válida",
+      "MESSAGE_LABEL": "Mensaje",
+      "MESSAGE_PLACEHOLDER": "Su mensaje",
+      "MESSAGE_REQUIRED": "El mensaje es requerido",
+      "MESSAGE_MIN_LENGTH": "El mensaje debe tener al menos 10 caracteres",
+      "SEND_BUTTON": "Enviar",
+      "SENDING": "Enviando...",
+      "SUCCESS_MESSAGE": "Su mensaje ha sido enviado con éxito. Le responderemos pronto.",
+      "PRIVACY_NOTE": "Su información está segura y solo se utilizará para responder a su consulta."
+    }
+  },
+  "FOOTER": {
+    "COMPANY_NAME": "COFAT Túnez",
+    "COMPANY_DESCRIPTION": "Su socio de confianza para el reclutamiento de talentos excepcionales que impulsan el crecimiento y la innovación",
+    "OUR_MISSION": "Nuestra Misión",
+    "MISSION_TEXT": "Ayudamos a las organizaciones a encontrar y desarrollar los mejores talentos a través de nuestras herramientas de evaluación innovadoras y nuestro proceso de reclutamiento experto.",
+    "TAG1": "Innovación",
+    "TAG2": "Excelencia",
+    "CONTACT": "Contacto",
+    "ADDRESS": "123 Calle de Negocios, Ciudad, País",
+    "EMAIL": "cofat@example.com",
+    "PHONE": "+123 456 789",
+    "CONNECT": "Conéctese",
+    "CONNECT_TEXT": "Síganos en las redes sociales para mantenerse informado sobre carreras y conocimientos de reclutamiento",
+    "FOLLOW_US": "Síganos",
+    "JOIN_TEAM": "Únase a Nuestro Equipo",
+    "COPYRIGHT": "© 2025 COFAT Túnez. Todos los derechos reservados.",
+    "PRIVACY": "Política de Privacidad",
+    "TERMS": "Términos de Uso",
+    "COOKIES": "Política de Cookies"
+  },
+  "BUTTONS": {
+    "SUBMIT": "Enviar",
+    "CANCEL": "Cancelar",
+    "LOGIN": "Iniciar sesión",
+    "REGISTER": "Registrarse",
+    "LOGOUT": "Cerrar sesión",
+    "SAVE": "Guardar",
+    "CLOSE": "Cerrar",
+    "CONFIRM": "Confirmar",
+    "BACK": "Atrás",
+    "NEXT": "Siguiente",
+    "CONTINUE": "Continuar",
+    "APPLY": "Aplicar",
+    "RESET": "Restablecer"
+  },
+  "NAV": {
+    "HOME": "Inicio",
+    "ABOUT": "Sobre nosotros",
+    "CONTACT": "Contacto",
+    "TESTS": "Pruebas",
+    "MY_PROFILE": "Mi Perfil",
+    "MY_TESTS": "Mis Pruebas",
+    "DASHBOARD": "Panel de control",
+    "BRAND_NAME": "COFAT Reclutamiento"
+  },
+  "USER": {
+    "PROFILE": "Mi Perfil",
+    "TESTS": "Mis Pruebas",
+    "DASHBOARD": "Panel de control",
+    "EMAIL": "Email",
+    "ROLE": "Rol",
+    "PROFILE_UPDATE_SUCCESS": "Perfil actualizado con éxito",
+    "PASSWORD_UPDATE_SUCCESS": "Contraseña actualizada con éxito",
+    "PROFILE_PICTURE_UPDATE_SUCCESS": "Foto de perfil actualizada con éxito",
+    "PROFILE_PICTURE_DELETE_SUCCESS": "Foto de perfil eliminada con éxito",
+    "ACCOUNT": {
+      "SETTINGS": "Configuración de la cuenta",
+      "PERSONAL_INFO": "Información Personal",
+      "PASSWORD": "Contraseña",
+      "SECURITY": "Seguridad",
+      "FIRSTNAME": "Nombre",
+      "LASTNAME": "Apellido",
+      "EMAIL": "Dirección de email",
+      "PHONE": "Número de teléfono",
+      "CURRENT_PASSWORD": "Contraseña actual",
+      "NEW_PASSWORD": "Nueva contraseña",
+      "CONFIRM_PASSWORD": "Confirmar contraseña",
+      "PASSWORD_MISMATCH": "Las contraseñas no coinciden",
+      "UPDATE_PROFILE": "Actualizar Perfil",
+      "CHANGE_PASSWORD": "Cambiar Contraseña"
+    },
+    "UPLOAD": {
+      "SELECT_FILE": "Seleccionar archivo",
+      "DROP_FILE": "Suelte el archivo aquí o haga clic para cargar",
+      "UPLOADING": "Cargando...",
+      "SUCCESS": "Archivo cargado con éxito",
+      "ERROR": "Error al cargar el archivo",
+      "SIZE_LIMIT": "El tamaño del archivo no debe exceder 5MB",
+      "SUPPORTED_FORMATS": "Formatos soportados: JPEG, PNG, GIF"
+    }
+  },
+  "LANG": {
+    "EN": "Inglés",
+    "FR": "Francés",
+    "ES": "Español"
+  },
+  "DASHBOARD": {
+    "TITLE": "Panel de Control",
+    "OVERVIEW": "Vista general del Panel de Control",
+    "USERS": "Gestión de Usuarios",
+    "LOGICAL_REASONING": {
+      "STATS": "Estadísticas de Razonamiento Lógico",
+      "USERS": "Usuarios de Razonamiento Lógico",
+      "TESTS": "Pruebas de Razonamiento Lógico"
+    },
+    "VERBAL_REASONING": {
+      "STATS": "Estadísticas de Razonamiento Verbal",
+      "USERS": "Usuarios de Razonamiento Verbal",
+      "TESTS": "Pruebas de Razonamiento Verbal"
+    }
+  },
+  "TESTS": {
+    "DOMINO": {
+      "TITLE": "Prueba de Razonamiento Lógico Dominó",
+      "INSTRUCTIONS": "Esta prueba evalúa su capacidad de razonamiento lógico utilizando patrones de dominó",
+      "HELP": {
+        "TITLE": "Cómo resolver puzzles de Dominó",
+        "DESCRIPTION": "Los puzzles de Dominó prueban su capacidad para reconocer patrones y usar el razonamiento lógico.",
+        "INSTRUCTIONS": [
+          "Estudie el patrón de puntos en cada dominó",
+          "Busque relaciones entre dominós consecutivos",
+          "Analice cómo cambian los valores en la secuencia",
+          "Seleccione la opción que continúa correctamente el patrón"
+        ]
+      },
+      "TIMER": {
+        "REMAINING": "Tiempo restante",
+        "EXPIRED": "Tiempo expirado",
+        "MINUTES": "minutos",
+        "SECONDS": "segundos"
+      }
+    },
+    "VERBAL": {
+      "TITLE": "Prueba de Razonamiento Verbal",
+      "INSTRUCTIONS": "Esta prueba evalúa su capacidad para comprender y analizar información escrita",
+      "HELP": {
+        "TITLE": "Cómo abordar preguntas de Razonamiento Verbal",
+        "DESCRIPTION": "Las pruebas de razonamiento verbal evalúan su capacidad para comprender e interpretar información escrita.",
+        "INSTRUCTIONS": [
+          "Lea el pasaje cuidadosamente antes de mirar las preguntas",
+          "Concéntrese en los hechos presentados en el texto",
+          "No introduzca conocimientos externos",
+          "Busque evidencia para respaldar su respuesta en el pasaje"
+        ]
+      }
+    }
+  },
+  "ERRORS": {
+    "REQUIRED": "Este campo es obligatorio",
+    "INVALID_EMAIL": "Por favor ingrese una dirección de email válida",
+    "MIN_LENGTH": "La longitud mínima es de {{value}} caracteres",
+    "MAX_LENGTH": "La longitud máxima es de {{value}} caracteres",
+    "PASSWORDS_DONT_MATCH": "Las contraseñas no coinciden",
+    "UNAUTHORIZED": "No está autorizado para realizar esta acción",
+    "SESSION_EXPIRED": "Su sesión ha expirado. Por favor, inicie sesión de nuevo.",
+    "CONNECTION_ERROR": "Error de conexión. Por favor revise su conexión a internet.",
+    "SERVER_ERROR": "Error del servidor. Por favor intente más tarde."
+  }
+}

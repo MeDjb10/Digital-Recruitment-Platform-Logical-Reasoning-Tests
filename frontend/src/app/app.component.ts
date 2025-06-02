@@ -23,12 +23,12 @@ export class AppComponent implements OnInit {
     private translate: TranslateService,
     private router: Router
   ) {
-    // Initialize translate service
-    this.translate.addLangs(['en', 'fr']);
+    // Initialize translate service with Spanish added
+    this.translate.addLangs(['en', 'fr', 'es']);
 
-    // Get browser language or use default
+    // Get browser language or use default, now including Spanish
     const browserLang = this.translate.getBrowserLang();
-    this.currentLang = browserLang?.match(/en|fr/) ? browserLang : 'en';
+    this.currentLang = browserLang?.match(/en|fr|es/) ? browserLang : 'fr';
     this.translate.use(this.currentLang);
   }
 

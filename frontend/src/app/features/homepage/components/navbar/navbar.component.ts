@@ -62,7 +62,7 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const savedLang = localStorage.getItem('preferred-language');
-    if (savedLang && ['en', 'fr'].includes(savedLang)) {
+    if (savedLang && ['en', 'fr', 'es'].includes(savedLang)) {
       this.currentLang = savedLang;
       this.translate.use(savedLang);
     } else {
