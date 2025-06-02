@@ -39,7 +39,11 @@ export const routes: Routes = [
           import('./features/candidate/DominoTest/domino-test.module').then(
             (m) => m.DominoTestModule
           ),
-      },
+  },
+  {
+    path: 'apply',
+    component: ApplicationFormComponent,
+  },
   {
     path: 'admin/layout-builder',
     component: DominoLayoutBuilderComponent,
