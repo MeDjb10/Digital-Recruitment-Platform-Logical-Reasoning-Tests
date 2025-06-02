@@ -302,11 +302,34 @@ class QuestionService {
 
     let updatedQuestion;
     try {
-      updatedQuestion = await Question.findByIdAndUpdate(questionId, updates, {
-        new: true,
-        runValidators: true,
-        context: "query",
-      });
+      // Use the appropriate discriminator model instead of the base Question model
+      // This ensures that discriminator-specific fields like correctAnswer are properly updated
+      if (existingQuestion.questionType === "DominoQuestion") {
+        updatedQuestion = await DominoQuestion.findByIdAndUpdate(
+          questionId,
+          updates,
+          {
+            new: true,
+            runValidators: true,
+            context: "query",
+          }
+        );
+      } else if (existingQuestion.questionType === "MultipleChoiceQuestion") {
+        updatedQuestion = await MultipleChoiceQuestion.findByIdAndUpdate(
+          questionId,
+          updates,
+          {
+            new: true,
+            runValidators: true,
+            context: "query",
+          }
+        );
+      } else {
+        throw new AppError(
+          `Unknown question type: ${existingQuestion.questionType}`,
+          StatusCodes.BAD_REQUEST
+        );
+      }
     } catch (error) {
       if (error.name === "ValidationError") {
         const messages = Object.values(error.errors).map((e) => e.message);
