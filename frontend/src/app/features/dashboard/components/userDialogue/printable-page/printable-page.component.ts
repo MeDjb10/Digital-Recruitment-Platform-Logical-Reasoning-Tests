@@ -6,6 +6,7 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { TestService } from '../../../../../core/services/test.service';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import { User } from '../../../../../core/models/user.model';
 
 // Configure pdfMake with fonts using proper syntax
 const pdfMakeWithFonts = pdfMake as any;
@@ -56,8 +57,14 @@ interface TestData {
   styleUrl: './printable-page.component.css',
 })
 export class PrintablePageComponent implements OnInit {
+  private readonly dateOptions: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  };
+
   @Input() attemptId!: string; // Generic attemptId, potentially used if specific ones aren't
-  @Input() userInfo: any;
+  @Input() userInfo: User | null = null; // User info for candidate details 
   @Input() testResults: any; // { dominoTest: { attempt, test }, additionalTest: { attempt, test } }
   @Input() dominoAttemptId?: string;
   @Input() mcqAttemptId?: string;
@@ -560,11 +567,11 @@ export class PrintablePageComponent implements OnInit {
             table: {
               widths: ['30%', '70%'],
               body: [
-                ['Full Name:', this.candidateInfo.name],
-                ['Email Address:', this.candidateInfo.email],
-                ['Role/Level:', this.candidateInfo.level],
-                ['Date of Birth:', this.candidateInfo.birthday],
-                ['Assessment Date:', this.candidateInfo.testDate],
+                ['Full Name:', this.userInfo?.firstName + ' ' + this.userInfo?.lastName],
+                ['Email Address:', this.userInfo?.email],
+                ['Role/Level:', this.userInfo?.educationLevel],
+                ['Date of Birth:',this.userInfo?.dateOfBirth ? new Date(this.userInfo.dateOfBirth).toLocaleDateString('en-US', this.dateOptions) : 'N/A'],
+                ['Assessment Date:', this.userInfo?.testAssignment?.examDate ? new Date(this.userInfo?.testAssignment?.examDate).toLocaleDateString('en-US', this.dateOptions) : 'N/A'],
               ],
             },
             layout: 'lightHorizontalLines',

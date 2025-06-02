@@ -73,6 +73,7 @@ export class CompletedUsersComponent implements OnInit {
 
           // Set user details
           this.userDetails = user.user || user;
+console.log(this.userDetails);
 
           const completedAttempts = attempts.data.filter(
             (attempt) => attempt.status === 'completed'

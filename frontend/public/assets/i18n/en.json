@@ -78,6 +78,9 @@
       "PRIVACY_NOTE": "Your information is secure and will only be used to respond to your inquiry."
     }
   },
+  "ABOUT": {
+    "TITLE": "About US"
+  },
   "FOOTER": {
     "COMPANY_NAME": "COFAT Tunis",
     "COMPANY_DESCRIPTION": "Your trusted partner for recruiting exceptional talent that drives business growth and innovation",
@@ -161,7 +164,8 @@
   },
   "LANG": {
     "EN": "English",
-    "FR": "French"
+    "FR": "French",
+    "ES": "Spanish"
   },
   "DASHBOARD": {
     "TITLE": "Dashboard",

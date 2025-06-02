@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FooterComponent } from "../footer/footer.component";
 import * as AOS from 'aos';
-
+import { TranslateModule } from '@ngx-translate/core';
 @Component({
   selector: 'app-a-propos',
-  imports: [FooterComponent],
+  imports: [FooterComponent,TranslateModule],
   templateUrl: './a-propos.component.html',
   styleUrl: './a-propos.component.css'
 })
