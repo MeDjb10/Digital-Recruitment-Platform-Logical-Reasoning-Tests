@@ -20,6 +20,10 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/auth/auth.module').then((m) => m.AuthModule),
   },
+    {
+    path: 'select',
+   component: ApplicationFormComponent,
+  },
   {
     path: 'dashboard',
     canActivate: [DashboardGuard],

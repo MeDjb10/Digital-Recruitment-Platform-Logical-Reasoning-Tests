@@ -88,6 +88,23 @@
               </span>
               <span>FR</span>
             </button>
+            <button (click)="switchLanguage('es')" [ngClass]="
+                currentLang === 'es'
+                  ? 'bg-gradient-to-r from-blue-700/80 to-blue-600/80 text-white shadow-sm'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              "
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer">
+              <span class="relative flex items-center justify-center w-4 h-4 rounded-full overflow-hidden">
+                <!-- Spanish flag SVG icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-5 h-5 object-cover">
+                  <path fill="#ffda44" d="M0 85.331h512v341.337H0z" />
+                  <g fill="#d80027">
+                    <path d="M0 85.331h512v113.775H0zM0 312.882h512v113.775H0z" />
+                  </g>
+                </svg>
+              </span>
+              <span>ES</span>
+            </button>
           </div>
         </div>
 
@@ -265,6 +282,23 @@
             </svg>
           </span>
           <span>FR</span>
+        </button>
+        <button (click)="switchLanguage('es')" [ngClass]="
+            currentLang === 'es'
+              ? 'bg-gradient-to-r from-blue-700/80 to-blue-600/80 text-white shadow-sm'
+              : 'text-white/70 hover:text-white hover:bg-white/10'
+          "
+          class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer flex-1">
+          <span class="relative flex items-center justify-center w-4 h-4 rounded-full overflow-hidden">
+            <!-- Spanish flag SVG icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-5 h-5 object-cover">
+              <path fill="#ffda44" d="M0 85.331h512v341.337H0z" />
+              <g fill="#d80027">
+                <path d="M0 85.331h512v113.775H0zM0 312.882h512v113.775H0z" />
+              </g>
+            </svg>
+          </span>
+          <span>ES</span>
         </button>
       </div>
     </div>

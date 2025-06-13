@@ -78,6 +78,9 @@
       "PRIVACY_NOTE": "Your information is secure and will only be used to respond to your inquiry."
     }
   },
+  "ABOUT": {
+    "TITLE": "About US"
+  },
   "FOOTER": {
     "COMPANY_NAME": "COFAT Tunis",
     "COMPANY_DESCRIPTION": "Your trusted partner for recruiting exceptional talent that drives business growth and innovation",
@@ -161,7 +164,8 @@
   },
   "LANG": {
     "EN": "English",
-    "FR": "French"
+    "FR": "French",
+    "ES": "Spanish"
   },
   "DASHBOARD": {
     "TITLE": "Dashboard",
@@ -324,10 +328,11 @@
       "OVERVIEW": "Analytics Overview",
       "MONITOR": "Monitor key recruitment metrics and activities",
       "EXPORT": "Export",
+      "LOADING_KPI": "Loading KPI data...",
+      "LOADING_ACTIVITIES": "Loading recent activities...",
       "TIME_PERIODS": {
         "LAST_7_DAYS": "Last 7 days",
         "LAST_30_DAYS": "Last 30 days",
-        "THIS_MONTH": "This month",
         "LAST_QUARTER": "Last quarter",
         "YEAR_TO_DATE": "Year to date"
       },
@@ -360,10 +365,11 @@
         "RECENT": "Recent Activity",
         "CANDIDATE": "Candidate",
         "ACTION": "Action",
-        "TEST_TYPE": "Test Type",
+        "TEST": "Test",
         "SCORE": "Score",
+        "DURATION": "Duration",
+        "QUESTIONS": "Questions",
         "DATE": "Date",
-        "STATUS": "Status",
         "NO_ACTIVITY": "No recent activities found"
       }
     },
