@@ -29,7 +29,7 @@ class RandomForestTrainer:
         # Update features list for new data format
         self.features = [
             'questionsAnswered',
-            'correct answers',
+            'correct_answers',
             'timeSpent',
             'halfCorrect',
             'reversed',
@@ -60,7 +60,7 @@ class RandomForestTrainer:
             # Read CSV with new column names
             df = pd.read_csv(self.data_path, names=[
                 'questionsAnswered',
-                'correct answers',
+                'correct_answers',
                 'timeSpent',
                 'halfCorrect',
                 'reversed',
@@ -74,7 +74,7 @@ class RandomForestTrainer:
 
             # Analyze class distribution
             class_distribution = df['label'].value_counts()
-            logging.info("\nClass distribution:")
+            logging.info("/nClass distribution:")
             for category, count in class_distribution.items():
                 logging.info(f"{category}: {count} samples")
 
@@ -82,7 +82,7 @@ class RandomForestTrainer:
             min_samples = 2
             small_classes = class_distribution[class_distribution < min_samples]
             if not small_classes.empty:
-                logging.warning("\nRemoving classes with insufficient samples:")
+                logging.warning("/nRemoving classes with insufficient samples:")
                 for category, count in small_classes.items():
                     logging.warning(f"{category}: {count} samples")
                 df = df[~df['label'].isin(small_classes.index)]
@@ -92,9 +92,9 @@ class RandomForestTrainer:
             y = df['label']
 
             # Verify remaining data
-            logging.info(f"\nFinal dataset size: {len(df)} samples")
+            logging.info(f"/nFinal dataset size: {len(df)} samples")
             remaining_distribution = df['label'].value_counts()
-            logging.info("\nFinal class distribution:")
+            logging.info("/nFinal class distribution:")
             for category, count in remaining_distribution.items():
                 logging.info(f"{category}: {count} samples")
 
@@ -156,7 +156,7 @@ class RandomForestTrainer:
         
         # Generate classification report
         report = classification_report(y_test, y_pred, target_names=category_labels)
-        logging.info(f"\nClassification Report:\n{report}")
+        logging.info(f"/nClassification Report:/n{report}")
         
         # Generate and save confusion matrix
         self._plot_confusion_matrix(y_test, y_pred)
@@ -201,7 +201,7 @@ class RandomForestTrainer:
 
         # Save model
         import joblib
-        model_path = self.output_dir / 'd2000_model.joblib'
+        model_path = self.output_dir / 'd70_model.joblib'
         joblib.dump(self.model, model_path)
         logging.info(f"Model saved to {model_path}")
 
@@ -217,8 +217,8 @@ class RandomForestTrainer:
 
 def main():
     # Use the d70 dataset
-    data_path = "../data/d2000_dataset_balanced.csv"
-    output_dir = "../models"
+    data_path = "C:/Users/tbfee/OneDrive/Desktop/pfe/Digital-Recruitment-Platform-Logical-Reasoning-Tests/ai-classification/ml/src/data/d70_dataset_balanced.csv"
+    output_dir = "./models"
     
     # Create output directory if it doesn't exist
     Path(output_dir).mkdir(parents=True, exist_ok=True)
