@@ -18,7 +18,7 @@ class PerformancePredictor:
         # Features match the metadata
         self.features = [
             'questionsAnswered',
-            'correct answers', 
+            'correct_answers', 
             'timeSpent',
             'halfCorrect',
             'reversed',
@@ -110,7 +110,7 @@ class PerformancePredictor:
         try:
             # Extract key metrics
             questions_answered = metrics.get('questionsAnswered', 0)
-            correct_answers = metrics.get('correct answers', 0)
+            correct_answers = metrics.get('correct_answers', 0)
             time_spent = metrics.get('timeSpent', 0)
             
             # Calculate basic metrics
@@ -156,7 +156,7 @@ def main():
         test_features = {
             'test_type': 'd2000',  # or 'd2000'
             'questionsAnswered':40,
-            'correct answers': 20,
+            'correct_answers': 20,
             'timeSpent': 20,
             'halfCorrect': 0,
             'reversed': 0,

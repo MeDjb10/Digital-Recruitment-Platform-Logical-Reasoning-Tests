@@ -78,7 +78,9 @@ export class CompletedUsersComponent implements OnInit {
 
           // Set user details and generate avatar
           this.userDetails = user.user || user;
+
           this.updateUserAvatar(this.userDetails);
+
           console.log(this.userDetails);
 
           const completedAttempts = attempts.data.filter(
