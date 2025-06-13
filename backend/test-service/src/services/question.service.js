@@ -1,9 +1,11 @@
 const mongoose = require("mongoose");
 const {
   DominoQuestion,
+  ArrowQuestion,
   MultipleChoiceQuestion,
   Question,
 } = require("../models/question.model");
+const { QuestionTemplate } = require("../models/questionTemplate.model");
 const Test = require("../models/test.model");
 const { AppError } = require("../middleware/errorHandler");
 const { StatusCodes } = require("http-status-codes");
@@ -93,6 +95,34 @@ class QuestionService {
   }
 
   /**
+   * Validate arrow question data
+   */
+  validateArrowQuestionData(questionData) {
+    // First validate domino data
+    this.validateDominoQuestionData(questionData);
+
+    // Then validate arrows if present
+    if (
+      questionData.arrows &&
+      Array.isArray(questionData.arrows) &&
+      questionData.arrows.length > 0
+    ) {
+      const missingArrowCoordinates = questionData.arrows.some(
+        (arrow) =>
+          arrow.exactX === undefined ||
+          arrow.exactY === undefined ||
+          arrow.angle === undefined
+      );
+      if (missingArrowCoordinates) {
+        throw new AppError(
+          "All arrows must have exactX, exactY, and angle properties",
+          StatusCodes.BAD_REQUEST
+        );
+      }
+    }
+  }
+
+  /**
    * Validate multiple choice question data
    */
   validateMultipleChoiceQuestionData(questionData) {
@@ -144,12 +174,15 @@ class QuestionService {
     };
 
     let question;
-
     try {
       if (questionData.questionType === "DominoQuestion") {
         this.validateDominoQuestionData(completeQuestionData);
         question = await DominoQuestion.create(completeQuestionData);
         logger.info(`DominoQuestion created successfully: ${question._id}`);
+      } else if (questionData.questionType === "ArrowQuestion") {
+        this.validateArrowQuestionData(completeQuestionData);
+        question = await ArrowQuestion.create(completeQuestionData);
+        logger.info(`ArrowQuestion created successfully: ${question._id}`);
       } else if (questionData.questionType === "MultipleChoiceQuestion") {
         this.validateMultipleChoiceQuestionData(completeQuestionData);
         question = await MultipleChoiceQuestion.create(completeQuestionData);
@@ -281,9 +314,7 @@ class QuestionService {
 
     logger.info(
       `Updating question ${questionId} of type ${existingQuestion.questionType}`
-    );
-
-    // Validate updates based on question type
+    ); // Validate updates based on question type
     if (existingQuestion.questionType === "MultipleChoiceQuestion") {
       if (updates.propositions) {
         this.validateMultipleChoiceQuestionData({
@@ -295,18 +326,54 @@ class QuestionService {
       delete updates.correctOptionIndex;
       delete updates.allowMultipleCorrect;
       delete updates.randomizeOptions;
-    } else if (existingQuestion.questionType === "DominoQuestion") {
+    } else if (
+      existingQuestion.questionType === "DominoQuestion" ||
+      existingQuestion.questionType === "ArrowQuestion"
+    ) {
       // Remove invalid fields
       delete updates.propositions;
     }
 
     let updatedQuestion;
     try {
-      updatedQuestion = await Question.findByIdAndUpdate(questionId, updates, {
-        new: true,
-        runValidators: true,
-        context: "query",
-      });
+      // Use the appropriate discriminator model instead of the base Question model
+      // This ensures that discriminator-specific fields like correctAnswer are properly updated
+      if (existingQuestion.questionType === "DominoQuestion") {
+        updatedQuestion = await DominoQuestion.findByIdAndUpdate(
+          questionId,
+          updates,
+          {
+            new: true,
+            runValidators: true,
+            context: "query",
+          }
+        );
+      } else if (existingQuestion.questionType === "ArrowQuestion") {
+        updatedQuestion = await ArrowQuestion.findByIdAndUpdate(
+          questionId,
+          updates,
+          {
+            new: true,
+            runValidators: true,
+            context: "query",
+          }
+        );
+      } else if (existingQuestion.questionType === "MultipleChoiceQuestion") {
+        updatedQuestion = await MultipleChoiceQuestion.findByIdAndUpdate(
+          questionId,
+          updates,
+          {
+            new: true,
+            runValidators: true,
+            context: "query",
+          }
+        );
+      } else {
+        throw new AppError(
+          `Unknown question type: ${existingQuestion.questionType}`,
+          StatusCodes.BAD_REQUEST
+        );
+      }
     } catch (error) {
       if (error.name === "ValidationError") {
         const messages = Object.values(error.errors).map((e) => e.message);
@@ -581,7 +648,6 @@ class QuestionService {
 
     // Reset analytics
     questionData.analytics = undefined;
-
     let newQuestion;
     try {
       if (questionType === "DominoQuestion") {
@@ -605,6 +671,27 @@ class QuestionService {
           });
         }
         newQuestion = await DominoQuestion.create(questionData);
+      } else if (questionType === "ArrowQuestion") {
+        // Generate unique IDs for dominos/arrows
+        if (questionData.dominos) {
+          questionData.dominos.forEach((d) => {
+            if (d.uniqueId) {
+              d.uniqueId = `${d.uniqueId}_copy_${Date.now()}_${Math.random()
+                .toString(36)
+                .substring(2, 7)}`;
+            }
+          });
+        }
+        if (questionData.arrows) {
+          questionData.arrows.forEach((a) => {
+            if (a.uniqueId) {
+              a.uniqueId = `${a.uniqueId}_copy_${Date.now()}_${Math.random()
+                .toString(36)
+                .substring(2, 7)}`;
+            }
+          });
+        }
+        newQuestion = await ArrowQuestion.create(questionData);
       } else if (questionType === "MultipleChoiceQuestion") {
         newQuestion = await MultipleChoiceQuestion.create(questionData);
       } else {

@@ -20,11 +20,18 @@
       <div class="flex flex-col items-center">
         <img
           [src]="
-            userDetails?.profilePicture ||
-            'assets/images/testimonial-avatar.jpg'
+            userAvatarUrl ||
+            'https://ui-avatars.com/api/?name=' +
+              encodeURIComponent(
+                (userDetails?.firstName || '') +
+                  ' ' +
+                  (userDetails?.lastName || '')
+              ) +
+              '&background=3b82f6&color=fff&bold=true'
           "
           [alt]="userDetails?.firstName + ' ' + userDetails?.lastName"
-          class="w-32 h-32 rounded-full mb-4 border-2 border-blue-500"
+          class="w-32 h-32 rounded-full mb-4 border-2 border-blue-500 object-cover"
+          (error)="handleUserImageError()"
         />
         <h3 class="text-xl font-bold text-gray-800">
           {{ userDetails?.firstName }} {{ userDetails?.lastName }}
@@ -59,22 +66,27 @@
         </div>
 
         <hr class="my-4 w-full border-gray-200" />
-
         <div class="w-full" *ngIf="testAssignment?.assignedBy">
           <h4 class="text-lg font-semibold mb-2">Assigned By</h4>
           <div class="flex items-center">
-            <div
-              *ngIf="!testAssignment.assignedBy.profilePicture"
-              class="w-10 h-10 rounded-full mr-2 bg-blue-500 flex items-center justify-center text-white font-bold"
-            >
-              {{ testAssignment.assignedBy.firstName?.charAt(0)
-              }}{{ testAssignment.assignedBy.lastName?.charAt(0) }}
-            </div>
             <img
-              *ngIf="testAssignment.assignedBy.profilePicture"
-              [src]="testAssignment.assignedBy.profilePicture"
-              [alt]="testAssignment.assignedBy.firstName"
-              class="w-10 h-10 rounded-full mr-2"
+              [src]="
+                assignedByAvatarUrl ||
+                'https://ui-avatars.com/api/?name=' +
+                  encodeURIComponent(
+                    (testAssignment.assignedBy.firstName || '') +
+                      ' ' +
+                      (testAssignment.assignedBy.lastName || '')
+                  ) +
+                  '&background=3b82f6&color=fff&bold=true'
+              "
+              [alt]="
+                testAssignment.assignedBy.firstName +
+                ' ' +
+                testAssignment.assignedBy.lastName
+              "
+              class="w-10 h-10 rounded-full mr-2 object-cover"
+              (error)="handleAssignedByImageError()"
             />
             <div>
               <p class="font-medium">

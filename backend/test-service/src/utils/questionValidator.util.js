@@ -182,6 +182,21 @@ const validateQuestionTypeSpecificFields = (req, res, next) => {
       .isObject()
       .run(req);
     validationChain = validateDominoQuestion; // Get the chain without validateRequest
+  } else if (questionType === "ArrowQuestion") {
+    // ArrowQuestion has the same validation as DominoQuestion since it extends it
+    check("instruction", "Instruction is required for ArrowQuestion")
+      .notEmpty()
+      .run(req);
+    check("difficulty", "Difficulty is required for ArrowQuestion")
+      .notEmpty()
+      .run(req);
+    check("dominos", "Dominos array (min 2) is required for ArrowQuestion")
+      .isArray({ min: 2 })
+      .run(req);
+    check("correctAnswer", "CorrectAnswer object is required for ArrowQuestion")
+      .isObject()
+      .run(req);
+    validationChain = validateDominoQuestion; // Use same validation as DominoQuestion
   } else if (questionType === "MultipleChoiceQuestion") {
     // Ensure required fields for create are present using separate checks
     check("instruction", "Instruction is required for MultipleChoiceQuestion")
