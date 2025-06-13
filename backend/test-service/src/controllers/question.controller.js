@@ -72,9 +72,8 @@ class QuestionController {
       success: true,
     });
   }
-
   /**
-   * Validate domino question structure
+   * Validate domino or arrow question structure
    */
   async validateDominoQuestion(req, res) {
     const result = await questionService.validateDominoQuestionStructure(

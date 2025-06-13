@@ -203,9 +203,10 @@ QuestionResponseSchema.methods.evaluateAnswer = async function () {
       console.error(`Question not found for evaluation: ${this.questionId}`);
       return this;
     }
-
     if (question.questionType === "DominoQuestion") {
       return this.evaluateDominoAnswer(question);
+    } else if (question.questionType === "ArrowQuestion") {
+      return this.evaluateDominoAnswer(question); // ArrowQuestion uses same evaluation logic as DominoQuestion
     } else if (question.questionType === "MultipleChoiceQuestion") {
       return this.evaluateMultipleChoiceAnswer(question);
     }
