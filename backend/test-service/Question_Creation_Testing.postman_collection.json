@@ -1,0 +1,623 @@
+{
+  "info": {
+    "name": "Question Creation Testing",
+    "description": "Comprehensive API testing collection for question creation functionality",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3003/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "questionId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Setup",
+      "item": [
+        {
+          "name": "Create Test",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test for Question Creation\",\n  \"description\": \"A test to validate question creation functionality\",\n  \"difficulty\": \"medium\",\n  \"duration\": 60,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tests",
+              "host": ["{{baseUrl}}"],
+              "path": ["tests"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.collectionVariables.set('testId', responseJson.data._id);",
+                  "    console.log('Test ID saved:', responseJson.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "DominoQuestion Tests",
+      "item": [
+        {
+          "name": "Create Valid DominoQuestion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionType\": \"DominoQuestion\",\n  \"instruction\": \"Find the missing domino in the sequence\",\n  \"difficulty\": \"medium\",\n  \"questionNumber\": 1,\n  \"dominos\": [\n    {\n      \"topDots\": 1,\n      \"bottomDots\": 2,\n      \"exactX\": 50,\n      \"exactY\": 100\n    },\n    {\n      \"topDots\": 2,\n      \"bottomDots\": 3,\n      \"exactX\": 150,\n      \"exactY\": 100\n    },\n    {\n      \"topDots\": 0,\n      \"bottomDots\": 0,\n      \"exactX\": 250,\n      \"exactY\": 100,\n      \"isMissing\": true\n    }\n  ],\n  \"correctAnswer\": {\n    \"topDots\": 3,\n    \"bottomDots\": 4\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/questions/tests/{{testId}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "tests", "{{testId}}", "questions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has success true', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Question type is DominoQuestion', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.data.questionType).to.eql('DominoQuestion');",
+                  "});",
+                  "",
+                  "pm.test('Has correct number of dominos', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.data.dominos).to.have.lengthOf(3);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Invalid DominoQuestion - Missing Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionType\": \"DominoQuestion\",\n  \"instruction\": \"Find the missing domino\",\n  \"difficulty\": \"medium\",\n  \"questionNumber\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/questions/tests/{{testId}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "tests", "{{testId}}", "questions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response has success false', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.false;",
+                  "});",
+                  "",
+                  "pm.test('Error message mentions missing fields', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.message.toLowerCase()).to.include('domino');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Invalid DominoQuestion - Invalid Dots",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionType\": \"DominoQuestion\",\n  \"instruction\": \"Find the missing domino\",\n  \"difficulty\": \"medium\",\n  \"questionNumber\": 3,\n  \"dominos\": [\n    {\n      \"topDots\": 7,\n      \"bottomDots\": 2,\n      \"exactX\": 50,\n      \"exactY\": 100\n    }\n  ],\n  \"correctAnswer\": {\n    \"topDots\": 3,\n    \"bottomDots\": 4\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/questions/tests/{{testId}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "tests", "{{testId}}", "questions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error message mentions invalid dots', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.message.toLowerCase()).to.include('dot');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ArrowQuestion Tests",
+      "item": [
+        {
+          "name": "Create Valid ArrowQuestion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionType\": \"ArrowQuestion\",\n  \"instruction\": \"Follow the arrow pattern to find the missing domino\",\n  \"difficulty\": \"hard\",\n  \"questionNumber\": 4,\n  \"dominos\": [\n    {\n      \"topDots\": 1,\n      \"bottomDots\": 2,\n      \"exactX\": 50,\n      \"exactY\": 100\n    },\n    {\n      \"topDots\": 2,\n      \"bottomDots\": 4,\n      \"exactX\": 150,\n      \"exactY\": 100\n    },\n    {\n      \"topDots\": 0,\n      \"bottomDots\": 0,\n      \"exactX\": 250,\n      \"exactY\": 100,\n      \"isMissing\": true\n    }\n  ],\n  \"arrows\": [\n    {\n      \"exactX\": 75,\n      \"exactY\": 125,\n      \"angle\": 45\n    },\n    {\n      \"exactX\": 175,\n      \"exactY\": 125,\n      \"angle\": 90\n    }\n  ],\n  \"correctAnswer\": {\n    \"topDots\": 4,\n    \"bottomDots\": 8\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/questions/tests/{{testId}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "tests", "{{testId}}", "questions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Question type is ArrowQuestion', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.data.questionType).to.eql('ArrowQuestion');",
+                  "});",
+                  "",
+                  "pm.test('Has arrows array', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.data.arrows).to.have.lengthOf(2);",
+                  "});",
+                  "",
+                  "pm.test('Arrows have required properties', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    const arrow = responseJson.data.arrows[0];",
+                  "    pm.expect(arrow).to.have.property('exactX');",
+                  "    pm.expect(arrow).to.have.property('exactY');",
+                  "    pm.expect(arrow).to.have.property('angle');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Invalid ArrowQuestion - Missing Arrow Properties",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionType\": \"ArrowQuestion\",\n  \"instruction\": \"Follow the arrow pattern\",\n  \"difficulty\": \"hard\",\n  \"questionNumber\": 5,\n  \"dominos\": [\n    {\n      \"topDots\": 1,\n      \"bottomDots\": 2,\n      \"exactX\": 50,\n      \"exactY\": 100\n    }\n  ],\n  \"arrows\": [\n    {\n      \"exactX\": 75,\n      \"exactY\": 125\n    }\n  ],\n  \"correctAnswer\": {\n    \"topDots\": 2,\n    \"bottomDots\": 4\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/questions/tests/{{testId}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "tests", "{{testId}}", "questions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error message mentions angle', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.message.toLowerCase()).to.include('angle');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MultipleChoiceQuestion Tests",
+      "item": [
+        {
+          "name": "Create Valid MultipleChoiceQuestion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionType\": \"MultipleChoiceQuestion\",\n  \"instruction\": \"Determine if each proposition is True (V), False (F), or Uncertain (?)\",\n  \"difficulty\": \"easy\",\n  \"questionNumber\": 6,\n  \"propositions\": [\n    {\n      \"text\": \"All birds can fly\",\n      \"correctAnswer\": \"F\"\n    },\n    {\n      \"text\": \"Some birds are penguins\",\n      \"correctAnswer\": \"V\"\n    },\n    {\n      \"text\": \"The weather tomorrow will be sunny\",\n      \"correctAnswer\": \"?\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/questions/tests/{{testId}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "tests", "{{testId}}", "questions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Question type is MultipleChoiceQuestion', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.data.questionType).to.eql('MultipleChoiceQuestion');",
+                  "});",
+                  "",
+                  "pm.test('Has propositions array', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.data.propositions).to.have.lengthOf(3);",
+                  "});",
+                  "",
+                  "pm.test('Propositions have required properties', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    const prop = responseJson.data.propositions[0];",
+                  "    pm.expect(prop).to.have.property('text');",
+                  "    pm.expect(prop).to.have.property('correctAnswer');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Invalid MultipleChoiceQuestion - Empty Propositions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionType\": \"MultipleChoiceQuestion\",\n  \"instruction\": \"Answer the propositions\",\n  \"difficulty\": \"easy\",\n  \"questionNumber\": 7,\n  \"propositions\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/questions/tests/{{testId}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "tests", "{{testId}}", "questions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error message mentions proposition', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.message.toLowerCase()).to.include('proposition');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Validation Tests",
+      "item": [
+        {
+          "name": "Validate Domino Question - Valid",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dominos\": [\n    {\n      \"topDots\": 1,\n      \"bottomDots\": 2,\n      \"exactX\": 50,\n      \"exactY\": 100\n    },\n    {\n      \"topDots\": 2,\n      \"bottomDots\": 3,\n      \"exactX\": 150,\n      \"exactY\": 100\n    }\n  ],\n  \"correctAnswer\": {\n    \"topDots\": 3,\n    \"bottomDots\": 4\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/questions/validate-domino",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "validate-domino"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Validation result is valid', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.isValid).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Domino Question - Invalid",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dominos\": [\n    {\n      \"topDots\": 7,\n      \"bottomDots\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/questions/validate-domino",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "validate-domino"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Validation result is invalid', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.isValid).to.be.false;",
+                  "});",
+                  "",
+                  "pm.test('Has errors array', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.errors).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Retrieval Tests",
+      "item": [
+        {
+          "name": "Get All Questions for Test",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/questions/tests/{{testId}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "tests", "{{testId}}", "questions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success true', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Has data array', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Has pagination info', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.pagination).to.be.an('object');",
+                  "});",
+                  "",
+                  "if (pm.response.json().data.length > 0) {",
+                  "    pm.collectionVariables.set('questionId', pm.response.json().data[0]._id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Question by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/questions/{{questionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "{{questionId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success true', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Has question data', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.data).to.be.an('object');",
+                  "    pm.expect(responseJson.data._id).to.eql(pm.collectionVariables.get('questionId'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
