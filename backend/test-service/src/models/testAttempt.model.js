@@ -21,6 +21,7 @@ const TestAttemptSchema = new Schema(
     },
     endTime: {
       type: Date,
+      default: null,
     },
     status: {
       type: String,
@@ -29,55 +30,63 @@ const TestAttemptSchema = new Schema(
       index: true,
     },
     score: {
-      // Represents the total points earned
       type: Number,
       default: 0,
     },
     percentageScore: {
-      // Percentage based on maximum possible score
       type: Number,
       default: 0,
     },
     timeSpent: {
-      type: Number, // Milliseconds
+      type: Number,
+      default: 0,
       comment: "Time spent in milliseconds",
     },
     lastActivityAt: {
-      // Track last interaction time
       type: Date,
       default: Date.now,
     },
     metrics: {
-      // Basic metrics
       questionsAnswered: { type: Number, default: 0 },
       questionsSkipped: { type: Number, default: 0 },
       questionsTotal: { type: Number, default: 0 },
       answerChanges: { type: Number, default: 0 },
       flaggedQuestions: { type: Number, default: 0 },
-
-      // Domino-specific metrics
       correctAnswers: { type: Number, default: 0 },
       halfCorrectAnswers: { type: Number, default: 0 },
       reversedAnswers: { type: Number, default: 0 },
-
-      // MCQ-specific metrics
       totalPropositionsCorrect: { type: Number, default: 0 },
       totalPropositionsAttempted: { type: Number, default: 0 },
       propositionAccuracy: { type: Number, default: 0 },
-
-      // Time and visit tracking
-      visitCounts: { type: Map, of: Number },
-      timePerQuestion: { type: Map, of: Number },
-
-      // Calculated metrics
+      visitCounts: { type: Map, of: Number, default: new Map() },
+      timePerQuestion: { type: Map, of: Number, default: new Map() },
       completionRate: { type: Number, default: 0 },
       averageTimePerQuestion: { type: Number, default: 0 },
       totalTimeSpent: { type: Number, default: 0 },
       averageVisitsPerQuestion: { type: Number, default: 0 },
     },
-    device: String,
-    browser: String,
-    ipAddress: String,
+    device: { type: String, default: '' },
+    browser: { type: String, default: '' },
+    ipAddress: { type: String, default: '' },
+    aiClassification: {
+      prediction: {
+        type: String,
+        default: null,
+      },
+      confidence: {
+        type: Number,
+        default: null,
+      },
+      classifiedAt: {
+        type: Date,
+        default: null,
+      },
+    },
+    manualClassification: { 
+      classification: { type: String, default: null },
+      classifiedBy: { type: String, default: null },
+      classifiedAt: { type: Date, default: null },
+    }
   },
   {
     timestamps: true,
@@ -384,6 +393,27 @@ TestAttemptSchema.methods.finishAttempt = function (status = "completed") {
   return this.save();
 };
 
+// Add method to update AI classification
+TestAttemptSchema.methods.updateAiClassification = function (prediction, confidence) {
+  this.aiClassification = {
+    prediction,
+    confidence,
+    classifiedAt: new Date(),
+  };
+  return this.save();
+};
+
+// Add method to update manual classification
+TestAttemptSchema.methods.updateManualClassification = function (classification, classifiedBy) {
+  this.manualClassification = {
+    classification,
+    classifiedBy,
+    classifiedAt: new Date(),
+  };
+  this.markModified('manualClassification');
+  return this.save();
+};
+
 // Post-save hook to update test analytics
 TestAttemptSchema.post("save", async function (doc, next) {
   // Use post hook with doc and next
@@ -442,6 +472,32 @@ TestAttemptSchema.set("toObject", {
     }
     return ret;
   },
+});
+
+// Update or add the pre-save middleware to initialize both AI and manual classifications
+TestAttemptSchema.pre("save", function (next) {
+  if (!this.aiClassification) {
+    this.aiClassification = {
+      prediction: null,
+      confidence: null,
+      classifiedAt: null,
+    };
+  }
+  
+  // Initialize manualClassification if it doesn't exist
+  if (!this.manualClassification) {
+    this.manualClassification = {
+      classification: null,
+      classifiedBy: null,
+      classifiedAt: null,
+    };
+  }
+  
+  // Mark both fields as modified to ensure they're saved
+  this.markModified('aiClassification');
+  this.markModified('manualClassification');
+  
+  next();
 });
 
 module.exports = mongoose.model("TestAttempt", TestAttemptSchema);

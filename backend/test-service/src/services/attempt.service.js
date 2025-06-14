@@ -1041,6 +1041,32 @@ class AttemptService {
       engagementScore: analytics.totalVisits + analytics.questionsFlagged,
     };
   }
+
+  /**
+   * Update attempt AI classification
+   */
+  async updateAiClassification(attemptId, classification) {
+    try {
+      const attempt = await TestAttempt.findById(attemptId);
+      if (!attempt) {
+        throw new Error(`Attempt ${attemptId} not found`);
+      }
+
+      attempt.aiClassification = {
+        prediction: classification.prediction,
+        confidence: classification.confidence,
+        classifiedAt: new Date(classification.timestamp || Date.now()),
+      };
+
+      await attempt.save();
+      logger.info(`Updated AI classification for attempt ${attemptId}`);
+      
+      return attempt;
+    } catch (error) {
+      logger.error(`Error updating AI classification for attempt ${attemptId}:`, error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new AttemptService();

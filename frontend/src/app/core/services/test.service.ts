@@ -713,4 +713,53 @@ export class TestService {
       })
     );
   }
+
+  /**
+   * Update AI classification for an attempt
+   */
+  updateAiClassification(attemptId: string, classification: { prediction: string; confidence: number; timestamp?: string }): Observable<AttemptResponse> {
+    console.log('Updating AI classification:', { attemptId, classification });
+    
+    return this.http
+      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/ai-classification`, classification)
+      .pipe(
+        tap(response => {
+          console.log('AI classification update response:', response);
+        }),
+        catchError(error => {
+          console.error('Error updating AI classification:', error);
+          // Create a more user-friendly error response
+          const errorMessage = error.error?.error || 'Failed to update AI classification';
+          return throwError(() => ({
+            success: false,
+            message: errorMessage,
+            error: error
+          }));
+        })
+      );
+  }
+
+  /**
+   * Update manual classification for an attempt
+   */
+  updateManualClassification(attemptId: string, classification: string): Observable<AttemptResponse> {
+    console.log('Updating manual classification:', { attemptId, classification });
+    
+    return this.http
+      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/manual-classification`, { classification })
+      .pipe(
+        tap(response => {
+          console.log('Manual classification update response:', response);
+        }),
+        catchError(error => {
+          console.error('Error updating manual classification:', error);
+          const errorMessage = error.error?.error || 'Failed to update manual classification';
+          return throwError(() => ({
+            success: false,
+            message: errorMessage,
+            error: error
+          }));
+        })
+      );
+  }
 }

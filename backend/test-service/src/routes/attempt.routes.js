@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const attemptService = require("../services/attempt.service");
 const {
   startTestAttempt,
   getAttemptById,
@@ -74,5 +75,67 @@ router.get(
   getTestAttempts
 );
 router.get("/:id/results", verifyToken, getAttemptResults);
+
+// Add AI classification route with authorization
+router.post("/:id/ai-classification", 
+  verifyToken, 
+  authorize("admin", "psychologist"), // Only allow admin and psychologist roles
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { prediction, confidence, timestamp } = req.body;
+      console.log("Received AI classification:", { id, prediction, confidence, timestamp });
+
+      const updatedAttempt = await attemptService.updateAiClassification(id, {
+        prediction,
+        confidence,
+        timestamp: timestamp || new Date(),
+      });
+
+      res.json({
+        success: true,
+        data: updatedAttempt,
+        message: "AI classification updated successfully"
+      });
+
+    } catch (error) {
+      console.error("Error in AI classification update:", error);
+      next(error);
+    }
+  }
+);
+
+// Add manual classification route with authorization
+router.post("/:id/manual-classification", 
+  verifyToken, 
+  authorize("admin", "psychologist"), // Only allow admin and psychologist roles
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { classification } = req.body;
+      const classifiedBy = req.user.id; // Assuming user info is in req.user
+
+      const attempt = await TestAttempt.findById(id);
+      if (!attempt) {
+        return res.status(404).json({
+          success: false,
+          message: "Attempt not found"
+        });
+      }
+
+      await attempt.updateManualClassification(classification, classifiedBy);
+
+      res.json({
+        success: true,
+        data: attempt,
+        message: "Manual classification updated successfully"
+      });
+
+    } catch (error) {
+      console.error("Error in manual classification update:", error);
+      next(error);
+    }
+  }
+);
 
 module.exports = router;

@@ -14,7 +14,7 @@
       <h2 class="text-2xl font-semibold mb-4">Test Score</h2>
       <div class="flex justify-center items-center space-x-8">
         <div class="text-center">
-          <p class="text-6xl font-bold mb-2">{{ performance.score | number : "1.0-1"  }}%</p>
+          <p class="text-6xl font-bold mb-2">{{ performance.score | number : "1.0-1" }}%</p>
 
           <p class="text-lg opacity-90">Overall Score</p>
         </div>
@@ -28,7 +28,7 @@
       </div>
     </div>
   </div>
-<div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
     <div
       class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-md transform hover:scale-105 transition-transform duration-300">
       <div class="flex items-center justify-between">
@@ -85,6 +85,61 @@
       </div>
     </div>
   </div>
+ 
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- AI Classification -->
+      <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">AI Classification</h3>
+        <div class="space-y-4">
+          <button (click)="classifyPerformance()"
+            class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            Get AI Classification
+          </button>
+          <div *ngIf="aiClassification" class="mt-4">
+            <p class="text-lg font-medium">Classification: <span class="text-blue-600">{{aiClassification}}</span></p>
+            <p class="text-sm text-gray-600">Confidence: {{aiConfidence | percent:'1.0-1'}}</p>
+          </div>
+        </div>
+      </div>      <!-- Manual Classification -->
+      <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Manual Classification</h3>
+        <div class="space-y-4">
+          <!-- Show dropdown only for psychologists when no classification exists -->
+          <div  class="transition-all duration-300">
+            <select #classificationSelect
+              (change)="onClassificationSelect(classificationSelect.value)"
+              class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none bg-white hover:bg-gray-50 transition-colors">
+              <option value="">Select Classification</option>
+              <option *ngFor="let label of classificationLabels" [value]="label">
+                {{label}}
+              </option>
+            </select>
+          </div>
+
+          <!-- Show existing classification with tooltip -->
+          <div *ngIf="manualClassification" 
+               class="p-3 bg-gray-50 rounded-lg border border-gray-200 relative group cursor-help">
+            <div class="flex items-center justify-between">
+              <span class="font-medium text-gray-700">{{manualClassification.value}}</span>
+              <i class="pi pi-info-circle text-blue-500"></i>
+            </div>
+            
+            <!-- Tooltip -->
+            <div class="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300
+                        absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2
+                        bg-gray-900 text-white text-sm rounded-lg py-2 px-4 shadow-lg">
+              <p class="whitespace-nowrap">
+                Classified by: {{manualClassification.classifiedBy}}<br>
+                Date: {{formatClassificationDate(manualClassification.classifiedAt)}}
+              </p>
+              <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 
+                          border-8 border-transparent border-t-gray-900"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   <!-- Performance Level Card -->
   <div class="bg-gradient-to-r from-white to-gray-50 p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
     <div class="flex justify-between items-center">
@@ -100,7 +155,7 @@
       <div class="text-right">
         <p class="text-sm text-gray-500">Overall Score</p>
         <p class="text-4xl font-bold" [style.color]="performance.color">
-          {{ performance.score | number : "1.0-1"  }}%
+          {{ performance.score | number : "1.0-1" }}%
         </p>
         <p class="text-xs text-gray-500 mt-1">
           {{ score }}/{{ totalQuestions }} correct
@@ -115,7 +170,7 @@
   </div>
 
   <!-- Statistics Grid -->
-  
+
 
   <!-- Test Analytics Section -->
   <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-8">
@@ -127,13 +182,13 @@
           <div class="flex justify-between">
             <span class="text-gray-600">Start Time:</span>
             <span class="font-medium">{{
-              testAnalytics.startTime 
+              testAnalytics.startTime
               }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">End Time:</span>
             <span class="font-medium">{{
-              testAnalytics.endTime 
+              testAnalytics.endTime
               }}</span>
           </div>
           <div class="flex justify-between">

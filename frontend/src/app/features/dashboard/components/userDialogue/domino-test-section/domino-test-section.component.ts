@@ -1,8 +1,7 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'primeng/chart';
-import { Location } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import {
   ApexAxisChartSeries,
@@ -16,6 +15,36 @@ import {
   ApexNonAxisChartSeries,
 } from 'ng-apexcharts';
 import { TestService } from '../../../../../core/services/test.service';
+import { AiService } from '../../../../../core/services/ai.service';
+import { User } from '../../../../../core/models/user.model';
+import { AuthService } from '../../../../../core/auth/services/auth.service';
+import { TooltipModule } from 'primeng/tooltip';
+
+interface MetricsRequest {
+  test_type: string;
+  questionsAnswered: number;
+  correct_answers: number;
+  timeSpent: number;
+  halfCorrect: number;
+  reversed: number;
+  questionsSkipped: number;
+  answerChanges: number;
+  flaggedQuestions: number;
+  desired_position: string;
+  education_level: string;
+  attemptId: string; // Add optional attemptId field
+}
+
+interface ClassificationResponse {
+  prediction: string;
+  confidence: number;
+}
+
+interface ManualClassification {
+  value: string;
+  classifiedBy: string;
+  classifiedAt: Date;
+}
 
 export type ChartOptions = {
   series: ApexAxisChartSeries | ApexNonAxisChartSeries;
@@ -36,6 +65,7 @@ export type ChartOptions = {
     ChartModule,
     NgApexchartsModule,
     ButtonModule,
+    TooltipModule,
   ],
   templateUrl: './domino-test-section.component.html',
   styleUrl: './domino-test-section.component.css',
@@ -43,7 +73,7 @@ export type ChartOptions = {
 export class DominoTestSectionComponent implements OnInit {
   @ViewChild('chart') chart!: ChartComponent;
   @Input() attemptId!: string;
-
+  @Input() userInfo: User | null = null;
   public chartOptions: Partial<ChartOptions>;
   // Enhanced properties based on backend data
   testType: string = 'Logical Reasoning Assessment';
@@ -52,6 +82,8 @@ export class DominoTestSectionComponent implements OnInit {
   score: number = 0;
   totalQuestions: number = 0;
   percentageScore: number = 0;
+  halfCorrect: number = 0;
+  flaggedQuestions: number = 0;
   questionsAnswered: number = 0;
   skippedQuestions: number = 0;
   inversedAnswers: number = 0;
@@ -106,7 +138,29 @@ export class DominoTestSectionComponent implements OnInit {
   isAiAnalysisVisible: boolean = false;
   isLoading: boolean = true;
   chartInitialized: boolean = false;
-  constructor(private location: Location, private testService: TestService) {
+
+  // Add new properties
+  manualClassification: ManualClassification | null = null;
+  aiClassification: string = '';
+  aiConfidence: number = 0;
+  classificationLabels: string[] = [
+    'Very Strong',
+    'Strong',
+    'Average',
+    'Weak',
+    'Very Weak',
+  ];
+  userPosition: string = ''; // This should be populated from user data
+  userEducation: string = ''; // This should be populated from user data
+  showClassificationDropdown = true;
+  currentUser: User | null | undefined ; // This should be populated from auth service
+
+  constructor(
+    private location: Location,
+    private testService: TestService,
+    private aiService: AiService,
+    private authService: AuthService // Add AuthService
+  ) {
     this.chartOptions = {
       series: [
         {
@@ -145,6 +199,8 @@ export class DominoTestSectionComponent implements OnInit {
   ];
   psychologistComment: string = '';
   ngOnInit() {
+    this.userEducation = this.userInfo?.educationLevel || '';
+    this.userPosition = this.userInfo?.desiredPosition || '';
     if (this.attemptId) {
       this.testService.getAttemptResults(this.attemptId).subscribe({
         next: (response) => {
@@ -157,7 +213,10 @@ export class DominoTestSectionComponent implements OnInit {
         },
       });
     }
-    console.log('test details aaaaaaaaaaaaaaaaaaaaaa:' , this.testAnalytics);
+    console.log('test details aaaaaaaaaaaaaaaaaaaaaa:', this.testAnalytics);
+    this.currentUser = this.authService.getCurrentUser();
+    this.showClassificationDropdown =
+      this.currentUser?.role=== 'psychologist' && !this.manualClassification;
   }
 
   private initializeData(data: any) {
@@ -187,6 +246,8 @@ export class DominoTestSectionComponent implements OnInit {
     this.percentageScore = attempt.percentageScore || 0;
     this.questionsAnswered = analytics.questionsAnswered || 0;
     this.skippedQuestions = analytics.questionsSkipped || 0;
+    this.halfCorrect = analytics.halfCorrect || 0;
+    this.flaggedQuestions = analytics.flaggedQuestions || 0;
     this.inversedAnswers = questions.filter(
       (q: any) => q.response?.isReversed
     ).length;
@@ -209,8 +270,10 @@ export class DominoTestSectionComponent implements OnInit {
       fastestQuestion: this.getFastestQuestion(questions),
       slowestQuestion: this.getSlowestQuestion(questions),
     };
-    console.log("aaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA23:",this.testAnalytics);
-    
+    console.log(
+      "aaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA23:",
+      this.testAnalytics
+    );
 
     // Calculate performance level based on percentage score
     this.calculatePerformanceLevel();
@@ -219,6 +282,15 @@ export class DominoTestSectionComponent implements OnInit {
     this.initializeTimeChart(questions);
     this.initializeTreeMap();
     this.isLoading = false;
+
+    if (data.attempt.manualClassification) {
+      this.manualClassification = {
+        value: data.attempt.manualClassification.value,
+        classifiedBy: data.attempt.manualClassification.classifiedBy,
+        classifiedAt: new Date(data.attempt.manualClassification.classifiedAt),
+      };
+      this.showClassificationDropdown = false;
+    }
   }
   private calculatePerformanceLevel() {
     if (this.percentageScore >= 90) {
@@ -448,5 +520,96 @@ export class DominoTestSectionComponent implements OnInit {
     } else {
       this.aiComments[commentIndex].dislikes++;
     }
+  }
+
+  async classifyPerformance() {
+    // Add some validation
+    if (!this.userPosition || !this.userEducation) {
+      console.error('Missing required user data', this.userEducation);
+      return;
+    }
+
+    const metrics: MetricsRequest = {
+      attemptId: this.attemptId,
+      test_type: this.testName,
+      questionsAnswered: this.questionsAnswered,
+      correct_answers: this.score,
+      timeSpent: this.testAnalytics.totalDuration || 0,
+      halfCorrect: this.halfCorrect || 0,
+      reversed: this.inversedAnswers || 0,
+      questionsSkipped: this.skippedQuestions || 0,
+      answerChanges: this.testAnalytics.questionsRevisited || 0,
+      flaggedQuestions: this.flaggedQuestions || 0,
+      desired_position: this.userPosition,
+      education_level: this.userEducation,
+    };
+
+    console.log('Sending metrics:', metrics);
+
+    try {
+      this.aiService.classify(metrics).subscribe({
+        next: (response: ClassificationResponse) => {
+          console.log('Classification success:', response);
+          this.aiClassification = response.prediction;
+          this.aiConfidence = response.confidence;
+
+          // Update the attempt with the classification
+          this.testService
+            .updateAiClassification(this.attemptId, {
+              prediction: response.prediction,
+              confidence: response.confidence,
+              timestamp: new Date().toISOString(),
+            })
+            .subscribe({
+              next: (updateResponse) => {
+                console.log('Classification saved to attempt:', updateResponse);
+              },
+              error: (updateError) => {
+                console.error('Error saving classification to attempt:', updateError);
+              },
+            });
+        },
+        error: (error) => {
+          console.error('Error getting AI classification:', error);
+          alert('Failed to get AI classification. Please try again.');
+        },
+      });
+    } catch (error) {
+      console.error('Error in classifyPerformance:', error);
+    }
+  }
+
+  onClassificationSelect(classification: string) {
+    if (!classification) return;
+
+    const classificationData: ManualClassification = {
+      value: classification,
+      classifiedBy: this.currentUser?.firstName + ' ' + this.currentUser?.lastName || 'Unknown',
+      classifiedAt: new Date(),
+    };
+
+    this.testService
+      .updateManualClassification(this.attemptId, classification)
+      .subscribe({
+        next: (response) => {
+          this.manualClassification = classificationData;
+          this.showClassificationDropdown = false;
+        },
+        error: (error) => {
+          console.error('Error updating manual classification:', error);
+          // Handle error - maybe show a notification
+        },
+      });
+  }
+
+  // Utility method to format date for tooltip
+  formatClassificationDate(date: Date): string {
+    return new Date(date).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 }
