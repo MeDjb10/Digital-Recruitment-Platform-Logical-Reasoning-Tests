@@ -115,19 +115,16 @@ router.post("/:id/manual-classification",
       const { classification } = req.body;
       const classifiedBy = req.user.id; // Assuming user info is in req.user
 
-      const attempt = await TestAttempt.findById(id);
-      if (!attempt) {
-        return res.status(404).json({
-          success: false,
-          message: "Attempt not found"
-        });
-      }
+      console.log("Received manual classification:", { id, classification, classifiedBy });
 
-      await attempt.updateManualClassification(classification, classifiedBy);
+      const updatedAttempt = await attemptService.updateManualClassification(id, {
+        classification,
+        classifiedBy
+      });
 
       res.json({
         success: true,
-        data: attempt,
+        data: updatedAttempt,
         message: "Manual classification updated successfully"
       });
 

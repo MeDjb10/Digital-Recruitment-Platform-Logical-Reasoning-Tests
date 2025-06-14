@@ -743,13 +743,11 @@ export class TestService {
    * Update manual classification for an attempt
    */
   updateManualClassification(attemptId: string, classification: string): Observable<AttemptResponse> {
-    console.log('Updating manual classification:', { attemptId, classification });
-    
     return this.http
       .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/manual-classification`, { classification })
       .pipe(
         tap(response => {
-          console.log('Manual classification update response:', response);
+          this.logApiInteraction('manualClassification', { attemptId, classification }, response);
         }),
         catchError(error => {
           console.error('Error updating manual classification:', error);
@@ -763,3 +761,4 @@ export class TestService {
       );
   }
 }
+  

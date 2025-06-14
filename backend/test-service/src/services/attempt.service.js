@@ -1067,6 +1067,32 @@ class AttemptService {
       throw error;
     }
   }
+
+  /**
+   * Update manual classification for an attempt
+   */
+  async updateManualClassification(attemptId, { classification, classifiedBy }) {
+    try {
+      const attempt = await TestAttempt.findById(attemptId);
+      if (!attempt) {
+        throw new Error(`Attempt ${attemptId} not found`);
+      }
+
+      attempt.manualClassification = {
+        classification,
+        classifiedBy,
+        classifiedAt: new Date(),
+      };
+
+      await attempt.save();
+      logger.info(`Updated manual classification for attempt ${attemptId}`);
+      
+      return attempt;
+    } catch (error) {
+      logger.error(`Error updating manual classification for attempt ${attemptId}:`, error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new AttemptService();
