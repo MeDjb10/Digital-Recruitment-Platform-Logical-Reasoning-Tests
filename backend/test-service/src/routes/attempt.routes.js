@@ -135,4 +135,58 @@ router.post("/:id/manual-classification",
   }
 );
 
+// Add AI comment route
+router.post("/:id/ai-comment", 
+  verifyToken, 
+  authorize("admin", "psychologist"), 
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { aiComment } = req.body;
+      console.log("Received AI comment:", { id, aiComment });
+
+      const updatedAttempt = await attemptService.updateAiComment(id, aiComment);
+
+      res.json({
+        success: true,
+        data: updatedAttempt,
+        message: "AI comment updated successfully"
+      });
+
+    } catch (error) {
+      console.error("Error in AI comment update:", error);
+      next(error);
+    }
+  }
+);
+
+// Add psychologist comment route
+router.post("/:id/psychologist-comment", 
+  verifyToken, 
+  authorize("admin", "psychologist"), // Only allow psychologist role
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { comment, commentedBy } = req.body;
+      
+      console.log("Received psychologist comment:", { id, comment, commentedBy });
+
+      const updatedAttempt = await attemptService.updatePsychologistComment(id, {
+        comment,
+        commentedBy
+      });
+
+      res.json({
+        success: true,
+        data: updatedAttempt,
+        message: "Psychologist comment updated successfully"
+      });
+
+    } catch (error) {
+      console.error("Error in psychologist comment update:", error);
+      next(error);
+    }
+  }
+);
+
 module.exports = router;

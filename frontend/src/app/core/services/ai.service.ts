@@ -24,6 +24,31 @@ interface ClassificationResponse {
   confidence: number;
 }
 
+interface AnalysisResponse {
+  metrics: {
+    attemptId: string;
+    test_type: string;
+    questionsAnswered: number;
+    correct_answers: number;
+    timeSpent: number;
+    halfCorrect: number;
+    reversed: number;
+    questionsSkipped: number;
+    answerChanges: number;
+    flaggedQuestions: number;
+    desired_position: string;
+    education_level: string;
+    timestamp: string;
+  };
+  prediction: {
+    test_type: string;
+    predicted_category: string;
+    confidence: number;
+    raw_features: any;
+  };
+  ai_analysis: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -55,6 +80,20 @@ export class AiService {
       }),
       catchError(error => {
         console.error('Error details:', error.error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  analyze(metrics: MetricsRequest): Observable<AnalysisResponse> {
+    console.log('Sending analysis request:', metrics);
+    
+    return this.http.post<AnalysisResponse>(`${this.apiUrl}/analyze`, metrics).pipe(
+      tap(response => {
+        console.log('Analysis response:', response);
+      }),
+      catchError(error => {
+        console.error('Analysis error:', error);
         return throwError(() => error);
       })
     );

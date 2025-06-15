@@ -760,5 +760,54 @@ export class TestService {
         })
       );
   }
+
+  /**
+   * Update AI comment for an attempt
+   */
+  updateAiComment(attemptId: string, aiComment: string): Observable<AttemptResponse> {
+    return this.http
+      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/ai-comment`, { aiComment })
+      .pipe(
+        tap(response => {
+          this.logApiInteraction('aiComment', { attemptId, aiComment }, response);
+        }),
+        catchError(error => {
+          console.error('Error updating AI comment:', error);
+          const errorMessage = error.error?.error || 'Failed to update AI comment';
+          return throwError(() => ({
+            success: false,
+            message: errorMessage,
+            error: error
+          }));
+        })
+      );
+  }
+
+  /**
+   * Update psychologist's comment for an attempt
+   */
+  updatePsychologistComment(attemptId: string, comment: string): Observable<AttemptResponse> {
+    const commentedBy = this.authService.getCurrentUser()?.firstName + ' ' + 
+                       this.authService.getCurrentUser()?.lastName;
+    
+    return this.http
+      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/psychologist-comment`, { 
+        comment, 
+        commentedBy 
+      })
+      .pipe(
+        tap(response => {
+          this.logApiInteraction('psychologistComment', { attemptId, comment }, response);
+        }),
+        catchError(error => {
+          console.error('Error updating psychologist comment:', error);
+          const errorMessage = error.error?.error || 'Failed to update psychologist comment';
+          return throwError(() => ({
+            success: false,
+            message: errorMessage,
+            error: error
+          }));
+        })
+      );
+  }
 }
-  

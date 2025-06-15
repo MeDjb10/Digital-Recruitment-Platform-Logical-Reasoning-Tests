@@ -143,6 +143,8 @@ export class DominoTestSectionComponent implements OnInit {
   manualClassification: ManualClassification | null = null;
   aiClassification: string = '';
   aiConfidence: number = 0;
+  aiComment: string = '';
+  isLoadingAnalysis: boolean = false;
   classificationLabels: string[] = [
     'Very Strong',
     'Strong',
@@ -154,6 +156,8 @@ export class DominoTestSectionComponent implements OnInit {
   userEducation: string = ''; // This should be populated from user data
   showClassificationDropdown = true;
   currentUser: User | null | undefined ; // This should be populated from auth service
+  psychologistComment: string = '';
+  isSavingComment: boolean = false;
 
   constructor(
     private location: Location,
@@ -188,16 +192,7 @@ export class DominoTestSectionComponent implements OnInit {
     };
   }
 
-  aiComments = [
-    {
-      text: 'Candidate performed well in logical reasoning. Lorem ipsum dolor sit amet consectetur adipisicing elit. Sunt neque, recusandae ut illum accusantium tempore hic aperiam quidem dolore et excepturi eveniet voluptatum cumque rem qui voluptatibus assumenda culpa ea!',
-      reaction: true,
-      likes: 0,
-      dislikes: 0,
-      feedback: '',
-    },
-  ];
-  psychologistComment: string = '';
+  
   ngOnInit() {
     this.userEducation = this.userInfo?.educationLevel || '';
     this.userPosition = this.userInfo?.desiredPosition || '';
@@ -514,13 +509,7 @@ export class DominoTestSectionComponent implements OnInit {
     }, 100);
   }
 
-  handleReaction(commentIndex: number, isLike: boolean) {
-    if (isLike) {
-      this.aiComments[commentIndex].likes++;
-    } else {
-      this.aiComments[commentIndex].dislikes++;
-    }
-  }
+  
 
   async classifyPerformance() {
     // Add some validation
@@ -611,5 +600,93 @@ export class DominoTestSectionComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  get formattedAiComment(): string {
+    if (!this.aiComment) return '';
+    
+    return this.aiComment
+      // Replace newlines with <br> tags
+      .replace(/\n/g, '<br>')
+      // Replace **text** with <strong>text</strong>
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Additional formatting if needed
+      .replace(/Assessment Summary:/g, '<h3 class="text-xl font-bold my-4">Assessment Summary:</h3>')
+      .replace(/Recommendation:/g, '<h3 class="text-xl font-bold my-4">Recommendation:</h3>');
+  }
+
+  async generateReport() {
+    if (!this.userPosition || !this.userEducation) {
+      console.error('Missing required user data');
+      return;
+    }
+
+    this.isLoadingAnalysis = true;
+    const metrics: MetricsRequest = {
+      attemptId: this.attemptId,
+      test_type: this.testName,
+      questionsAnswered: this.questionsAnswered,
+      correct_answers: this.score,
+      timeSpent: this.testAnalytics.totalDuration || 0,
+      halfCorrect: this.halfCorrect || 0,
+      reversed: this.inversedAnswers || 0,
+      questionsSkipped: this.skippedQuestions || 0,
+      answerChanges: this.testAnalytics.questionsRevisited || 0,
+      flaggedQuestions: this.flaggedQuestions || 0,
+      desired_position: this.userPosition,
+      education_level: this.userEducation,
+    };
+
+    try {
+      this.aiService.analyze(metrics).subscribe({
+        next: (response) => {
+          // Remove <think> tags if present in the response
+          this.aiComment = response.ai_analysis.replace(/<think>.*?<\/think>/g, '').trim();
+          
+          this.testService.updateAiComment(this.attemptId, this.aiComment)
+            .subscribe({
+              next: (updateResponse) => {
+                console.log('AI analysis saved:', updateResponse);
+                this.isLoadingAnalysis = false;
+                this.isAiAnalysisVisible = true;
+              },
+              error: (updateError) => {
+                console.error('Error saving AI analysis:', updateError);
+                this.isLoadingAnalysis = false;
+              }
+            });
+        },
+        error: (error) => {
+          console.error('Error getting AI analysis:', error);
+          alert('Failed to generate AI report. Please try again.');
+          this.isLoadingAnalysis = false;
+        }
+      });
+    } catch (error) {
+      console.error('Error in generateReport:', error);
+      this.isLoadingAnalysis = false;
+    }
+  }
+
+  // Add method to submit psychologist comment
+  async submitPsychologistComment() {
+    if (!this.psychologistComment.trim()) {
+      return;
+    }
+
+    this.isSavingComment = true;
+    try {
+      await this.testService.updatePsychologistComment(
+        this.attemptId,
+        this.psychologistComment
+      ).toPromise();
+      
+      // Optionally refresh the data or show success message
+      this.isSavingComment = false;
+    } catch (error) {
+      console.error('Error saving psychologist comment:', error);
+      this.isSavingComment = false;
+      // Optionally show error message
+    }
   }
 }

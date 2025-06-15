@@ -86,6 +86,15 @@ const TestAttemptSchema = new Schema(
       classification: { type: String, default: null },
       classifiedBy: { type: String, default: null },
       classifiedAt: { type: Date, default: null },
+    },
+    psychologistComment: {
+      comment: { type: String, default: null },
+      commentedBy: { type: String, default: null },
+      commentedAt: { type: Date, default: null },
+    },
+    aiComment: {
+      comment: { type: String, default: null },
+      commentedAt: { type: Date, default: null },
     }
   },
   {
@@ -474,7 +483,7 @@ TestAttemptSchema.set("toObject", {
   },
 });
 
-// Update or add the pre-save middleware to initialize both AI and manual classifications
+// Update or add the pre-save middleware to initialize all fields
 TestAttemptSchema.pre("save", function (next) {
   if (!this.aiClassification) {
     this.aiClassification = {
@@ -484,7 +493,6 @@ TestAttemptSchema.pre("save", function (next) {
     };
   }
   
-  // Initialize manualClassification if it doesn't exist
   if (!this.manualClassification) {
     this.manualClassification = {
       classification: null,
@@ -492,12 +500,41 @@ TestAttemptSchema.pre("save", function (next) {
       classifiedAt: null,
     };
   }
+
+  // Initialize psychologistComment if it doesn't exist
+  if (!this.psychologistComment) {
+    this.psychologistComment = {
+      comment: null,
+      commentedBy: null,
+      commentedAt: null,
+    };
+  }
+
+  // Initialize aiComment if it doesn't exist
+  if (!this.aiComment) {
+    this.aiComment = {
+      comment: null,
+      commentedAt: null,
+    };
+  }
   
-  // Mark both fields as modified to ensure they're saved
+  // Mark all fields as modified to ensure they're saved
   this.markModified('aiClassification');
   this.markModified('manualClassification');
+  this.markModified('psychologistComment');
+  this.markModified('aiComment');
   
   next();
 });
+
+// Update the updateAiComment method to properly use the new structure
+TestAttemptSchema.methods.updateAiComment = async function (aiCommentText) {
+  this.aiComment = {
+    comment: aiCommentText,
+    commentedAt: new Date(),
+  };
+  this.markModified('aiComment');
+  return await this.save();
+};
 
 module.exports = mongoose.model("TestAttempt", TestAttemptSchema);

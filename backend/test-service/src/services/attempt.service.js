@@ -1093,6 +1093,50 @@ class AttemptService {
       throw error;
     }
   }
+  async updateAiComment(attemptId, aiComment) {
+    try {
+      const attempt = await TestAttempt.findById(attemptId);
+      if (!attempt) {
+        throw new Error(`Attempt ${attemptId} not found`);
+      }
+
+      attempt.aiComment = {
+        comment: aiComment,
+        commentedAt: new Date(),
+      };
+
+      attempt.markModified('aiComment'); // Explicitly mark as modified
+      await attempt.save();
+      logger.info(`Updated ai comment for attempt ${attemptId}`);
+      
+      return attempt;
+    } catch (error) {
+      logger.error(`Error updating ai comment for attempt ${attemptId}:`, error);
+      throw error;
+    }
+  }
+  async updatePsychologistComment(attemptId, { comment, commentedBy }) {
+    try {
+      const attempt = await TestAttempt.findById(attemptId);
+      if (!attempt) {
+        throw new Error(`Attempt ${attemptId} not found`);
+      }
+
+      attempt.psychologistComment = {
+        comment,
+        commentedBy,
+       commentedAt: new Date(),
+      };
+
+      await attempt.save();
+      logger.info(`Updated psychologist comment for attempt ${attemptId}`);
+      
+      return attempt;
+    } catch (error) {
+      logger.error(`Error updating psychologist comment for attempt ${attemptId}:`, error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new AttemptService();

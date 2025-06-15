@@ -304,40 +304,35 @@
       <div class="mb-8">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-bold text-xl text-gray-800">AI Analysis</h3>
-          <button (click)="isAiAnalysisVisible = !isAiAnalysisVisible"
-            class="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors duration-300">
-            {{ isAiAnalysisVisible ? "Hide Analysis" : "Show Analysis" }}
-          </button>
+          <div class="flex gap-2">
+            <button 
+              (click)="generateReport()"
+              [disabled]="isLoadingAnalysis"
+              class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300 flex items-center gap-2"
+            >
+              <div *ngIf="isLoadingAnalysis" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              {{ isLoadingAnalysis ? 'Generating...' : 'Generate Report' }}
+            </button>
+            <button (click)="isAiAnalysisVisible = !isAiAnalysisVisible"
+              class="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors duration-300">
+              {{ isAiAnalysisVisible ? "Hide Analysis" : "Show Analysis" }}
+            </button>
+          </div>
         </div>
-        <div *ngIf="isAiAnalysisVisible" class="">
-          <div *ngFor="let comment of aiComments; let i = index"
-            class="bg-white hover:p-4 hover:rounded-xl hover:shadow-lg transition-all duration-300">
-            <p class="text-gray-700 italic mb-4">"{{ comment.text }}"</p>
-            <div class="flex items-center gap-4">
-              <button (click)="handleReaction(i, true)" [class]="
-                  comment.reaction === true
-                    ? '  text-green-500'
-                    : ' text-green-500'
-                "
-                class="rounded-full transition-colors duration-300 hover:text-green-600 hover:scale-110 hover:shadow-lg">
-                <i [class]="
-                    comment.reaction === true
-                      ? 'pi pi-thumbs-up-fill'
-                      : 'pi pi-thumbs-up'
-                  "></i>
-              </button>
-              <button (click)="handleReaction(i, false)" [class]="
-                  comment.reaction === false ? ' text-red-500' : ' text-red-500'
-                " class="rounded-full transition-all duration-300 hover:text-red-600 hover:scale-110 hover:shadow-lg">
-                <i [class]="
-                    comment.reaction === false
-                      ? 'pi pi-thumbs-down-fill'
-                      : 'pi pi-thumbs-down'
-                  "></i>
-              </button>
-              <input [(ngModel)]="comment.feedback" type="text" placeholder="Your feedback"
-                class="p-2 border rounded-lg flex-1 focus:ring-2 focus:ring-blue-300 focus:outline-none" />
-            </div>
+        
+        <!-- Loading State -->
+        <div *ngIf="isLoadingAnalysis" class="flex justify-center items-center p-8">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+            <p class="text-gray-600">Analyzing test performance...</p>
+          </div>
+        </div>
+
+        <!-- Analysis Content -->
+        <div *ngIf="isAiAnalysisVisible && !isLoadingAnalysis && aiComment" 
+             class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 transition-all duration-300">
+          <div class="text-gray-700 prose max-w-none">
+            <div [innerHTML]="formattedAiComment"></div>
           </div>
         </div>
       </div>
@@ -346,11 +341,24 @@
 
       <!-- Psychologist Comment Section -->
       <div class="bg-white">
-        <h3 class="font-bold text-xl mb-4 text-gray-800">
-          Psychologist's Analysis
-        </h3>
-        <textarea [(ngModel)]="psychologistComment" placeholder="Enter your professional analysis here..."
-          class="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none min-h-[150px]"></textarea>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-xl text-gray-800">
+            Psychologist's Analysis
+          </h3>
+          <button 
+            (click)="submitPsychologistComment()"
+            [disabled]="isSavingComment || !psychologistComment.trim()"
+            class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <div *ngIf="isSavingComment" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            {{ isSavingComment ? 'Saving...' : 'Save Comment' }}
+          </button>
+        </div>
+        <textarea 
+          [(ngModel)]="psychologistComment" 
+          placeholder="Enter your professional analysis here..."
+          class="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none min-h-[150px]"
+        ></textarea>
       </div>
     </div>
   </div>
