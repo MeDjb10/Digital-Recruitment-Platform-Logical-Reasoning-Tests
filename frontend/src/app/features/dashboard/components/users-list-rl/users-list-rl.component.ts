@@ -85,11 +85,7 @@ export class UsersListRLComponent implements OnInit, AfterViewInit {
     { label: 'Not Submitted', value: 'not_submitted', severity: 'secondary' },
   ];
 
-  testStatusOptions = [
-    { label: 'Not Started', value: 'not_started', severity: 'secondary' },
-    { label: 'In Progress', value: 'in-progress', severity: 'info' },
-    { label: 'Completed', value: 'completed', severity: 'success' },
-  ];
+
 
   // Education level options for filtering
   educationLevelOptions = [
