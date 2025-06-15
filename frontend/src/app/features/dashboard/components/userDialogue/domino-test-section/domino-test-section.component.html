@@ -129,7 +129,7 @@
         <div class="space-y-4">
           <!-- Show dropdown only for psychologists when no classification exists -->
           <div  class="transition-all duration-300">
-            <select #classificationSelect
+            <select #classificationSelect *ngIf="!manualClassification"
               (change)="onClassificationSelect(classificationSelect.value)"
               class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none bg-white hover:bg-gray-50 transition-colors">
               <option value="">Select Classification</option>
