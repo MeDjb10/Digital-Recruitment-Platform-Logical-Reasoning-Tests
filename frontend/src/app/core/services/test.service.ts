@@ -713,4 +713,122 @@ export class TestService {
       })
     );
   }
+
+  /**
+   * Update AI classification for an attempt
+   */
+  updateAiClassification(attemptId: string, classification: { prediction: string; confidence: number; timestamp?: string }): Observable<AttemptResponse> {
+    console.log('Updating AI classification:', { attemptId, classification });
+    
+    return this.http
+      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/ai-classification`, classification)
+      .pipe(
+        tap(response => {
+          console.log('AI classification update response:', response);
+        }),
+        catchError(error => {
+          console.error('Error updating AI classification:', error);
+          // Create a more user-friendly error response
+          const errorMessage = error.error?.error || 'Failed to update AI classification';
+          return throwError(() => ({
+            success: false,
+            message: errorMessage,
+            error: error
+          }));
+        })
+      );
+  }
+
+  /**
+   * Update manual classification for an attempt
+   */
+  updateManualClassification(attemptId: string, classification: string): Observable<AttemptResponse> {
+    return this.http
+      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/manual-classification`, { classification })
+      .pipe(
+        tap(response => {
+          this.logApiInteraction('manualClassification', { attemptId, classification }, response);
+        }),
+        catchError(error => {
+          console.error('Error updating manual classification:', error);
+          const errorMessage = error.error?.error || 'Failed to update manual classification';
+          return throwError(() => ({
+            success: false,
+            message: errorMessage,
+            error: error
+          }));
+        })
+      );
+  }
+
+  /**
+   * Update AI comment for an attempt
+   */
+  updateAiComment(attemptId: string, aiComment: string): Observable<AttemptResponse> {
+    return this.http
+      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/ai-comment`, { aiComment })
+      .pipe(
+        tap(response => {
+          this.logApiInteraction('aiComment', { attemptId, aiComment }, response);
+        }),
+        catchError(error => {
+          console.error('Error updating AI comment:', error);
+          const errorMessage = error.error?.error || 'Failed to update AI comment';
+          return throwError(() => ({
+            success: false,
+            message: errorMessage,
+            error: error
+          }));
+        })
+      );
+  }
+
+  /**
+   * Update psychologist's comment for an attempt
+   */
+  updatePsychologistComment(attemptId: string, comment: string): Observable<AttemptResponse> {
+    const commentedBy = this.authService.getCurrentUser()?.firstName + ' ' + 
+                       this.authService.getCurrentUser()?.lastName;
+    
+    return this.http
+      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/psychologist-comment`, { 
+        comment, 
+        commentedBy 
+      })
+      .pipe(
+        tap(response => {
+          this.logApiInteraction('psychologistComment', { attemptId, comment }, response);
+        }),
+        catchError(error => {
+          console.error('Error updating psychologist comment:', error);
+          const errorMessage = error.error?.error || 'Failed to update psychologist comment';
+          return throwError(() => ({
+            success: false,
+            message: errorMessage,
+            error: error
+          }));
+        })
+      );
+  }
+
+  /**
+   * Get just the attempt data
+   */
+  getAttempt(attemptId: string): Observable<AttemptResponse> {
+    return this.http
+      .get<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}`)
+      .pipe(
+        tap(response => {
+          this.logApiInteraction('getAttempt', { attemptId }, response);
+        }),
+        catchError(error => {
+          console.error('Error getting attempt:', error);
+          return throwError(() => ({
+            success: false,
+            message: 'Failed to get attempt data',
+            error: error
+          }));
+        })
+      );
+  }
 }

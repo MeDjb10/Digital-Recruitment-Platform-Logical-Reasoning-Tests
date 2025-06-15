@@ -14,7 +14,7 @@
       <h2 class="text-2xl font-semibold mb-4">Test Score</h2>
       <div class="flex justify-center items-center space-x-8">
         <div class="text-center">
-          <p class="text-6xl font-bold mb-2">{{ performance.score | number : "1.0-1"  }}%</p>
+          <p class="text-6xl font-bold mb-2">{{ performance.score | number : "1.0-1" }}%</p>
 
           <p class="text-lg opacity-90">Overall Score</p>
         </div>
@@ -28,7 +28,7 @@
       </div>
     </div>
   </div>
-<div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
     <div
       class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-md transform hover:scale-105 transition-transform duration-300">
       <div class="flex items-center justify-between">
@@ -85,6 +85,83 @@
       </div>
     </div>
   </div>
+ 
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- AI Classification -->
+      <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          AI Classification
+          <i class="pi pi-robot text-blue-500"></i>
+        </h3>
+        <div class="space-y-4">
+          <!-- Show classification if exists -->
+          <div *ngIf="aiClassification" 
+               class="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 relative group cursor-help">
+            <div class="flex justify-between items-center">
+              <span 
+                    class="text-lg font-semibold">
+                {{aiClassification}}
+              </span>
+              <span class="text-sm text-blue-600">
+                {{aiConfidence | percent:'1.0-1'}}
+              </span>
+            </div>
+            <!-- Tooltip -->
+            <div class="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300
+                        absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2
+                        bg-gray-900 text-white text-sm rounded-lg py-2 px-4 shadow-lg whitespace-nowrap">
+              <p>Confidence Level: {{aiConfidence | percent:'1.0-1'}}</p>
+              <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 
+                          border-8 border-transparent border-t-gray-900"></div>
+            </div>
+          </div>
+          <!-- Show button only if no classification exists -->
+          <button *ngIf="!aiClassification"
+            (click)="classifyPerformance()"
+            class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            Get AI Classification
+          </button>
+        </div>
+      </div>      <!-- Manual Classification -->
+      <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Manual Classification</h3>
+        <div class="space-y-4">
+          <!-- Show dropdown only for psychologists when no classification exists -->
+          <div  class="transition-all duration-300">
+            <select #classificationSelect *ngIf="!manualClassification"
+              (change)="onClassificationSelect(classificationSelect.value)"
+              class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none bg-white hover:bg-gray-50 transition-colors">
+              <option value="">Select Classification</option>
+              <option *ngFor="let label of classificationLabels" [value]="label">
+                {{label}}
+              </option>
+            </select>
+          </div>
+
+          <!-- Show existing classification with tooltip -->
+          <div *ngIf="manualClassification" 
+               class="p-3 bg-gray-50 rounded-lg border border-gray-200 relative group cursor-help">
+            <div class="flex items-center justify-between">
+              <span class="font-medium text-gray-700">{{manualClassification.value}}</span>
+              <i class="pi pi-info-circle text-blue-500"></i>
+            </div>
+            
+            <!-- Tooltip -->
+            <div class="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300
+                        absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2
+                        bg-gray-900 text-white text-sm rounded-lg py-2 px-4 shadow-lg">
+              <p class="whitespace-nowrap">
+                Classified by: {{manualClassification.classifiedBy}}<br>
+                Date: {{formatClassificationDate(manualClassification.classifiedAt)}}
+              </p>
+              <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 
+                          border-8 border-transparent border-t-gray-900"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   <!-- Performance Level Card -->
   <div class="bg-gradient-to-r from-white to-gray-50 p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
     <div class="flex justify-between items-center">
@@ -100,7 +177,7 @@
       <div class="text-right">
         <p class="text-sm text-gray-500">Overall Score</p>
         <p class="text-4xl font-bold" [style.color]="performance.color">
-          {{ performance.score | number : "1.0-1"  }}%
+          {{ performance.score | number : "1.0-1" }}%
         </p>
         <p class="text-xs text-gray-500 mt-1">
           {{ score }}/{{ totalQuestions }} correct
@@ -115,7 +192,7 @@
   </div>
 
   <!-- Statistics Grid -->
-  
+
 
   <!-- Test Analytics Section -->
   <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-8">
@@ -127,13 +204,13 @@
           <div class="flex justify-between">
             <span class="text-gray-600">Start Time:</span>
             <span class="font-medium">{{
-              testAnalytics.startTime 
+              testAnalytics.startTime
               }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">End Time:</span>
             <span class="font-medium">{{
-              testAnalytics.endTime 
+              testAnalytics.endTime
               }}</span>
           </div>
           <div class="flex justify-between">
@@ -249,40 +326,39 @@
       <div class="mb-8">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-bold text-xl text-gray-800">AI Analysis</h3>
-          <button (click)="isAiAnalysisVisible = !isAiAnalysisVisible"
-            class="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors duration-300">
-            {{ isAiAnalysisVisible ? "Hide Analysis" : "Show Analysis" }}
-          </button>
+          <div class="flex gap-2">
+            <!-- Only show generate button if no analysis exists -->
+            <button *ngIf="!aiComment"
+              (click)="generateReport()"
+              [disabled]="isLoadingAnalysis"
+              class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300 flex items-center gap-2"
+            >
+              <div *ngIf="isLoadingAnalysis" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              {{ isLoadingAnalysis ? 'Generating...' : 'Generate Report' }}
+            </button>
+            <!-- Only show toggle button if analysis exists -->
+            <button *ngIf="aiComment"
+              (click)="isAiAnalysisVisible = !isAiAnalysisVisible"
+              class="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors duration-300"
+            >
+              {{ isAiAnalysisVisible ? "Hide Analysis" : "Show Analysis" }}
+            </button>
+          </div>
         </div>
-        <div *ngIf="isAiAnalysisVisible" class="">
-          <div *ngFor="let comment of aiComments; let i = index"
-            class="bg-white hover:p-4 hover:rounded-xl hover:shadow-lg transition-all duration-300">
-            <p class="text-gray-700 italic mb-4">"{{ comment.text }}"</p>
-            <div class="flex items-center gap-4">
-              <button (click)="handleReaction(i, true)" [class]="
-                  comment.reaction === true
-                    ? '  text-green-500'
-                    : ' text-green-500'
-                "
-                class="rounded-full transition-colors duration-300 hover:text-green-600 hover:scale-110 hover:shadow-lg">
-                <i [class]="
-                    comment.reaction === true
-                      ? 'pi pi-thumbs-up-fill'
-                      : 'pi pi-thumbs-up'
-                  "></i>
-              </button>
-              <button (click)="handleReaction(i, false)" [class]="
-                  comment.reaction === false ? ' text-red-500' : ' text-red-500'
-                " class="rounded-full transition-all duration-300 hover:text-red-600 hover:scale-110 hover:shadow-lg">
-                <i [class]="
-                    comment.reaction === false
-                      ? 'pi pi-thumbs-down-fill'
-                      : 'pi pi-thumbs-down'
-                  "></i>
-              </button>
-              <input [(ngModel)]="comment.feedback" type="text" placeholder="Your feedback"
-                class="p-2 border rounded-lg flex-1 focus:ring-2 focus:ring-blue-300 focus:outline-none" />
-            </div>
+        
+        <!-- Loading State -->
+        <div *ngIf="isLoadingAnalysis" class="flex justify-center items-center p-8">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+            <p class="text-gray-600">Analyzing test performance...</p>
+          </div>
+        </div>
+
+        <!-- Analysis Content -->
+        <div *ngIf="aiComment && isAiAnalysisVisible" 
+             class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 transition-all duration-300">
+          <div class="text-gray-700 prose max-w-none">
+            <div [innerHTML]="formattedAiComment"></div>
           </div>
         </div>
       </div>
@@ -291,11 +367,33 @@
 
       <!-- Psychologist Comment Section -->
       <div class="bg-white">
-        <h3 class="font-bold text-xl mb-4 text-gray-800">
-          Psychologist's Analysis
-        </h3>
-        <textarea [(ngModel)]="psychologistComment" placeholder="Enter your professional analysis here..."
-          class="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none min-h-[150px]"></textarea>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-xl text-gray-800">
+            Psychologist's Analysis
+          </h3>
+          <!-- Only show save button for psychologists -->
+          <button *ngIf="currentUser?.role === 'psychologist'"
+            (click)="submitPsychologistComment()"
+            [disabled]="isSavingComment || !psychologistComment.trim()"
+            class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <div *ngIf="isSavingComment" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            {{ isSavingComment ? 'Saving...' : 'Save Comment' }}
+          </button>
+        </div>
+        
+        <!-- Show existing comment for non-psychologists -->
+        <div *ngIf="psychologistComment && currentUser?.role !== 'psychologist'"
+             class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <p class="whitespace-pre-line text-gray-700">{{psychologistComment}}</p>
+        </div>
+        
+        <!-- Show textarea only for psychologists -->
+        <textarea *ngIf="currentUser?.role === 'psychologist'"
+          [(ngModel)]="psychologistComment" 
+          placeholder="Enter your professional analysis here..."
+          class="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none min-h-[150px]"
+        ></textarea>
       </div>
     </div>
   </div>

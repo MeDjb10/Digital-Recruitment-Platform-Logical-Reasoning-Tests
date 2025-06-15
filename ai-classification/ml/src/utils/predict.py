@@ -66,9 +66,13 @@ class PerformancePredictor:
         try:
             # Determine which model to use based on test type
             test_type = features.get('test_type', '').lower()
-            if test_type == 'd70':
+            # Convert test type to lowercase and remove any spaces or dashes
+            test_type = test_type.lower().replace('-', '').replace(' ', '')
+            
+            # Check if contains 'd' and either '70' or '2000'
+            if 'd' in test_type and '70' in test_type:
                 model = self.d70_model
-            elif test_type == 'd2000':
+            elif 'd' in test_type and '2000' in test_type:
                 model = self.d2000_model
             else:
                 raise ValueError(f"Unknown test type: {test_type}")

@@ -71,6 +71,7 @@ app.get("/", (req, res) => {
       auth: "/api/auth/*",
       users: "/api/users/*",
       tests: "/api/tests/*",
+      ai: "/api/ai/*",
     },
   });
 });
@@ -320,6 +321,41 @@ app.use(
     },
   })
 );
+
+// Add proxy route for AI service with enhanced error handling
+app.use(
+  "/api/ai",
+  proxy("http://localhost:8001", {
+    timeout: 30000, // 30 seconds timeout
+    proxyReqPathResolver: (req) => {
+      console.log(`Proxying to AI service: ${req.originalUrl}`);
+      const path = req.originalUrl.replace('/api/ai', '');
+      console.log(`Transformed path: ${path}`);
+      return path;
+    },
+    proxyReqBodyDecorator: (bodyContent, srcReq) => {
+      // Log request body for debugging
+      console.log('AI service request body:', bodyContent);
+      return bodyContent;
+    },
+    proxyErrorHandler: (err, res, next) => {
+      console.error("AI service proxy error:", err);
+      if (err.code === "ECONNREFUSED") {
+        return res.status(503).json({
+          status: "error",
+          message: "AI service is unavailable",
+          details: err.message
+        });
+      }
+      res.status(500).json({
+        status: "error",
+        message: "Error connecting to AI service",
+        details: process.env.NODE_ENV === "development" ? err.message : undefined,
+      });
+    },
+  })
+);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error("Gateway error:", err);
@@ -338,6 +374,7 @@ app.listen(PORT, () => {
   console.log(`🔐 Auth Service: http://localhost:${PORT}/api/auth/*`);
   console.log(`👤 User Service: http://localhost:${PORT}/api/users/*`);
   console.log(`📝 Test Service: http://localhost:${PORT}/api/tests/*`);
+  console.log(`🤖 AI Service: http://localhost:${PORT}/api/ai/*`);
 });
 
 // Handle unhandled promise rejections
