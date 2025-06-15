@@ -150,123 +150,47 @@ export class UsersListRLComponent implements OnInit {
       examDate: [null],
     });
   }
-
   ngOnInit() {
     this.loadCandidates();
     this.loadTests(); // Add this to load tests on component init
-
-    // Setup debounce for search
-    this.searchTerms
-      .pipe(debounceTime(400), distinctUntilChanged())
-      .subscribe((term) => {
-        this.filters.search = term;
-        this.loadCandidates();
-      });
   }
 
-  // New method to handle global filter input changes
-  onGlobalFilterChange(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.globalFilterValue = value;
-    this.filters.search = value;
-    this.loadCandidates();
-  }
-
-  // Method to handle status filter changes
-  onStatusFilterChange(value: string) {
-    console.log('Status filter changed to:', value);
-    if (value) {
-      this.filters.testAuthorizationStatus = value as any;
-    } else {
-      delete this.filters.testAuthorizationStatus;
-    }
-    // Manually trigger a reload with the new filters
-    this.loadCandidates();
-  }
-
-  // Clear the global filter
-  clearGlobalFilter(input: HTMLInputElement) {
+  // Simplified global filter method that works with PrimeNG table
+  clearGlobalFilter(input: HTMLInputElement, table: Table) {
     this.globalFilterValue = '';
     input.value = '';
-    this.searchTerms.next('');
+    table.clear();
   }
 
+  // Refresh data method
+  refreshData() {
+    this.selectedCandidates = [];
+    this.loadCandidates();
+  }
+
+  // Clear all filters
+  clearAllFilters(table: Table) {
+    this.globalFilterValue = '';
+    this.filterValues = {};
+    this.filters = {
+      role: 'candidate',
+      page: 1,
+      limit: 10,
+    };
+    table.clear();
+    this.loadCandidates();
+  }
   // Check if there are active filters
   hasActiveFilters(): boolean {
     return (
       !!this.globalFilterValue ||
-      Object.keys(this.filterValues).length > 0 ||
-      Object.keys(this.filters).some((key) => {
-        const value = this.filters[key as keyof UserFilters];
-        return (
-          key !== 'role' &&
-          key !== 'page' &&
-          key !== 'limit' &&
-          value !== undefined &&
-          value !== null &&
-          value !== ''
-        );
-      })
-    );
-  }
+      this.table?.hasFilter() ||
+      Object.keys(this.filterValues).length > 0
+    );  }
 
   // Clear selection
   clearSelection() {
     this.selectedCandidates = [];
-  }
-
-  // Add a new method to handle generic column filter changes
-  onColumnFilterChange(field: string, value: any) {
-    console.log(`Column filter changed: ${field} = ${value}`);
-
-    if (value && value.trim() !== '') {
-      // Update our tracking object
-      this.filterValues[field] = value;
-
-      // Update the filters object based on the field
-      switch (field) {
-        case 'firstName':
-          this.filters.firstName = value;
-          break;
-        case 'lastName':
-          this.filters.lastName = value;
-          break;
-        case 'email':
-          this.filters.email = value;
-          break;
-        case 'educationLevel':
-          this.filters.educationLevel = value;
-          break;
-        default:
-          // For any other fields
-          (this.filters as any)[field] = value;
-      }
-    } else {
-      // Clear filter if value is empty
-      delete this.filterValues[field];
-
-      // Remove from filters object
-      switch (field) {
-        case 'firstName':
-          delete this.filters.firstName;
-          break;
-        case 'lastName':
-          delete this.filters.lastName;
-          break;
-        case 'email':
-          delete this.filters.email;
-          break;
-        case 'educationLevel':
-          delete this.filters.educationLevel;
-          break;
-        default:
-          // For any other fields
-          delete (this.filters as any)[field];
-      }
-    }
-
-    // Reload the data with updated filters
-    this.loadCandidates();
   }
 
   // Add specific handler for date filter - improve with better null handling
@@ -288,14 +212,18 @@ export class UsersListRLComponent implements OnInit {
     }
 
     this.loadCandidates();
-  }
-
-  // Improved to handle the right event type
+  }  // Simplified loadCandidates method
   loadCandidates(event?: any) {
     this.loading = true;
     
+    // Build filters based on current view
+    const currentFilters: UserFilters = {
+      ...this.filters,
+      ...(this.activeView === 'test_progress' && { testAuthorizationStatus: 'approved' as const })
+    };
+    
     if (this.activeView === 'test_progress') {
-      this.userService.getUsers(this.filters).pipe(
+      this.userService.getUsers(currentFilters).pipe(
         catchError(error => {
           console.error('Error loading users:', error);
           return of({ users: [], pagination: { total: 0 } });
@@ -303,7 +231,7 @@ export class UsersListRLComponent implements OnInit {
         switchMap(response => {
           const candidates = response.users;
           
-          // Use individual attempts instead of getting all at once
+          // Get test progress for approved candidates
           const attemptRequests = candidates.map(candidate => {
             if (!candidate._id) {
               return of({ ...candidate, testProgress: null });
@@ -314,7 +242,6 @@ export class UsersListRLComponent implements OnInit {
                   new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
                 );
                 const latestAttempt = sortedAttempts[0];
-                console.log(`Latest attempt for candidate ${candidate._id}:`, latestAttempt);
                 
                 return {
                   ...candidate,
@@ -328,14 +255,14 @@ export class UsersListRLComponent implements OnInit {
                 };
               }),
               catchError(error => {
-                console.error(`Error loading attempts for candidate ${candidate.id}:`, error);
+                console.error(`Error loading attempts for candidate ${candidate._id}:`, error);
                 return of({
                   ...candidate,
                   testProgress: null
                 });
               })
-            )}
-          );
+            );
+          });
 
           return forkJoin(attemptRequests).pipe(
             map(candidatesWithProgress => ({
@@ -346,31 +273,24 @@ export class UsersListRLComponent implements OnInit {
         })
       ).subscribe({
         next: (result) => {
-          this.candidates = result.candidates;
+          this.candidates = result.candidates.map(user => {
+            if (user._id && !user.id) {
+              user.id = user._id;
+            }
+            return user;
+          });
           this.totalRecords = result.totalRecords;
           this.loading = false;
         },
         error: (error) => {
           console.error('Error:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to load data'
-          });
-          this.loading = false;
-          this.candidates = [];
-          this.totalRecords = 0;
+          this.handleLoadError(error);
         }
       });
     } else {
-      this.userService.getUsers(this.filters).subscribe({
+      this.userService.getUsers(currentFilters).subscribe({
         next: (response) => {
-          console.log('Response from server:', response);
-          console.log('Total records:', response.pagination.total);
-
-          // Map users to ensure each has a consistent identifier property for table selection
           this.candidates = response.users.map((user) => {
-            // If _id exists but id doesn't, assign _id to id for consistency
             if (user._id && !user.id) {
               user.id = user._id;
             }
@@ -381,15 +301,20 @@ export class UsersListRLComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error loading candidates:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to load candidates. Please try again.',
-          });
-          this.loading = false;
+          this.handleLoadError(error);
         },
       });
     }
+  }
+  private handleLoadError(error: any) {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to load data. Please try again.',
+    });
+    this.loading = false;
+    this.candidates = [];
+    this.totalRecords = 0;
   }
 
   // Make formatDateForApi more robust with better error handling
@@ -407,28 +332,7 @@ export class UsersListRLComponent implements OnInit {
       return d.toISOString().split('T')[0];
     } catch (err) {
       console.error('Error formatting date:', err);
-      return '';
-    }
-  }
-
-  // Improved method to clear filters
-  clearAllFilters(table: Table) {
-    // Reset the table UI filters
-    table.clear();
-
-    // Reset our internal state
-    this.globalFilterValue = '';
-    this.filterValues = {};
-
-    // Reset the API request filters
-    this.filters = {
-      role: 'candidate',
-      page: 1,
-      limit: 10,
-    };
-
-    // Reload data
-    this.loadCandidates();
+      return '';    }
   }
 
   // Method to load test authorization requests
@@ -850,7 +754,8 @@ export class UsersListRLComponent implements OnInit {
   // Method to switch between views
   switchView(view: 'auth_requests' | 'test_progress') {
     this.activeView = view;
-    this.clearSelection();
+    this.selectedCandidates = [];
+    this.clearAllFilters(this.table);
     this.loadCandidates();
   }
 
