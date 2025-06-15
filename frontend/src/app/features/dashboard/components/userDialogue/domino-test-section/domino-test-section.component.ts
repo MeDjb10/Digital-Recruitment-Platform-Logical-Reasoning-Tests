@@ -154,11 +154,11 @@ export class DominoTestSectionComponent implements OnInit {
   ];
   userPosition: string = ''; // This should be populated from user data
   userEducation: string = ''; // This should be populated from user data
-  showClassificationDropdown = true;
-  currentUser: User | null | undefined; // This should be populated from auth service
-  psychologistComment: string = '';
+  showClassificationDropdown = true;  currentUser: User | null | undefined; // This should be populated from auth service
   savedPsychologistComment: string = ''; // Tracks the saved comment from database
   draftPsychologistComment: string = ''; // Tracks the draft being edited
+  psychologistCommentAuthor: string = ''; // Tracks who wrote the comment
+  psychologistCommentDate: Date | null = null; // Tracks when the comment was written
   isSavingComment: boolean = false;
 
   attempt: any = null; // Add this property
@@ -228,9 +228,20 @@ export class DominoTestSectionComponent implements OnInit {
           }          // Initialize psychologist comment if it exists
           if (this.attempt.psychologistComment?.comment) {
             this.savedPsychologistComment = this.attempt.psychologistComment.comment;
-            this.psychologistComment = this.attempt.psychologistComment.comment;
-            console.log('Psychologist comment:', this.psychologistComment);
             
+            // Set author and date from backend if available
+            if (this.attempt.psychologistComment.authorName) {
+              this.psychologistCommentAuthor = this.attempt.psychologistComment.authorName;
+            }
+            if (this.attempt.psychologistComment.createdAt) {
+              this.psychologistCommentDate = new Date(this.attempt.psychologistComment.createdAt);
+            }
+            
+            console.log('Psychologist comment loaded:', {
+              comment: this.savedPsychologistComment,
+              author: this.psychologistCommentAuthor,
+              date: this.psychologistCommentDate
+            });
           }
         },
         error: (error) => {
@@ -249,13 +260,12 @@ export class DominoTestSectionComponent implements OnInit {
           this.isLoading = false;
         },
       });
-    }
-    console.log('test details aaaaaaaaaaaaaaaaaaaaaa:', this.testAnalytics);
+    }    console.log('test details aaaaaaaaaaaaaaaaaaaaaa:', this.testAnalytics);
     this.currentUser = this.authService.getCurrentUser();
     console.log('Current user:', this.currentUser?.role);
     
-    this.showClassificationDropdown =
-      this.currentUser?.role === 'psychologist' && !this.manualClassification;
+    // Update this line to use the new method
+    this.showClassificationDropdown = this.canManuallyClassify();
   }
 
   private initializeData(data: any) {
@@ -627,14 +637,22 @@ export class DominoTestSectionComponent implements OnInit {
     } catch (error) {
       console.error('Error in classifyPerformance:', error);
     }
-  }
+  }  onClassificationSelect(classification: string) {
+    if (!classification || !this.canManuallyClassify()) {
+      console.error('Unauthorized attempt to classify or invalid classification');
+      return;
+    }
 
-  onClassificationSelect(classification: string) {
-    if (!classification) return;
+    // Get the full user name, fallback to email or 'Unknown'
+    const userName = this.currentUser 
+      ? `${this.currentUser.firstName || ''} ${this.currentUser.lastName || ''}`.trim() 
+        || this.currentUser.email 
+        || 'Unknown User'
+      : 'Unknown User';
 
     const classificationData: ManualClassification = {
       value: classification,
-      classifiedBy: this.currentUser?.firstName + ' ' + this.currentUser?.lastName || 'Unknown',
+      classifiedBy: userName,
       classifiedAt: new Date(),
     };
 
@@ -644,6 +662,7 @@ export class DominoTestSectionComponent implements OnInit {
         next: (response) => {
           this.manualClassification = classificationData;
           this.showClassificationDropdown = false;
+          console.log('Manual classification updated successfully');
         },
         error: (error) => {
           console.error('Error updating manual classification:', error);
@@ -692,10 +711,14 @@ export class DominoTestSectionComponent implements OnInit {
       // Clean up empty paragraphs
       .replace(/<p class="mb-4 text-gray-700 leading-relaxed"><\/p>/g, '');
   }
-
   async generateReport() {
     if (!this.userPosition || !this.userEducation) {
       console.error('Missing required user data');
+      return;
+    }
+
+    if (!this.hasAccessToAnalytics()) {
+      console.error('Unauthorized attempt to generate AI analysis');
       return;
     }
 
@@ -744,10 +767,10 @@ export class DominoTestSectionComponent implements OnInit {
       console.error('Error in generateReport:', error);
       this.isLoadingAnalysis = false;
     }
-  }
-  // Add method to submit psychologist comment
+  }  // Add method to submit psychologist comment
   async submitPsychologistComment() {
-    if (!this.draftPsychologistComment.trim()) {
+    if (!this.draftPsychologistComment.trim() || !this.canAddPsychologistComment()) {
+      console.error('Unauthorized attempt to add comment or empty comment');
       return;
     }
 
@@ -758,16 +781,134 @@ export class DominoTestSectionComponent implements OnInit {
         this.draftPsychologistComment
       ).toPromise();
 
-      // Update both saved and current comment after successful save
+      // Update saved comment and clear draft after successful save
       this.savedPsychologistComment = this.draftPsychologistComment;
-      this.psychologistComment = this.draftPsychologistComment;
       this.draftPsychologistComment = '';
       
+      // Set author and date for the newly saved comment
+      const userName = this.currentUser 
+        ? `${this.currentUser.firstName || ''} ${this.currentUser.lastName || ''}`.trim() 
+          || this.currentUser.email 
+          || 'Unknown User'
+        : 'Unknown User';
+      
+      this.psychologistCommentAuthor = userName;
+      this.psychologistCommentDate = new Date();
+      
       this.isSavingComment = false;
+      console.log('Psychologist comment saved successfully');
     } catch (error) {
       console.error('Error saving psychologist comment:', error);
       this.isSavingComment = false;
       // Optionally show error message
     }
+  }
+
+  // Add method to get classification styling based on level
+  getClassificationStyle(classification: string): string {
+    switch (classification.toLowerCase()) {
+      case 'très fort':
+      case 'very strong':
+        return 'bg-gradient-to-r from-green-500 to-green-600 border-green-400';
+      case 'fort':
+      case 'strong':
+        return 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-400';
+      case 'moyen':
+      case 'average':
+        return 'bg-gradient-to-r from-yellow-500 to-yellow-600 border-yellow-400';
+      case 'faible':
+      case 'weak':
+        return 'bg-gradient-to-r from-orange-500 to-orange-600 border-orange-400';
+      case 'très faible':
+      case 'very weak':
+        return 'bg-gradient-to-r from-red-500 to-red-600 border-red-400';
+      default:
+        return 'bg-gradient-to-r from-gray-500 to-gray-600 border-gray-400';
+    }
+  }
+
+  // Add method to translate French classifications to English
+  translateClassification(classification: string): string {
+    const translations: { [key: string]: string } = {
+      'très fort': 'Very Strong',
+      'fort': 'Strong',
+      'moyen': 'Average',
+      'faible': 'Weak',
+      'très faible': 'Very Weak'
+    };
+    
+    return translations[classification.toLowerCase()] || classification;
+  }
+
+  // Helper method to format psychologist comment date
+  formatPsychologistCommentDate(date: Date | null): string {
+    if (!date) return 'Unknown date';
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // Role-based permission methods
+  canManuallyClassify(): boolean {
+    return this.currentUser?.role === 'psychologist' && !this.manualClassification;
+  }
+
+  canAddPsychologistComment(): boolean {
+    return this.currentUser?.role === 'psychologist' && !this.savedPsychologistComment;
+  }
+
+  canViewClassificationDetails(): boolean {
+    return this.currentUser?.role === 'psychologist' || this.currentUser?.role === 'admin';
+  }
+
+  isPsychologist(): boolean {
+    return this.currentUser?.role === 'psychologist';
+  }
+
+  isAdmin(): boolean {
+    return this.currentUser?.role === 'admin';
+  }
+
+  hasAccessToAnalytics(): boolean {
+    return this.isPsychologist() || this.isAdmin();
+  }
+
+  // Get user role display name
+  getUserRoleDisplay(): string {
+    switch (this.currentUser?.role) {
+      case 'psychologist':
+        return 'Psychologist';
+      case 'admin':
+        return 'Administrator';
+      case 'hr':
+        return 'HR Manager';
+      case 'candidate':
+        return 'Candidate';
+      default:
+        return 'User';
+    }
+  }
+
+  // Get permission message for restricted actions
+  getPermissionMessage(action: string): string {
+    switch (action) {
+      case 'classify':
+        return 'Only psychologists can manually classify test results';
+      case 'comment':
+        return 'Only psychologists can add professional analysis';
+      case 'generate':
+        return 'Only authorized personnel can generate AI analysis';
+      default:
+        return 'You do not have permission to perform this action';
+    }
+  }
+
+  // Check if user can view sensitive analytics
+  canViewDetailedAnalytics(): boolean {
+    return this.isPsychologist() || this.isAdmin();
   }
 }

@@ -247,6 +247,9 @@ export class TestsListComponent implements OnInit {
   loading: boolean = true;
   errorMessage: string = '';
 
+  // Track attempt status for each test
+  testAttemptStatus: { [testId: string]: any } = {};
+
   constructor(
     private userService: UserService,
     private testService: TestService,
@@ -300,15 +303,32 @@ export class TestsListComponent implements OnInit {
             throw new Error('No test IDs found in assignment');
           }
 
-          // Fetch all assigned tests
-          const testRequests = testIds.map((testId, index) =>
-            this.testService.getTestById(testId).pipe(
+          // Fetch all assigned tests and their attempt status
+          const testRequests = testIds.map((testId, index) => {
+            const testRequest = this.testService.getTestById(testId).pipe(
               catchError((error) => {
                 console.error(`Error loading test ${testId}:`, error);
                 return of(null); // Return null for failed requests
               })
-            )
-          );
+            );
+            const attemptRequest = this.testService
+              .getAttemptByCandidateAndTest(currentUserId, testId)
+              .pipe(
+                catchError((error) => {
+                  // If no attempt found, that's expected for new tests
+                  console.log(
+                    `No attempt found for test ${testId}:`,
+                    error.status === 404 ? 'Not found (expected)' : error
+                  );
+                  return of({ success: true, data: null });
+                })
+              );
+
+            return forkJoin({
+              test: testRequest,
+              attempt: attemptRequest,
+            });
+          });
 
           return forkJoin(testRequests);
         }),
@@ -326,16 +346,46 @@ export class TestsListComponent implements OnInit {
         })
       )
       .subscribe({
-        next: (testResponses) => {
-          // Filter out null responses and extract test data
-          this.assignedTests = testResponses
-            .filter((response: any) => response?.success && response?.data)
-            .map((response: any, index: number) => ({
-              ...response.data,
-              isMainTest: index === 0, // First test is the main test
-            }));
+        next: (responses) => {
+          // Filter out null responses and extract test data with attempt status
+          this.assignedTests = [];
+          this.testAttemptStatus = {};
+
+          responses.forEach((response: any, index: number) => {
+            if (response?.test?.success && response?.test?.data) {
+              const testData = {
+                ...response.test.data,
+                isMainTest: index === 0, // First test is the main test
+              };
+
+              this.assignedTests.push(testData);
+              // Store attempt status
+              const testId = testData._id || testData.id;
+              if (response.attempt?.data) {
+                this.testAttemptStatus[testId] = {
+                  hasAttempt: true,
+                  attemptId: response.attempt.data._id,
+                  status: response.attempt.data.status,
+                  startTime: response.attempt.data.startTime,
+                  endTime: response.attempt.data.endTime,
+                  percentageScore: response.attempt.data.percentageScore,
+                };
+                console.log(
+                  `Test ${testId} has attempt with status: ${response.attempt.data.status}`
+                );
+              } else {
+                this.testAttemptStatus[testId] = {
+                  hasAttempt: false,
+                  attemptId: null,
+                  status: null,
+                };
+                console.log(`Test ${testId} has no attempt yet`);
+              }
+            }
+          });
 
           console.log('Loaded assigned tests:', this.assignedTests);
+          console.log('Test attempt status:', this.testAttemptStatus);
           this.loading = false;
           this.cdr.markForCheck();
         },
@@ -348,9 +398,31 @@ export class TestsListComponent implements OnInit {
         },
       });
   }
-
   // TrackBy function for better performance
   trackByTestId(index: number, test: any): string {
     return test._id || test.id || index.toString();
+  }
+
+  // Helper method to get test status
+  getTestStatus(testId: string): string {
+    const attemptStatus = this.testAttemptStatus[testId];
+    if (!attemptStatus?.hasAttempt) {
+      return 'not-started';
+    }
+    return attemptStatus.status || 'unknown';
+  }
+
+  // Helper method to check if test can be started/continued
+  canInteractWithTest(testId: string): boolean {
+    const status = this.getTestStatus(testId);
+    return status === 'not-started' || status === 'in-progress';
+  }
+
+  // Helper method to format percentage score
+  formatScore(score: number | undefined): string {
+    if (score === undefined || score === null) {
+      return '';
+    }
+    return Math.round(score).toString();
   }
 }

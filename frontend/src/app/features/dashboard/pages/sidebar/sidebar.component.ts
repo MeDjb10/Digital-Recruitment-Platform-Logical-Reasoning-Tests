@@ -63,38 +63,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
           route: 'Tests',
         },
         {
-          name: 'Statistiques',
-          translationKey: 'DASHBOARD.LOGICAL_REASONING.STATS',
-          route: 'Statistique',
-        },
-        {
           name: 'Utilisateurs',
           translationKey: 'DASHBOARD.LOGICAL_REASONING.USERS',
           route: 'Users',
-        },
-      ],
-    },
-    {
-      name: 'Verbal Reasoning',
-      translationKey: 'DASHBOARD.SIDEBAR.VERBAL_REASONING',
-      route: 'VerbalReasoning',
-      expanded: false,
-      icon: 'pi-comments', // Changed from pi-comment
-      subsections: [
-        {
-          name: 'Statistics',
-          translationKey: 'DASHBOARD.VERBAL_REASONING.STATS',
-          route: 'Statistics',
-        },
-        {
-          name: 'Users',
-          translationKey: 'DASHBOARD.VERBAL_REASONING.USERS',
-          route: 'Users',
-        },
-        {
-          name: 'Tests',
-          translationKey: 'DASHBOARD.VERBAL_REASONING.TESTS',
-          route: 'Tests',
         },
       ],
     },
@@ -112,12 +83,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
       translationKey: 'DASHBOARD.SIDEBAR.USERS',
       icon: 'pi-users',
       route: '/dashboard/users',
-    },
-    {
-      label: 'Settings',
-      translationKey: 'DASHBOARD.SIDEBAR.SETTINGS',
-      icon: 'pi-cog',
-      route: '/dashboard/settings',
     },
   ];
 
