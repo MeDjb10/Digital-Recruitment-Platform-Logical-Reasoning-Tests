@@ -238,8 +238,7 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
 
   // Setup user menu items
   setupUserMenu(): void {
-    this.userMenuItems = [
-      {
+    this.userMenuItems = [      {
         label: this.translate.instant('USER.PROFILE'),
         icon: 'pi pi-user',
         command: () => {
@@ -250,6 +249,7 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
       {
         label: this.translate.instant('USER.TESTS'),
         icon: 'pi pi-list',
+        visible: this.isCandidate(),
         command: () => {
           this.router.navigate(['/tests/my-tests']);
           this.showUserDropdown = false;
@@ -288,6 +288,12 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
     return ['admin', 'moderator', 'psychologist'].includes(
       this.currentUser.role
     );
+  }
+
+  // Check if user is candidate
+  isCandidate(): boolean {
+    if (!this.currentUser) return false;
+    return this.currentUser.role === 'candidate';
   }
 
   // Navigate to login
