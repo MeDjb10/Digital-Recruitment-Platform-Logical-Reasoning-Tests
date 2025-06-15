@@ -93,8 +93,7 @@ class PerformanceAnalyzer:
               
             # Store in ChromaDB for RAG purposes
             self._store_interaction(metrics, ai_comment)
-            
-            # Combine results
+              # Combine results
             return {
                 "metrics": metrics,
                 "prediction": prediction_result,
@@ -111,12 +110,17 @@ class PerformanceAnalyzer:
         
         # Store metrics and AI response
         metrics_str = json.dumps(metrics, default=json_util.default)
+        
+        # Prepare metadata, filtering out None values
+        metadata = {
+            "timestamp": timestamp
+        }
+        if ai_comment is not None:
+            metadata["ai_comment"] = ai_comment
+        
         self.metrics_collection.add(
             documents=[metrics_str],
-            metadatas=[{
-                "timestamp": timestamp,
-                "ai_comment": ai_comment
-            }],
+            metadatas=[metadata],
             ids=[f"metrics_{timestamp}"]
         )
         
@@ -190,10 +194,24 @@ class PerformanceAnalyzer:
             (f"Human Feedback: {case['feedback']}\n" if case['feedback'] else "No feedback available\n") +
             (f"Psychologist Comment: {case['psychologist_comment']}" if case['psychologist_comment'] else "No psychologist comment available")
             for i, case in enumerate(similar_cases)
-        ])
+        ])        # Add test-specific information
+        test_type_raw = metrics.get('test_type', '').lower()
+        # Normalize test type to match our internal keys
+        normalized_test_type = test_type_raw.lower().replace('-', '').replace(' ', '')
         
-        # Add test-specific information
-        test_type = metrics.get('test_type', '').lower()
+        logging.info(f"Test type detection - Raw: '{test_type_raw}', Normalized: '{normalized_test_type}'")
+        
+        # Determine the correct test key
+        if 'd' in normalized_test_type and '70' in normalized_test_type:
+            test_key = 'd70'
+            logging.info("Detected D70 test")
+        elif 'd' in normalized_test_type and '2000' in normalized_test_type:
+            test_key = 'd2000'
+            logging.info("Detected D2000 test")
+        else:
+            test_key = 'unknown'
+            logging.warning(f"Unknown test type detected: {test_type_raw}")
+        
         test_info = {
             'd70': {
                 'total_questions': 44,
@@ -204,8 +222,13 @@ class PerformanceAnalyzer:
                 'total_questions': 40,
                 'time_limit': 20,
                 'description': 'D-2000 Test (40 questions, 20 minutes time limit)'
+            },
+            'unknown': {
+                'total_questions': 'Unknown',
+                'time_limit': 'Unknown',
+                'description': f'Unknown test type: {test_type_raw}'
             }
-        }.get(test_type, {})
+        }.get(test_key, {})
 
         prompt = f"""
         Analyze the following test performance data for a candidate, considering:
