@@ -209,6 +209,28 @@ class AttemptService {
   }
 
   /**
+   * Get attempt by candidate ID and test ID
+   */
+  async getAttemptByCandidateAndTest(candidateId, testId) {
+    if (!mongoose.Types.ObjectId.isValid(candidateId)) {
+      throw new AppError("Invalid candidate ID format", 400);
+    }
+    if (!mongoose.Types.ObjectId.isValid(testId)) {
+      throw new AppError("Invalid test ID format", 400);
+    }
+
+    const attempt = await TestAttempt.findOne({
+      candidateId,
+      testId,
+    }).populate({
+      path: "testId",
+      select: "name description duration difficulty category type",
+    });
+
+    return attempt;
+  }
+
+  /**
    * Get questions with responses for an attempt
    */
   async getAttemptQuestions(attemptId) {
@@ -1060,10 +1082,13 @@ class AttemptService {
 
       await attempt.save();
       logger.info(`Updated AI classification for attempt ${attemptId}`);
-      
+
       return attempt;
     } catch (error) {
-      logger.error(`Error updating AI classification for attempt ${attemptId}:`, error);
+      logger.error(
+        `Error updating AI classification for attempt ${attemptId}:`,
+        error
+      );
       throw error;
     }
   }
@@ -1071,7 +1096,10 @@ class AttemptService {
   /**
    * Update manual classification for an attempt
    */
-  async updateManualClassification(attemptId, { classification, classifiedBy }) {
+  async updateManualClassification(
+    attemptId,
+    { classification, classifiedBy }
+  ) {
     try {
       const attempt = await TestAttempt.findById(attemptId);
       if (!attempt) {
@@ -1086,10 +1114,13 @@ class AttemptService {
 
       await attempt.save();
       logger.info(`Updated manual classification for attempt ${attemptId}`);
-      
+
       return attempt;
     } catch (error) {
-      logger.error(`Error updating manual classification for attempt ${attemptId}:`, error);
+      logger.error(
+        `Error updating manual classification for attempt ${attemptId}:`,
+        error
+      );
       throw error;
     }
   }
@@ -1105,13 +1136,16 @@ class AttemptService {
         commentedAt: new Date(),
       };
 
-      attempt.markModified('aiComment'); // Explicitly mark as modified
+      attempt.markModified("aiComment"); // Explicitly mark as modified
       await attempt.save();
       logger.info(`Updated ai comment for attempt ${attemptId}`);
-      
+
       return attempt;
     } catch (error) {
-      logger.error(`Error updating ai comment for attempt ${attemptId}:`, error);
+      logger.error(
+        `Error updating ai comment for attempt ${attemptId}:`,
+        error
+      );
       throw error;
     }
   }
@@ -1125,15 +1159,18 @@ class AttemptService {
       attempt.psychologistComment = {
         comment,
         commentedBy,
-       commentedAt: new Date(),
+        commentedAt: new Date(),
       };
 
       await attempt.save();
       logger.info(`Updated psychologist comment for attempt ${attemptId}`);
-      
+
       return attempt;
     } catch (error) {
-      logger.error(`Error updating psychologist comment for attempt ${attemptId}:`, error);
+      logger.error(
+        `Error updating psychologist comment for attempt ${attemptId}:`,
+        error
+      );
       throw error;
     }
   }

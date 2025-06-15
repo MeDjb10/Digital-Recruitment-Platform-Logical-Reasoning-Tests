@@ -394,6 +394,34 @@ class AttemptController {
       data: results,
     });
   }
+
+  /**
+   * Get attempt by candidate ID and test ID
+   */
+  async getAttemptByCandidateAndTest(req, res) {
+    const { candidateId, testId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(candidateId)) {
+      throw new AppError(
+        "Invalid candidate ID format",
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(testId)) {
+      throw new AppError("Invalid test ID format", StatusCodes.BAD_REQUEST);
+    }
+
+    const attempt = await attemptService.getAttemptByCandidateAndTest(
+      candidateId,
+      testId
+    );
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: attempt,
+    });
+  }
 }
 
 const attemptController = new AttemptController();
@@ -415,4 +443,6 @@ module.exports = {
   getTestAttempts: attemptController.getTestAttempts.bind(attemptController),
   getAttemptResults:
     attemptController.getAttemptResults.bind(attemptController),
+  getAttemptByCandidateAndTest:
+    attemptController.getAttemptByCandidateAndTest.bind(attemptController),
 };
