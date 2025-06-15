@@ -4,7 +4,7 @@ const CircuitBreaker = require('opossum');
 const defaultOptions = {
   timeout: 1000, // Time in ms before a request is considered failed
   errorThresholdPercentage: 50, // Error rate % threshold to trip breaker
-  resetTimeout: 3000, // Time in ms to wait before resetting the breaker
+  resetTimeout: 1000, // Time in ms to wait before resetting the breaker
   rollingCountTimeout: 10000, // Time window in ms over which error rates are calculated
   rollingCountBuckets: 10, // Number of buckets the time window is split into
 };
