@@ -157,6 +157,8 @@ export class DominoTestSectionComponent implements OnInit {
   showClassificationDropdown = true;
   currentUser: User | null | undefined; // This should be populated from auth service
   psychologistComment: string = '';
+  savedPsychologistComment: string = ''; // Tracks the saved comment from database
+  draftPsychologistComment: string = ''; // Tracks the draft being edited
   isSavingComment: boolean = false;
 
   attempt: any = null; // Add this property
@@ -223,11 +225,12 @@ export class DominoTestSectionComponent implements OnInit {
           if (this.attempt.aiComment?.comment) {
             this.aiComment = this.attempt.aiComment.comment;
             this.isAiAnalysisVisible = true;
-          }
-
-          // Initialize psychologist comment if it exists
+          }          // Initialize psychologist comment if it exists
           if (this.attempt.psychologistComment?.comment) {
+            this.savedPsychologistComment = this.attempt.psychologistComment.comment;
             this.psychologistComment = this.attempt.psychologistComment.comment;
+            console.log('Psychologist comment:', this.psychologistComment);
+            
           }
         },
         error: (error) => {
@@ -249,6 +252,8 @@ export class DominoTestSectionComponent implements OnInit {
     }
     console.log('test details aaaaaaaaaaaaaaaaaaaaaa:', this.testAnalytics);
     this.currentUser = this.authService.getCurrentUser();
+    console.log('Current user:', this.currentUser?.role);
+    
     this.showClassificationDropdown =
       this.currentUser?.role === 'psychologist' && !this.manualClassification;
   }
@@ -280,8 +285,8 @@ export class DominoTestSectionComponent implements OnInit {
     this.percentageScore = attempt.percentageScore || 0;
     this.questionsAnswered = analytics.questionsAnswered || 0;
     this.skippedQuestions = analytics.questionsSkipped || 0;
-    this.halfCorrect = analytics.halfCorrect || 0;
-    this.flaggedQuestions = analytics.flaggedQuestions || 0;
+    this.halfCorrect = analytics.halfCorrectAnswers || 0;
+    this.flaggedQuestions = analytics.questionsFlagged || 0;
     this.inversedAnswers = questions.filter(
       (q: any) => q.response?.isReversed
     ).length;
@@ -657,18 +662,35 @@ export class DominoTestSectionComponent implements OnInit {
       minute: '2-digit',
     });
   }
-
   get formattedAiComment(): string {
     if (!this.aiComment) return '';
 
     return this.aiComment
-      // Replace newlines with <br> tags
+      // Replace headers (## Title) with styled h3 tags
+      .replace(/##\s*(.*?)(?=\n|$)/g, '<h3 class="text-xl font-bold text-blue-700 my-4 border-b-2 border-blue-200 pb-2">$1</h3>')
+      // Replace subheaders (### Subtitle) with styled h4 tags
+      .replace(/###\s*(.*?)(?=\n|$)/g, '<h4 class="text-lg font-semibold text-gray-800 my-3">$1</h4>')
+      // Replace **text** with strong tags
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+      // Replace *text* with emphasized text
+      .replace(/\*(.*?)\*/g, '<em class="italic text-gray-700">$1</em>')
+      // Replace bullet points (- item) with styled list items
+      .replace(/^- (.+)$/gm, '<div class="flex items-start my-2"><span class="text-blue-500 mr-2">•</span><span class="text-gray-700">$1</span></div>')
+      // Replace numbered lists (1. item) with styled list items
+      .replace(/^\d+\.\s(.+)$/gm, '<div class="flex items-start my-2"><span class="text-blue-500 font-semibold mr-2">•</span><span class="text-gray-700">$1</span></div>')
+      // Replace specific sections with custom styling
+      .replace(/Assessment Summary:/gi, '<h3 class="text-xl font-bold text-blue-700 my-4 border-b-2 border-blue-200 pb-2">📊 Assessment Summary</h3>')
+      .replace(/Recommendation:/gi, '<h3 class="text-xl font-bold text-green-700 my-4 border-b-2 border-green-200 pb-2">💡 Recommendation</h3>')
+      .replace(/Performance Analysis:/gi, '<h3 class="text-xl font-bold text-purple-700 my-4 border-b-2 border-purple-200 pb-2">📈 Performance Analysis</h3>')
+      .replace(/Key Insights:/gi, '<h3 class="text-xl font-bold text-indigo-700 my-4 border-b-2 border-indigo-200 pb-2">🔍 Key Insights</h3>')
+      // Replace double newlines with proper paragraph spacing
+      .replace(/\n\n/g, '</p><p class="mb-4 text-gray-700 leading-relaxed">')
+      // Replace single newlines with br tags
       .replace(/\n/g, '<br>')
-      // Replace **text** with <strong>text</strong>
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      // Additional formatting if needed
-      .replace(/Assessment Summary:/g, '<h3 class="text-xl font-bold my-4">Assessment Summary:</h3>')
-      .replace(/Recommendation:/g, '<h3 class="text-xl font-bold my-4">Recommendation:</h3>');
+      // Wrap the entire content in paragraph tags
+      .replace(/^(.*)$/s, '<p class="mb-4 text-gray-700 leading-relaxed">$1</p>')
+      // Clean up empty paragraphs
+      .replace(/<p class="mb-4 text-gray-700 leading-relaxed"><\/p>/g, '');
   }
 
   async generateReport() {
@@ -723,10 +745,9 @@ export class DominoTestSectionComponent implements OnInit {
       this.isLoadingAnalysis = false;
     }
   }
-
   // Add method to submit psychologist comment
   async submitPsychologistComment() {
-    if (!this.psychologistComment.trim()) {
+    if (!this.draftPsychologistComment.trim()) {
       return;
     }
 
@@ -734,10 +755,14 @@ export class DominoTestSectionComponent implements OnInit {
     try {
       await this.testService.updatePsychologistComment(
         this.attemptId,
-        this.psychologistComment
+        this.draftPsychologistComment
       ).toPromise();
 
-      // Optionally refresh the data or show success message
+      // Update both saved and current comment after successful save
+      this.savedPsychologistComment = this.draftPsychologistComment;
+      this.psychologistComment = this.draftPsychologistComment;
+      this.draftPsychologistComment = '';
+      
       this.isSavingComment = false;
     } catch (error) {
       console.error('Error saving psychologist comment:', error);
