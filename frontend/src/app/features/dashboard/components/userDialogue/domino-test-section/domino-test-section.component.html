@@ -12,9 +12,8 @@
   <div class="text-center mb-8">
     <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-8 rounded-2xl shadow-xl text-white">
       <h2 class="text-2xl font-semibold mb-4">Test Score</h2>
-      <div class="flex justify-center items-center space-x-8">
-        <div class="text-center">
-          <p class="text-6xl font-bold mb-2">{{ performance.score | number : "1.0-1" }}%</p>
+      <div class="flex justify-center items-center space-x-8">        <div class="text-center">
+          <p class="text-6xl font-bold mb-2">{{ percentageScore | number : "1.0-1" }}%</p>
 
           <p class="text-lg opacity-90">Overall Score</p>
         </div>
@@ -160,33 +159,63 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  <!-- Performance Level Card -->
+      </div>    </div>
+
+  <!-- AI Analysis Section -->
   <div class="bg-gradient-to-r from-white to-gray-50 p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
-    <div class="flex justify-between items-center">
-      <div>
-        <h3 class="font-semibold text-lg text-gray-700 mb-2">
-          Performance Level
-        </h3>
-        <p class="text-3xl font-bold mb-2" [style.color]="performance.color">
-          {{ performance.level }}
-        </p>
-        <p class="text-sm text-gray-600">{{ performance.description }}</p>
-      </div>
-      <div class="text-right">
-        <p class="text-sm text-gray-500">Overall Score</p>
-        <p class="text-4xl font-bold" [style.color]="performance.color">
-          {{ performance.score | number : "1.0-1" }}%
-        </p>
-        <p class="text-xs text-gray-500 mt-1">
-          {{ score }}/{{ totalQuestions }} correct
-        </p>
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-xl text-gray-800">AI Performance Analysis</h3>
+      <div class="flex gap-2">
+        <!-- Only show generate button if no analysis exists -->
+        <button *ngIf="!aiComment"
+          (click)="generateReport()"
+          [disabled]="isLoadingAnalysis"
+          class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300 flex items-center gap-2"
+        >
+          <div *ngIf="isLoadingAnalysis" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+          {{ isLoadingAnalysis ? 'Generating...' : 'Generate Analysis' }}
+        </button>
+        <!-- Only show toggle button if analysis exists -->
+        <button *ngIf="aiComment"
+          (click)="isAiAnalysisVisible = !isAiAnalysisVisible"
+          class="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors duration-300"
+        >
+          {{ isAiAnalysisVisible ? "Collapse" : "Expand" }}
+        </button>
       </div>
     </div>
-    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-      <p class="text-sm text-blue-700">
-        <strong>Recommendation:</strong> {{ performance.recommendation }}
+    
+    <!-- Loading State -->
+    <div *ngIf="isLoadingAnalysis" class="flex justify-center items-center p-8">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+        <p class="text-gray-600">Analyzing test performance...</p>
+      </div>
+    </div>
+
+    <!-- No Analysis State -->
+    <div *ngIf="!aiComment && !isLoadingAnalysis" class="text-center py-8">
+      <div class="text-gray-400 mb-4">
+        <i class="pi pi-robot text-4xl"></i>
+      </div>
+      <p class="text-gray-600 mb-4">No AI analysis available yet</p>
+      <p class="text-sm text-gray-500">Click "Generate Analysis" to get detailed insights about this test performance</p>
+    </div>
+
+    <!-- Analysis Content -->
+    <div *ngIf="aiComment && isAiAnalysisVisible" 
+         class="bg-white p-6 rounded-lg border border-gray-100 shadow-sm transition-all duration-300">
+      <div class="prose prose-blue max-w-none">
+        <div [innerHTML]="formattedAiComment" class="space-y-4"></div>
+      </div>
+    </div>
+
+    <!-- Collapsed Analysis Preview -->
+    <div *ngIf="aiComment && !isAiAnalysisVisible" 
+         class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+      <p class="text-blue-700 text-sm">
+        <i class="pi pi-info-circle mr-2"></i>
+        AI analysis is available. Click "Expand" to view detailed insights.
       </p>
     </div>
   </div>
@@ -316,81 +345,37 @@
       <h3 class="font-bold text-xl mb-4 text-gray-800">
         Time Distribution per Question
       </h3>
-      <div class="">
-        <apx-chart [series]="chartOptions.series!" [chart]="chartOptions.chart!" [dataLabels]="chartOptions.dataLabels!"
+      <div class="">        <apx-chart [series]="chartOptions.series!" [chart]="chartOptions.chart!" [dataLabels]="chartOptions.dataLabels!"
           [plotOptions]="chartOptions.plotOptions!" [colors]="chartOptions.colors!"></apx-chart>
       </div>
     </div>
-    <!-- AI Comments Section -->
+    <!-- Psychologist Comment Section -->
     <div>
-      <div class="mb-8">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-bold text-xl text-gray-800">AI Analysis</h3>
-          <div class="flex gap-2">
-            <!-- Only show generate button if no analysis exists -->
-            <button *ngIf="!aiComment"
-              (click)="generateReport()"
-              [disabled]="isLoadingAnalysis"
-              class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300 flex items-center gap-2"
-            >
-              <div *ngIf="isLoadingAnalysis" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-              {{ isLoadingAnalysis ? 'Generating...' : 'Generate Report' }}
-            </button>
-            <!-- Only show toggle button if analysis exists -->
-            <button *ngIf="aiComment"
-              (click)="isAiAnalysisVisible = !isAiAnalysisVisible"
-              class="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors duration-300"
-            >
-              {{ isAiAnalysisVisible ? "Hide Analysis" : "Show Analysis" }}
-            </button>
-          </div>
-        </div>
-        
-        <!-- Loading State -->
-        <div *ngIf="isLoadingAnalysis" class="flex justify-center items-center p-8">
-          <div class="text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-            <p class="text-gray-600">Analyzing test performance...</p>
-          </div>
-        </div>
-
-        <!-- Analysis Content -->
-        <div *ngIf="aiComment && isAiAnalysisVisible" 
-             class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 transition-all duration-300">
-          <div class="text-gray-700 prose max-w-none">
-            <div [innerHTML]="formattedAiComment"></div>
-          </div>
-        </div>
-      </div>
-
-      <hr class="my-8 border-t border-gray-200 w-full" />
-
-      <!-- Psychologist Comment Section -->
+      <hr class="my-8 border-t border-gray-200 w-full" />      <!-- Psychologist Comment Section -->
       <div class="bg-white">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-bold text-xl text-gray-800">
             Psychologist's Analysis
           </h3>
-          <!-- Only show save button for psychologists -->
-          <button *ngIf="currentUser?.role === 'psychologist'"
+          <!-- Only show save button when no saved comment exists and user is psychologist or admin -->
+          <button *ngIf="!savedPsychologistComment && (currentUser?.role === 'psychologist' || currentUser?.role === 'admin')"
             (click)="submitPsychologistComment()"
-            [disabled]="isSavingComment || !psychologistComment.trim()"
+            [disabled]="isSavingComment || !draftPsychologistComment.trim()"
             class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div *ngIf="isSavingComment" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
             {{ isSavingComment ? 'Saving...' : 'Save Comment' }}
           </button>
         </div>
-        
-        <!-- Show existing comment for non-psychologists -->
-        <div *ngIf="psychologistComment && currentUser?.role !== 'psychologist'"
+          <!-- Show existing saved comment when it exists for all users -->
+        <div *ngIf="savedPsychologistComment"
              class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <p class="whitespace-pre-line text-gray-700">{{psychologistComment}}</p>
+          <p class="whitespace-pre-line text-gray-700">{{savedPsychologistComment}}</p>
         </div>
         
-        <!-- Show textarea only for psychologists -->
-        <textarea *ngIf="currentUser?.role === 'psychologist'"
-          [(ngModel)]="psychologistComment" 
+        <!-- Show textarea when no saved comment exists and user is psychologist or admin -->
+        <textarea *ngIf="!savedPsychologistComment && (currentUser?.role === 'psychologist' || currentUser?.role === 'admin')"
+          [(ngModel)]="draftPsychologistComment" 
           placeholder="Enter your professional analysis here..."
           class="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none min-h-[150px]"
         ></textarea>
