@@ -1,4 +1,10 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  AfterViewInit,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { Table } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -63,7 +69,7 @@ import { TestService } from '../../../../core/services/test.service';
   templateUrl: './users-list-rl.component.html',
   styleUrl: './users-list-rl.component.css',
 })
-export class UsersListRLComponent implements OnInit {
+export class UsersListRLComponent implements OnInit, AfterViewInit {
   @ViewChild('dt') table!: Table;
 
   candidates: User[] = [];
@@ -106,15 +112,12 @@ export class UsersListRLComponent implements OnInit {
     limit: 10,
   };
 
-  // Options for assignment
-  testOptions: any[] = [
-    { label: 'D-70 (Basic)', value: 'D-70' },
-    { label: 'D-2000 (Advanced)', value: 'D-2000' },
-  ];
+  // Add loading state for tests
+  testsLoading: boolean = false;
 
-  additionalTestOptions: any[] = [
-    { label: 'Logique des propositions', value: 'logique_des_propositions' },
-  ];
+  // Options for assignment - will be populated dynamically from database
+  testOptions: any[] = [];
+  additionalTestOptions: any[] = [];
 
   totalRecords: number = 0;
   currentDate: Date = new Date(); // Add current date for calendar min date
@@ -128,7 +131,6 @@ export class UsersListRLComponent implements OnInit {
     { label: 'Timed Out', value: 'timed-out', severity: 'warning' },
     { label: 'Abandoned', value: 'abandoned', severity: 'danger' },
   ];
-
   constructor(
     private userService: UserService,
     private router: Router,
@@ -136,11 +138,12 @@ export class UsersListRLComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     private testAssignmentService: TestAssignmentService,
-    private testLookupService: TestLookupService, // Add this
+    private testLookupService: TestLookupService,
     private testService: TestService
   ) {
+    // Initialize assignment form with empty values - tests will be loaded dynamically
     this.assignmentForm = this.fb.group({
-      assignedTest: ['D-70', Validators.required],
+      assignedTest: ['', Validators.required], // Will be populated with test IDs from database
       additionalTests: [[]],
       examDate: [null, Validators.required],
     });
@@ -150,10 +153,21 @@ export class UsersListRLComponent implements OnInit {
       examDate: [null],
     });
   }
-
+  ngAfterViewInit(): void {
+    // Initialize the data table if it exists
+    if (this.table) {
+      // Set initial global filter value if needed
+      this.table.filterGlobal(this.globalFilterValue, 'contains');
+      
+      // Ensure the table is properly initialized with current data
+      if (this.candidates.length === 0 && !this.loading) {
+        this.loadCandidates();
+      }
+    }
+  }
   ngOnInit() {
     this.loadCandidates();
-    this.loadTests(); // Add this to load tests on component init
+    this.loadTests(); // Load tests on component initialization
 
     // Setup debounce for search
     this.searchTerms
@@ -293,75 +307,88 @@ export class UsersListRLComponent implements OnInit {
   // Improved to handle the right event type
   loadCandidates(event?: any) {
     this.loading = true;
-    
-    if (this.activeView === 'test_progress') {
-      this.userService.getUsers(this.filters).pipe(
-        catchError(error => {
-          console.error('Error loading users:', error);
-          return of({ users: [], pagination: { total: 0 } });
-        }),
-        switchMap(response => {
-          const candidates = response.users;
-          
-          // Use individual attempts instead of getting all at once
-          const attemptRequests = candidates.map(candidate => {
-            if (!candidate._id) {
-              return of({ ...candidate, testProgress: null });
-            }
-            return this.testService.getCandidateAttempts(candidate._id).pipe(
-              map(attemptsResponse => {
-                const sortedAttempts = attemptsResponse.data.sort((a, b) => 
-                  new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-                );
-                const latestAttempt = sortedAttempts[0];
-                console.log(`Latest attempt for candidate ${candidate._id}:`, latestAttempt);
-                
-                return {
-                  ...candidate,
-                  testProgress: latestAttempt ? {
-                    status: latestAttempt.status,
-                    percentageScore: latestAttempt.percentageScore,
-                    timeSpent: latestAttempt.timeSpent,
-                    lastActive: latestAttempt.lastActivityAt,
-                    completedAt: latestAttempt.endTime
-                  } : null
-                };
-              }),
-              catchError(error => {
-                console.error(`Error loading attempts for candidate ${candidate.id}:`, error);
-                return of({
-                  ...candidate,
-                  testProgress: null
-                });
-              })
-            )}
-          );
 
-          return forkJoin(attemptRequests).pipe(
-            map(candidatesWithProgress => ({
-              candidates: candidatesWithProgress,
-              totalRecords: response.pagination.total
-            }))
-          );
-        })
-      ).subscribe({
-        next: (result) => {
-          this.candidates = result.candidates;
-          this.totalRecords = result.totalRecords;
-          this.loading = false;
-        },
-        error: (error) => {
-          console.error('Error:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to load data'
-          });
-          this.loading = false;
-          this.candidates = [];
-          this.totalRecords = 0;
-        }
-      });
+    if (this.activeView === 'test_progress') {
+      this.userService
+        .getUsers(this.filters)
+        .pipe(
+          catchError((error) => {
+            console.error('Error loading users:', error);
+            return of({ users: [], pagination: { total: 0 } });
+          }),
+          switchMap((response) => {
+            const candidates = response.users;
+
+            // Use individual attempts instead of getting all at once
+            const attemptRequests = candidates.map((candidate) => {
+              if (!candidate._id) {
+                return of({ ...candidate, testProgress: null });
+              }
+              return this.testService.getCandidateAttempts(candidate._id).pipe(
+                map((attemptsResponse) => {
+                  const sortedAttempts = attemptsResponse.data.sort(
+                    (a, b) =>
+                      new Date(b.startTime).getTime() -
+                      new Date(a.startTime).getTime()
+                  );
+                  const latestAttempt = sortedAttempts[0];
+                  console.log(
+                    `Latest attempt for candidate ${candidate._id}:`,
+                    latestAttempt
+                  );
+
+                  return {
+                    ...candidate,
+                    testProgress: latestAttempt
+                      ? {
+                          status: latestAttempt.status,
+                          percentageScore: latestAttempt.percentageScore,
+                          timeSpent: latestAttempt.timeSpent,
+                          lastActive: latestAttempt.lastActivityAt,
+                          completedAt: latestAttempt.endTime,
+                        }
+                      : null,
+                  };
+                }),
+                catchError((error) => {
+                  console.error(
+                    `Error loading attempts for candidate ${candidate.id}:`,
+                    error
+                  );
+                  return of({
+                    ...candidate,
+                    testProgress: null,
+                  });
+                })
+              );
+            });
+
+            return forkJoin(attemptRequests).pipe(
+              map((candidatesWithProgress) => ({
+                candidates: candidatesWithProgress,
+                totalRecords: response.pagination.total,
+              }))
+            );
+          })
+        )
+        .subscribe({
+          next: (result) => {
+            this.candidates = result.candidates;
+            this.totalRecords = result.totalRecords;
+            this.loading = false;
+          },
+          error: (error) => {
+            console.error('Error:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to load data',
+            });
+            this.loading = false;
+            this.candidates = [];
+            this.totalRecords = 0;
+          },
+        });
     } else {
       this.userService.getUsers(this.filters).subscribe({
         next: (response) => {
@@ -473,12 +500,14 @@ export class UsersListRLComponent implements OnInit {
   }
 
   // Update return type to match PrimeNG's p-tag severity options
-  getTestProgressSeverity(status: string | undefined): 'info' | 'success' | 'warn' | 'danger' | 'secondary' {
+  getTestProgressSeverity(
+    status: string | undefined
+  ): 'info' | 'success' | 'warn' | 'danger' | 'secondary' {
     switch (status?.toLowerCase()) {
       case 'completed':
         return 'success';
-      case 'in-progress':  // Add this case
-      case 'in_progress':  // Keep this for backward compatibility
+      case 'in-progress': // Add this case
+      case 'in_progress': // Keep this for backward compatibility
         return 'info';
       case 'timed-out':
       case 'timed_out':
@@ -493,7 +522,9 @@ export class UsersListRLComponent implements OnInit {
   }
 
   // Update getSeverity method to match PrimeNG's p-tag severity options
-  getSeverity(status: string): 'info' | 'success' | 'warn' | 'danger' | 'secondary' {
+  getSeverity(
+    status: string
+  ): 'info' | 'success' | 'warn' | 'danger' | 'secondary' {
     switch (status) {
       case 'pending':
         return 'warn';
@@ -530,26 +561,40 @@ export class UsersListRLComponent implements OnInit {
         examDate: null,
       });
     }
-  }
-
-  // Open assignment dialog
+  } // Open assignment dialog
   showAssignmentDialog(candidate: User) {
     this.selectedCandidate = candidate;
+
+    // Ensure tests are loaded before showing dialog
+    if (this.testOptions.length === 0) {
+      this.loadTests();
+    }
+
     this.assignmentDialogVisible = true;
 
-    // Populate the assignment form if test is already assigned
+    // If candidate already has a test assignment, populate the form with the assigned test IDs
     if (candidate.testAssignment) {
+      // Handle both old format (using names) and new format (using IDs)
+      const assignedTestValue =
+        (candidate.testAssignment as any).assignedTestId ||
+        candidate.testAssignment.assignedTest ||
+        '';
+      const additionalTestValues =
+        (candidate.testAssignment as any).additionalTestIds ||
+        candidate.testAssignment.additionalTests ||
+        [];
+
       this.assignmentForm.patchValue({
-        assignedTest: candidate.testAssignment.assignedTest,
-        additionalTests: candidate.testAssignment.additionalTests || [],
+        assignedTest: assignedTestValue,
+        additionalTests: additionalTestValues,
         examDate: candidate.testAssignment.examDate
           ? new Date(candidate.testAssignment.examDate)
           : null,
       });
     } else {
-      // Reset form for new assignment
+      // Reset form for new assignment with empty values (no defaults)
       this.assignmentForm.reset({
-        assignedTest: 'D-70',
+        assignedTest: '', // Let user select from loaded tests
         additionalTests: [],
         examDate: null,
       });
@@ -621,13 +666,12 @@ export class UsersListRLComponent implements OnInit {
         },
       });
   }
-
   assignTest() {
     if (!this.selectedCandidate || !this.assignmentForm.valid) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Warning',
-        detail: 'Please fill all required fields',
+        summary: 'Incomplete Form',
+        detail: 'Please fill all required fields before assigning the test',
       });
       return;
     }
@@ -635,7 +679,7 @@ export class UsersListRLComponent implements OnInit {
     const formData = this.assignmentForm.value;
     let userId = this.selectedCandidate.id;
 
-    // If the backend model is using _id instead of id, use that property
+    // Ensure we have a valid user ID
     if (
       !this.isValidObjectId(userId) &&
       this.selectedCandidate._id &&
@@ -644,49 +688,92 @@ export class UsersListRLComponent implements OnInit {
       userId = this.selectedCandidate._id;
     }
 
-    // Use TestLookupService to get the test IDs
-    forkJoin({
-      mainTestId: this.testLookupService.getTestIdByName(formData.assignedTest),
-      additionalTestIds:
-        formData.additionalTests && formData.additionalTests.length > 0
-          ? this.testLookupService.getTestIdsByNames(formData.additionalTests)
-          : of([]),
-    })
-      .pipe(
-        switchMap(({ mainTestId, additionalTestIds }) => {
-          if (!mainTestId) {
-            throw new Error(
-              `Test "${formData.assignedTest}" not found. Please refresh the page and try again.`
-            );
-          }
+    if (!this.isValidObjectId(userId)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Invalid User',
+        detail: 'Cannot assign test: Invalid user ID',
+      });
+      return;
+    }
 
-          return this.testAssignmentService.manualTestAssignment(userId, {
-            assignedTestId: mainTestId,
-            additionalTestIds: additionalTestIds,
-            examDate: formData.examDate,
-          });
-        })
-      )
+    // Validate the selected test ID
+    if (!this.isValidObjectId(formData.assignedTest)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Invalid Test Selection',
+        detail: 'Please select a valid test from the dropdown',
+      });
+      return;
+    }
+
+    // Validate additional test IDs if provided
+    const additionalTestIds = formData.additionalTests || [];
+    for (const testId of additionalTestIds) {
+      if (!this.isValidObjectId(testId)) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Invalid Additional Test',
+          detail:
+            'One or more additional tests are invalid. Please review your selections.',
+        });
+        return;
+      }
+    }
+
+    // Prepare assignment data with validated test IDs
+    const assignmentData = {
+      assignedTestId: formData.assignedTest, // This is now a validated test ID from database
+      additionalTestIds: additionalTestIds, // These are now validated test IDs from database
+      examDate: formData.examDate,
+    };
+
+    console.log('Assigning test with data:', {
+      userId,
+      assignmentData,
+      selectedTestName: this.getTestNameById(formData.assignedTest),
+      additionalTestNames: additionalTestIds.map((id: string) =>
+        this.getTestNameById(id)
+      ),
+    });
+
+    this.testAssignmentService
+      .manualTestAssignment(userId, assignmentData)
       .subscribe({
         next: (response) => {
           this.messageService.add({
             severity: 'success',
-            summary: 'Success',
-            detail: 'Test assigned successfully',
+            summary: 'Test Assigned Successfully',
+            detail: `Test has been assigned to ${this.selectedCandidate?.firstName} ${this.selectedCandidate?.lastName}`,
           });
+
           this.assignmentDialogVisible = false;
-          // Refresh the data with current filters
+          this.assignmentForm.reset();
+          this.selectedCandidate = null;
+
+          // Refresh the candidates list to show updated assignment status
           this.loadCandidates();
         },
         error: (error) => {
-          console.error('Error assigning test:', error);
+          console.error('Test assignment error:', error);
+          const errorMessage =
+            error?.error?.message || error?.message || 'Failed to assign test';
+
           this.messageService.add({
             severity: 'error',
-            summary: 'Error',
-            detail: error.message || 'Failed to assign test. Please try again.',
+            summary: 'Assignment Failed',
+            detail: errorMessage,
           });
         },
       });
+  }
+
+  // Helper method to get test name by ID for logging/display purposes
+  private getTestNameById(testId: string): string {
+    const test =
+      this.testOptions.find((option) => option.value === testId) ||
+      this.additionalTestOptions.find((option) => option.value === testId);
+    return test ? test.label : 'Unknown Test';
   }
 
   // Add this helper method to validate MongoDB ObjectIds
@@ -827,22 +914,78 @@ export class UsersListRLComponent implements OnInit {
       limit: 10,
     };
     this.loadCandidates();
-  }
-
-  // Add this method to load tests
+  } // Load tests dynamically from database and populate dropdowns
   loadTests() {
+    this.testsLoading = true;
+
     this.testLookupService.getAllTests().subscribe({
       next: (tests) => {
-        console.log('Loaded available tests:', tests);
+        console.log('Loaded available tests from database:', tests);
+
+        if (!tests || tests.length === 0) {
+          console.warn('No tests found in database');
+          this.testOptions = [];
+          this.additionalTestOptions = [];
+          this.testsLoading = false;
+          return;
+        }
+
+        // Create dropdown options using test IDs as values
+        const allTestOptions = tests
+          .filter((test: any) => test.isActive !== false) // Only include active tests
+          .map((test: any) => ({
+            label: `${test.name} ${
+              test.difficulty ? `(${test.difficulty})` : ''
+            } - ${test.category || test.type || 'General'}`,
+            value: test._id, // Use the database ID
+            testData: test, // Store full test data for reference
+            category: test.category,
+            type: test.type,
+            difficulty: test.difficulty,
+            isActive: test.isActive,
+          }));
+
+        // Categorize tests - Primary tests for main assignment, additional tests for extras
+        const primaryTests: any[] = [];
+        const additionalTests: any[] = [];
+
+        allTestOptions.forEach((option: any) => {
+          // Main tests: typically domino and logical reasoning tests
+          if (option.type === 'domino' || option.category === 'logical') {
+            primaryTests.push(option);
+          }
+
+          // Additional tests can be any test type
+          additionalTests.push(option);
+        });
+
+        // Set the options for dropdowns
+        this.testOptions =
+          primaryTests.length > 0 ? primaryTests : allTestOptions;
+        this.additionalTestOptions = additionalTests;
+
+        console.log('Primary test options (using IDs):', this.testOptions);
+        console.log(
+          'Additional test options (using IDs):',
+          this.additionalTestOptions
+        );
+
+        this.testsLoading = false;
       },
       error: (error) => {
-        console.error('Error loading tests:', error);
+        console.error('Error loading tests from database:', error);
+        this.testsLoading = false;
+
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
+          summary: 'Error Loading Tests',
           detail:
-            'Failed to load tests. Test assignment might not work properly.',
+            'Failed to load tests from database. Please refresh the page and try again.',
         });
+
+        // Clear options on error rather than using hardcoded fallbacks
+        this.testOptions = [];
+        this.additionalTestOptions = [];
       },
     });
   }
@@ -864,6 +1007,9 @@ export class UsersListRLComponent implements OnInit {
   // Add new method to view attempt details
   viewAttemptDetails(candidateId: string) {
     // Navigate to the details page with the candidate ID
-    this.router.navigate(['/dashboard/RaisonnementLogique/Users/completed', candidateId]);
+    this.router.navigate([
+      '/dashboard/RaisonnementLogique/Users/completed',
+      candidateId,
+    ]);
   }
 }
