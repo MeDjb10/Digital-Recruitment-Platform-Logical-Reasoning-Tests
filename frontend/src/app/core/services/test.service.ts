@@ -810,4 +810,25 @@ export class TestService {
         })
       );
   }
+
+  /**
+   * Get just the attempt data
+   */
+  getAttempt(attemptId: string): Observable<AttemptResponse> {
+    return this.http
+      .get<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}`)
+      .pipe(
+        tap(response => {
+          this.logApiInteraction('getAttempt', { attemptId }, response);
+        }),
+        catchError(error => {
+          console.error('Error getting attempt:', error);
+          return throwError(() => ({
+            success: false,
+            message: 'Failed to get attempt data',
+            error: error
+          }));
+        })
+      );
+  }
 }

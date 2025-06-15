@@ -103,12 +103,12 @@ export class DominoTestSectionComponent implements OnInit {
     score: number;
     recommendation: string;
   } = {
-    level: 'Calculating...',
-    color: '#6b7280',
-    description: 'Performance analysis in progress',
-    score: 0,
-    recommendation: 'Analysis in progress...',
-  };
+      level: 'Calculating...',
+      color: '#6b7280',
+      description: 'Performance analysis in progress',
+      score: 0,
+      recommendation: 'Analysis in progress...',
+    };
   // Detailed analytics
   testAnalytics: {
     startTime: string;
@@ -122,17 +122,17 @@ export class DominoTestSectionComponent implements OnInit {
     fastestQuestion: { number: number; time: string };
     slowestQuestion: { number: number; time: string };
   } = {
-    startTime: '',
-    endTime: '',
-    totalDuration: 0,
-    browser: '',
-    device: '',
-    screenResolution: '',
-    averageQuestionTime: '',
-    questionsRevisited: 0,
-    fastestQuestion: { number: 0, time: '0:00' },
-    slowestQuestion: { number: 0, time: '0:00' },
-  };
+      startTime: '',
+      endTime: '',
+      totalDuration: 0,
+      browser: '',
+      device: '',
+      screenResolution: '',
+      averageQuestionTime: '',
+      questionsRevisited: 0,
+      fastestQuestion: { number: 0, time: '0:00' },
+      slowestQuestion: { number: 0, time: '0:00' },
+    };
 
   timeChartData: any;
   isAiAnalysisVisible: boolean = false;
@@ -155,9 +155,11 @@ export class DominoTestSectionComponent implements OnInit {
   userPosition: string = ''; // This should be populated from user data
   userEducation: string = ''; // This should be populated from user data
   showClassificationDropdown = true;
-  currentUser: User | null | undefined ; // This should be populated from auth service
+  currentUser: User | null | undefined; // This should be populated from auth service
   psychologistComment: string = '';
   isSavingComment: boolean = false;
+
+  attempt: any = null; // Add this property
 
   constructor(
     private location: Location,
@@ -192,11 +194,48 @@ export class DominoTestSectionComponent implements OnInit {
     };
   }
 
-  
+
   ngOnInit() {
     this.userEducation = this.userInfo?.educationLevel || '';
     this.userPosition = this.userInfo?.desiredPosition || '';
     if (this.attemptId) {
+      // First get the attempt to check classifications
+      this.testService.getAttempt(this.attemptId).subscribe({
+        next: (response) => {
+          console.log('Attempt data:', response);
+          this.attempt = response.data;
+
+          // Initialize AI classification if it exists
+          if (this.attempt.aiClassification?.prediction) {
+            this.aiClassification = this.attempt.aiClassification.prediction;
+            this.aiConfidence = this.attempt.aiClassification.confidence;
+          }
+
+          // Initialize manual classification if it exists
+          if (this.attempt.manualClassification?.classification) {
+            this.manualClassification = {
+              value: this.attempt.manualClassification.classification,
+              classifiedBy: this.attempt.manualClassification.classifiedBy,
+              classifiedAt: new Date(this.attempt.manualClassification.classifiedAt)
+            };
+          }
+          // Initialize AI comment if it exists
+          if (this.attempt.aiComment?.comment) {
+            this.aiComment = this.attempt.aiComment.comment;
+            this.isAiAnalysisVisible = true;
+          }
+
+          // Initialize psychologist comment if it exists
+          if (this.attempt.psychologistComment?.comment) {
+            this.psychologistComment = this.attempt.psychologistComment.comment;
+          }
+        },
+        error: (error) => {
+          console.error('Error loading attempt:', error);
+        }
+      });
+
+      // Then get the full results
       this.testService.getAttemptResults(this.attemptId).subscribe({
         next: (response) => {
           console.log('Domino test results:', response);
@@ -211,7 +250,7 @@ export class DominoTestSectionComponent implements OnInit {
     console.log('test details aaaaaaaaaaaaaaaaaaaaaa:', this.testAnalytics);
     this.currentUser = this.authService.getCurrentUser();
     this.showClassificationDropdown =
-      this.currentUser?.role=== 'psychologist' && !this.manualClassification;
+      this.currentUser?.role === 'psychologist' && !this.manualClassification;
   }
 
   private initializeData(data: any) {
@@ -278,14 +317,32 @@ export class DominoTestSectionComponent implements OnInit {
     this.initializeTreeMap();
     this.isLoading = false;
 
-    if (data.attempt.manualClassification) {
-      this.manualClassification = {
-        value: data.attempt.manualClassification.value,
-        classifiedBy: data.attempt.manualClassification.classifiedBy,
-        classifiedAt: new Date(data.attempt.manualClassification.classifiedAt),
-      };
-      this.showClassificationDropdown = false;
-    }
+    // // Initialize AI classification
+    // if (data.attempt.aiClassification?.prediction) {
+    //   this.aiClassification = data.attempt.aiClassification.prediction;
+    //   this.aiConfidence = data.attempt.aiClassification.confidence || 0;
+    // }
+
+    // // Initialize manual classification
+    // if (data.attempt.manualClassification?.classification) {
+    //   this.manualClassification = {
+    //     value: data.attempt.manualClassification.classification,
+    //     classifiedBy: data.attempt.manualClassification.classifiedBy || 'Unknown',
+    //     classifiedAt: new Date(data.attempt.manualClassification.classifiedAt),
+    //   };
+    //   this.showClassificationDropdown = false;
+    // }
+
+    // // Initialize AI comment
+    // if (data.attempt.aiComment?.comment) {
+    //   this.aiComment = data.attempt.aiComment.comment;
+    //   this.isAiAnalysisVisible = true;
+    // }
+
+    // // Initialize psychologist comment
+    // if (data.attempt.psychologistComment?.comment) {
+    //   this.psychologistComment = data.attempt.psychologistComment.comment;
+    // }
   }
   private calculatePerformanceLevel() {
     if (this.percentageScore >= 90) {
@@ -509,7 +566,7 @@ export class DominoTestSectionComponent implements OnInit {
     }, 100);
   }
 
-  
+
 
   async classifyPerformance() {
     // Add some validation
@@ -538,7 +595,6 @@ export class DominoTestSectionComponent implements OnInit {
     try {
       this.aiService.classify(metrics).subscribe({
         next: (response: ClassificationResponse) => {
-          console.log('Classification success:', response);
           this.aiClassification = response.prediction;
           this.aiConfidence = response.confidence;
 
@@ -604,7 +660,7 @@ export class DominoTestSectionComponent implements OnInit {
 
   get formattedAiComment(): string {
     if (!this.aiComment) return '';
-    
+
     return this.aiComment
       // Replace newlines with <br> tags
       .replace(/\n/g, '<br>')
@@ -642,7 +698,7 @@ export class DominoTestSectionComponent implements OnInit {
         next: (response) => {
           // Remove <think> tags if present in the response
           this.aiComment = response.ai_analysis.replace(/<think>.*?<\/think>/g, '').trim();
-          
+
           this.testService.updateAiComment(this.attemptId, this.aiComment)
             .subscribe({
               next: (updateResponse) => {
@@ -680,7 +736,7 @@ export class DominoTestSectionComponent implements OnInit {
         this.attemptId,
         this.psychologistComment
       ).toPromise();
-      
+
       // Optionally refresh the data or show success message
       this.isSavingComment = false;
     } catch (error) {
