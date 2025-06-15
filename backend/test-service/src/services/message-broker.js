@@ -8,7 +8,7 @@ exports.initConsumers = async () => {
   // Listen for test list requests
   await consumeMessage(QUEUES.TEST_LIST_REQUEST, handleTestListRequest);
   // Listen for AI classification messages
-  await consumeMessage(QUEUES.AI_CLASSIFICATION, handleAiClassification);
+  // await consumeMessage(QUEUES.AI_CLASSIFICATION, handleAiClassification);
   logger.info("Test service message consumers initialized");
 };
 
@@ -45,32 +45,32 @@ const handleTestListRequest = async (message) => {
 };
 
 // Handle AI classification messages
-const handleAiClassification = async (message) => {
-  try {
-    const { attemptId, prediction, confidence, timestamp } = message;
+// const handleAiClassification = async (message) => {
+//   try {
+//     const { attemptId, prediction, confidence, timestamp } = message;
     
-    if (!attemptId || !prediction || confidence === undefined) {
-      logger.error('Invalid AI classification message received:', message);
-      return;
-    }
+//     if (!attemptId || !prediction || confidence === undefined) {
+//       logger.error('Invalid AI classification message received:', message);
+//       return;
+//     }
 
-    const attempt = await TestAttempt.findById(attemptId);
-    if (!attempt) {
-      logger.error(`Attempt ${attemptId} not found for AI classification update`);
-      return;
-    }
+//     const attempt = await TestAttempt.findById(attemptId);
+//     if (!attempt) {
+//       logger.error(`Attempt ${attemptId} not found for AI classification update`);
+//       return;
+//     }
 
-    // Update the attempt with AI classification
-    attempt.aiClassification = {
-      prediction,
-      confidence,
-      classifiedAt: new Date(timestamp),
-    };
+//     // Update the attempt with AI classification
+//     attempt.aiClassification = {
+//       prediction,
+//       confidence,
+//       classifiedAt: new Date(timestamp),
+//     };
 
-    await attempt.save();
-    logger.info(`Updated attempt ${attemptId} with AI classification: ${prediction} (${confidence})`);
+//     await attempt.save();
+//     logger.info(`Updated attempt ${attemptId} with AI classification: ${prediction} (${confidence})`);
 
-  } catch (error) {
-    logger.error('Error handling AI classification message:', error);
-  }
-};
+//   } catch (error) {
+//     logger.error('Error handling AI classification message:', error);
+//   }
+// };
