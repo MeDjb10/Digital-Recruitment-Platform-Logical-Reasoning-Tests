@@ -26,7 +26,7 @@ router.get("/profile", verifyToken(), userController.getMyProfile);
 
 router.get(
   "/:userId",
-  verifyToken(),
+  verifyToken(["admin", "moderator", "psychologist"]),
   validateUserId,
   userController.getUserById
 );
