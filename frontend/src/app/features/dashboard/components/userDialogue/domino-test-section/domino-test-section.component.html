@@ -84,97 +84,183 @@
       </div>
     </div>
   </div>
- 
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <!-- AI Classification -->
-      <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-        <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          AI Classification
-          <i class="pi pi-robot text-blue-500"></i>
-        </h3>
-        <div class="space-y-4">
-          <!-- Show classification if exists -->
-          <div *ngIf="aiClassification" 
-               class="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 relative group cursor-help">
-            <div class="flex justify-between items-center">
-              <span 
-                    class="text-lg font-semibold">
-                {{aiClassification}}
-              </span>
-              <span class="text-sm text-blue-600">
-                {{aiConfidence | percent:'1.0-1'}}
-              </span>
+     <div class="grid grid-cols-3 gap-6 mb-8">
+      <!-- Classifications Section (1/3 width - left side) -->
+      <div class="col-span-1 space-y-6">
+        <!-- AI Classification -->
+        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <i class="pi pi-robot text-blue-500"></i>
+            AI Classification
+          </h3>
+          <div class="space-y-4">
+            <!-- Show classification if exists -->
+            <div *ngIf="aiClassification" 
+                 class="p-4 rounded-lg border-2 relative group cursor-help transition-all duration-300"
+                 [ngClass]="getClassificationStyle(aiClassification)">
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-semibold text-white">
+                  {{translateClassification(aiClassification)}}
+                </span>
+                <div class="flex items-center gap-2">
+                  
+                  <i class="pi pi-info-circle text-white"></i>
+                </div>
+              </div>
+              <!-- Tooltip -->
+              <div class="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300
+                          absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2
+                          bg-gray-900 text-white text-sm rounded-lg py-2 px-4 shadow-lg whitespace-nowrap">
+                <p>AI Confidence Level: {{aiConfidence | percent:'1.0-1'}}</p>
+                <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 
+                            border-8 border-transparent border-t-gray-900"></div>
+              </div>
             </div>
-            <!-- Tooltip -->
-            <div class="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300
-                        absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2
-                        bg-gray-900 text-white text-sm rounded-lg py-2 px-4 shadow-lg whitespace-nowrap">
-              <p>Confidence Level: {{aiConfidence | percent:'1.0-1'}}</p>
-              <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 
-                          border-8 border-transparent border-t-gray-900"></div>
+            <!-- Show button only if no classification exists -->
+            <button *ngIf="!aiClassification"
+              (click)="classifyPerformance()"
+              class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+              <i class="pi pi-robot mr-2"></i>
+              Get AI Classification
+            </button>
+          </div>
+        </div>        <!-- Manual Classification -->
+        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <i class="pi pi-user text-purple-500"></i>
+            Manual Classification
+            <!-- Role indicator -->
+            <span *ngIf="!isPsychologist()" class="ml-auto">
+              <i class="pi pi-lock text-gray-400 text-sm" 
+                 title="Psychologist only"></i>
+            </span>
+          </h3>
+          <div class="space-y-4">            <!-- Show dropdown only for psychologists when no classification exists -->
+            <div *ngIf="canManuallyClassify()" class="transition-all duration-300">
+              <select #classificationSelect
+                (change)="onClassificationSelect(classificationSelect.value)"
+                class="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-purple-300 focus:outline-none bg-white hover:bg-gray-50 transition-colors text-gray-700">
+                <option value="">Select Classification Level</option>
+                <option *ngFor="let label of classificationLabels" [value]="label">
+                  {{label}}
+                </option>
+              </select>
+            </div>            <!-- Show message for non-psychologists when no classification exists -->
+            <div *ngIf="!manualClassification && !canManuallyClassify()" 
+                 class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
+              <div class="text-gray-500">
+                <i class="pi pi-lock text-2xl mb-2"></i>
+                <p class="text-sm">{{getPermissionMessage('classify')}}</p>
+                <p class="text-xs text-gray-400 mt-1">Current role: {{getUserRoleDisplay()}}</p>
+              </div>
+            </div>
+
+            <!-- Show existing classification with enhanced styling -->
+            <div *ngIf="manualClassification" 
+                 class="p-4 rounded-lg border-2 relative group cursor-help transition-all duration-300"
+                 [ngClass]="getClassificationStyle(manualClassification.value)">
+              <div class="flex items-center justify-between">
+                <span class="font-semibold text-white text-lg">{{manualClassification.value}}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm bg-white bg-opacity-20 px-2 py-1 rounded text-white">
+                    Manual
+                  </span>
+                  <i class="pi pi-info-circle text-white"></i>
+                </div>
+              </div>
+                <!-- Tooltip - Show detailed info only to authorized users -->
+              <div class="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300
+                          absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2
+                          bg-gray-900 text-white text-sm rounded-lg py-2 px-4 shadow-lg">
+                <p class="whitespace-nowrap" *ngIf="canViewClassificationDetails(); else limitedInfo">
+                  Classified by: {{manualClassification.classifiedBy}}<br>
+                  Date: {{formatClassificationDate(manualClassification.classifiedAt)}}
+                </p>
+                <ng-template #limitedInfo>
+                  <p class="whitespace-nowrap">Manual Classification</p>
+                </ng-template>
+                <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 
+                            border-8 border-transparent border-t-gray-900"></div>
+              </div>
             </div>
           </div>
-          <!-- Show button only if no classification exists -->
-          <button *ngIf="!aiClassification"
-            (click)="classifyPerformance()"
-            class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-            Get AI Classification
-          </button>
         </div>
-      </div>      <!-- Manual Classification -->
-      <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-        <h3 class="text-xl font-semibold text-gray-800 mb-4">Manual Classification</h3>
-        <div class="space-y-4">
-          <!-- Show dropdown only for psychologists when no classification exists -->
-          <div  class="transition-all duration-300">
-            <select #classificationSelect *ngIf="!manualClassification"
-              (change)="onClassificationSelect(classificationSelect.value)"
-              class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none bg-white hover:bg-gray-50 transition-colors">
-              <option value="">Select Classification</option>
-              <option *ngFor="let label of classificationLabels" [value]="label">
-                {{label}}
-              </option>
-            </select>
+      </div>      <!-- Psychologist Comment Section (2/3 width - right side) -->
+      <div class="col-span-2">
+        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 h-full">          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+              <i class="pi pi-user-edit text-green-500"></i>
+              Psychologist's Analysis
+              <!-- Role indicator -->
+              <span *ngIf="!isPsychologist()" class="ml-2">
+                <i class="pi pi-lock text-gray-400 text-sm" 
+                   title="Psychologist only"></i>
+              </span>
+            </h3><!-- Only show save button when no saved comment exists and user is psychologist -->
+            <button *ngIf="canAddPsychologistComment()"
+              (click)="submitPsychologistComment()"
+              [disabled]="isSavingComment || !draftPsychologistComment.trim()"
+              class="px-3 py-1 text-sm rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors duration-300 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div *ngIf="isSavingComment" class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
+              <i *ngIf="!isSavingComment" class="pi pi-save text-xs"></i>
+              {{ isSavingComment ? 'Saving...' : 'Save' }}
+            </button>
           </div>
-
-          <!-- Show existing classification with tooltip -->
-          <div *ngIf="manualClassification" 
-               class="p-3 bg-gray-50 rounded-lg border border-gray-200 relative group cursor-help">
-            <div class="flex items-center justify-between">
-              <span class="font-medium text-gray-700">{{manualClassification.value}}</span>
-              <i class="pi pi-info-circle text-blue-500"></i>
-            </div>
+          
+          <!-- Show existing saved comment when it exists for all users -->
+          <div *ngIf="savedPsychologistComment"
+               class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200 flex-1">
+            <p class="whitespace-pre-line text-gray-700 leading-relaxed mb-3">{{savedPsychologistComment}}</p>
             
-            <!-- Tooltip -->
-            <div class="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-300
-                        absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2
-                        bg-gray-900 text-white text-sm rounded-lg py-2 px-4 shadow-lg">
-              <p class="whitespace-nowrap">
-                Classified by: {{manualClassification.classifiedBy}}<br>
-                Date: {{formatClassificationDate(manualClassification.classifiedAt)}}
-              </p>
-              <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 
-                          border-8 border-transparent border-t-gray-900"></div>
+            <!-- Author and Date Information -->
+            <div class="flex items-center justify-between text-xs text-gray-500 border-t border-green-200 pt-2 mt-3">
+              <div class="flex items-center gap-1">
+                <i class="pi pi-user"></i>
+                <span>{{psychologistCommentAuthor || 'Unknown Author'}}</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <i class="pi pi-calendar"></i>
+                <span>{{formatPsychologistCommentDate(psychologistCommentDate)}}</span>
+              </div>
+            </div>
+          </div>
+            <!-- Show textarea when no saved comment exists and user is psychologist -->
+          <textarea *ngIf="canAddPsychologistComment()"
+            [(ngModel)]="draftPsychologistComment" 
+            placeholder="Enter your professional analysis here..."
+            class="w-full h-full p-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-300 focus:outline-none resize-none"
+          ></textarea>          <!-- Show message for non-psychologists when no comment exists -->
+          <div *ngIf="!savedPsychologistComment && !canAddPsychologistComment()"
+               class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex-1 flex items-center justify-center">
+            <div class="text-center text-gray-500">
+              <i class="pi pi-lock text-2xl mb-2"></i>
+              <p class="text-sm">{{getPermissionMessage('comment')}}</p>
+              <p class="text-xs text-gray-400 mt-1">Current role: {{getUserRoleDisplay()}}</p>
             </div>
           </div>
         </div>
-      </div>    </div>
-
-  <!-- AI Analysis Section -->
+      </div>
+    </div>
+  <!-- AI Analysis Section - Show to all users but limit generation to authorized users -->
   <div class="bg-gradient-to-r from-white to-gray-50 p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-bold text-xl text-gray-800">AI Performance Analysis</h3>
       <div class="flex gap-2">
-        <!-- Only show generate button if no analysis exists -->
-        <button *ngIf="!aiComment"
+        <!-- Only show generate button if no analysis exists and user has access -->
+        <button *ngIf="!aiComment && hasAccessToAnalytics()"
           (click)="generateReport()"
           [disabled]="isLoadingAnalysis"
           class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300 flex items-center gap-2"
         >
           <div *ngIf="isLoadingAnalysis" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
           {{ isLoadingAnalysis ? 'Generating...' : 'Generate Analysis' }}
-        </button>
+        </button>        <!-- Show permission message for unauthorized users -->
+        <div *ngIf="!aiComment && !hasAccessToAnalytics()" 
+             class="px-4 py-2 rounded-lg bg-gray-100 text-gray-600 flex items-center gap-2">
+          <i class="pi pi-lock text-sm"></i>
+          <span class="text-sm">{{getPermissionMessage('generate')}}</span>
+        </div>
         <!-- Only show toggle button if analysis exists -->
         <button *ngIf="aiComment"
           (click)="isAiAnalysisVisible = !isAiAnalysisVisible"
@@ -191,15 +277,17 @@
         <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
         <p class="text-gray-600">Analyzing test performance...</p>
       </div>
-    </div>
-
-    <!-- No Analysis State -->
+    </div>    <!-- No Analysis State -->
     <div *ngIf="!aiComment && !isLoadingAnalysis" class="text-center py-8">
       <div class="text-gray-400 mb-4">
         <i class="pi pi-robot text-4xl"></i>
       </div>
       <p class="text-gray-600 mb-4">No AI analysis available yet</p>
-      <p class="text-sm text-gray-500">Click "Generate Analysis" to get detailed insights about this test performance</p>
+      <p *ngIf="hasAccessToAnalytics()" class="text-sm text-gray-500">
+        Click "Generate Analysis" to get detailed insights about this test performance
+      </p>      <p *ngIf="!hasAccessToAnalytics()" class="text-sm text-gray-500">
+        {{getPermissionMessage('generate')}}
+      </p>
     </div>
 
     <!-- Analysis Content -->
@@ -296,89 +384,65 @@
       </div>
     </div>
   </div>
-
-  <!-- Detailed Metrics -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-      <h4 class="font-semibold text-gray-700 mb-3">Completion Rate</h4>
-      <div class="relative pt-1">
-        <div class="flex mb-2 items-center justify-between">
-          <div>
-            <span class="text-xs font-semibold inline-block py-1 px-2 rounded-full text-blue-600 bg-blue-200">
-              Progress
-            </span>
-          </div>
-          <div class="text-right">
-            <span class="text-xs font-semibold inline-block text-blue-600">
-              {{ completionRate }}%
-            </span>
-          </div>
-        </div>
-        <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
-          <div [style.width.%]="completionRate"
-            class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-      <h4 class="font-semibold text-gray-700 mb-3">Efficiency Score</h4>
-      <p class="text-3xl font-bold text-indigo-600">
-        {{ efficiencyScore | number : "1.0-3" }}
-      </p>
-      <p class="text-sm text-gray-500 mt-1">Points per second</p>
-    </div>
-
-    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-      <h4 class="font-semibold text-gray-700 mb-3">Avg. Time/Question</h4>
-      <p class="text-3xl font-bold text-teal-600">
-        {{ averageTimePerQuestion / 1000 | number : "1.0-1" }}s
-      </p>
-      <p class="text-sm text-gray-500 mt-1">Per question</p>
-    </div>
-  </div>
-  <br />
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Stats for each question -->
-    <div>
+  <!-- Tree Map and Metrics Section -->
+  <div class="grid grid-cols-2 gap-6 mb-8">
+    <!-- Tree Map Section (1/2 width - left side) -->
+    <div class="col-span-1">
       <h3 class="font-bold text-xl mb-4 text-gray-800">
         Time Distribution per Question
       </h3>
-      <div class="">        <apx-chart [series]="chartOptions.series!" [chart]="chartOptions.chart!" [dataLabels]="chartOptions.dataLabels!"
+      <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+        <apx-chart [series]="chartOptions.series!" [chart]="chartOptions.chart!" [dataLabels]="chartOptions.dataLabels!"
           [plotOptions]="chartOptions.plotOptions!" [colors]="chartOptions.colors!"></apx-chart>
       </div>
     </div>
-    <!-- Psychologist Comment Section -->
-    <div>
-      <hr class="my-8 border-t border-gray-200 w-full" />      <!-- Psychologist Comment Section -->
-      <div class="bg-white">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-bold text-xl text-gray-800">
-            Psychologist's Analysis
-          </h3>
-          <!-- Only show save button when no saved comment exists and user is psychologist or admin -->
-          <button *ngIf="!savedPsychologistComment && (currentUser?.role === 'psychologist' || currentUser?.role === 'admin')"
-            (click)="submitPsychologistComment()"
-            [disabled]="isSavingComment || !draftPsychologistComment.trim()"
-            class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <div *ngIf="isSavingComment" class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-            {{ isSavingComment ? 'Saving...' : 'Save Comment' }}
-          </button>
+
+    <!-- Metrics Section (1/2 width - right side) -->
+    <div class="col-span-1 space-y-6">
+      <!-- Completion Rate -->
+      <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+        <h4 class="font-semibold text-gray-700 mb-3">Completion Rate</h4>
+        <div class="relative pt-1">
+          <div class="flex mb-2 items-center justify-between">
+            <div>
+              <span class="text-xs font-semibold inline-block py-1 px-2 rounded-full text-blue-600 bg-blue-200">
+                Progress
+              </span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-semibold inline-block text-blue-600">
+                {{ completionRate }}%
+              </span>
+            </div>
+          </div>
+          <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+            <div [style.width.%]="completionRate"
+              class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500">
+            </div>
+          </div>
         </div>
-          <!-- Show existing saved comment when it exists for all users -->
-        <div *ngIf="savedPsychologistComment"
-             class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <p class="whitespace-pre-line text-gray-700">{{savedPsychologistComment}}</p>
+      </div>
+
+      <!-- Efficiency Score -->
+      <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex justify-between items-center">
+        <h4 class="text-3xl font-semibold text-gray-700 mb-3">Efficiency Score</h4>
+        <div>
+          <p class="text-3xl font-bold text-indigo-600">
+          {{ efficiencyScore | number : "1.0-3" }}
+        </p>
+        <p class="text-sm text-gray-500 mt-1">Points per second</p>
         </div>
-        
-        <!-- Show textarea when no saved comment exists and user is psychologist or admin -->
-        <textarea *ngIf="!savedPsychologistComment && (currentUser?.role === 'psychologist' || currentUser?.role === 'admin')"
-          [(ngModel)]="draftPsychologistComment" 
-          placeholder="Enter your professional analysis here..."
-          class="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:outline-none min-h-[150px]"
-        ></textarea>
+      </div>
+
+      <!-- Average Time per Question -->
+      <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex justify-between items-center">
+        <h4 class=" text-3xl font-semibold text-gray-700 mb-3">Avg. Time/Question</h4>
+       <div>
+         <p class="text-3xl font-bold text-teal-600">
+          {{ averageTimePerQuestion / 1000 | number : "1.0-1" }}s
+        </p>
+        <p class="text-sm text-gray-500 mt-1">Per question</p>
+       </div>
       </div>
     </div>
   </div>
