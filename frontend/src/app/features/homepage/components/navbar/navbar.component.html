@@ -178,9 +178,7 @@
                 <i
                   class="w-5 mr-3 text-[1.1rem] text-[#718096] transition-all duration-200 hover:text-[#3182ce] hover:translate-x-0.5 pi pi-user"></i>
                 <span>{{ "USER.PROFILE" | translate }}</span>
-              </a>
-
-              <a routerLink="/tests/my-tests"
+              </a>              <a routerLink="/select" *ngIf="isCandidate()"
                 class="flex items-center py-3.5 px-4 text-[0.9rem] text-[#4a5568] border-l-[3px] border-transparent transition-all duration-200 hover:bg-[#f7fafc] hover:text-[#2d3748] hover:border-l-[#4299e1]">
                 <i
                   class="w-5 mr-3 text-[1.1rem] text-[#718096] transition-all duration-200 hover:text-[#3182ce] hover:translate-x-0.5 pi pi-list"></i>
@@ -366,9 +364,7 @@
             class="flex items-center py-3 px-4 rounded-lg my-1 text-base font-medium text-white/90 transition-all duration-250 hover:bg-white/15 hover:text-white hover:translate-x-[3px]">
             <i class="pi pi-user mr-3 text-lg opacity-90"></i>
             {{ "USER.PROFILE" | translate }}
-          </a>
-
-          <a routerLink="/tests/my-tests"
+          </a>          <a routerLink="/tests/my-tests" *ngIf="isCandidate()"
             class="flex items-center py-3 px-4 rounded-lg my-1 text-base font-medium text-white/90 transition-all duration-250 hover:bg-white/15 hover:text-white hover:translate-x-[3px]">
             <i class="pi pi-list mr-3 text-lg opacity-90"></i>
             {{ "USER.TESTS" | translate }}

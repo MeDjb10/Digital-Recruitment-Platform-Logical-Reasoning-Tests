@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 from utils.performance_analyzer import PerformanceAnalyzer
 from utils.db_schema import PerformanceMetrics
+from utils.broker import broker
 
 app = FastAPI(title="Performance Analysis API")
 
@@ -27,6 +28,7 @@ model_dir = str(Path(__file__).parent.parent / "Models")
 analyzer = PerformanceAnalyzer(model_dir)
 
 class MetricsRequest(BaseModel):
+    attemptId: str  # Add this field
     test_type: str
     questionsAnswered: int
     correct_answers: int
@@ -128,17 +130,20 @@ async def clear_database():
 @app.post("/classify")
 async def classify_performance(metrics: MetricsRequest):
     try:
-        # Convert to PerformanceMetrics with timestamp
         metrics_dict = metrics.dict()
+        attempt_id = metrics_dict.pop('attemptId')
         del metrics_dict['desired_position']
         del metrics_dict['education_level']
+        
         performance_metrics: PerformanceMetrics = {
             **metrics_dict,
             "timestamp": datetime.now().isoformat()
         }
         
-        # Get only the prediction
         prediction_result = analyzer.predictor.predict(performance_metrics)
+        
+        # Publish to message broker
+        await broker.publish_classification(attempt_id, prediction_result)
         
         return {
             "prediction": prediction_result["predicted_category"],
@@ -146,7 +151,20 @@ async def classify_performance(metrics: MetricsRequest):
         }
     
     except Exception as e:
+        print(f"Error in classification: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+async def publish_classification_result(attempt_id: str, prediction_result: dict):
+    # Implementation depends on your message broker setup
+    # This is a placeholder for the actual implementation
+    message = {
+        "attemptId": attempt_id,
+        "prediction": prediction_result["predicted_category"],
+        "confidence": prediction_result["confidence"],
+        "timestamp": datetime.now().isoformat()
+    }
+    # Publish to message broker
+    # await broker.publish("test.attempts.classified", message)
 
 if __name__ == "__main__":
     import uvicorn

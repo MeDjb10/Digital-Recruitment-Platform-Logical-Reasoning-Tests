@@ -8,8 +8,8 @@ const {
 } = require("../utils/file-upload.util");
 const logger = require("../utils/logger.util");
 // Add these imports to the top of the file
-const { publishMessage } = require('../utils/message-broker');
-const { EXCHANGES, ROUTING_KEYS } = require('../config/rabbit.config');
+const { publishMessage } = require("../utils/message-broker");
+const { EXCHANGES, ROUTING_KEYS } = require("../config/rabbit.config");
 /**
  * Get users with pagination and filtering
  */
@@ -126,14 +126,16 @@ exports.getUserById = async (
   if (!user) {
     throw new ErrorResponse("User not found", 404);
   }
-
   // Skip permission check for service-to-service requests
   if (isServiceRequest) {
     return user;
   }
 
   // For regular user requests, enforce access control
-  if (userId !== requestUserId && !["admin", "moderator"].includes(userRole)) {
+  if (
+    userId !== requestUserId &&
+    !["admin", "moderator", "psychologist"].includes(userRole)
+  ) {
     throw new ErrorResponse("Not authorized to access this user profile", 403);
   }
 
@@ -698,8 +700,8 @@ exports.updateTestAuthorizationStatus = async (
  */
 exports.getUserTestAssignment = async (userId) => {
   const user = await User.findById(userId)
-    .select('testAuthorizationStatus testAssignment')
-    .populate('testAssignment.assignedBy', 'firstName lastName email')
+    .select("testAuthorizationStatus testAssignment")
+    .populate("testAssignment.assignedBy", "firstName lastName email")
     .lean();
 
   if (!user) {
@@ -709,7 +711,8 @@ exports.getUserTestAssignment = async (userId) => {
   // Check if user's test authorization status is approved
   if (user.testAuthorizationStatus !== "approved") {
     throw new ErrorResponse(
-      "User is not approved for testing. Current status: " + user.testAuthorizationStatus,
+      "User is not approved for testing. Current status: " +
+        user.testAuthorizationStatus,
       403
     );
   }

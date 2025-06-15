@@ -209,6 +209,28 @@ class AttemptService {
   }
 
   /**
+   * Get attempt by candidate ID and test ID
+   */
+  async getAttemptByCandidateAndTest(candidateId, testId) {
+    if (!mongoose.Types.ObjectId.isValid(candidateId)) {
+      throw new AppError("Invalid candidate ID format", 400);
+    }
+    if (!mongoose.Types.ObjectId.isValid(testId)) {
+      throw new AppError("Invalid test ID format", 400);
+    }
+
+    const attempt = await TestAttempt.findOne({
+      candidateId,
+      testId,
+    }).populate({
+      path: "testId",
+      select: "name description duration difficulty category type",
+    });
+
+    return attempt;
+  }
+
+  /**
    * Get questions with responses for an attempt
    */
   async getAttemptQuestions(attemptId) {
@@ -1040,6 +1062,117 @@ class AttemptService {
           : 0,
       engagementScore: analytics.totalVisits + analytics.questionsFlagged,
     };
+  }
+
+  /**
+   * Update attempt AI classification
+   */
+  async updateAiClassification(attemptId, classification) {
+    try {
+      const attempt = await TestAttempt.findById(attemptId);
+      if (!attempt) {
+        throw new Error(`Attempt ${attemptId} not found`);
+      }
+
+      attempt.aiClassification = {
+        prediction: classification.prediction,
+        confidence: classification.confidence,
+        classifiedAt: new Date(classification.timestamp || Date.now()),
+      };
+
+      await attempt.save();
+      logger.info(`Updated AI classification for attempt ${attemptId}`);
+
+      return attempt;
+    } catch (error) {
+      logger.error(
+        `Error updating AI classification for attempt ${attemptId}:`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Update manual classification for an attempt
+   */
+  async updateManualClassification(
+    attemptId,
+    { classification, classifiedBy }
+  ) {
+    try {
+      const attempt = await TestAttempt.findById(attemptId);
+      if (!attempt) {
+        throw new Error(`Attempt ${attemptId} not found`);
+      }
+
+      attempt.manualClassification = {
+        classification,
+        classifiedBy,
+        classifiedAt: new Date(),
+      };
+
+      await attempt.save();
+      logger.info(`Updated manual classification for attempt ${attemptId}`);
+
+      return attempt;
+    } catch (error) {
+      logger.error(
+        `Error updating manual classification for attempt ${attemptId}:`,
+        error
+      );
+      throw error;
+    }
+  }
+  async updateAiComment(attemptId, aiComment) {
+    try {
+      const attempt = await TestAttempt.findById(attemptId);
+      if (!attempt) {
+        throw new Error(`Attempt ${attemptId} not found`);
+      }
+
+      attempt.aiComment = {
+        comment: aiComment,
+        commentedAt: new Date(),
+      };
+
+      attempt.markModified("aiComment"); // Explicitly mark as modified
+      await attempt.save();
+      logger.info(`Updated ai comment for attempt ${attemptId}`);
+
+      return attempt;
+    } catch (error) {
+      logger.error(
+        `Error updating ai comment for attempt ${attemptId}:`,
+        error
+      );
+      throw error;
+    }
+  }
+  async updatePsychologistComment(attemptId, { comment, commentedBy }) {
+    try {
+      const attempt = await TestAttempt.findById(attemptId);
+      if (!attempt) {
+        throw new Error(`Attempt ${attemptId} not found`);
+      }
+
+      attempt.psychologistComment = {
+        comment,
+        commentedBy,
+        commentedAt: new Date(),
+      };
+
+      await attempt.save();
+      logger.info(`Updated psychologist comment for attempt ${attemptId}`);
+
+      return attempt;
+    } catch (error) {
+      logger.error(
+        `Error updating psychologist comment for attempt ${attemptId}:`,
+        error
+      );
+      throw error;
+    }
   }
 }
 

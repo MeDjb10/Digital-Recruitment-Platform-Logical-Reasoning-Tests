@@ -12,16 +12,9 @@
         <nav aria-label="Breadcrumb">
           <ol class="flex items-center space-x-2 text-sm">
             <li>
-              <a
-                routerLink="/dashboard"
-                class="text-gray-500 hover:text-blue-600 transition-colors"
-                >Dashboard</a
-              >
+              <a routerLink="/dashboard" class="text-gray-500 hover:text-blue-600 transition-colors">Dashboard</a>
             </li>
-            <li
-              *ngIf="pageTitle !== 'Dashboard'"
-              class="flex items-center space-x-2"
-            >
+            <li *ngIf="pageTitle !== 'Dashboard'" class="flex items-center space-x-2">
               <i class="pi pi-angle-right text-gray-400 text-xs"></i>
               <span class="text-gray-800 font-medium">{{ pageTitle }}</span>
             </li>
@@ -37,101 +30,47 @@
 
     <!-- Right Side: Actions & Profile with improved layout -->
     <div class="flex items-center space-x-1 md:space-x-3">
-      <!-- Search with animation -->
-      <div class="relative hidden md:block search-container">
-        <div class="search-input-container">
-          <span
-            class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 pointer-events-none"
-          >
-            <i class="pi pi-search text-sm"></i>
-          </span>
-          <input
-            type="text"
-            [placeholder]="'DASHBOARD.NAVBAR.SEARCH' | translate"
-            class="search-input"
-            (focus)="searchFocused = true"
-            (blur)="searchFocused = false"
-          />
-          <span
-            *ngIf="!searchFocused"
-            class="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-400 text-xs"
-          >
-            <span class="hidden lg:inline">⌘</span><span>K</span>
-          </span>
-        </div>
-      </div>
 
-      <!-- Mobile Search Button -->
-      <button
-        pButton
-        pRipple
-        type="button"
-        icon="pi pi-search"
-        class="p-button-text p-button-rounded md:hidden"
-      ></button>
 
       <!-- Language Selector -->
       <div class="relative">
-        <button
-          pButton
-          pRipple
-          type="button"
-          (click)="toggleLanguageDropdown()"
+        <button pButton pRipple type="button" (click)="toggleLanguageDropdown()"
           class="language-selector p-button-text p-button-rounded flex items-center"
-          [pTooltip]="'DASHBOARD.NAVBAR.CHANGE_LANGUAGE' | translate"
-          tooltipPosition="bottom"
-        >
+          [pTooltip]="'DASHBOARD.NAVBAR.CHANGE_LANGUAGE' | translate" tooltipPosition="bottom">
           <i class="pi pi-globe text-gray-600"></i>
           <span class="ml-1 hidden lg:inline-block text-gray-700">{{
             currentLang.toUpperCase()
-          }}</span>
+            }}</span>
         </button>
 
         <!-- Language Dropdown -->
-        <div
-          *ngIf="showLanguageDropdown"
-          class="language-dropdown absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200"
-        >
-          <button
-            (click)="switchLanguage('en')"
+        <div *ngIf="showLanguageDropdown"
+          class="language-dropdown absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+          <button (click)="switchLanguage('en')"
             class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            [ngClass]="{ 'bg-blue-50': currentLang === 'en' }"
-          >
+            [ngClass]="{ 'bg-blue-50': currentLang === 'en' }">
             <div class="w-5 h-5 mr-3 relative overflow-hidden rounded-full">
               <!-- US flag SVG icon -->
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 512 512"
-                class="w-5 h-5"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-5 h-5">
                 <path fill="#f0f0f0" d="M0 85.33h512v341.337H0z" />
                 <g fill="#d80027">
-                  <path
-                    d="M0 85.33h512v42.663H0zM0 170.66h512v42.663H0zM0 256h512v42.663H0zM0 341.33h512v42.663H0z"
-                  />
+                  <path d="M0 85.33h512v42.663H0zM0 170.66h512v42.663H0zM0 256h512v42.663H0zM0 341.33h512v42.663H0z" />
                 </g>
                 <path fill="#2e52b2" d="M0 85.33h256v170.663H0z" />
                 <g fill="#f0f0f0">
                   <path
-                    d="m99.82 160.624-4.184 12.883h-13.534l10.947 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.946-7.96h-13.533zM103.797 219.288l-4.185 12.883H86.08l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96h-13.532zM43.663 219.288l-4.185 12.883H25.946l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96H54.65zM43.663 160.624l-4.185 12.883H25.946l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96H54.65zM155.57 160.624l-4.184 12.883h-13.533l10.946 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.947-7.96h-13.534zM155.57 219.288l-4.184 12.883h-13.533l10.946 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.947-7.96h-13.534zM43.663 102.85l-4.185 12.884H25.946l10.947 7.96-4.183 12.883 10.954-7.974 10.957 7.974-4.185-12.883 10.946-7.96H54.65zM103.797 102.85l-4.185 12.884H86.08l10.947 7.96-4.183 12.883 10.954-7.974 10.957 7.974-4.185-12.883 10.946-7.96h-13.532zM155.57 102.85l-4.184 12.884h-13.533l10.946 7.96-4.185 12.883 10.956-7.974 10.956 7.974-4.185-12.883 10.947-7.96h-13.534z"
-                  />
+                    d="m99.82 160.624-4.184 12.883h-13.534l10.947 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.946-7.96h-13.533zM103.797 219.288l-4.185 12.883H86.08l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96h-13.532zM43.663 219.288l-4.185 12.883H25.946l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96H54.65zM43.663 160.624l-4.185 12.883H25.946l10.947 7.96-4.183 12.884 10.954-7.975 10.957 7.975-4.185-12.884 10.946-7.96H54.65zM155.57 160.624l-4.184 12.883h-13.533l10.946 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.947-7.96h-13.534zM155.57 219.288l-4.184 12.883h-13.533l10.946 7.96-4.185 12.884 10.956-7.975 10.956 7.975-4.185-12.884 10.947-7.96h-13.534zM43.663 102.85l-4.185 12.884H25.946l10.947 7.96-4.183 12.883 10.954-7.974 10.957 7.974-4.185-12.883 10.946-7.96H54.65zM103.797 102.85l-4.185 12.884H86.08l10.947 7.96-4.183 12.883 10.954-7.974 10.957 7.974-4.185-12.883 10.946-7.96h-13.532zM155.57 102.85l-4.184 12.884h-13.533l10.946 7.96-4.185 12.883 10.956-7.974 10.956 7.974-4.185-12.883 10.947-7.96h-13.534z" />
                 </g>
               </svg>
             </div>
             <span>{{ "LANG.EN" | translate }}</span>
           </button>
-          <button
-            (click)="switchLanguage('fr')"
+          <button (click)="switchLanguage('fr')"
             class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            [ngClass]="{ 'bg-blue-50': currentLang === 'fr' }"
-          >
+            [ngClass]="{ 'bg-blue-50': currentLang === 'fr' }">
             <div class="w-5 h-5 mr-3 relative overflow-hidden rounded-full">
               <!-- French flag SVG icon -->
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 512 512"
-                class="w-5 h-5"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-5 h-5">
                 <path fill="#f0f0f0" d="M0 85.33h512v341.337H0z" />
                 <path fill="#0052b4" d="M0 85.33h170.663v341.337H0z" />
                 <path fill="#d80027" d="M341.337 85.33H512v341.337H341.337z" />
@@ -142,169 +81,35 @@
         </div>
       </div>
 
-      <!-- Quick Actions Button -->
-      <button
-        pButton
-        pRipple
-        type="button"
-        icon="pi pi-bolt"
-        [pTooltip]="'DASHBOARD.NAVBAR.QUICK_ACTIONS' | translate"
-        tooltipPosition="bottom"
-        class="p-button-text p-button-rounded hidden sm:flex"
-      ></button>
-
-      <!-- Notification Dropdown with counter -->
-      <div class="relative">
-        <button
-          pButton
-          pRipple
-          type="button"
-          icon="pi pi-bell"
-          [pTooltip]="'DASHBOARD.NAVBAR.NOTIFICATIONS' | translate"
-          tooltipPosition="bottom"
-          class="p-button-text p-button-rounded notification-btn"
-          (click)="toggleNotifications()"
-        >
-          <span *ngIf="unreadNotifications > 0" class="notification-badge">
-            {{ unreadNotifications > 9 ? "9+" : unreadNotifications }}
-          </span>
-        </button>
-
-        <!-- Enhanced Notifications Dropdown -->
-        <div *ngIf="showNotifications" class="notification-dropdown">
-          <div class="p-4 border-b border-gray-100">
-            <div class="flex justify-between items-center">
-              <h3 class="font-medium text-gray-900">
-                {{ "DASHBOARD.NAVBAR.NOTIFICATIONS" | translate }}
-              </h3>
-              <button
-                pButton
-                [label]="'DASHBOARD.NAVBAR.MARK_ALL_READ' | translate"
-                class="p-button-text p-button-sm"
-              ></button>
-            </div>
-          </div>
-
-          <div class="max-h-[350px] overflow-y-auto py-1">
-            <a
-              *ngFor="let notification of notifications"
-              href="#"
-              class="notification-item"
-              [ngClass]="{
-                'border-blue-500': notification.type === 'info',
-                'border-green-500': notification.type === 'success',
-                'border-yellow-500': notification.type === 'warning',
-                'border-red-500': notification.type === 'error',
-                unread: notification.unread
-              }"
-            >
-              <div class="flex-shrink-0 mr-3">
-                <div
-                  class="notification-icon"
-                  [ngClass]="{
-                    'bg-blue-100 text-blue-500': notification.type === 'info',
-                    'bg-green-100 text-green-500':
-                      notification.type === 'success',
-                    'bg-yellow-100 text-yellow-500':
-                      notification.type === 'warning',
-                    'bg-red-100 text-red-500': notification.type === 'error'
-                  }"
-                >
-                  <i [class]="'pi ' + notification.icon"></i>
-                </div>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="notification-title">{{ notification.title }}</p>
-                <p class="notification-time">
-                  {{ notification.time | date : "shortTime" }}
-                </p>
-              </div>
-              <button
-                *ngIf="notification.unread"
-                pButton
-                pRipple
-                icon="pi pi-times"
-                class="p-button-text p-button-rounded p-button-sm p-button-plain self-start mt-1"
-              ></button>
-            </a>
-
-            <!-- Empty State with improved visuals -->
-            <div *ngIf="notifications.length === 0" class="p-6 text-center">
-              <div
-                class="mx-auto w-12 h-12 rounded-full bg-gray-100/80 flex items-center justify-center mb-3"
-              >
-                <i class="pi pi-bell-slash text-gray-400 text-lg"></i>
-              </div>
-              <p class="text-gray-500">
-                {{ "DASHBOARD.NAVBAR.NO_NOTIFICATIONS" | translate }}
-              </p>
-              <p class="text-xs text-gray-400 mt-1">
-                {{ "DASHBOARD.NAVBAR.NO_NEW_NOTIFICATIONS" | translate }}
-              </p>
-            </div>
-          </div>
-
-          <div class="p-2 border-t border-gray-100">
-            <button
-              pButton
-              icon="pi pi-external-link"
-              [label]="'DASHBOARD.NAVBAR.VIEW_ALL' | translate"
-              class="p-button-text p-button-sm w-full justify-center"
-            ></button>
-          </div>
-        </div>
-      </div>
-
       <p-toast position="top-right"></p-toast>
       <!-- User Dropdown with improved interaction -->
       <div class="relative">
-        <button
-          pButton
-          class="p-button-text p-button-rounded user-menu-button"
-          (click)="toggleUserDropdown()"
-          pRipple
-        >
+        <button pButton class="p-button-text p-button-rounded user-menu-button" (click)="toggleUserDropdown()" pRipple>
           <!-- Profile picture with upload functionality -->
           <div class="avatar-container relative">
-            <img
-              [src]="
+            <img [src]="
                 avatarUrl ||
                 'https://ui-avatars.com/api/?name=' +
                   encodeURIComponent(userFullName) +
                   '&background=3b82f6&color=fff&bold=true'
-              "
-              class="h-9 w-9 rounded-full border-2 border-white shadow-sm"
-              [class.profile-loading]="isUploading"
-              alt="User avatar"
-              (error)="handleImageError()"
-              (click)="$event.stopPropagation(); fileInput.click()"
-            />
+              " class="h-9 w-9 rounded-full border-2 border-white shadow-sm" [class.profile-loading]="isUploading"
+              alt="User avatar" (error)="handleImageError()" (click)="$event.stopPropagation(); fileInput.click()" />
             <!-- Overlay with icon when hovering -->
             <div class="avatar-upload-overlay">
               <i class="pi pi-camera"></i>
             </div>
             <!-- Hidden file input -->
-            <input
-              #fileInput
-              type="file"
-              (change)="onFileSelected($event)"
-              accept="image/png, image/jpeg, image/jpg, image/gif, image/webp"
-              style="display: none"
-            />
+            <input #fileInput type="file" (change)="onFileSelected($event)"
+              accept="image/png, image/jpeg, image/jpg, image/gif, image/webp" style="display: none" />
             <!-- Loading spinner -->
             <div *ngIf="isUploading" class="avatar-loading-spinner">
               <i class="pi pi-spin pi-spinner"></i>
             </div>
           </div>
 
-          <span
-            class="hidden md:block ml-2 font-medium text-sm text-gray-700"
-            >{{ userFullName }}</span
-          >
-          <i
-            class="pi pi-chevron-down ml-1 text-xs transition-transform duration-200"
-            [ngClass]="{ 'transform rotate-180': showUserDropdown }"
-          ></i>
+          <span class="hidden md:block ml-2 font-medium text-sm text-gray-700">{{ userFullName }}</span>
+          <i class="pi pi-chevron-down ml-1 text-xs transition-transform duration-200"
+            [ngClass]="{ 'transform rotate-180': showUserDropdown }"></i>
         </button>
 
         <!-- Enhanced User Dropdown Menu -->
@@ -312,17 +117,13 @@
           <div class="p-3 border-b border-gray-100">
             <div class="flex items-start">
               <div class="relative">
-                <img
-                  [src]="
+                <img [src]="
                     avatarUrl ||
                     'https://ui-avatars.com/api/?name=' +
                       encodeURIComponent(userFullName) +
                       '&background=3b82f6&color=fff&bold=true'
-                  "
-                  class="h-10 w-10 rounded-full border-2 border-white shadow-sm object-cover"
-                  [class.profile-loading]="isUploading"
-                  alt="User avatar"
-                />
+                  " class="h-10 w-10 rounded-full border-2 border-white shadow-sm object-cover"
+                  [class.profile-loading]="isUploading" alt="User avatar" />
               </div>
               <div class="ml-3">
                 <p class="font-medium text-gray-900">{{ userFullName }}</p>
@@ -331,8 +132,7 @@
                 </p>
                 <div class="mt-2">
                   <span
-                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                  >
+                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                     {{ userRole }}
                   </span>
                 </div>
@@ -341,40 +141,17 @@
           </div>
 
           <div class="py-1">
-            <a
-              class="user-dropdown-item"
-              (click)="triggerProfilePictureUpload(); $event.preventDefault()"
-            >
+            <a class="user-dropdown-item" (click)="triggerProfilePictureUpload(); $event.preventDefault()">
               <i class="pi pi-camera"></i>
               <span>{{ "DASHBOARD.NAVBAR.PROFILE_PHOTO" | translate }}</span>
             </a>
-            <a
-              *ngIf="avatarUrl"
-              class="user-dropdown-item"
-              (click)="deleteProfilePicture(); $event.preventDefault()"
-            >
+            <a *ngIf="avatarUrl" class="user-dropdown-item" (click)="deleteProfilePicture(); $event.preventDefault()">
               <i class="pi pi-trash"></i>
               <span>{{ "DASHBOARD.NAVBAR.DELETE_PHOTO" | translate }}</span>
             </a>
-            <a class="user-dropdown-item">
+            <a [routerLink]="'/profile'" class="user-dropdown-item">
               <i class="pi pi-user"></i>
               <span>{{ "DASHBOARD.NAVBAR.PROFILE" | translate }}</span>
-            </a>
-            <a class="user-dropdown-item">
-              <i class="pi pi-cog"></i>
-              <span>{{ "DASHBOARD.NAVBAR.SETTINGS" | translate }}</span>
-              <span
-                class="ml-auto bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded-full"
-                >New</span
-              >
-            </a>
-            <a class="user-dropdown-item">
-              <i class="pi pi-shield"></i>
-              <span>{{ "DASHBOARD.NAVBAR.SECURITY" | translate }}</span>
-            </a>
-            <a class="user-dropdown-item">
-              <i class="pi pi-users"></i>
-              <span>{{ "DASHBOARD.NAVBAR.TEAM" | translate }}</span>
             </a>
             <a [routerLink]="'/home'" class="user-dropdown-item">
               <i class="pi pi-home"></i>
@@ -383,11 +160,7 @@
           </div>
 
           <div class="py-1 border-t border-gray-100">
-            <button
-              (click)="logout()"
-              class="user-dropdown-item text-red-600 w-full text-left"
-              type="button"
-            >
+            <button (click)="logout()" class="user-dropdown-item text-red-600 w-full text-left" type="button">
               <i class="pi pi-sign-out"></i>
               <span>{{ "DASHBOARD.NAVBAR.SIGN_OUT" | translate }}</span>
             </button>
