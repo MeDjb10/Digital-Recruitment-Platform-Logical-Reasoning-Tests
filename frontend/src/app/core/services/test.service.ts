@@ -717,23 +717,34 @@ export class TestService {
   /**
    * Update AI classification for an attempt
    */
-  updateAiClassification(attemptId: string, classification: { prediction: string; confidence: number; timestamp?: string }): Observable<AttemptResponse> {
+  updateAiClassification(
+    attemptId: string,
+    classification: {
+      prediction: string;
+      confidence: number;
+      timestamp?: string;
+    }
+  ): Observable<AttemptResponse> {
     console.log('Updating AI classification:', { attemptId, classification });
-    
+
     return this.http
-      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/ai-classification`, classification)
+      .post<AttemptResponse>(
+        `${this.attemptApiUrl}/${attemptId}/ai-classification`,
+        classification
+      )
       .pipe(
-        tap(response => {
+        tap((response) => {
           console.log('AI classification update response:', response);
         }),
-        catchError(error => {
+        catchError((error) => {
           console.error('Error updating AI classification:', error);
           // Create a more user-friendly error response
-          const errorMessage = error.error?.error || 'Failed to update AI classification';
+          const errorMessage =
+            error.error?.error || 'Failed to update AI classification';
           return throwError(() => ({
             success: false,
             message: errorMessage,
-            error: error
+            error: error,
           }));
         })
       );
@@ -742,20 +753,31 @@ export class TestService {
   /**
    * Update manual classification for an attempt
    */
-  updateManualClassification(attemptId: string, classification: string): Observable<AttemptResponse> {
+  updateManualClassification(
+    attemptId: string,
+    classification: string
+  ): Observable<AttemptResponse> {
     return this.http
-      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/manual-classification`, { classification })
+      .post<AttemptResponse>(
+        `${this.attemptApiUrl}/${attemptId}/manual-classification`,
+        { classification }
+      )
       .pipe(
-        tap(response => {
-          this.logApiInteraction('manualClassification', { attemptId, classification }, response);
+        tap((response) => {
+          this.logApiInteraction(
+            'manualClassification',
+            { attemptId, classification },
+            response
+          );
         }),
-        catchError(error => {
+        catchError((error) => {
           console.error('Error updating manual classification:', error);
-          const errorMessage = error.error?.error || 'Failed to update manual classification';
+          const errorMessage =
+            error.error?.error || 'Failed to update manual classification';
           return throwError(() => ({
             success: false,
             message: errorMessage,
-            error: error
+            error: error,
           }));
         })
       );
@@ -764,20 +786,30 @@ export class TestService {
   /**
    * Update AI comment for an attempt
    */
-  updateAiComment(attemptId: string, aiComment: string): Observable<AttemptResponse> {
+  updateAiComment(
+    attemptId: string,
+    aiComment: string
+  ): Observable<AttemptResponse> {
     return this.http
-      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/ai-comment`, { aiComment })
+      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/ai-comment`, {
+        aiComment,
+      })
       .pipe(
-        tap(response => {
-          this.logApiInteraction('aiComment', { attemptId, aiComment }, response);
+        tap((response) => {
+          this.logApiInteraction(
+            'aiComment',
+            { attemptId, aiComment },
+            response
+          );
         }),
-        catchError(error => {
+        catchError((error) => {
           console.error('Error updating AI comment:', error);
-          const errorMessage = error.error?.error || 'Failed to update AI comment';
+          const errorMessage =
+            error.error?.error || 'Failed to update AI comment';
           return throwError(() => ({
             success: false,
             message: errorMessage,
-            error: error
+            error: error,
           }));
         })
       );
@@ -786,26 +818,39 @@ export class TestService {
   /**
    * Update psychologist's comment for an attempt
    */
-  updatePsychologistComment(attemptId: string, comment: string): Observable<AttemptResponse> {
-    const commentedBy = this.authService.getCurrentUser()?.firstName + ' ' + 
-                       this.authService.getCurrentUser()?.lastName;
-    
+  updatePsychologistComment(
+    attemptId: string,
+    comment: string
+  ): Observable<AttemptResponse> {
+    const commentedBy =
+      this.authService.getCurrentUser()?.firstName +
+      ' ' +
+      this.authService.getCurrentUser()?.lastName;
+
     return this.http
-      .post<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}/psychologist-comment`, { 
-        comment, 
-        commentedBy 
-      })
+      .post<AttemptResponse>(
+        `${this.attemptApiUrl}/${attemptId}/psychologist-comment`,
+        {
+          comment,
+          commentedBy,
+        }
+      )
       .pipe(
-        tap(response => {
-          this.logApiInteraction('psychologistComment', { attemptId, comment }, response);
+        tap((response) => {
+          this.logApiInteraction(
+            'psychologistComment',
+            { attemptId, comment },
+            response
+          );
         }),
-        catchError(error => {
+        catchError((error) => {
           console.error('Error updating psychologist comment:', error);
-          const errorMessage = error.error?.error || 'Failed to update psychologist comment';
+          const errorMessage =
+            error.error?.error || 'Failed to update psychologist comment';
           return throwError(() => ({
             success: false,
             message: errorMessage,
-            error: error
+            error: error,
           }));
         })
       );
@@ -818,17 +863,31 @@ export class TestService {
     return this.http
       .get<AttemptResponse>(`${this.attemptApiUrl}/${attemptId}`)
       .pipe(
-        tap(response => {
+        tap((response) => {
           this.logApiInteraction('getAttempt', { attemptId }, response);
         }),
-        catchError(error => {
+        catchError((error) => {
           console.error('Error getting attempt:', error);
           return throwError(() => ({
             success: false,
             message: 'Failed to get attempt data',
-            error: error
+            error: error,
           }));
         })
       );
+  }
+
+  /**
+   * Get attempt by candidate ID and test ID
+   */
+  getAttemptByCandidateAndTest(
+    candidateId: string,
+    testId: string
+  ): Observable<AttemptResponse> {
+    return this.http
+      .get<AttemptResponse>(
+        `${this.attemptApiUrl}/candidates/${candidateId}/tests/${testId}`
+      )
+      .pipe(catchError(this.handleError));
   }
 }
