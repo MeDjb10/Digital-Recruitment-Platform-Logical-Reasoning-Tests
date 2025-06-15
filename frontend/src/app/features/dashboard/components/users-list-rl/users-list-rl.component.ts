@@ -71,7 +71,6 @@ export class UsersListRLComponent implements OnInit {
   loading: boolean = true;
   globalFilterValue: string = '';
   private searchTerms = new Subject<string>();
-
   // Status options for filtering
   testAuthStatuses: any[] = [
     { label: 'Pending', value: 'pending', severity: 'warning' },
@@ -80,10 +79,19 @@ export class UsersListRLComponent implements OnInit {
     { label: 'Not Submitted', value: 'not_submitted', severity: 'secondary' },
   ];
 
-  testProgressStatuses: any[] = [
+  testStatusOptions = [
     { label: 'Not Started', value: 'not_started', severity: 'secondary' },
-    { label: 'In Progress', value: 'in_progress', severity: 'info' },
+    { label: 'In Progress', value: 'in-progress', severity: 'info' },
     { label: 'Completed', value: 'completed', severity: 'success' },
+  ];
+
+  // Education level options for filtering
+  educationLevelOptions = [
+    { label: 'High School', value: 'high_school' },
+    { label: 'Bachelor\'s Degree', value: 'bachelor' },
+    { label: 'Master\'s Degree', value: 'master' },
+    { label: 'PhD', value: 'phd' },
+    { label: 'Other', value: 'other' },
   ];
 
   // Add new property to track which view is active
@@ -111,7 +119,6 @@ export class UsersListRLComponent implements OnInit {
     { label: 'D-70 (Basic)', value: 'D-70' },
     { label: 'D-2000 (Advanced)', value: 'D-2000' },
   ];
-
   additionalTestOptions: any[] = [
     { label: 'Logique des propositions', value: 'logique_des_propositions' },
   ];
@@ -122,12 +129,9 @@ export class UsersListRLComponent implements OnInit {
   // Add variables to track filter state
   filterValues: any = {};
 
-  testStatusOptions = [
-    { label: 'Completed', value: 'completed', severity: 'success' },
-    { label: 'In Progress', value: 'in-progress', severity: 'info' }, // Match database value
-    { label: 'Timed Out', value: 'timed-out', severity: 'warning' },
-    { label: 'Abandoned', value: 'abandoned', severity: 'danger' },
-  ];
+  // Quick filter variables
+  quickStatusFilter: string = '';
+  quickTestStatusFilter: string = '';
 
   constructor(
     private userService: UserService,
@@ -167,11 +171,12 @@ export class UsersListRLComponent implements OnInit {
     this.selectedCandidates = [];
     this.loadCandidates();
   }
-
   // Clear all filters
   clearAllFilters(table: Table) {
     this.globalFilterValue = '';
     this.filterValues = {};
+    this.quickStatusFilter = '';
+    this.quickTestStatusFilter = '';
     this.filters = {
       role: 'candidate',
       page: 1,
@@ -179,14 +184,16 @@ export class UsersListRLComponent implements OnInit {
     };
     table.clear();
     this.loadCandidates();
-  }
-  // Check if there are active filters
+  }  // Check if there are active filters
   hasActiveFilters(): boolean {
     return (
       !!this.globalFilterValue ||
+      !!this.quickStatusFilter ||
+      !!this.quickTestStatusFilter ||
       this.table?.hasFilter() ||
       Object.keys(this.filterValues).length > 0
-    );  }
+    );
+  }
 
   // Clear selection
   clearSelection() {
@@ -770,5 +777,25 @@ export class UsersListRLComponent implements OnInit {
   viewAttemptDetails(candidateId: string) {
     // Navigate to the details page with the candidate ID
     this.router.navigate(['/dashboard/RaisonnementLogique/Users/completed', candidateId]);
+  }
+
+  // Quick filter methods
+  applyQuickStatusFilter(status: string) {
+    if (this.table) {
+      this.table.filter(status, 'testAuthorizationStatus', 'equals');
+    }
+  }
+
+  applyQuickTestStatusFilter(status: string) {
+    if (this.table) {
+      this.table.filter(status, 'testProgress.status', 'equals');
+    }
+  }
+
+  // Clear all filters and reset quick filters
+  clearQuickFilters() {
+    this.quickStatusFilter = '';
+    this.quickTestStatusFilter = '';
+    this.clearAllFilters(this.table);
   }
 }
