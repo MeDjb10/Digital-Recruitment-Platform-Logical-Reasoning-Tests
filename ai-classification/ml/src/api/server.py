@@ -56,7 +56,7 @@ async def analyze_performance(metrics: MetricsRequest):
     try:
         # Convert to PerformanceMetrics with timestamp
         performance_metrics: PerformanceMetrics = {
-            **metrics.dict(),
+            **metrics.model_dump(),
             "timestamp": datetime.now().isoformat()
         }
         
@@ -76,7 +76,7 @@ async def provide_feedback(request: FeedbackRequest):
     try:
         # Convert to PerformanceMetrics with timestamp
         performance_metrics: PerformanceMetrics = {
-            **request.metrics.dict(),
+            **request.metrics.model_dump(),
             "timestamp": datetime.now().isoformat()
         }
         
@@ -98,7 +98,7 @@ async def add_psychologist_comment(request: PsychologistCommentRequest):
     try:
         # Convert to PerformanceMetrics with timestamp
         performance_metrics: PerformanceMetrics = {
-            **request.metrics.dict(),
+            **request.metrics.model_dump(),
             "timestamp": datetime.now().isoformat()
         }
         
@@ -130,7 +130,7 @@ async def clear_database():
 @app.post("/classify")
 async def classify_performance(metrics: MetricsRequest):
     try:
-        metrics_dict = metrics.dict()
+        metrics_dict = metrics.model_dump()
         attempt_id = metrics_dict.pop('attemptId')
         del metrics_dict['desired_position']
         del metrics_dict['education_level']

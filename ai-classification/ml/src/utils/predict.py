@@ -46,9 +46,7 @@ class PerformancePredictor:
                 logging.info("D2000 model loaded successfully")
 
             if not self.d70_model and not self.d2000_model:
-                raise FileNotFoundError("No models found!")
-
-            # Load metadata
+                raise FileNotFoundError("No models found!")            # Load metadata
             if not os.path.exists(self.metadata_path):
                 raise FileNotFoundError(f"Metadata file not found at {self.metadata_path}")
             
@@ -66,15 +64,21 @@ class PerformancePredictor:
         try:
             # Determine which model to use based on test type
             test_type = features.get('test_type', '').lower()
+            logging.info(f"Original test type: {features.get('test_type', '')}")
+            
             # Convert test type to lowercase and remove any spaces or dashes
-            test_type = test_type.lower().replace('-', '').replace(' ', '')
+            normalized_test_type = test_type.lower().replace('-', '').replace(' ', '')
+            logging.info(f"Normalized test type: {normalized_test_type}")
             
             # Check if contains 'd' and either '70' or '2000'
-            if 'd' in test_type and '70' in test_type:
+            if 'd' in normalized_test_type and '70' in normalized_test_type:
                 model = self.d70_model
-            elif 'd' in test_type and '2000' in test_type:
+                logging.info("Using D70 model")
+            elif 'd' in normalized_test_type and '2000' in normalized_test_type:
                 model = self.d2000_model
+                logging.info("Using D2000 model")
             else:
+                logging.error(f"No matching model found for test type: {test_type} (normalized: {normalized_test_type})")
                 raise ValueError(f"Unknown test type: {test_type}")
 
             if not model:
