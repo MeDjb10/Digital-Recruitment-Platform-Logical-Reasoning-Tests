@@ -299,13 +299,13 @@ class PerformanceAnalyzer:
            - Include confidence level and key deciding factors
            - Suggest next steps or additional assessments if needed        IMPORTANT: Your analysis should demonstrate that you've learned from the other candidates' cases - particularly from psychologist feedback patterns, professional language, and assessment styles. Show that you understand what makes a quality psychological assessment by emulating the expert language and avoiding mistakes identified in previous AI analyses. Focus on the CURRENT candidate's metrics while using the communication style and professional standards demonstrated by psychologists in the historical cases.
 
-        Keep your tone professional, constructive, and evidence-based, matching the language patterns observed in expert psychological assessments from the historical data.
+        Keep your tone professional, constructive, and evidence-based, matching the language patterns observed in expert psychological assessments from the historical data. and make it simple.
         """
 
         # Prepare request
         try:
             data = {
-                "model": "deepseek-r1:1.5b",
+                "model": "deepseek-r1:8b",
                 "messages": [{"role": "user", "content": prompt}],
                 "stream": False
             }
