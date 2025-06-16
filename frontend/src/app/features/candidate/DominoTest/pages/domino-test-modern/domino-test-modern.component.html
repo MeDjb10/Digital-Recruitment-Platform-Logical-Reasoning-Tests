@@ -1,7 +1,19 @@
 <!-- Add the modal component at the top level -->
 
 <!-- Only render the main test container if the modal is closed -->
-<div class="test-container">
+<div class="test-container" [class.blurred]="!isPageVisible">
+  <!-- Security Prevention Overlay -->
+  <div class="screenshot-prevention-overlay"></div>
+  
+  <!-- Security Indicator -->
+  <div class="security-indicator" 
+       [class.warning]="tabSwitchWarnings > 0 && tabSwitchWarnings < maxTabSwitchWarnings"
+       [class.violation]="isTestSecurityViolated">
+    <i class="pi" [ngClass]="isTestSecurityViolated ? 'pi-ban' : tabSwitchWarnings > 0 ? 'pi-exclamation-triangle' : 'pi-shield'"></i>
+    <span *ngIf="!isTestSecurityViolated && tabSwitchWarnings === 0">Secure</span>
+    <span *ngIf="tabSwitchWarnings > 0 && !isTestSecurityViolated">{{ maxTabSwitchWarnings - tabSwitchWarnings }} warnings left</span>
+    <span *ngIf="isTestSecurityViolated">Violation Detected</span>
+  </div>
   <!-- Compact Header Component -->
   <app-test-header [testName]="testName" [formattedTime]="formattedTime" [isTimerWarning]="isTimerWarning"
     [isTimerCritical]="isTimerCritical" [currentQuestionIndex]="currentQuestionIndex"

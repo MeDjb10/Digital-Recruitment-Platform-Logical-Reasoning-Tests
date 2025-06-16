@@ -78,6 +78,135 @@
             </div>
             <span>{{ "LANG.FR" | translate }}</span>
           </button>
+        </div>      </div>
+
+      <!-- Security Alerts -->
+      <div class="relative" *ngIf="isStaff()">
+        <button pButton pRipple type="button" (click)="toggleSecurityAlerts()"
+          class="security-alerts-btn p-button-text p-button-rounded flex items-center relative"
+          [pTooltip]="'Security Alerts' | translate" tooltipPosition="bottom">
+          <i class="pi pi-shield text-gray-600" [class.text-red-600]="unreadSecurityAlerts > 0"></i>
+          <span *ngIf="unreadSecurityAlerts > 0"
+            class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            {{ unreadSecurityAlerts > 99 ? '99+' : unreadSecurityAlerts }}
+          </span>
+          <i class="pi pi-wifi-slash text-red-500 text-xs absolute -bottom-1 -right-1" 
+             *ngIf="!isSecurityConnected" 
+             [pTooltip]="'Security service disconnected'" 
+             tooltipPosition="bottom"></i>
+        </button>
+
+        <!-- Security Alerts Dropdown -->
+        <div *ngIf="showSecurityAlerts"
+          class="security-alerts-dropdown absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl z-50 border border-gray-200 max-h-96 overflow-hidden">
+          
+          <!-- Header -->
+          <div class="flex items-center justify-between p-4 border-b border-gray-200">
+            <div class="flex items-center">
+              <i class="pi pi-shield text-red-600 mr-2"></i>
+              <h3 class="font-semibold text-gray-900">Security Alerts</h3>
+              <span *ngIf="unreadSecurityAlerts > 0" 
+                class="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                {{ unreadSecurityAlerts }} new
+              </span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button (click)="openSecurityMonitor()" 
+                class="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded"
+                [pTooltip]="'Open Security Monitor'" tooltipPosition="bottom">
+                <i class="pi pi-external-link"></i>
+              </button>
+              <button (click)="clearAllSecurityAlerts()" 
+                class="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded"
+                [pTooltip]="'Clear All'" tooltipPosition="bottom">
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Connection Status -->
+          <div *ngIf="!isSecurityConnected" 
+            class="bg-yellow-50 border-l-4 border-yellow-400 p-3">
+            <div class="flex">
+              <i class="pi pi-exclamation-triangle text-yellow-400 mr-2"></i>
+              <div class="text-sm">
+                <p class="text-yellow-700">Security service disconnected</p>
+                <p class="text-yellow-600 text-xs">Real-time alerts may be delayed</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alerts List -->
+          <div class="max-h-80 overflow-y-auto">
+            <div *ngIf="securityAlerts.length === 0" class="p-6 text-center text-gray-500">
+              <i class="pi pi-check-circle text-4xl text-green-500 mb-2"></i>
+              <p class="text-sm">No security alerts</p>
+              <p class="text-xs text-gray-400">All tests are running smoothly</p>
+            </div>
+
+            <div *ngFor="let alert of securityAlerts; trackBy: trackByAlertId" 
+              class="border-b border-gray-100 p-4 hover:bg-gray-50 transition-colors">
+              
+              <!-- Alert Header -->
+              <div class="flex items-start justify-between mb-2">
+                <div class="flex items-center">
+                  <i [class]="'pi ' + getSecuritySeverityIcon(alert.severity)" 
+                     [ngClass]="{
+                       'text-red-600': alert.severity === 'CRITICAL',
+                       'text-orange-500': alert.severity === 'HIGH',
+                       'text-yellow-500': alert.severity === 'MEDIUM',
+                       'text-blue-500': alert.severity === 'LOW'
+                     }" class="mr-2"></i>
+                  <span class="text-xs font-medium px-2 py-1 rounded"
+                    [ngClass]="{
+                      'bg-red-100 text-red-800': alert.severity === 'CRITICAL',
+                      'bg-orange-100 text-orange-800': alert.severity === 'HIGH',
+                      'bg-yellow-100 text-yellow-800': alert.severity === 'MEDIUM',
+                      'bg-blue-100 text-blue-800': alert.severity === 'LOW'
+                    }">
+                    {{ alert.severity }}
+                  </span>
+                </div>
+                <span class="text-xs text-gray-500">{{ getTimeElapsed(alert.timestamp) }}</span>
+              </div>              <!-- Alert Content -->
+              <div class="mb-2">
+                <h4 class="font-medium text-sm text-gray-900">{{ formatAlertType(alert.alertType) }}</h4>
+                <p class="text-sm text-gray-600 mt-1">{{ alert.description || 'No description available' }}</p>
+              </div>              <!-- Candidate Info -->
+              <div class="flex items-center text-xs text-gray-500 mb-3">
+                <i class="pi pi-user mr-1"></i>
+                <span>{{ alert.candidateName || alert.candidateId || 'Unknown Candidate' }}</span>
+                <span class="mx-2" *ngIf="alert.testId">•</span>
+                <i class="pi pi-file mr-1" *ngIf="alert.testId"></i>
+                <span *ngIf="alert.testId">Test: {{ alert.testId }}</span>
+                <span class="mx-2" *ngIf="isValidQuestionIndex(alert.questionIndex)">•</span>
+                <i class="pi pi-question-circle mr-1" *ngIf="isValidQuestionIndex(alert.questionIndex)"></i>
+                <span *ngIf="isValidQuestionIndex(alert.questionIndex)">Q{{ alert.questionIndex + 1 }}</span>
+              </div>
+
+              <!-- Warning Count (if applicable) -->
+              <div *ngIf="alert.warningCount !== undefined" 
+                class="text-xs text-gray-500 mb-3 flex items-center">
+                <i class="pi pi-exclamation-triangle mr-1"></i>
+                <span>Warning {{ alert.warningCount }} of {{ alert.maxWarnings || 3 }}</span>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex items-center space-x-2">
+                <button (click)="acknowledgeAlert(alert)"
+                  class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded hover:bg-green-200 transition-colors">
+                  <i class="pi pi-check mr-1"></i>
+                  Acknowledge
+                </button>
+                <button (click)="requestIntervention(alert)"
+                  class="text-xs bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200 transition-colors"
+                  *ngIf="alert.severity === 'CRITICAL' || alert.severity === 'HIGH'">
+                  <i class="pi pi-exclamation-circle mr-1"></i>
+                  Intervene
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

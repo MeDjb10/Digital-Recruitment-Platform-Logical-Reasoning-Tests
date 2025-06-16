@@ -49,6 +49,26 @@ interface AnalysisResponse {
   ai_analysis: string;
 }
 
+interface PsychologistCommentRequest {
+  metrics: MetricsRequest;
+  comment: string;
+}
+
+interface PsychologistCommentResponse {
+  message: string;
+}
+
+interface FeedbackRequest {
+  metrics: MetricsRequest;
+  ai_comment: string;
+  is_good: boolean;
+  feedback_text?: string;
+}
+
+interface FeedbackResponse {
+  improved_analysis: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -94,6 +114,60 @@ export class AiService {
       }),
       catchError(error => {
         console.error('Analysis error:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  commentOnAnalysis(request: PsychologistCommentRequest): Observable<PsychologistCommentResponse> {
+    console.log('Sending psychologist comment request:', request);
+    
+    return this.http.post<PsychologistCommentResponse>(`${this.apiUrl}/comment`, request).pipe(
+      tap(response => {
+        console.log('Comment response:', response);
+      }),
+      catchError(error => {
+        console.error('Comment error:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  addPsychologistComment(metrics: MetricsRequest, comment: string): Observable<PsychologistCommentResponse> {
+    const request: PsychologistCommentRequest = {
+      metrics,
+      comment
+    };
+
+    console.log('Sending psychologist comment request:', request);
+
+    return this.http.post<PsychologistCommentResponse>(`${this.apiUrl}/comment`, request).pipe(
+      tap(response => {
+        console.log('Psychologist comment response:', response);
+      }),
+      catchError(error => {
+        console.error('Psychologist comment error:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  provideFeedback(metrics: MetricsRequest, aiComment: string, isGood: boolean, feedbackText?: string): Observable<FeedbackResponse> {
+    const request: FeedbackRequest = {
+      metrics,
+      ai_comment: aiComment,
+      is_good: isGood,
+      feedback_text: feedbackText || ''
+    };
+
+    console.log('Sending feedback request:', request);
+
+    return this.http.post<FeedbackResponse>(`${this.apiUrl}/feedback`, request).pipe(
+      tap(response => {
+        console.log('Feedback response:', response);
+      }),
+      catchError(error => {
+        console.error('Feedback error:', error);
         return throwError(() => error);
       })
     );

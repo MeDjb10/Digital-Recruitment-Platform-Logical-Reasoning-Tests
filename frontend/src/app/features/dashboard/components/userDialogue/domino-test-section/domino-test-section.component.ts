@@ -154,12 +154,19 @@ export class DominoTestSectionComponent implements OnInit {
   ];
   userPosition: string = ''; // This should be populated from user data
   userEducation: string = ''; // This should be populated from user data
-  showClassificationDropdown = true;  currentUser: User | null | undefined; // This should be populated from auth service
+  showClassificationDropdown = true;
+  currentUser: User | null | undefined; // This should be populated from auth service
   savedPsychologistComment: string = ''; // Tracks the saved comment from database
   draftPsychologistComment: string = ''; // Tracks the draft being edited
   psychologistCommentAuthor: string = ''; // Tracks who wrote the comment
   psychologistCommentDate: Date | null = null; // Tracks when the comment was written
   isSavingComment: boolean = false;
+  
+  // Feedback properties
+  showFeedbackSection: boolean = false;
+  feedbackText: string = '';
+  isSubmittingFeedback: boolean = false;
+  feedbackSubmitted: boolean = false;
 
   attempt: any = null; // Add this property
 
@@ -736,13 +743,16 @@ export class DominoTestSectionComponent implements OnInit {
       flaggedQuestions: this.flaggedQuestions || 0,
       desired_position: this.userPosition,
       education_level: this.userEducation,
-    };
-
-    try {
+    };    try {
       this.aiService.analyze(metrics).subscribe({
         next: (response) => {
           // Remove <think> tags if present in the response
           this.aiComment = response.ai_analysis.replace(/<think>.*?<\/think>/g, '').trim();
+
+          // Reset feedback state for new analysis
+          this.feedbackSubmitted = false;
+          this.showFeedbackSection = false;
+          this.feedbackText = '';
 
           this.testService.updateAiComment(this.attemptId, this.aiComment)
             .subscribe({
@@ -761,13 +771,14 @@ export class DominoTestSectionComponent implements OnInit {
           console.error('Error getting AI analysis:', error);
           alert('Failed to generate AI report. Please try again.');
           this.isLoadingAnalysis = false;
-        }
-      });
+        }      });
     } catch (error) {
       console.error('Error in generateReport:', error);
       this.isLoadingAnalysis = false;
     }
-  }  // Add method to submit psychologist comment
+  }
+
+  // Add method to submit psychologist comment
   async submitPsychologistComment() {
     if (!this.draftPsychologistComment.trim() || !this.canAddPsychologistComment()) {
       console.error('Unauthorized attempt to add comment or empty comment');
@@ -776,10 +787,38 @@ export class DominoTestSectionComponent implements OnInit {
 
     this.isSavingComment = true;
     try {
+      // Save to main database via test service
       await this.testService.updatePsychologistComment(
         this.attemptId,
         this.draftPsychologistComment
       ).toPromise();
+
+      // Also send to AI service for RAG storage
+      const metrics: MetricsRequest = {
+        attemptId: this.attemptId,
+        test_type: this.testName,
+        questionsAnswered: this.questionsAnswered,
+        correct_answers: this.score,
+        timeSpent: this.testAnalytics.totalDuration || 0,
+        halfCorrect: this.halfCorrect || 0,
+        reversed: this.inversedAnswers || 0,
+        questionsSkipped: this.skippedQuestions || 0,
+        answerChanges: this.testAnalytics.questionsRevisited || 0,
+        flaggedQuestions: this.flaggedQuestions || 0,
+        desired_position: this.userPosition,
+        education_level: this.userEducation,
+      };
+
+      // Send to AI service for RAG storage (don't wait for this to complete)
+      this.aiService.addPsychologistComment(metrics, this.draftPsychologistComment).subscribe({
+        next: (response) => {
+          console.log('Psychologist comment stored in RAG system:', response);
+        },
+        error: (error) => {
+          console.error('Error storing comment in RAG system:', error);
+          // Don't block the UI for RAG storage errors
+        }
+      });
 
       // Update saved comment and clear draft after successful save
       this.savedPsychologistComment = this.draftPsychologistComment;
@@ -909,6 +948,63 @@ export class DominoTestSectionComponent implements OnInit {
 
   // Check if user can view sensitive analytics
   canViewDetailedAnalytics(): boolean {
-    return this.isPsychologist() || this.isAdmin();
+    return this.hasAccessToAnalytics();
+  }
+
+  // Feedback methods
+  toggleFeedbackSection(): void {
+    this.showFeedbackSection = !this.showFeedbackSection;
+    if (!this.showFeedbackSection) {
+      this.feedbackText = '';
+      this.feedbackSubmitted = false;
+    }
+  }
+
+  async submitFeedback(isGood: boolean): Promise<void> {
+    if (!this.aiComment) {
+      console.error('No AI comment to provide feedback on');
+      return;
+    }
+
+    this.isSubmittingFeedback = true;
+
+    const metrics: MetricsRequest = {
+      attemptId: this.attemptId,
+      test_type: this.testName,
+      questionsAnswered: this.questionsAnswered,
+      correct_answers: this.score,
+      timeSpent: this.testAnalytics.totalDuration || 0,
+      halfCorrect: this.halfCorrect || 0,
+      reversed: this.inversedAnswers || 0,
+      questionsSkipped: this.skippedQuestions || 0,
+      answerChanges: this.testAnalytics.questionsRevisited || 0,
+      flaggedQuestions: this.flaggedQuestions || 0,
+      desired_position: this.userPosition,
+      education_level: this.userEducation,
+    };
+
+    try {
+      await this.aiService.provideFeedback(
+        metrics,
+        this.aiComment,
+        isGood,
+        this.feedbackText
+      ).toPromise();
+
+      this.feedbackSubmitted = true;
+      this.showFeedbackSection = false;
+      this.feedbackText = '';
+      
+      console.log('Feedback submitted successfully');
+      
+      // Optionally show a success message
+      // You could add a toast notification here
+      
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      // Optionally show an error message
+    } finally {
+      this.isSubmittingFeedback = false;
+    }
   }
 }
