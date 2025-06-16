@@ -231,37 +231,75 @@ class PerformanceAnalyzer:
         }.get(test_key, {})
 
         prompt = f"""
-        Analyze the following test performance data for a candidate, considering:
-        
-        Test Information:
+        You are an expert psychologist analyzing cognitive test performance. Your task is to provide a comprehensive evaluation by learning from historical cases to make informed judgments about the current candidate's performance.
+
+        CONTEXT AND TEST INFORMATION:
         {test_info.get('description', 'Unknown test type')}
         - Total Questions: {test_info.get('total_questions', 'N/A')}
         - Time Limit: {test_info.get('time_limit', 'N/A')} minutes
         
-        Candidate Profile:
+        CANDIDATE PROFILE:
         - Desired Position: {desired_position}
         - Education Level: {education_level}
 
-        Current Performance:
+        CURRENT PERFORMANCE METRICS TO ANALYZE:
         {json.dumps(metrics, indent=2)}
 
-        Predicted Level: {prediction['predicted_category']}
-        Confidence of the prediction: {prediction['confidence']:.1%}
-
-        Historical Similar Cases:
+        AI PREDICTION RESULTS:
+        - Predicted Performance Level: {prediction['predicted_category']}
+        - Model Confidence: {prediction['confidence']:.1%}       
+        HISTORICAL CASES FOR LEARNING AND COMPARISON (FROM OTHER CANDIDATES):
+        The following cases are from DIFFERENT candidates who took similar tests previously. These serve as your learning dataset to:
+        - Understand how previous AI analyses were evaluated by human experts
+        - Learn the professional language and terminology used by psychologists
+        - Identify what constitutes accurate vs. inaccurate assessments
+        - Observe patterns in how psychologists provide feedback and corrections
+        - Calibrate your analysis style to match expert expectations
+        
+        IMPORTANT: These are NOT the current candidate's previous attempts - they are examples from other users that help you understand:
+        • What language and tone psychologists expect in professional assessments
+        • How to properly interpret different performance metric combinations
+        • Common mistakes in AI analysis that received negative feedback
+        • Successful analysis patterns that received positive psychologist validation
+        
         {similar_cases_text}
 
-        Based on the test requirements, current metrics, similar historical cases, and the candidate's profile, provide a detailed analysis that:
-        1. Evaluates overall performance relative to test requirements (time management and completion rate)
-        2. Points out key strengths
-        3. Identifies areas for improvement
-        4. Assesses suitability for the desired position considering:
-           - Required cognitive abilities for the role
-           - Educational background alignment
-           - Performance compared to role expectations and test benchmarks
-        5. Provide a clear recommendation (Suitable/Not Suitable) with justification
-        
-        Keep the tone professional and constructive.
+        COMPREHENSIVE ANALYSIS REQUIRED:        1. **PERFORMANCE METRIC EVALUATION** (Learn from other candidates' analyses):
+           - Study how psychologists interpreted similar metrics in other cases
+           - Identify what terminology and language psychologists used for comparable performance levels
+           - Learn from mistakes: observe where previous AI analyses were corrected or criticized
+           - Adopt the professional assessment language demonstrated in psychologist feedback
+           - Compare current metrics against patterns seen in other candidates' cases
+
+        2. **STRENGTHS IDENTIFICATION** (Mirror expert language):
+           - Use terminology and phrasing similar to how psychologists described strengths in other cases
+           - Learn from feedback patterns: what constituted valid vs. overstated strength assessments
+           - Adopt the professional tone and specific language used by experts in similar evaluations
+
+        3. **AREAS FOR IMPROVEMENT** (Professional assessment style):
+           - Emulate how psychologists diplomatically identified weaknesses in other candidates
+           - Learn the appropriate level of directness vs. constructive framing from expert feedback
+           - Use professional psychological assessment terminology demonstrated in other cases
+
+        4. **POSITION SUITABILITY ASSESSMENT** (Expert-calibrated judgment):
+           - Study how psychologists made suitability decisions for other candidates with similar profiles
+           - Learn the decision-making framework and reasoning patterns from expert assessments
+           - Adopt the level of confidence and qualification language used by professionals
+
+        5. **LEARNING FROM PSYCHOLOGIST LANGUAGE AND FEEDBACK PATTERNS**:
+           - Analyze the specific terminology, tone, and structure used by psychologists in other cases
+           - Identify common phrases and professional language patterns in expert assessments
+           - Learn from cases where AI analysis was corrected: understand what was wrong and why
+           - Observe how psychologists balance honesty with constructive feedback
+           - Study the level of detail and specificity that experts provide in their evaluations
+
+        6. **FINAL RECOMMENDATION** (Clear and justified):
+           - Provide a definitive recommendation: SUITABLE / NOT SUITABLE / NEEDS DEVELOPMENT
+           - Support your decision with specific metrics and historical comparisons
+           - Include confidence level and key deciding factors
+           - Suggest next steps or additional assessments if needed        IMPORTANT: Your analysis should demonstrate that you've learned from the other candidates' cases - particularly from psychologist feedback patterns, professional language, and assessment styles. Show that you understand what makes a quality psychological assessment by emulating the expert language and avoiding mistakes identified in previous AI analyses. Focus on the CURRENT candidate's metrics while using the communication style and professional standards demonstrated by psychologists in the historical cases.
+
+        Keep your tone professional, constructive, and evidence-based, matching the language patterns observed in expert psychological assessments from the historical data.
         """
 
         # Prepare request
