@@ -24,8 +24,10 @@ import {
   DominoChange,
   PropositionResponse, // Import PropositionResponse
 } from '../../models/domino.model';
+import { RealtimeSecurityAlertService, SecurityAlert } from '../../services/realtime-security-alert.service';
 import { DominoPosition } from '../../../../../core/models/domino.model';
 import { MultipleChoiceQuestionComponent } from '../../components/multiple-choice-question/multiple-choice-question.component'; // Import the new component
+import { AuthService } from '../../../../../core/auth/services/auth.service';
 
 @Component({
   selector: 'app-domino-test-modern',
@@ -48,12 +50,13 @@ export class DominoTestModernComponent
   implements OnInit, OnDestroy, AfterViewInit
 {
   @ViewChild(SimpleDominoGridComponent) dominoGrid?: SimpleDominoGridComponent;
-
   // Test meta data
   testName: string = 'Domino Logical Reasoning Test';
   testType: string = 'domino'; // Default type
   testId: string = 'd70'; // Default to d70 test
   attemptId: string | null = null;
+  candidateId: string | null = null;
+  candidateName: string | null = null;
 
   // Questions and navigation
   questions: TestQuestion[] = [];
@@ -91,7 +94,6 @@ export class DominoTestModernComponent
 
   // Flag to check if we have editable dominos
   hasEditableDominos: boolean = false;
-
   // Test submission state
   isSubmittingTest: boolean = false;
   loadingError: string | null = null;
@@ -102,6 +104,13 @@ export class DominoTestModernComponent
   instructionExpanded: boolean = false;
   isInstructionLong: boolean = false;
   private readonly INSTRUCTION_LENGTH_THRESHOLD = 120; // characters
+  // Security and anti-cheating properties
+  tabSwitchWarnings: number = 0;
+  maxTabSwitchWarnings: number = 10; // Allow 10 warnings before auto-submit
+  isTestSecurityViolated: boolean = false;
+  securityViolationReason: string = '';
+  lastFocusTime: number = Date.now();
+  isPageVisible: boolean = true;
 
   // Progress percentage
   get progressPercentage(): number {
@@ -109,21 +118,115 @@ export class DominoTestModernComponent
       ? Math.round((this.answeredCount / this.questions.length) * 100)
       : 0;
   }
-
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private dominoTestService: DominoTestService,
-    private trackingService: TestAttemptTrackingService
-  ) {}
-
-  // React to browser/tab close to save progress
-  @HostListener('window:beforeunload')
-  onBeforeUnload() {
+    private trackingService: TestAttemptTrackingService,
+    private securityAlertService: RealtimeSecurityAlertService,
+    private authService: AuthService // Inject AuthService
+  ) {}  // React to browser/tab close to save progress
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent) {
     // Record time spent on current question before leaving
     this.trackingService.endCurrentQuestionVisit();
     this.saveProgress();
+    
+    // If test is not complete, show warning and send alert
+    if (!this.isTestComplete && !this.isSubmittingTest) {
+      // Send real-time alert about navigation attempt
+      this.sendRealtimeAlert('NAVIGATION_ATTEMPT', 'Candidate attempted to leave test before completion', {
+        navigationType: 'beforeunload',
+        testProgress: `${this.answeredCount}/${this.questions.length}`,
+        timeRemaining: this.timeLeft
+      });
+      
+      const message = 'Are you sure you want to leave? Your test progress will be saved, but leaving during the test may be considered suspicious activity and psychologists have been notified.';
+      event.returnValue = message;
+      
+      // Log this as a potential security concern
+      this.logSecurityEvent('User attempted to leave test before completion');
+      
+      return message;
+    }
+    
+    return null;
+  }
+  // Security: Detect when user leaves the tab/window
+  @HostListener('window:blur')
+  onWindowBlur() {
+    this.updatePageVisibility(false);
+    this.handleTabSwitch('Window lost focus');
+  }
+
+  @HostListener('window:focus')
+  onWindowFocus() {
+    this.lastFocusTime = Date.now();
+    this.updatePageVisibility(true);
+  }
+
+  // Security: Detect visibility change (tab switching)
+  @HostListener('document:visibilitychange')
+  onVisibilityChange() {
+    if (document.hidden) {
+      this.updatePageVisibility(false);
+      this.handleTabSwitch('Tab switched or browser minimized');
+    } else {
+      this.updatePageVisibility(true);
+      this.lastFocusTime = Date.now();
+    }
+  }  // Security: Log right-click attempts but don't prevent them
+  @HostListener('contextmenu', ['$event'])
+  onRightClick(event: Event) {
+    // Just log the attempt but allow right-click
+    this.logSecurityEvent('Right-click context menu accessed');
+    
+    // Send low-severity alert
+    this.sendRealtimeAlert('RIGHT_CLICK', 'Right-click context menu accessed', {
+      elementType: (event.target as HTMLElement)?.tagName || 'unknown',
+      eventType: 'contextmenu'
+    });
+    
+    return true; // Allow the context menu
+  }// Security: Prevent common keyboard shortcuts for cheating
+  @HostListener('keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent): boolean {
+    // Only prevent screenshot shortcuts - allow everything else including DevTools
+    if (
+      (event.key === 'PrintScreen') || // Print Screen
+      (event.ctrlKey && event.shiftKey && (event.key === 'S' || event.key === 's')) // Ctrl+Shift+S (Screenshot in some browsers)
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const shortcut = `${event.ctrlKey ? 'Ctrl+' : ''}${event.shiftKey ? 'Shift+' : ''}${event.key}`;
+      
+      // Only send low-severity alert for screenshots
+      this.sendRealtimeAlert('SCREENSHOT_ATTEMPT', `Screenshot attempt detected: ${shortcut}`, {
+        shortcut: shortcut,
+        eventType: 'keydown',
+        prevented: true
+      });
+      
+      // Don't treat this as a critical violation - just log it
+      this.logSecurityEvent(`Screenshot attempt blocked: ${shortcut}`);
+      return false;
+    }
+    return true;
+  }
+  // Security: Allow text selection everywhere
+  @HostListener('selectstart', ['$event'])
+  onSelectStart(event: Event): boolean {
+    // Allow text selection everywhere - just log it
+    this.logSecurityEvent('Text selection detected');
+    return true;
+  }
+  // Allow window resizing without security alerts
+  @HostListener('window:resize')
+  onWindowResize() {
+    // Just log for informational purposes, no security alerts
+    console.log('Window resized to:', window.innerWidth, 'x', window.innerHeight);
   }
 
   ngOnInit(): void {
@@ -136,6 +239,9 @@ export class DominoTestModernComponent
       console.log('testId', this.testId);
       this.loadTestData(this.testId);
     });
+
+    // Initialize security measures
+    this.initializeSecurityMeasures();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -157,9 +263,7 @@ export class DominoTestModernComponent
       this.cdr.detectChanges();
     }, 100);
     this.checkInstructionLength();
-  }
-
-  ngOnDestroy(): void {
+  }  ngOnDestroy(): void {
     // Clean up subscriptions
     if (this.timerSubscription) {
       this.timerSubscription.unsubscribe();
@@ -169,6 +273,30 @@ export class DominoTestModernComponent
     this.trackingService.endCurrentQuestionVisit();
     this.saveProgress();
     this.trackingService.cleanup();
+
+    // Disconnect security alert service
+    this.securityAlertService.disconnect();
+
+    // Try to send any failed alerts before leaving
+    this.retryFailedAlerts();
+
+    // Clean up security event listeners
+    this.cleanupSecurityMeasures();
+  }
+
+  /**
+   * Clean up security measures when component is destroyed
+   */
+  private cleanupSecurityMeasures(): void {
+    // Remove event listeners that were added globally
+    document.removeEventListener('contextmenu', (e) => e.preventDefault());
+    document.removeEventListener('selectstart', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target.matches('input, textarea, [contenteditable]')) {
+        e.preventDefault();
+      }
+    });
+    document.removeEventListener('dragstart', (e) => e.preventDefault());
   }
 
   loadTestData(testId: string): void {
@@ -186,8 +314,7 @@ export class DominoTestModernComponent
 
     // Load fresh data from backend
     this.dominoTestService.getTest(testId).subscribe({
-      next: (testData) => {
-        console.log(
+      next: (testData) => {        console.log(
           '[ModernTest] Raw test data loaded from backend:',
           testData
         ); // DEBUG
@@ -201,14 +328,40 @@ export class DominoTestModernComponent
           this.timeLeft = this.testDuration * 60;
           this.updateFormattedTime();
 
-          // Store the attempt ID for tracking
+          // Store the attempt ID and candidate info for tracking
           if (testData.attemptId) {
             this.attemptId = testData.attemptId;
             // Initialize the tracking service
             this.trackingService.initAttempt(testData.attemptId);
           } else {
             console.error('No attempt ID provided in test data');
+          }          // Extract candidate information for security alerts
+          this.candidateId = testData.candidateId || testData.candidate?.id || 'unknown';
+          this.candidateName = testData.candidateName || testData.candidate?.name || 'Unknown Candidate';
+
+          // If we don't have candidate info from test data, get it from current user
+          if (this.candidateId === 'unknown' || this.candidateName === 'Unknown Candidate') {
+            this.authService.currentUser$.subscribe(user => {
+              if (user) {
+                if (this.candidateId === 'unknown') {
+                  this.candidateId = user.id;
+                }
+                if (this.candidateName === 'Unknown Candidate') {
+                  this.candidateName = `${user.firstName} ${user.lastName}`;
+                }
+                console.log('Updated candidate info from auth:', { 
+                  id: this.candidateId, 
+                  name: this.candidateName 
+                });
+              }
+            });
           }
+
+          console.log('Candidate Info:', { 
+            id: this.candidateId, 
+            name: this.candidateName, 
+            attemptId: this.attemptId 
+          });
 
           // Process questions - handle both _id and id formats, and questionType
           this.questions = testData.questions.map((q: any, index: number) => ({
@@ -682,12 +835,17 @@ export class DominoTestModernComponent
         error: (err) => console.error('Error skipping question:', err),
       });
   }
-
   finishTest(autoSubmit: boolean = false): void {
     if (this.isSubmittingTest) return;
 
     const unansweredCount = this.questions.length - this.answeredCount;
-    if (!autoSubmit && unansweredCount > 0) {
+    
+    // Different handling for security violations vs normal submission
+    if (this.isTestSecurityViolated) {
+      // Security violation - force submit without confirmation
+      console.log('Force submitting test due to security violation:', this.securityViolationReason);
+    } else if (!autoSubmit && unansweredCount > 0) {
+      // Normal submission with unanswered questions
       if (
         !confirm(
           `You have ${unansweredCount} unanswered question(s). Are you sure you want to submit your test?`
@@ -697,15 +855,23 @@ export class DominoTestModernComponent
       }
     }
 
-    this.isSubmittingTest = true;
-
-    // Make sure to record the time spent on the current question
+    this.isSubmittingTest = true;    // Make sure to record the time spent on the current question
     this.trackingService.endCurrentQuestionVisit();
 
     // Complete the attempt through the tracking service
     this.trackingService.completeAttempt().subscribe({
       next: (result) => {
         console.log('Test submitted successfully:', result);
+        
+        // Log security information separately if needed
+        if (this.isTestSecurityViolated) {
+          console.log('Security violation details:', {
+            reason: this.securityViolationReason,
+            tabSwitchWarnings: this.tabSwitchWarnings,
+            autoSubmitted: autoSubmit || this.isTestSecurityViolated
+          });
+        }
+        
         this.isTestComplete = true;
         this.isSubmittingTest = false;
 
@@ -731,11 +897,16 @@ export class DominoTestModernComponent
         // Clear saved progress since test is complete
         this.dominoTestService.clearTestProgress(this.testId);
 
-        // Navigate to the completion page
+        // Clear security logs
+        localStorage.removeItem(`security_logs_${this.testId}`);
+
+        // Navigate to the completion page with security information
         this.router.navigate(['/candidate/tests/complete'], {
           queryParams: {
             attemptId: attemptId,
             score: score,
+            securityViolated: this.isTestSecurityViolated,
+            violationReason: this.securityViolationReason
           },
         });
 
@@ -744,7 +915,13 @@ export class DominoTestModernComponent
       error: (error) => {
         console.error('Error submitting test:', error);
         this.isSubmittingTest = false;
-        alert('Failed to submit test. Please try again.');
+        
+        if (this.isTestSecurityViolated) {
+          alert('Test submission failed due to security violation. Please contact support.');
+        } else {
+          alert('Failed to submit test. Please try again.');
+        }
+        
         this.cdr.markForCheck();
       },
     });
@@ -918,5 +1095,360 @@ export class DominoTestModernComponent
         }
       }, 5000); // Auto-expand after 5 seconds
     }
+  }  /**
+   * Initialize security measures for the test
+   */
+  private initializeSecurityMeasures(): void {
+    // Allow right-click context menu
+    // document.addEventListener('contextmenu', (e) => e.preventDefault());
+    
+    // Allow text selection globally
+    // document.addEventListener('selectstart', (e) => {
+    //   const target = e.target as HTMLElement;
+    //   if (!target.matches('input, textarea, [contenteditable]')) {
+    //     e.preventDefault();
+    //   }
+    // });
+
+    // Allow drag and drop
+    // document.addEventListener('dragstart', (e) => e.preventDefault());
+    
+    // Remove DevTools monitoring - allowing DevTools access
+    // this.monitorDevTools();
+    
+    // Minimal cheating detection (only essential monitoring)
+    this.detectCheatingAttempts();
+    
+    // Add less intrusive warning about test monitoring
+    this.showSecurityWarning();
+  }  /**
+   * Show initial security warning to the user
+   */
+  private showSecurityWarning(): void {
+    const message = `� Test Guidelines
+
+Welcome to the logical reasoning test!
+
+For the best test experience:
+• Keep this tab focused and active
+• Avoid switching between tabs frequently (you have ${this.maxTabSwitchWarnings} warnings before auto-submission)
+• You can use developer tools and right-click if needed for accessibility
+• Take your time and answer questions carefully
+
+This test is monitored to ensure fairness and integrity.
+
+Click OK to begin the test.`;
+
+    if (!confirm(message)) {
+      // If user doesn't accept, redirect them away
+      this.router.navigate(['/']);
+      return;
+    }
+
+    // Show additional reminder
+    setTimeout(() => {
+      alert('📋 REMINDER: Keep this window focused and avoid suspicious activities. Your test session is now being monitored.');
+    }, 1000);
+  }  /**
+   * Handle tab switching and focus loss
+   */
+  private handleTabSwitch(reason: string): void {
+    if (this.isTestComplete || this.isSubmittingTest) {
+      return; // Don't trigger if test is already complete
+    }
+
+    this.tabSwitchWarnings++;
+    this.isPageVisible = false;
+    
+    console.info(`Security notice ${this.tabSwitchWarnings}: ${reason}`);
+    
+    // Log the violation locally
+    this.logSecurityEvent(`Tab switch detected: ${reason}`);
+
+    // Send real-time alert to psychologists (low severity)
+    this.sendRealtimeAlert('TAB_SWITCH', reason, {
+      currentWarning: this.tabSwitchWarnings,
+      totalAllowed: this.maxTabSwitchWarnings,
+      timeOnQuestion: Date.now() - this.lastFocusTime
+    });
+
+    if (this.tabSwitchWarnings >= this.maxTabSwitchWarnings) {
+      // Send critical alert before auto-submitting
+      this.sendRealtimeAlert('TEST_SUBMITTED_VIOLATION', `Test auto-submitted: Maximum tab switch violations reached (${this.maxTabSwitchWarnings})`, {
+        finalViolation: true,
+        autoSubmitted: true
+      });
+      
+      // Auto-submit test after max warnings (now 10 instead of 3)
+      this.handleSecurityViolation(`Maximum tab switch violations reached (${this.maxTabSwitchWarnings})`);
+    } else {
+      // Show less intrusive warning to user only for higher warning counts
+      if (this.tabSwitchWarnings % 3 === 0) { // Only show warning every 3 violations
+        const remainingWarnings = this.maxTabSwitchWarnings - this.tabSwitchWarnings;
+        alert(`Security Notice: Tab switch detected (${this.tabSwitchWarnings}/${this.maxTabSwitchWarnings})
+
+${remainingWarnings} more violations will result in auto-submission.
+
+Please keep this tab focused to continue the test.`);
+      }
+    }
+  }
+  /**
+   * Handle serious security violations (immediate test submission)
+   */
+  private handleSecurityViolation(reason: string): void {
+    if (this.isTestComplete || this.isSubmittingTest) {
+      return;
+    }
+
+    this.isTestSecurityViolated = true;
+    this.securityViolationReason = reason;
+    
+    console.error('Security violation detected:', reason);
+    this.logSecurityEvent(`Security violation: ${reason}`);
+
+    // Send critical alert immediately
+    this.sendCriticalAlert('TEST_SUBMITTED_VIOLATION', reason, {
+      violationType: 'CRITICAL_SECURITY_VIOLATION',
+      autoSubmitted: true,
+      forceSubmission: true
+    });
+
+    // Show final warning
+    alert(`🚫 SECURITY VIOLATION DETECTED 🚫
+
+Reason: ${reason}
+
+⚠️ PSYCHOLOGISTS HAVE BEEN IMMEDIATELY NOTIFIED ⚠️
+
+Your test is being automatically submitted due to suspicious activity.
+This incident has been logged for review.`);
+
+    // Force submit the test
+    this.finishTest(true);
+  }
+
+  /**
+   * Log security events for review
+   */
+  private logSecurityEvent(event: string): void {
+    const securityLog = {
+      timestamp: new Date().toISOString(),
+      event: event,
+      testId: this.testId,
+      attemptId: this.attemptId,
+      questionIndex: this.currentQuestionIndex,
+      userAgent: navigator.userAgent,
+      url: window.location.href
+    };
+
+    console.log('Security Event:', securityLog);
+    
+    // Send to backend if tracking service is available
+    if (this.attemptId && this.trackingService) {
+      // You might want to add a method to trackingService for logging security events
+      // this.trackingService.logSecurityEvent(securityLog).subscribe();
+    }
+
+    // Store locally as backup
+    const existingLogs = localStorage.getItem(`security_logs_${this.testId}`) || '[]';
+    const logs = JSON.parse(existingLogs);
+    logs.push(securityLog);
+    localStorage.setItem(`security_logs_${this.testId}`, JSON.stringify(logs));
+  }
+
+  /**
+   * Send real-time security alert to psychologists
+   */
+  private sendRealtimeAlert(
+    alertType: SecurityAlert['alertType'], 
+    description: string, 
+    additionalData?: any
+  ): void {
+    if (!this.attemptId || !this.candidateId) {
+      console.warn('Cannot send alert: Missing attemptId or candidateId');
+      return;
+    }
+
+    const alert = RealtimeSecurityAlertService.createAlert(
+      this.attemptId,
+      this.testId,
+      this.candidateId,
+      alertType,
+      description,
+      this.currentQuestionIndex,
+      {
+        ...additionalData,
+        candidateName: this.candidateName,
+        testName: this.testName,
+        questionTitle: this.currentQuestion?.title || 'Unknown',
+        timeRemaining: this.timeLeft,
+        browserInfo: {
+          userAgent: navigator.userAgent,
+          viewport: `${window.innerWidth}x${window.innerHeight}`,
+          language: navigator.language
+        }
+      },
+      this.tabSwitchWarnings,
+      this.maxTabSwitchWarnings
+    );
+
+    // Send the alert
+    this.securityAlertService.sendSecurityAlert(alert).subscribe({
+      next: (response) => {
+        console.log(`🚨 Real-time ${alertType} alert sent successfully:`, response);
+      },
+      error: (error) => {
+        console.error(`❌ Failed to send ${alertType} alert:`, error);
+        // Fallback: Store alert locally for later transmission
+        this.storeFailedAlert(alert);
+      }
+    });
+  }
+
+  /**
+   * Send critical security violation alert
+   */
+  private sendCriticalAlert(
+    alertType: SecurityAlert['alertType'], 
+    description: string, 
+    additionalData?: any
+  ): void {
+    if (!this.attemptId || !this.candidateId) {
+      console.warn('Cannot send critical alert: Missing attemptId or candidateId');
+      return;
+    }
+
+    const alert = RealtimeSecurityAlertService.createAlert(
+      this.attemptId,
+      this.testId,
+      this.candidateId,
+      alertType,
+      description,
+      this.currentQuestionIndex,
+      {
+        ...additionalData,
+        candidateName: this.candidateName,
+        testName: this.testName,
+        critical: true,
+        requiresImmediateAttention: true
+      },
+      this.tabSwitchWarnings,
+      this.maxTabSwitchWarnings
+    );
+
+    // Send critical alert
+    this.securityAlertService.sendCriticalViolation(alert).subscribe({
+      next: (response) => {
+        console.log(`🚨 CRITICAL ${alertType} alert sent successfully:`, response);
+      },
+      error: (error) => {
+        console.error(`❌ Failed to send CRITICAL ${alertType} alert:`, error);
+        this.storeFailedAlert(alert);
+      }
+    });
+  }
+
+  /**
+   * Store failed alerts locally for retry
+   */
+  private storeFailedAlert(alert: SecurityAlert): void {
+    try {
+      const failedAlerts = JSON.parse(localStorage.getItem(`failed_alerts_${this.testId}`) || '[]');
+      failedAlerts.push(alert);
+      localStorage.setItem(`failed_alerts_${this.testId}`, JSON.stringify(failedAlerts));
+      console.log('Alert stored locally for retry');
+    } catch (error) {
+      console.error('Failed to store alert locally:', error);
+    }
+  }
+
+  /**
+   * Retry failed alerts
+   */
+  private retryFailedAlerts(): void {
+    try {
+      const failedAlerts = JSON.parse(localStorage.getItem(`failed_alerts_${this.testId}`) || '[]');
+      if (failedAlerts.length > 0) {
+        this.securityAlertService.sendBatchAlerts(failedAlerts).subscribe({
+          next: () => {
+            localStorage.removeItem(`failed_alerts_${this.testId}`);
+            console.log(`Successfully sent ${failedAlerts.length} failed alerts`);
+          },
+          error: (error) => {
+            console.error('Failed to send batch alerts:', error);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error retrying failed alerts:', error);
+    }
+  }
+
+  /**
+   * Monitor for DevTools opening
+   */
+  private monitorDevTools(): void {
+    let devtools = false;
+    const threshold = 160;
+
+    const detectDevTools = () => {
+      if (window.outerHeight - window.innerHeight > threshold || 
+          window.outerWidth - window.innerWidth > threshold) {
+        if (!devtools) {
+          devtools = true;
+          this.handleSecurityViolation('Developer tools detected');
+        }
+      } else {
+        devtools = false;
+      }
+    };
+
+    // Check every 500ms
+    setInterval(detectDevTools, 500);
+  }
+
+  /**
+   * Update page visibility state and handle blur effects
+   */
+  private updatePageVisibility(isVisible: boolean): void {
+    this.isPageVisible = isVisible;
+    
+    // Add visual feedback for loss of focus
+    const testContainer = document.querySelector('.test-container');
+    if (testContainer) {
+      if (isVisible) {
+        testContainer.classList.remove('blurred');
+      } else {
+        testContainer.classList.add('blurred');
+      }
+    }
+    
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Enhanced detection of potential cheating attempts
+   */
+  private detectCheatingAttempts(): void {
+    // Monitor for rapid window state changes (potential recording software)
+    let focusChangeCount = 0;
+    let lastFocusChange = 0;
+    
+    const monitorFocusChanges = () => {
+      const now = Date.now();
+      if (now - lastFocusChange < 1000) { // Less than 1 second between changes
+        focusChangeCount++;
+        if (focusChangeCount > 5) { // More than 5 rapid changes
+          this.handleSecurityViolation('Rapid window state changes detected (potential recording software)');
+        }
+      } else {
+        focusChangeCount = 0;
+      }
+      lastFocusChange = now;
+    };
+
+    window.addEventListener('focus', monitorFocusChanges);
+    window.addEventListener('blur', monitorFocusChanges);
   }
 }

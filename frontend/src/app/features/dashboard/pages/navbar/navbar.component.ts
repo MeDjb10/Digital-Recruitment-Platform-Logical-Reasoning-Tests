@@ -25,6 +25,7 @@ import { MessageService } from 'primeng/api';
 import { environment } from '../../../../../environments/environment';
 import { UserService } from '../../../../core/services/user.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { RealtimeSecurityAlertService, SecurityAlert } from '../../../candidate/DominoTest/services/realtime-security-alert.service';
 
 interface Notification {
   id: number;
@@ -55,12 +56,17 @@ interface Notification {
 export class NavbarComponent implements OnInit, OnDestroy {
   @Input() sidebarCollapsed = false;
   @Output() toggleSidebarEvent = new EventEmitter<void>();
-
   pageTitle = 'Dashboard';
   showNotifications = false;
   showUserDropdown = false;
   searchFocused = false;
   isBrowser: boolean;
+
+  // Security alerts
+  showSecurityAlerts = false;
+  securityAlerts: SecurityAlert[] = [];
+  unreadSecurityAlerts = 0;
+  isSecurityConnected = false;
 
   // Language state
   currentLang: string = 'en';
@@ -72,10 +78,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
   userEmail = '';
   userRole = 'User';
   avatarUrl = '';
-
   // Subscriptions
   private userSub: Subscription | null = null;
   private routeSub: Subscription | null = null;
+  private securityAlertSub: Subscription | null = null;
+  private securityConnectionSub: Subscription | null = null;
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
@@ -91,13 +98,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   get unreadNotifications(): number {
     return this.notifications.filter((n) => n.unread).length;
   }
-
   constructor(
     private router: Router,
     private authService: AuthService,
     private userService: UserService,
     private messageService: MessageService,
     private translate: TranslateService,
+    private securityAlertService: RealtimeSecurityAlertService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -160,8 +167,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         // Redirect to login if not authenticated
         this.router.navigate(['/auth/login']);
-      }
-    });
+      }    });
+
+    // Initialize security alerts monitoring
+    this.initializeSecurityAlerts();
 
     // Simulate keyboard shortcut for search - only in browser environment
     if (this.isBrowser) {
@@ -187,13 +196,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // Close the language dropdown if it's open
     this.showLanguageDropdown = false;
   }
-
   // Toggle language dropdown
   toggleLanguageDropdown(): void {
     this.showLanguageDropdown = !this.showLanguageDropdown;
     // Close other dropdowns
     this.showNotifications = false;
     this.showUserDropdown = false;
+    this.showSecurityAlerts = false;
   }
 
   fetchCurrentUserProfile(userId: string): void {
@@ -251,15 +260,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   // Add this property to the class
   private _fetchingProfile = false;
-
   ngOnDestroy(): void {
     // Clean up subscriptions to prevent memory leaks
     if (this.userSub) {
       this.userSub.unsubscribe();
     }
-
     if (this.routeSub) {
       this.routeSub.unsubscribe();
+    }
+    if (this.securityAlertSub) {
+      this.securityAlertSub.unsubscribe();
+    }
+    if (this.securityConnectionSub) {
+      this.securityConnectionSub.unsubscribe();
     }
 
     // Remove event listener to prevent memory leaks
@@ -576,7 +589,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
   isStaff(): boolean {
     return this.isAdmin() || this.isModerator() || this.isPsychologist();
   }
-
   // Handle clicks outside dropdowns
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -602,6 +614,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ) {
       this.showLanguageDropdown = false;
     }
+
+    if (
+      !target.closest('.security-alerts-dropdown') &&
+      !target.closest('.security-alerts-btn')
+    ) {
+      this.showSecurityAlerts = false;
+    }
   }
 
   updatePageTitle(url: string): void {
@@ -623,15 +642,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
   toggleSidebar(): void {
     this.toggleSidebarEvent.emit();
   }
-
   toggleNotifications(): void {
     this.showNotifications = !this.showNotifications;
     this.showUserDropdown = false;
+    this.showSecurityAlerts = false;
   }
 
   toggleUserDropdown(): void {
     this.showUserDropdown = !this.showUserDropdown;
     this.showNotifications = false;
+    this.showSecurityAlerts = false;
   }
 
   // Mark all notifications as read
@@ -660,7 +680,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/settings']);
     this.showUserDropdown = false;
   }
-
   // Logout function that calls the AuthService
   // Logout user
   logout(): void {
@@ -674,5 +693,262 @@ export class NavbarComponent implements OnInit, OnDestroy {
         // Even on error, the AuthService.clearAuthData method will handle navigation
       },
     });
+  }
+
+  // Security Alert Methods
+  
+  /**
+   * Initialize security alerts monitoring
+   */
+  initializeSecurityAlerts(): void {
+    // Subscribe to real-time security alerts
+    this.securityAlertSub = this.securityAlertService.getSecurityAlerts().subscribe({
+      next: (alert) => {
+        this.addSecurityAlert(alert);
+        this.playSecurityAlertSound(alert.severity);
+        this.showSecurityNotification(alert);
+      },
+      error: (error) => {
+        console.error('Error receiving security alerts:', error);
+      }
+    });
+
+    // Monitor connection status
+    this.securityConnectionSub = this.securityAlertService.getConnectionStatus().subscribe({
+      next: (connected) => {
+        this.isSecurityConnected = connected;
+        if (connected) {
+          this.loadActiveSecurityAlerts();
+        }
+      }
+    });
+  }
+  /**
+   * Load active security alerts
+   */
+  loadActiveSecurityAlerts(): void {
+    this.securityAlertService.getActiveAlerts().subscribe({
+      next: (alerts) => {
+        console.log('Loaded active security alerts:', alerts); // Debug log
+        this.securityAlerts = alerts.slice(0, 10); // Show only latest 10
+        this.unreadSecurityAlerts = alerts.length; // All are considered unread until acknowledged
+      },
+      error: (error) => {
+        console.error('Error loading security alerts:', error);
+      }
+    });
+  }
+  /**
+   * Add new security alert to the list
+   */
+  addSecurityAlert(alert: SecurityAlert): void {
+    console.log('Received security alert:', alert); // Debug log
+    
+    // Add to beginning of list
+    this.securityAlerts.unshift(alert);
+    
+    // Keep only latest 10 alerts
+    this.securityAlerts = this.securityAlerts.slice(0, 10);
+    
+    // Update unread count
+    this.unreadSecurityAlerts++;
+  }
+  /**
+   * Toggle security alerts dropdown
+   */
+  toggleSecurityAlerts(): void {
+    this.showSecurityAlerts = !this.showSecurityAlerts;
+    // Close other dropdowns
+    this.showNotifications = false;
+    this.showUserDropdown = false;
+    this.showLanguageDropdown = false;
+  }
+
+  /**
+   * Acknowledge security alert
+   */
+  acknowledgeAlert(alert: SecurityAlert): void {
+    if (!alert.id) return;
+    
+    const psychologistId = this.currentUser?.id || 'unknown';
+    this.securityAlertService.acknowledgeAlert(alert.id, psychologistId).subscribe({
+      next: () => {
+        // Remove from alerts list
+        this.securityAlerts = this.securityAlerts.filter(a => a.id !== alert.id);
+        this.unreadSecurityAlerts = Math.max(0, this.unreadSecurityAlerts - 1);
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Alert Acknowledged',
+          detail: 'Security alert has been acknowledged.'
+        });
+      },
+      error: (error) => {
+        console.error('Error acknowledging alert:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to acknowledge alert.'
+        });
+      }
+    });
+  }
+
+  /**
+   * Request intervention for security alert
+   */
+  requestIntervention(alert: SecurityAlert): void {
+    const reason = prompt('Please provide a reason for intervention:');
+    if (!reason) return;
+
+    const psychologistId = this.currentUser?.id || 'unknown';
+    this.securityAlertService.requestIntervention(alert.attemptId, reason, psychologistId).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Intervention Requested',
+          detail: 'Intervention request has been sent successfully.'
+        });
+        
+        // Update alert to show intervention requested
+        const alertIndex = this.securityAlerts.findIndex(a => a.id === alert.id);
+        if (alertIndex !== -1) {
+          this.securityAlerts[alertIndex].additionalData = {
+            ...this.securityAlerts[alertIndex].additionalData,
+            interventionRequested: true
+          };
+        }
+      },
+      error: (error) => {
+        console.error('Error requesting intervention:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to send intervention request.'
+        });
+      }
+    });
+  }
+
+  /**
+   * Play sound for security alerts
+   */
+  playSecurityAlertSound(severity: SecurityAlert['severity']): void {
+    try {
+      const audio = new Audio();
+      
+      switch (severity) {
+        case 'CRITICAL':
+          // Use browser notification sound or create beep
+          audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSMFJHfH8N2QQAoUXrTp65hVFApGn+DyvmwhCyqJ0fPSlEgODl24'; // Critical alert sound
+          break;
+        case 'HIGH':
+          audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSMFJHfH8N2QQAoUXrTp65hVFApGn+DyvmwhCyqJ0fPSlEgODl24'; // High alert sound
+          break;
+        default:
+          return; // No sound for medium/low alerts
+      }
+
+      audio.volume = 0.3;
+      audio.play().catch(console.log);
+    } catch (error) {
+      console.log('Audio not supported:', error);
+    }
+  }
+
+  /**
+   * Show browser notification for critical alerts
+   */
+  showSecurityNotification(alert: SecurityAlert): void {
+    if (alert.severity === 'CRITICAL' && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        new Notification('🚨 Critical Security Alert', {
+          body: `${alert.candidateName}: ${alert.description}`,
+          icon: '/assets/icons/security-alert.png',
+          tag: alert.id
+        });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission();
+      }
+    }
+  }  /**
+   * Format alert type for display
+   */
+  formatAlertType(alertType: SecurityAlert['alertType'] | string | undefined): string {
+    if (!alertType) return 'Security Alert';
+    
+    if (typeof alertType !== 'string') return 'Security Alert';
+    
+    return alertType.replace(/_/g, ' ').toLowerCase()
+      .replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  /**
+   * Get severity icon
+   */
+  getSecuritySeverityIcon(severity: SecurityAlert['severity']): string {
+    switch (severity) {
+      case 'CRITICAL': return 'pi-exclamation-triangle';
+      case 'HIGH': return 'pi-exclamation-circle';
+      case 'MEDIUM': return 'pi-info-circle';
+      case 'LOW': return 'pi-info';
+      default: return 'pi-info';
+    }
+  }
+  /**
+   * Get time elapsed since alert
+   */
+  getTimeElapsed(timestamp: string | undefined): string {
+    if (!timestamp) return 'Unknown time';
+    
+    const now = new Date();
+    const alertTime = new Date(timestamp);
+    
+    // Check if date is valid
+    if (isNaN(alertTime.getTime())) return 'Invalid date';
+    
+    const diffMs = now.getTime() - alertTime.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    
+    return alertTime.toLocaleDateString();
+  }
+
+  /**
+   * Clear all security alerts
+   */
+  clearAllSecurityAlerts(): void {
+    if (confirm('Are you sure you want to clear all security alerts?')) {
+      this.securityAlerts = [];
+      this.unreadSecurityAlerts = 0;
+      this.showSecurityAlerts = false;
+    }
+  }
+  /**
+   * Navigate to full security monitor
+   */
+  openSecurityMonitor(): void {
+    this.router.navigate(['/dashboard/security-monitor']);
+    this.showSecurityAlerts = false;
+  }
+
+  /**
+   * Check if question index is valid
+   */
+  isValidQuestionIndex(questionIndex: number | undefined): boolean {
+    return questionIndex !== undefined && questionIndex !== null && 
+           typeof questionIndex === 'number' && !isNaN(questionIndex) && questionIndex >= 0;
+  }
+
+  /**
+   * Track by function for security alerts ngFor
+   */
+  trackByAlertId(index: number, alert: SecurityAlert): string {
+    return alert.id || index.toString();
   }
 }

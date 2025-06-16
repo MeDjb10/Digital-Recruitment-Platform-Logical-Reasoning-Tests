@@ -26,6 +26,12 @@
   overflow: hidden;
   background-color: var(--background-soft);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .test-body {
@@ -536,6 +542,167 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ===========================
+   SECURITY & ANTI-CHEATING STYLES
+   =========================== */
+
+/* Disable text selection for security */
+.test-container {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Allow text selection only in input fields */
+.test-container input,
+.test-container textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Disable drag and drop */
+.test-container * {
+  -webkit-user-drag: none;
+  -moz-user-drag: none;
+}
+
+/* Prevent image saving */
+.test-container img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+  -moz-user-drag: none;
+}
+
+/* Security warning overlay styles */
+.security-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(239, 68, 68, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  color: white;
+  font-size: 1.5rem;
+  text-align: center;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+/* Hide scrollbars to prevent context menu access */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 3px;
+}
+
+/* Disable print media queries */
+@media print {
+  .test-container {
+    display: none !important;
+  }
+  
+  body::before {
+    content: "Test content cannot be printed for security reasons.";
+    display: block;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    color: red;
+    z-index: 10000;
+  }
+}
+
+/* Security indicator in header */
+.security-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: var(--success-color);
+  color: white;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.security-indicator.warning {
+  background-color: var(--warning-color);
+  animation: pulse 1s infinite;
+}
+
+.security-indicator.violation {
+  background-color: var(--error-color);
+  animation: pulse 0.5s infinite;
+}
+
+/* Prevent screenshot overlay */
+.screenshot-prevention-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: 
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(0,0,0,0.02) 10px,
+      rgba(0,0,0,0.02) 20px
+    );
+}
+
+/* Blur effect when window loses focus */
+.test-container.blurred {
+  filter: blur(2px);
+  transition: filter 0.3s ease;
+}
+
+.test-container.blurred::after {
+  content: "⚠️ Test window is not focused. Click here to continue.";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  font-size: 1.2rem;
+  text-align: center;
+  z-index: 10000;
+  pointer-events: none;
 }
 
 /* Responsive Design - Enhanced Mobile Experience */
