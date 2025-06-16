@@ -1,4 +1,10 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnChanges,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 interface QuestionInfo {
@@ -448,7 +454,7 @@ interface QuestionInfo {
     `,
   ],
 })
-export class TestSidebarComponent {
+export class TestSidebarComponent implements OnChanges {
   @Input() questions: QuestionInfo[] = [];
   @Input() currentQuestion: number = 0;
   @Input() isCollapsed: boolean = false;
@@ -459,6 +465,26 @@ export class TestSidebarComponent {
   @Output() toggleCollapse = new EventEmitter<boolean>();
   @Output() finishTest = new EventEmitter<void>();
   @Output() resetTest = new EventEmitter<void>();
+
+  ngOnChanges(): void {
+    // Debug: Log questions state when it changes
+    if (this.questions && this.questions.length > 0) {
+      const answeredQuestions = this.questions.filter((q) => q.answered);
+      if (answeredQuestions.length > 0) {
+        console.log(
+          '[SIDEBAR DEBUG] Questions marked as answered:',
+          answeredQuestions.map((q) => ({
+            id: q.id,
+            answered: q.answered,
+            flagged: q.flaggedForReview || q.flagged,
+          }))
+        );
+      }
+      console.log(
+        `[SIDEBAR DEBUG] Total questions: ${this.questions.length}, Answered count prop: ${this.answeredCount}, Actual answered: ${answeredQuestions.length}`
+      );
+    }
+  }
 
   toggleSidebar(): void {
     this.isCollapsed = !this.isCollapsed;

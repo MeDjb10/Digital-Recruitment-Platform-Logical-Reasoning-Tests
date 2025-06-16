@@ -12,7 +12,7 @@ import { MenuItem } from 'primeng/api';
 
 // Auth Service
 import { AuthService } from '../../../../core/auth/services/auth.service';
-import { User } from '../../../../core/models/user.model';
+import { User, UserResponse } from '../../../../core/models/user.model';
 import { environment } from '../../../../../environments/environment';
 import { UserService } from '../../../../core/services/user.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -38,6 +38,8 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
   userFullName = '';
   userRole = '';
   avatarUrl = '';
+  testAuthStatus: 'pending' | 'approved' | 'rejected' | 'not_submitted' =
+    'not_submitted';
 
   // Language state
   currentLang: string = 'en'; // Add this property
@@ -79,6 +81,11 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
         // Set initial avatar using whatever is available
         this.updateAvatar(user);
 
+        // Check test authorization status for candidates
+        if (user.role === 'candidate') {
+          this.checkTestAuthorizationStatus();
+        }
+
         // Then fetch complete profile to get profile picture if available
         this.fetchUserProfile(user.id);
 
@@ -87,6 +94,7 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
         this.userFullName = '';
         this.userRole = '';
         this.avatarUrl = '';
+        this.testAuthStatus = 'not_submitted';
       }
     });
 
@@ -180,6 +188,36 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Check test authorization status for candidates
+  private checkTestAuthorizationStatus(): void {
+    if (!this.currentUser || this.currentUser.role !== 'candidate') {
+      return;
+    }
+
+    this.userService.getMyProfile().subscribe({
+      next: (response: UserResponse) => {
+        if (response.success && response.user) {
+          this.testAuthStatus =
+            response.user.testAuthorizationStatus || 'not_submitted';
+
+          // Update the current user object with the latest test auth status
+          if (this.currentUser) {
+            this.currentUser.testAuthorizationStatus = this.testAuthStatus;
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching test authorization status:', error);
+        this.testAuthStatus = 'not_submitted';
+      },
+    });
+  }
+
+  // Public method to refresh test authorization status
+  refreshTestAuthStatus(): void {
+    this.checkTestAuthorizationStatus();
+  }
+
   // Handle image error
   handleImageError(): void {
     console.log(
@@ -238,7 +276,8 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
 
   // Setup user menu items
   setupUserMenu(): void {
-    this.userMenuItems = [      {
+    this.userMenuItems = [
+      {
         label: this.translate.instant('USER.PROFILE'),
         icon: 'pi pi-user',
         command: () => {
@@ -249,7 +288,7 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
       {
         label: this.translate.instant('USER.TESTS'),
         icon: 'pi pi-list',
-        visible: this.isCandidate(),
+        visible: this.shouldShowTests(),
         command: () => {
           this.router.navigate(['/tests/my-tests']);
           this.showUserDropdown = false;
@@ -296,6 +335,21 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
     return this.currentUser.role === 'candidate';
   }
 
+  // Check if tests should be visible (only for approved candidates or staff)
+  shouldShowTests(): boolean {
+    if (!this.currentUser) return false;
+
+    // Show tests for staff members always
+    if (this.isStaffMember()) return true;
+
+    // Show tests for candidates only if they are approved
+    if (this.isCandidate()) {
+      return this.testAuthStatus === 'approved';
+    }
+
+    return false;
+  }
+
   // Navigate to login
   navigateToLogin(): void {
     this.router.navigate(['/auth/login']);
@@ -316,7 +370,7 @@ export class HomepageNavbarComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Logout error:', error);
         // Even on error, the AuthService.clearAuthData method will handle navigation
-      }
+      },
     });
   }
 

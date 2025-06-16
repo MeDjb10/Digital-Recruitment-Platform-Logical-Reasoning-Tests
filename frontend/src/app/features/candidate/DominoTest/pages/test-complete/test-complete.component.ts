@@ -6,20 +6,32 @@ import { ActivatedRoute, Router } from '@angular/router';
 @Component({
   selector: 'app-test-complete',
   standalone: true,
-  imports: [CommonModule],
-  template: `
+  imports: [CommonModule],  template: `
     <div class="container">
-      <div class="completion-card">
-        <h1>Test Completed!</h1>
+      <div class="completion-card" [class.security-violation]="securityViolated">
+        <h1 *ngIf="!securityViolated">Test Completed!</h1>
+        <h1 *ngIf="securityViolated" class="violation-title">Test Completed with Security Alert</h1>
 
-        <div class="score-display">
-          <div class="score">{{ score }}%</div>
+        <!-- Security Violation Alert -->
+        <div *ngIf="securityViolated" class="security-alert">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-content">
+            <h3>Security Violation Detected</h3>
+            <p>{{ violationReason }}</p>
+            <p class="alert-note">This incident has been logged and will be reviewed by administrators.</p>
+          </div>
+        </div>
+
+        <div class="score-display" [class.violation-score]="securityViolated">
+          <div class="score" [class.violation]="securityViolated">{{ score }}%</div>
           <div class="score-label">Your Score</div>
         </div>
 
         <div class="message">
-          <p>Thank you for completing the {{ testId }} test.</p>
+          <p *ngIf="!securityViolated">Thank you for completing the test.</p>
+          <p *ngIf="securityViolated">Your test has been completed and submitted.</p>
           <p>Your results have been saved and will be analyzed.</p>
+          <p *ngIf="attemptId" class="attempt-id">Attempt ID: {{ attemptId }}</p>
         </div>
 
         <button class="return-button" (click)="returnToHome()">
@@ -82,10 +94,72 @@ import { ActivatedRoute, Router } from '@angular/router';
         font-size: 16px;
         cursor: pointer;
         transition: background-color 0.3s;
+      }      .return-button:hover {
+        background-color: #45a049;
       }
 
-      .return-button:hover {
-        background-color: #45a049;
+      /* Security violation styles */
+      .completion-card.security-violation {
+        border: 3px solid #f44336;
+        background: linear-gradient(135deg, #fff 0%, #ffebee 100%);
+      }
+
+      .violation-title {
+        color: #f44336 !important;
+      }
+
+      .security-alert {
+        background-color: #ffebee;
+        border: 2px solid #f44336;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+      }
+
+      .alert-icon {
+        font-size: 2rem;
+        color: #f44336;
+      }
+
+      .alert-content h3 {
+        color: #f44336;
+        margin: 0 0 10px 0;
+        font-size: 1.2rem;
+      }
+
+      .alert-content p {
+        margin: 5px 0;
+        color: #666;
+      }
+
+      .alert-note {
+        font-style: italic;
+        font-size: 0.9rem;
+        color: #999 !important;
+      }
+
+      .score.violation {
+        color: #ff9800 !important;
+      }
+
+      .violation-score {
+        border: 2px dashed #ff9800;
+        border-radius: 10px;
+        padding: 20px;
+        background-color: #fff3e0;
+      }
+
+      .attempt-id {
+        font-family: monospace;
+        background-color: #f5f5f5;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        color: #666;
+        border: 1px solid #ddd;
       }
     `,
   ],
@@ -93,6 +167,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 export class TestCompleteComponent implements OnInit {
   testId: string = '';
   score: number = 0;
+  securityViolated: boolean = false;
+  violationReason: string = '';
+  attemptId: string = '';
 
   constructor(private route: ActivatedRoute, private router: Router) {}
 
@@ -100,6 +177,9 @@ export class TestCompleteComponent implements OnInit {
     this.route.queryParams.subscribe((params) => {
       this.testId = params['testId'] || 'Unknown';
       this.score = params['score'] || 0;
+      this.attemptId = params['attemptId'] || '';
+      this.securityViolated = params['securityViolated'] === 'true';
+      this.violationReason = params['violationReason'] || '';
     });
   }
 

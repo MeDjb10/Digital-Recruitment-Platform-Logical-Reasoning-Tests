@@ -21,8 +21,14 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Form header styling */
@@ -50,17 +56,13 @@
 /* Card styling with subtle depth */
 :host ::ng-deep .p-card {
   border-radius: 12px;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02);
   transition: all 0.3s ease;
   background: #ffffff;
 }
 
 :host ::ng-deep .p-card:hover {
-  box-shadow: 
-    0 8px 20px rgba(0, 0, 0, 0.12),
-    0 0 0 1px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.02);
   transform: translateY(-2px);
 }
 
@@ -232,7 +234,11 @@
   align-items: center;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0));
+  background: linear-gradient(
+    to bottom,
+    rgba(59, 130, 246, 0.05),
+    rgba(59, 130, 246, 0)
+  );
   border-radius: 12px;
   transition: all 0.3s ease;
 }
@@ -243,7 +249,11 @@
   flex-direction: column;
   align-items: center;
   padding: 1.5rem;
-  background: linear-gradient(to bottom right, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0));
+  background: linear-gradient(
+    to bottom right,
+    rgba(59, 130, 246, 0.05),
+    rgba(59, 130, 246, 0)
+  );
   border-radius: 12px;
   transition: all 0.3s ease;
   position: relative;
@@ -262,16 +272,15 @@
     flex-direction: row;
     align-items: flex-start;
   }
-  
+
   .profile-preview-container {
     flex: 1;
   }
-  
+
   .upload-options {
     flex: 1;
   }
 }
-
 
 /* Profile preview container with subtle animation */
 .profile-preview {
@@ -283,19 +292,15 @@
   border: 4px solid #ffffff;
   overflow: hidden;
   background: #f8fafc;
-  box-shadow: 
-    0 10px 25px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(0, 0, 0, 0.01),
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.01),
     0 0 0 4px rgba(59, 130, 246, 0.15);
   transition: all 0.3s ease;
 }
 
 .profile-preview:hover {
   transform: scale(1.02);
-  box-shadow: 
-    0 15px 30px rgba(59, 130, 246, 0.2),
-    0 0 0 1px rgba(59, 130, 246, 0.1),
-    0 0 0 4px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 15px 30px rgba(59, 130, 246, 0.2),
+    0 0 0 1px rgba(59, 130, 246, 0.1), 0 0 0 4px rgba(59, 130, 246, 0.2);
 }
 
 .profile-preview img {
@@ -497,10 +502,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
-
 
 /* Upload zone styling */
 .upload-zone {
@@ -516,7 +524,8 @@
   text-align: center;
 }
 
-.upload-zone:hover, .upload-zone.drag-over {
+.upload-zone:hover,
+.upload-zone.drag-over {
   border-color: #60a5fa;
   background-color: #f0f7ff;
 }
@@ -558,8 +567,14 @@
 }
 
 @keyframes badgeFadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .file-info-badge i {
@@ -638,9 +653,6 @@
   color: #64748b;
   margin: 0;
 }
-
-
-
 
 /* Divider styling */
 :host ::ng-deep .p-divider {
@@ -802,12 +814,12 @@
   :host ::ng-deep .p-card .p-card-body {
     padding: 1.25rem;
   }
-  
+
   .navigation-controls {
     flex-direction: column-reverse;
     gap: 1rem;
   }
-  
+
   :host ::ng-deep .p-button {
     width: 100%;
   }
@@ -818,7 +830,6 @@
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
-
 
 /* Add these new textarea styles to your existing CSS */
 .textarea-header {
@@ -836,7 +847,6 @@
   color: #334155;
   margin-bottom: 0;
 }
-
 
 .textarea-container {
   position: relative;
@@ -1009,9 +1019,15 @@
 
 /* Focus glow animation */
 @keyframes subtle-glow {
-  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.1); }
-  50% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
-  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.1); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.1);
+  }
 }
 
 /* Responsive adjustments */
@@ -1021,12 +1037,226 @@
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .textarea-hint {
     max-width: 100%;
   }
-  
+
   .textarea-counter {
     align-self: flex-end;
   }
+}
+
+/* Enhanced date picker styling for age validation */
+:host ::ng-deep .p-calendar .p-inputtext::placeholder {
+  color: #6b7280;
+  font-style: italic;
+}
+
+:host ::ng-deep .p-calendar.p-invalid .p-inputtext {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}
+
+/* File upload warning styling */
+.file-size-warning {
+  display: flex;
+  align-items: center;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  color: #dc2626;
+  font-size: 0.9rem;
+  animation: shake 0.5s ease-in-out;
+}
+
+.file-size-warning i {
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
+
+@keyframes shake {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  70%,
+  90% {
+    transform: translateX(-2px);
+  }
+  40%,
+  60% {
+    transform: translateX(2px);
+  }
+}
+
+/* Enhanced select dropdown styling */
+:host ::ng-deep .p-select {
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+:host ::ng-deep .p-select:not(.p-disabled):hover {
+  border-color: #94a3b8;
+}
+
+:host ::ng-deep .p-select:not(.p-disabled).p-focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+:host ::ng-deep .p-select-panel {
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+}
+
+:host ::ng-deep .p-select-option {
+  padding: 0.75rem 1rem;
+  transition: background-color 0.2s;
+}
+
+:host ::ng-deep .p-select-option:hover {
+  background-color: #f1f5f9;
+}
+
+:host ::ng-deep .p-select-option.p-selected {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Enhanced placeholder styling for input fields */
+:host ::ng-deep .p-inputtext::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Make calendar/date picker smaller and more compact */
+:host ::ng-deep .p-datepicker {
+  font-size: 0.9rem;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-header {
+  padding: 0.5rem;
+}
+
+:host ::ng-deep .p-datepicker .p-datepicker-title {
+  font-size: 0.95rem;
+}
+
+:host ::ng-deep .p-datepicker table {
+  width: 100%;
+  font-size: 0.85rem;
+}
+
+:host ::ng-deep .p-datepicker table td {
+  padding: 0.25rem;
+}
+
+:host ::ng-deep .p-datepicker table td > span {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+:host ::ng-deep .p-calendar .p-inputtext {
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+}
+
+:host ::ng-deep .p-calendar {
+  max-width: 280px; /* Limit the width of the calendar input */
+}
+
+/* Make the calendar popup more compact */
+:host ::ng-deep .p-datepicker .p-monthpicker .p-monthpicker-month {
+  padding: 0.4rem;
+  font-size: 0.85rem;
+}
+
+:host ::ng-deep .p-datepicker .p-yearpicker .p-yearpicker-year {
+  padding: 0.4rem;
+  font-size: 0.85rem;
+}
+
+/* Ensure the date input field is smaller on the form */
+:host ::ng-deep .field.col-span-2 .p-calendar {
+  max-width: 100%;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  :host ::ng-deep .field.col-span-2 .p-calendar {
+    max-width: 350px; /* Limit width on larger screens */
+  }
+}
+
+/* Enhanced toast notification styling for file size errors */
+:host ::ng-deep .p-toast .p-toast-message.p-toast-message-error {
+  background-color: #fef2f2;
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(239, 68, 68, 0.2);
+}
+
+:host
+  ::ng-deep
+  .p-toast
+  .p-toast-message.p-toast-message-error
+  .p-toast-message-content {
+  padding: 1rem;
+}
+
+:host
+  ::ng-deep
+  .p-toast
+  .p-toast-message.p-toast-message-error
+  .p-toast-summary {
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 0.25rem;
+}
+
+:host
+  ::ng-deep
+  .p-toast
+  .p-toast-message.p-toast-message-error
+  .p-toast-detail {
+  color: #991b1b;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* File size warning animation */
+.file-size-error {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+/* Debug: Make file upload errors more visible */
+:host ::ng-deep .p-toast .p-toast-message-error .p-toast-icon {
+  color: #ef4444;
+  font-size: 1.2rem;
 }

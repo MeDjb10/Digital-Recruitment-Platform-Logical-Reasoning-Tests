@@ -1,0 +1,28 @@
+{
+  "name": "security-alert-service",
+  "version": "1.0.0",
+  "description": "Real-time security alert service for monitoring test-taking activities",
+  "main": "security-alert-service.js",
+  "scripts": {
+    "start": "node security-alert-service.js",
+    "dev": "nodemon security-alert-service.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "security",
+    "alerts",
+    "monitoring",
+    "websocket",
+    "real-time"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
