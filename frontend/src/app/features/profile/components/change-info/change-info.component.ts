@@ -29,9 +29,9 @@ import { UserContextService } from '../../../../core/services/user-context.servi
   @Output() cancelled = new EventEmitter<void>();
   userForm!: FormGroup;
   genderOptions = [
-    { label: 'Male', value: 'MALE' },
-    { label: 'Female', value: 'FEMALE' },
-    { label: 'Other', value: 'OTHER' }
+    { label: 'Male', value: 'Male' },
+    { label: 'Female', value: 'Female' },
+   
   ];
   maxDate: Date = new Date();
   constructor(
