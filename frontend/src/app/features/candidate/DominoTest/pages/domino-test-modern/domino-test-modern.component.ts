@@ -189,10 +189,52 @@ export class DominoTestModernComponent
     });
     
     return true; // Allow the context menu
-  }// Security: Prevent common keyboard shortcuts for cheating
+  }// Security: Monitor keyboard shortcuts for cheating and copy/paste
   @HostListener('keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): boolean {
-    // Only prevent screenshot shortcuts - allow everything else including DevTools
+    // Monitor copy/paste operations
+    if (event.ctrlKey || event.metaKey) {
+      if (event.key === 'c' || event.key === 'C') {
+        // Copy operation detected
+        this.sendRealtimeAlert('COPY_PASTE', 'Copy operation detected (Ctrl+C)', {
+          operation: 'copy',
+          shortcut: event.ctrlKey ? 'Ctrl+C' : 'Cmd+C',
+          eventType: 'keydown',
+          prevented: false
+        });
+        this.logSecurityEvent('Copy operation detected');
+        // Allow the operation but log it
+        return true;
+      }
+      
+      if (event.key === 'v' || event.key === 'V') {
+        // Paste operation detected
+        this.sendRealtimeAlert('COPY_PASTE', 'Paste operation detected (Ctrl+V)', {
+          operation: 'paste',
+          shortcut: event.ctrlKey ? 'Ctrl+V' : 'Cmd+V',
+          eventType: 'keydown',
+          prevented: false
+        });
+        this.logSecurityEvent('Paste operation detected');
+        // Allow the operation but log it
+        return true;
+      }
+      
+      if (event.key === 'a' || event.key === 'A') {
+        // Select all operation detected
+        this.sendRealtimeAlert('COPY_PASTE', 'Select All operation detected (Ctrl+A)', {
+          operation: 'selectAll',
+          shortcut: event.ctrlKey ? 'Ctrl+A' : 'Cmd+A',
+          eventType: 'keydown',
+          prevented: false
+        });
+        this.logSecurityEvent('Select All operation detected');
+        // Allow the operation but log it
+        return true;
+      }
+    }
+
+    // Monitor screenshot attempts
     if (
       (event.key === 'PrintScreen') || // Print Screen
       (event.ctrlKey && event.shiftKey && (event.key === 'S' || event.key === 's')) // Ctrl+Shift+S (Screenshot in some browsers)
@@ -202,31 +244,69 @@ export class DominoTestModernComponent
       
       const shortcut = `${event.ctrlKey ? 'Ctrl+' : ''}${event.shiftKey ? 'Shift+' : ''}${event.key}`;
       
-      // Only send low-severity alert for screenshots
       this.sendRealtimeAlert('SCREENSHOT_ATTEMPT', `Screenshot attempt detected: ${shortcut}`, {
         shortcut: shortcut,
         eventType: 'keydown',
         prevented: true
       });
       
-      // Don't treat this as a critical violation - just log it
       this.logSecurityEvent(`Screenshot attempt blocked: ${shortcut}`);
       return false;
     }
+    
+    // Monitor DevTools shortcuts
+    if (
+      (event.key === 'F12') || // F12
+      (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'i')) || // Ctrl+Shift+I
+      (event.ctrlKey && event.shiftKey && (event.key === 'J' || event.key === 'j')) || // Ctrl+Shift+J
+      (event.ctrlKey && event.shiftKey && (event.key === 'C' || event.key === 'c')) || // Ctrl+Shift+C
+      (event.ctrlKey && (event.key === 'U' || event.key === 'u')) // Ctrl+U (View Source)
+    ) {
+      const shortcut = `${event.ctrlKey ? 'Ctrl+' : ''}${event.shiftKey ? 'Shift+' : ''}${event.key}`;
+      
+      this.sendRealtimeAlert('DEVTOOLS_DETECTED', `Developer tools shortcut detected: ${shortcut}`, {
+        shortcut: shortcut,
+        eventType: 'keydown',
+        prevented: false
+      });
+      
+      this.logSecurityEvent(`DevTools shortcut detected: ${shortcut}`);
+      // Allow the operation but log it
+      return true;
+    }
+    
     return true;
-  }
-  // Security: Allow text selection everywhere
+  }  // Security: Monitor text selection
   @HostListener('selectstart', ['$event'])
   onSelectStart(event: Event): boolean {
-    // Allow text selection everywhere - just log it
+    // Monitor text selection and send alert
+    this.sendRealtimeAlert('COPY_PASTE', 'Text selection detected', {
+      operation: 'textSelection',
+      elementType: (event.target as HTMLElement)?.tagName || 'unknown',
+      eventType: 'selectstart',
+      prevented: false
+    });
+    
     this.logSecurityEvent('Text selection detected');
-    return true;
+    return true; // Allow text selection
   }
-  // Allow window resizing without security alerts
+  
+  // Security: Monitor window resizing
   @HostListener('window:resize')
   onWindowResize() {
-    // Just log for informational purposes, no security alerts
-    console.log('Window resized to:', window.innerWidth, 'x', window.innerHeight);
+    const newWidth = window.innerWidth;
+    const newHeight = window.innerHeight;
+    
+    // Send alert for window resizing
+    this.sendRealtimeAlert('DEVTOOLS_DETECTED', 'Window resized - potential DevTools activity', {
+      operation: 'windowResize',
+      newDimensions: `${newWidth}x${newHeight}`,
+      eventType: 'resize',
+      prevented: false
+    });
+    
+    this.logSecurityEvent(`Window resized to: ${newWidth}x${newHeight}`);
+    console.log('Window resized to:', newWidth, 'x', newHeight);
   }
 
   ngOnInit(): void {
