@@ -12,9 +12,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class PerformancePredictor:
     def __init__(self, model_dir: str):
         # Set absolute model paths
-        self.d70_path = r"C:\Users\tbfee\OneDrive\Desktop\pfe\Digital-Recruitment-Platform-Logical-Reasoning-Tests\ai-classification\ml\src\models\d70_model.joblib"
-        self.d2000_path = r"C:\Users\tbfee\OneDrive\Desktop\pfe\Digital-Recruitment-Platform-Logical-Reasoning-Tests\ai-classification\ml\src\models\d2000_model.joblib"
-        self.metadata_path = Path(self.d70_path).parent / "model_metadata.json"
+        current_dir = Path(__file__).parent  # utils directory
+        models_dir = current_dir.parent / "models"  # Navigate to models directory
+
+        self.d70_path = models_dir / "d70_model.joblib"
+        self.d2000_path = models_dir / "d2000_model.joblib"
+        self.metadata_path = models_dir / "model_metadata.json"
         # Features match the metadata
         self.features = [
             'questionsAnswered',
