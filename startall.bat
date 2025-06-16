@@ -22,6 +22,9 @@ start "Test Assignement Service" cmd /k "cd backend/test-assignment-service && n
 REM Start Notification Service
 start "Notification Service" cmd /k "cd backend/notification-service && npm run dev"
 
+REM Start Security Alert Service
+start "Security Alert Service" cmd /k "cd backend/security-alert-service && npm start"
+
 REM Start AI Classification
 start "AI Classification" cmd /k "cd ai-classification\ml && venv\Scripts\activate && cd src\api && python server.py"
 
