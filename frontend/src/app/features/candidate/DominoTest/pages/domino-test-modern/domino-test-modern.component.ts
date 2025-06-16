@@ -24,7 +24,10 @@ import {
   DominoChange,
   PropositionResponse, // Import PropositionResponse
 } from '../../models/domino.model';
-import { RealtimeSecurityAlertService, SecurityAlert } from '../../services/realtime-security-alert.service';
+import {
+  RealtimeSecurityAlertService,
+  SecurityAlert,
+} from '../../services/realtime-security-alert.service';
 import { DominoPosition } from '../../../../../core/models/domino.model';
 import { MultipleChoiceQuestionComponent } from '../../components/multiple-choice-question/multiple-choice-question.component'; // Import the new component
 import { AuthService } from '../../../../../core/auth/services/auth.service';
@@ -57,13 +60,17 @@ export class DominoTestModernComponent
   attemptId: string | null = null;
   candidateId: string | null = null;
   candidateName: string | null = null;
-
   // Questions and navigation
   questions: TestQuestion[] = [];
   currentQuestionIndex: number = 0;
   currentQuestion: TestQuestion | undefined; // Explicitly type and ensure not readonly
   answeredCount: number = 0;
   flaggedCount: number = 0;
+
+  // Getter to ensure currentQuestion is always in sync
+  get currentQuestionSafe(): TestQuestion | undefined {
+    return this.questions[this.currentQuestionIndex] || undefined;
+  }
 
   // UI state
   sidebarCollapsed: boolean = false;
@@ -93,12 +100,15 @@ export class DominoTestModernComponent
   ];
 
   // Flag to check if we have editable dominos
-  hasEditableDominos: boolean = false;
-  // Test submission state
+  hasEditableDominos: boolean = false; // Test submission state
   isSubmittingTest: boolean = false;
   loadingError: string | null = null;
   isTestComplete: boolean = false;
   loading: boolean = true; // Loading state for the test data
+  // Progress expiration settings
+  private readonly PROGRESS_EXPIRY_TIME = 60 * 60 * 1000; // 1 hour in milliseconds
+  private progressStartTime: number = 0;
+  private cleanupInterval?: number;
 
   // New properties for instruction handling
   instructionExpanded: boolean = false;
@@ -126,31 +136,40 @@ export class DominoTestModernComponent
     private trackingService: TestAttemptTrackingService,
     private securityAlertService: RealtimeSecurityAlertService,
     private authService: AuthService // Inject AuthService
-  ) {}  // React to browser/tab close to save progress
+  ) {} // React to browser/tab close to save progress
   @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(event: BeforeUnloadEvent) {
     // Record time spent on current question before leaving
     this.trackingService.endCurrentQuestionVisit();
-    this.saveProgress();
-    
+
+    // Only save progress if test is not complete or being submitted
+    if (!this.isTestComplete && !this.isSubmittingTest) {
+      this.saveProgress();
+    }
+
     // If test is not complete, show warning and send alert
     if (!this.isTestComplete && !this.isSubmittingTest) {
       // Send real-time alert about navigation attempt
-      this.sendRealtimeAlert('NAVIGATION_ATTEMPT', 'Candidate attempted to leave test before completion', {
-        navigationType: 'beforeunload',
-        testProgress: `${this.answeredCount}/${this.questions.length}`,
-        timeRemaining: this.timeLeft
-      });
-      
-      const message = 'Are you sure you want to leave? Your test progress will be saved, but leaving during the test may be considered suspicious activity and psychologists have been notified.';
+      this.sendRealtimeAlert(
+        'NAVIGATION_ATTEMPT',
+        'Candidate attempted to leave test before completion',
+        {
+          navigationType: 'beforeunload',
+          testProgress: `${this.answeredCount}/${this.questions.length}`,
+          timeRemaining: this.timeLeft,
+        }
+      );
+
+      const message =
+        'Are you sure you want to leave? Your test progress will be saved, but leaving during the test may be considered suspicious activity and psychologists have been notified.';
       event.returnValue = message;
-      
+
       // Log this as a potential security concern
       this.logSecurityEvent('User attempted to leave test before completion');
-      
+
       return message;
     }
-    
+
     return null;
   }
   // Security: Detect when user leaves the tab/window
@@ -176,58 +195,70 @@ export class DominoTestModernComponent
       this.updatePageVisibility(true);
       this.lastFocusTime = Date.now();
     }
-  }  // Security: Log right-click attempts but don't prevent them
+  } // Security: Log right-click attempts but don't prevent them
   @HostListener('contextmenu', ['$event'])
   onRightClick(event: Event) {
     // Just log the attempt but allow right-click
     this.logSecurityEvent('Right-click context menu accessed');
-    
+
     // Send low-severity alert
     this.sendRealtimeAlert('RIGHT_CLICK', 'Right-click context menu accessed', {
       elementType: (event.target as HTMLElement)?.tagName || 'unknown',
-      eventType: 'contextmenu'
+      eventType: 'contextmenu',
     });
-    
+
     return true; // Allow the context menu
-  }// Security: Monitor keyboard shortcuts for cheating and copy/paste
+  } // Security: Monitor keyboard shortcuts for cheating and copy/paste
   @HostListener('keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): boolean {
     // Monitor copy/paste operations
     if (event.ctrlKey || event.metaKey) {
       if (event.key === 'c' || event.key === 'C') {
         // Copy operation detected
-        this.sendRealtimeAlert('COPY_PASTE', 'Copy operation detected (Ctrl+C)', {
-          operation: 'copy',
-          shortcut: event.ctrlKey ? 'Ctrl+C' : 'Cmd+C',
-          eventType: 'keydown',
-          prevented: false
-        });
+        this.sendRealtimeAlert(
+          'COPY_PASTE',
+          'Copy operation detected (Ctrl+C)',
+          {
+            operation: 'copy',
+            shortcut: event.ctrlKey ? 'Ctrl+C' : 'Cmd+C',
+            eventType: 'keydown',
+            prevented: false,
+          }
+        );
         this.logSecurityEvent('Copy operation detected');
         // Allow the operation but log it
         return true;
       }
-      
+
       if (event.key === 'v' || event.key === 'V') {
         // Paste operation detected
-        this.sendRealtimeAlert('COPY_PASTE', 'Paste operation detected (Ctrl+V)', {
-          operation: 'paste',
-          shortcut: event.ctrlKey ? 'Ctrl+V' : 'Cmd+V',
-          eventType: 'keydown',
-          prevented: false
-        });
+        this.sendRealtimeAlert(
+          'COPY_PASTE',
+          'Paste operation detected (Ctrl+V)',
+          {
+            operation: 'paste',
+            shortcut: event.ctrlKey ? 'Ctrl+V' : 'Cmd+V',
+            eventType: 'keydown',
+            prevented: false,
+          }
+        );
         this.logSecurityEvent('Paste operation detected');
         // Allow the operation but log it
         return true;
       }
-      
+
       if (event.key === 'a' || event.key === 'A') {
         // Select all operation detected
-        this.sendRealtimeAlert('COPY_PASTE', 'Select All operation detected (Ctrl+A)', {
-          operation: 'selectAll',
-          shortcut: event.ctrlKey ? 'Ctrl+A' : 'Cmd+A',
-          eventType: 'keydown',
-          prevented: false
-        });
+        this.sendRealtimeAlert(
+          'COPY_PASTE',
+          'Select All operation detected (Ctrl+A)',
+          {
+            operation: 'selectAll',
+            shortcut: event.ctrlKey ? 'Ctrl+A' : 'Cmd+A',
+            eventType: 'keydown',
+            prevented: false,
+          }
+        );
         this.logSecurityEvent('Select All operation detected');
         // Allow the operation but log it
         return true;
@@ -236,47 +267,67 @@ export class DominoTestModernComponent
 
     // Monitor screenshot attempts
     if (
-      (event.key === 'PrintScreen') || // Print Screen
-      (event.ctrlKey && event.shiftKey && (event.key === 'S' || event.key === 's')) // Ctrl+Shift+S (Screenshot in some browsers)
+      event.key === 'PrintScreen' || // Print Screen
+      (event.ctrlKey &&
+        event.shiftKey &&
+        (event.key === 'S' || event.key === 's')) // Ctrl+Shift+S (Screenshot in some browsers)
     ) {
       event.preventDefault();
       event.stopPropagation();
-      
-      const shortcut = `${event.ctrlKey ? 'Ctrl+' : ''}${event.shiftKey ? 'Shift+' : ''}${event.key}`;
-      
-      this.sendRealtimeAlert('SCREENSHOT_ATTEMPT', `Screenshot attempt detected: ${shortcut}`, {
-        shortcut: shortcut,
-        eventType: 'keydown',
-        prevented: true
-      });
-      
+
+      const shortcut = `${event.ctrlKey ? 'Ctrl+' : ''}${
+        event.shiftKey ? 'Shift+' : ''
+      }${event.key}`;
+
+      this.sendRealtimeAlert(
+        'SCREENSHOT_ATTEMPT',
+        `Screenshot attempt detected: ${shortcut}`,
+        {
+          shortcut: shortcut,
+          eventType: 'keydown',
+          prevented: true,
+        }
+      );
+
       this.logSecurityEvent(`Screenshot attempt blocked: ${shortcut}`);
       return false;
     }
-    
+
     // Monitor DevTools shortcuts
     if (
-      (event.key === 'F12') || // F12
-      (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'i')) || // Ctrl+Shift+I
-      (event.ctrlKey && event.shiftKey && (event.key === 'J' || event.key === 'j')) || // Ctrl+Shift+J
-      (event.ctrlKey && event.shiftKey && (event.key === 'C' || event.key === 'c')) || // Ctrl+Shift+C
+      event.key === 'F12' || // F12
+      (event.ctrlKey &&
+        event.shiftKey &&
+        (event.key === 'I' || event.key === 'i')) || // Ctrl+Shift+I
+      (event.ctrlKey &&
+        event.shiftKey &&
+        (event.key === 'J' || event.key === 'j')) || // Ctrl+Shift+J
+      (event.ctrlKey &&
+        event.shiftKey &&
+        (event.key === 'C' || event.key === 'c')) || // Ctrl+Shift+C
       (event.ctrlKey && (event.key === 'U' || event.key === 'u')) // Ctrl+U (View Source)
     ) {
-      const shortcut = `${event.ctrlKey ? 'Ctrl+' : ''}${event.shiftKey ? 'Shift+' : ''}${event.key}`;
-      
-      this.sendRealtimeAlert('DEVTOOLS_DETECTED', `Developer tools shortcut detected: ${shortcut}`, {
-        shortcut: shortcut,
-        eventType: 'keydown',
-        prevented: false
-      });
-      
+      const shortcut = `${event.ctrlKey ? 'Ctrl+' : ''}${
+        event.shiftKey ? 'Shift+' : ''
+      }${event.key}`;
+
+      this.sendRealtimeAlert(
+        'DEVTOOLS_DETECTED',
+        `Developer tools shortcut detected: ${shortcut}`,
+        {
+          shortcut: shortcut,
+          eventType: 'keydown',
+          prevented: false,
+        }
+      );
+
       this.logSecurityEvent(`DevTools shortcut detected: ${shortcut}`);
       // Allow the operation but log it
       return true;
     }
-    
+
     return true;
-  }  // Security: Monitor text selection
+  } // Security: Monitor text selection
   @HostListener('selectstart', ['$event'])
   onSelectStart(event: Event): boolean {
     // Monitor text selection and send alert
@@ -284,35 +335,41 @@ export class DominoTestModernComponent
       operation: 'textSelection',
       elementType: (event.target as HTMLElement)?.tagName || 'unknown',
       eventType: 'selectstart',
-      prevented: false
+      prevented: false,
     });
-    
+
     this.logSecurityEvent('Text selection detected');
     return true; // Allow text selection
   }
-  
+
   // Security: Monitor window resizing
   @HostListener('window:resize')
   onWindowResize() {
     const newWidth = window.innerWidth;
     const newHeight = window.innerHeight;
-    
+
     // Send alert for window resizing
-    this.sendRealtimeAlert('DEVTOOLS_DETECTED', 'Window resized - potential DevTools activity', {
-      operation: 'windowResize',
-      newDimensions: `${newWidth}x${newHeight}`,
-      eventType: 'resize',
-      prevented: false
-    });
-    
+    this.sendRealtimeAlert(
+      'DEVTOOLS_DETECTED',
+      'Window resized - potential DevTools activity',
+      {
+        operation: 'windowResize',
+        newDimensions: `${newWidth}x${newHeight}`,
+        eventType: 'resize',
+        prevented: false,
+      }
+    );
+
     this.logSecurityEvent(`Window resized to: ${newWidth}x${newHeight}`);
     console.log('Window resized to:', newWidth, 'x', newHeight);
   }
-
   ngOnInit(): void {
+    console.log('[ModernTest] ngOnInit called');
+
     this.route.params.subscribe((params) => {
       if (params['id']) {
         this.testId = params['id'];
+        console.log('[ModernTest] Route params received, testId:', this.testId);
       }
 
       // Load the test data
@@ -322,6 +379,9 @@ export class DominoTestModernComponent
 
     // Initialize security measures
     this.initializeSecurityMeasures();
+
+    // Start periodic cleanup of expired progress
+    this.startPeriodicCleanup();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -343,15 +403,24 @@ export class DominoTestModernComponent
       this.cdr.detectChanges();
     }, 100);
     this.checkInstructionLength();
-  }  ngOnDestroy(): void {
+  }
+  ngOnDestroy(): void {
     // Clean up subscriptions
     if (this.timerSubscription) {
       this.timerSubscription.unsubscribe();
     }
 
-    // Record time spent and save progress before leaving
-    this.trackingService.endCurrentQuestionVisit();
-    this.saveProgress();
+    // Clean up cleanup interval
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = undefined;
+    }
+
+    // Record time spent and save progress before leaving (only if test not complete)
+    if (!this.isTestComplete) {
+      this.trackingService.endCurrentQuestionVisit();
+      this.saveProgress();
+    }
     this.trackingService.cleanup();
 
     // Disconnect security alert service
@@ -378,23 +447,66 @@ export class DominoTestModernComponent
     });
     document.removeEventListener('dragstart', (e) => e.preventDefault());
   }
+  /**
+   * Reset all component state to initial values
+   */
+  private resetComponentState(): void {
+    console.log('[ModernTest] Resetting component state...');
 
+    // Reset questions and navigation
+    this.questions = [];
+    this.currentQuestionIndex = 0;
+    this.currentQuestion = undefined;
+    this.answeredCount = 0;
+    this.flaggedCount = 0;
+
+    // Reset UI state
+    this.sidebarCollapsed = false;
+    this.showTooltip = true;
+    this.instructionExpanded = false;
+    this.isInstructionLong = false;
+
+    // Reset test state
+    this.isSubmittingTest = false;
+    this.isTestComplete = false;
+    this.loadingError = null;
+
+    // Reset security state
+    this.tabSwitchWarnings = 0;
+    this.isTestSecurityViolated = false;
+    this.securityViolationReason = '';
+    this.isPageVisible = true;
+
+    console.log(
+      '[ModernTest] Component state reset - questions cleared, counters zeroed'
+    );
+
+    // Force change detection to ensure UI reflects the reset state
+    this.cdr.detectChanges();
+  }
   loadTestData(testId: string): void {
     this.loading = true;
     this.loadingError = null;
     console.log('[ModernTest] Loading test data for ID:', testId); // DEBUG
 
+    // Reset all state before loading
+    this.resetComponentState();
+
     // Check for saved progress first
     const savedProgress = this.dominoTestService.loadProgress(testId);
-    if (savedProgress) {
-      console.log('[ModernTest] Found saved progress, loading it'); // DEBUG
+    if (savedProgress && this.isProgressValid(savedProgress)) {
+      console.log('[ModernTest] Found valid saved progress, loading it'); // DEBUG
       this.handleSavedProgress(savedProgress);
       return;
+    } else if (savedProgress) {
+      console.log('[ModernTest] Found expired saved progress, clearing it'); // DEBUG
+      this.dominoTestService.clearTestProgress(testId);
     }
 
     // Load fresh data from backend
     this.dominoTestService.getTest(testId).subscribe({
-      next: (testData) => {        console.log(
+      next: (testData) => {
+        console.log(
           '[ModernTest] Raw test data loaded from backend:',
           testData
         ); // DEBUG
@@ -408,6 +520,9 @@ export class DominoTestModernComponent
           this.timeLeft = this.testDuration * 60;
           this.updateFormattedTime();
 
+          // Set progress start time for expiration tracking
+          this.progressStartTime = Date.now();
+
           // Store the attempt ID and candidate info for tracking
           if (testData.attemptId) {
             this.attemptId = testData.attemptId;
@@ -415,13 +530,22 @@ export class DominoTestModernComponent
             this.trackingService.initAttempt(testData.attemptId);
           } else {
             console.error('No attempt ID provided in test data');
-          }          // Extract candidate information for security alerts
-          this.candidateId = testData.candidateId || testData.candidate?.id || 'unknown';
-          this.candidateName = testData.candidateName || testData.candidate?.name || 'Unknown Candidate';
+          }
+
+          // Extract candidate information for security alerts
+          this.candidateId =
+            testData.candidateId || testData.candidate?.id || 'unknown';
+          this.candidateName =
+            testData.candidateName ||
+            testData.candidate?.name ||
+            'Unknown Candidate';
 
           // If we don't have candidate info from test data, get it from current user
-          if (this.candidateId === 'unknown' || this.candidateName === 'Unknown Candidate') {
-            this.authService.currentUser$.subscribe(user => {
+          if (
+            this.candidateId === 'unknown' ||
+            this.candidateName === 'Unknown Candidate'
+          ) {
+            this.authService.currentUser$.subscribe((user) => {
               if (user) {
                 if (this.candidateId === 'unknown') {
                   this.candidateId = user.id;
@@ -429,21 +553,19 @@ export class DominoTestModernComponent
                 if (this.candidateName === 'Unknown Candidate') {
                   this.candidateName = `${user.firstName} ${user.lastName}`;
                 }
-                console.log('Updated candidate info from auth:', { 
-                  id: this.candidateId, 
-                  name: this.candidateName 
+                console.log('Updated candidate info from auth:', {
+                  id: this.candidateId,
+                  name: this.candidateName,
                 });
               }
             });
           }
 
-          console.log('Candidate Info:', { 
-            id: this.candidateId, 
-            name: this.candidateName, 
-            attemptId: this.attemptId 
-          });
-
-          // Process questions - handle both _id and id formats, and questionType
+          console.log('Candidate Info:', {
+            id: this.candidateId,
+            name: this.candidateName,
+            attemptId: this.attemptId,
+          }); // Process questions - handle both _id and id formats, and questionType
           this.questions = testData.questions.map((q: any, index: number) => ({
             // Added index for logging
             id: q._id || q.id, // Support both formats
@@ -460,19 +582,36 @@ export class DominoTestModernComponent
             propositions: q.propositions || [],
             // Common fields
             correctAnswer: q.correctAnswer, // Keep generic for now
-            answered: q.answered || false,
-            flaggedForReview: q.flaggedForReview || false,
-            visited: q.visited || false,
+            // For NEW attempts, always start with fresh state
+            answered: false, // Always false for new attempts
+            flaggedForReview: false, // Always false for new attempts
+            visited: false, // Always false for new attempts (except first question)
             pattern: q.pattern || '', // May only apply to Domino
             layoutType: q.layoutType || 'grid', // May only apply to Domino
-            userAnswer: q.userAnswer, // Restore user answer
+            userAnswer: undefined, // Always undefined for new attempts
             questionNumber: index + 1, // Add question number for easier debugging
           }));
-
           console.log(
             '[ModernTest] Mapped questions after loading:',
-            JSON.stringify(this.questions, null, 2)
-          ); // DEBUG - Log mapped questions
+            JSON.stringify(
+              this.questions.map((q) => ({
+                id: q.id,
+                questionNumber: q.questionNumber,
+                answered: q.answered,
+                flagged: q.flaggedForReview,
+                visited: q.visited,
+                userAnswer: q.userAnswer,
+              })),
+              null,
+              2
+            )
+          ); // DEBUG - Log mapped questions// Reset progress counters for new attempts
+          this.answeredCount = 0;
+          this.flaggedCount = 0;
+
+          // Always start from the first question for new test attempts
+          this.currentQuestionIndex = 0;
+          this.currentQuestion = this.questions[0];
 
           // Set first question as visited and start tracking it
           if (this.questions.length > 0) {
@@ -482,25 +621,54 @@ export class DominoTestModernComponent
                 String(this.questions[0].id)
               );
             }
-          }
+          } // Recalculate progress to ensure UI state is correct
+          this.recalculateProgress();
+
+          console.log(
+            `[ModernTest] After recalculate - Answered: ${this.answeredCount}, Flagged: ${this.flaggedCount}`
+          );
+          console.log(
+            `[ModernTest] Questions state after new load:`,
+            this.questions.map((q) => ({
+              id: q.id,
+              questionNumber: q.questionNumber,
+              answered: q.answered,
+              flagged: q.flaggedForReview,
+              visited: q.visited,
+              userAnswer: q.userAnswer,
+            }))
+          );
 
           this.startTimer();
+          this.loading = false;
 
-          this.recalculateProgress();
-          this.cdr.markForCheck();
+          // Force change detection multiple times to ensure UI sync
+          this.cdr.detectChanges();
+
+          // Use setTimeout to ensure change detection happens after current cycle
+          setTimeout(() => {
+            this.cdr.detectChanges();
+            console.log(
+              `[ModernTest] Final UI sync - Answered: ${this.answeredCount}/${this.questions.length}`
+            );
+          }, 0);
+
+          // Start animations after loading
+          this.startAnimations();
         } else {
           this.loadingError = 'Failed to load test data.';
+          this.loading = false;
           this.cdr.markForCheck();
         }
       },
       error: (error) => {
         console.error('Error loading test:', error);
         this.loadingError = 'Error loading test data. Please try again.';
+        this.loading = false;
         this.cdr.markForCheck();
       },
     });
   }
-
   handleSavedProgress(savedProgress: any): void {
     console.log(
       '[ModernTest] Handling saved progress. Raw saved data:',
@@ -512,6 +680,7 @@ export class DominoTestModernComponent
     this.testDuration = savedProgress.duration;
     this.timeLeft = savedProgress.remainingTime;
     this.attemptId = savedProgress.attemptId; // Restore attemptId
+    this.progressStartTime = savedProgress.progressStartTime || Date.now(); // Restore or set current time
 
     // Restore questions and progress - **Refined Mapping**
     this.questions = savedProgress.questions.map((q: any, index: number) => ({
@@ -545,11 +714,24 @@ export class DominoTestModernComponent
       JSON.stringify(this.questions, null, 2)
     ); // DEBUG
 
+    // Ensure currentQuestionIndex is within bounds
+    if (this.currentQuestionIndex >= this.questions.length) {
+      this.currentQuestionIndex = 0;
+    }
+
     if (this.questions.length > 0) {
       this.currentQuestion = this.questions[this.currentQuestionIndex];
       // Mark the current question as visited upon loading progress
       if (this.currentQuestion) {
         this.currentQuestion.visited = true;
+      }
+
+      // Start tracking the current question
+      if (this.attemptId && this.currentQuestion) {
+        this.trackingService.initAttempt(this.attemptId);
+        this.trackingService.startQuestionVisit(
+          String(this.currentQuestion.id)
+        );
       }
     } else {
       this.currentQuestion = undefined;
@@ -564,8 +746,15 @@ export class DominoTestModernComponent
     // Start animations after loading saved progress
     this.startAnimations();
   }
-
   saveProgress(): void {
+    // Don't save progress if test is complete or being submitted
+    if (this.isTestComplete || this.isSubmittingTest) {
+      console.log(
+        '[ModernTest] Skipping progress save - test complete or submitting'
+      );
+      return;
+    }
+
     if (!this.testId || !this.questions || this.questions.length === 0) {
       console.warn(
         '[ModernTest] Attempted to save progress with invalid data.'
@@ -581,6 +770,7 @@ export class DominoTestModernComponent
       currentQuestionIndex: this.currentQuestionIndex,
       questions: this.questions, // Save the current state of questions array
       attemptId: this.attemptId, // Save attemptId
+      progressStartTime: this.progressStartTime, // Save start time for expiration
       timestamp: new Date().toISOString(),
     };
 
@@ -642,18 +832,64 @@ export class DominoTestModernComponent
       .toString()
       .padStart(2, '0')}`;
   }
-
   recalculateProgress(): void {
+    console.log('[ModernTest] Recalculating progress...');
+    console.log(`[ModernTest] Total questions: ${this.questions.length}`);
+
     // Count answered questions
     this.answeredCount = this.questions.filter((q) => q.answered).length;
 
     // Count flagged questions
     this.flaggedCount = this.questions.filter((q) => q.flaggedForReview).length;
 
-    // Log for debugging
+    // Debug: Log which questions are marked as answered
+    const answeredQuestions = this.questions.filter((q) => q.answered);
+    const flaggedQuestions = this.questions.filter((q) => q.flaggedForReview);
+
     console.log(
-      `Progress updated: ${this.answeredCount}/${this.questions.length} answered, ${this.flaggedCount} flagged`
+      `[ModernTest] Progress calculated: ${this.answeredCount}/${this.questions.length} answered, ${this.flaggedCount} flagged`
     );
+
+    if (answeredQuestions.length > 0) {
+      console.log(
+        '[ModernTest] Questions marked as answered:',
+        answeredQuestions.map((q) => ({
+          id: q.id,
+          questionNumber: q.questionNumber,
+          answered: q.answered,
+          userAnswer: q.userAnswer,
+        }))
+      );
+    } else {
+      console.log('[ModernTest] No questions marked as answered');
+    }
+
+    if (flaggedQuestions.length > 0) {
+      console.log(
+        '[ModernTest] Questions marked as flagged:',
+        flaggedQuestions.map((q) => ({
+          id: q.id,
+          questionNumber: q.questionNumber,
+          flagged: q.flaggedForReview,
+        }))
+      );
+    }
+
+    // Debug: Show all questions state for troubleshooting
+    if (this.questions.length > 0) {
+      console.log(
+        '[ModernTest] All questions state:',
+        this.questions.map((q, index) => ({
+          index: index,
+          id: q.id,
+          questionNumber: q.questionNumber,
+          answered: q.answered,
+          flagged: q.flaggedForReview,
+          visited: q.visited,
+          userAnswer: q.userAnswer,
+        }))
+      );
+    }
   }
 
   // Navigation methods
@@ -919,11 +1155,14 @@ export class DominoTestModernComponent
     if (this.isSubmittingTest) return;
 
     const unansweredCount = this.questions.length - this.answeredCount;
-    
+
     // Different handling for security violations vs normal submission
     if (this.isTestSecurityViolated) {
       // Security violation - force submit without confirmation
-      console.log('Force submitting test due to security violation:', this.securityViolationReason);
+      console.log(
+        'Force submitting test due to security violation:',
+        this.securityViolationReason
+      );
     } else if (!autoSubmit && unansweredCount > 0) {
       // Normal submission with unanswered questions
       if (
@@ -935,23 +1174,23 @@ export class DominoTestModernComponent
       }
     }
 
-    this.isSubmittingTest = true;    // Make sure to record the time spent on the current question
+    this.isSubmittingTest = true; // Make sure to record the time spent on the current question
     this.trackingService.endCurrentQuestionVisit();
 
     // Complete the attempt through the tracking service
     this.trackingService.completeAttempt().subscribe({
       next: (result) => {
         console.log('Test submitted successfully:', result);
-        
+
         // Log security information separately if needed
         if (this.isTestSecurityViolated) {
           console.log('Security violation details:', {
             reason: this.securityViolationReason,
             tabSwitchWarnings: this.tabSwitchWarnings,
-            autoSubmitted: autoSubmit || this.isTestSecurityViolated
+            autoSubmitted: autoSubmit || this.isTestSecurityViolated,
           });
         }
-        
+
         this.isTestComplete = true;
         this.isSubmittingTest = false;
 
@@ -972,13 +1211,18 @@ export class DominoTestModernComponent
 
         console.log(
           `Test completed, score: ${score}%, attemptId: ${attemptId}`
-        );
-
-        // Clear saved progress since test is complete
+        ); // Clear saved progress since test is complete
         this.dominoTestService.clearTestProgress(this.testId);
 
-        // Clear security logs
+        // Clear security logs and cleanup intervals
         localStorage.removeItem(`security_logs_${this.testId}`);
+        localStorage.removeItem(`failed_alerts_${this.testId}`);
+
+        // Clear cleanup interval
+        if (this.cleanupInterval) {
+          clearInterval(this.cleanupInterval);
+          this.cleanupInterval = undefined;
+        }
 
         // Navigate to the completion page with security information
         this.router.navigate(['/candidate/tests/complete'], {
@@ -986,7 +1230,7 @@ export class DominoTestModernComponent
             attemptId: attemptId,
             score: score,
             securityViolated: this.isTestSecurityViolated,
-            violationReason: this.securityViolationReason
+            violationReason: this.securityViolationReason,
           },
         });
 
@@ -995,13 +1239,15 @@ export class DominoTestModernComponent
       error: (error) => {
         console.error('Error submitting test:', error);
         this.isSubmittingTest = false;
-        
+
         if (this.isTestSecurityViolated) {
-          alert('Test submission failed due to security violation. Please contact support.');
+          alert(
+            'Test submission failed due to security violation. Please contact support.'
+          );
         } else {
           alert('Failed to submit test. Please try again.');
         }
-        
+
         this.cdr.markForCheck();
       },
     });
@@ -1048,29 +1294,43 @@ export class DominoTestModernComponent
     );
     return maxRow + 1; // Add 1 because rows are 0-indexed
   }
-
   resetTest(): void {
     // Show confirmation dialog
     if (confirm('This will reset all your progress. Are you sure?')) {
+      // Stop current timer
+      if (this.timerSubscription) {
+        this.timerSubscription.unsubscribe();
+        this.timerSubscription = undefined;
+      }
+
+      // End current question tracking
+      this.trackingService.endCurrentQuestionVisit();
+
       // Clear saved progress for this test
       this.dominoTestService.clearTestProgress(this.testId);
 
       // Reset the questions to initial state
       this.questions = [];
 
-      // Reset timer if needed
+      // Reset timer values
       this.timeLeft = this.testDuration * 60;
       this.updateFormattedTime();
 
       // Reset UI state
       this.showTooltip = true;
       this.sidebarCollapsed = false;
+      this.instructionExpanded = false;
 
-      // Go to the first question
+      // Reset to first question
       this.currentQuestionIndex = 0;
+      this.currentQuestion = undefined;
+      this.progressStartTime = Date.now(); // Reset progress start time
+
+      // Reset progress counters
+      this.answeredCount = 0;
+      this.flaggedCount = 0;
 
       // Load fresh test data with proper callback handling
-      // Use the CURRENT test ID instead of hardcoded 'd70-enhanced'
       this.dominoTestService.getTest(this.testId).subscribe({
         next: (testData) => {
           if (testData) {
@@ -1079,6 +1339,15 @@ export class DominoTestModernComponent
             this.testDuration = testData.duration || 30;
             this.timeLeft = this.testDuration * 60;
             this.updateFormattedTime();
+
+            // Reset progress start time for new attempt
+            this.progressStartTime = Date.now();
+
+            // Store the attempt ID for tracking
+            if (testData.attemptId) {
+              this.attemptId = testData.attemptId;
+              this.trackingService.initAttempt(testData.attemptId);
+            }
 
             // Process questions
             if (testData.questions && testData.questions.length > 0) {
@@ -1102,23 +1371,60 @@ export class DominoTestModernComponent
                 correctAnswer: q.correctAnswer,
               }));
 
-              // Mark first question as visited
+              // Always start from first question and mark it as visited
+              this.currentQuestionIndex = 0;
+              this.currentQuestion = this.questions[0];
+
               if (this.questions.length > 0) {
                 this.questions[0].visited = true;
+                // Start tracking the first question
+                if (this.attemptId) {
+                  this.trackingService.startQuestionVisit(
+                    String(this.questions[0].id)
+                  );
+                }
               }
-            }
+            } // Recalculate progress
+            this.recalculateProgress();
+
+            console.log(
+              `[ModernTest] After reset recalculate - Answered: ${this.answeredCount}, Flagged: ${this.flaggedCount}`
+            );
+            console.log(
+              `[ModernTest] Questions state after reset:`,
+              this.questions.map((q) => ({
+                id: q.id,
+                questionNumber: q.questionNumber || 'N/A',
+                answered: q.answered,
+                flagged: q.flaggedForReview,
+                visited: q.visited,
+                userAnswer: q.userAnswer,
+              }))
+            );
 
             // Start the timer
             this.startTimer();
-            this.cdr.markForCheck();
+
+            // Force change detection multiple times to ensure UI sync
+            this.cdr.detectChanges();
+
+            // Use setTimeout to ensure change detection happens after current cycle
+            setTimeout(() => {
+              this.cdr.detectChanges();
+              console.log(
+                `[ModernTest] Final reset UI sync - Answered: ${this.answeredCount}/${this.questions.length}`
+              );
+            }, 0);
           }
         },
         error: (error) => {
           console.error('Error loading test data:', error);
 
-          // Mark first question as visited
+          // Mark first question as visited even on error
+          this.currentQuestionIndex = 0;
           if (this.questions.length > 0) {
             this.questions[0].visited = true;
+            this.currentQuestion = this.questions[0];
           }
 
           this.cdr.markForCheck();
@@ -1175,13 +1481,14 @@ export class DominoTestModernComponent
         }
       }, 5000); // Auto-expand after 5 seconds
     }
-  }  /**
+  }
+  /**
    * Initialize security measures for the test
    */
   private initializeSecurityMeasures(): void {
     // Allow right-click context menu
     // document.addEventListener('contextmenu', (e) => e.preventDefault());
-    
+
     // Allow text selection globally
     // document.addEventListener('selectstart', (e) => {
     //   const target = e.target as HTMLElement;
@@ -1192,16 +1499,17 @@ export class DominoTestModernComponent
 
     // Allow drag and drop
     // document.addEventListener('dragstart', (e) => e.preventDefault());
-    
+
     // Remove DevTools monitoring - allowing DevTools access
     // this.monitorDevTools();
-    
+
     // Minimal cheating detection (only essential monitoring)
     this.detectCheatingAttempts();
-    
+
     // Add less intrusive warning about test monitoring
     this.showSecurityWarning();
-  }  /**
+  }
+  /**
    * Show initial security warning to the user
    */
   private showSecurityWarning(): void {
@@ -1227,9 +1535,12 @@ Click OK to begin the test.`;
 
     // Show additional reminder
     setTimeout(() => {
-      alert('📋 REMINDER: Keep this window focused and avoid suspicious activities. Your test session is now being monitored.');
+      alert(
+        '📋 REMINDER: Keep this window focused and avoid suspicious activities. Your test session is now being monitored.'
+      );
     }, 1000);
-  }  /**
+  }
+  /**
    * Handle tab switching and focus loss
    */
   private handleTabSwitch(reason: string): void {
@@ -1239,9 +1550,9 @@ Click OK to begin the test.`;
 
     this.tabSwitchWarnings++;
     this.isPageVisible = false;
-    
+
     console.info(`Security notice ${this.tabSwitchWarnings}: ${reason}`);
-    
+
     // Log the violation locally
     this.logSecurityEvent(`Tab switch detected: ${reason}`);
 
@@ -1249,22 +1560,30 @@ Click OK to begin the test.`;
     this.sendRealtimeAlert('TAB_SWITCH', reason, {
       currentWarning: this.tabSwitchWarnings,
       totalAllowed: this.maxTabSwitchWarnings,
-      timeOnQuestion: Date.now() - this.lastFocusTime
+      timeOnQuestion: Date.now() - this.lastFocusTime,
     });
 
     if (this.tabSwitchWarnings >= this.maxTabSwitchWarnings) {
       // Send critical alert before auto-submitting
-      this.sendRealtimeAlert('TEST_SUBMITTED_VIOLATION', `Test auto-submitted: Maximum tab switch violations reached (${this.maxTabSwitchWarnings})`, {
-        finalViolation: true,
-        autoSubmitted: true
-      });
-      
+      this.sendRealtimeAlert(
+        'TEST_SUBMITTED_VIOLATION',
+        `Test auto-submitted: Maximum tab switch violations reached (${this.maxTabSwitchWarnings})`,
+        {
+          finalViolation: true,
+          autoSubmitted: true,
+        }
+      );
+
       // Auto-submit test after max warnings (now 10 instead of 3)
-      this.handleSecurityViolation(`Maximum tab switch violations reached (${this.maxTabSwitchWarnings})`);
+      this.handleSecurityViolation(
+        `Maximum tab switch violations reached (${this.maxTabSwitchWarnings})`
+      );
     } else {
       // Show less intrusive warning to user only for higher warning counts
-      if (this.tabSwitchWarnings % 3 === 0) { // Only show warning every 3 violations
-        const remainingWarnings = this.maxTabSwitchWarnings - this.tabSwitchWarnings;
+      if (this.tabSwitchWarnings % 3 === 0) {
+        // Only show warning every 3 violations
+        const remainingWarnings =
+          this.maxTabSwitchWarnings - this.tabSwitchWarnings;
         alert(`Security Notice: Tab switch detected (${this.tabSwitchWarnings}/${this.maxTabSwitchWarnings})
 
 ${remainingWarnings} more violations will result in auto-submission.
@@ -1283,7 +1602,7 @@ Please keep this tab focused to continue the test.`);
 
     this.isTestSecurityViolated = true;
     this.securityViolationReason = reason;
-    
+
     console.error('Security violation detected:', reason);
     this.logSecurityEvent(`Security violation: ${reason}`);
 
@@ -1291,7 +1610,7 @@ Please keep this tab focused to continue the test.`);
     this.sendCriticalAlert('TEST_SUBMITTED_VIOLATION', reason, {
       violationType: 'CRITICAL_SECURITY_VIOLATION',
       autoSubmitted: true,
-      forceSubmission: true
+      forceSubmission: true,
     });
 
     // Show final warning
@@ -1319,11 +1638,11 @@ This incident has been logged for review.`);
       attemptId: this.attemptId,
       questionIndex: this.currentQuestionIndex,
       userAgent: navigator.userAgent,
-      url: window.location.href
+      url: window.location.href,
     };
 
     console.log('Security Event:', securityLog);
-    
+
     // Send to backend if tracking service is available
     if (this.attemptId && this.trackingService) {
       // You might want to add a method to trackingService for logging security events
@@ -1331,7 +1650,8 @@ This incident has been logged for review.`);
     }
 
     // Store locally as backup
-    const existingLogs = localStorage.getItem(`security_logs_${this.testId}`) || '[]';
+    const existingLogs =
+      localStorage.getItem(`security_logs_${this.testId}`) || '[]';
     const logs = JSON.parse(existingLogs);
     logs.push(securityLog);
     localStorage.setItem(`security_logs_${this.testId}`, JSON.stringify(logs));
@@ -1341,8 +1661,8 @@ This incident has been logged for review.`);
    * Send real-time security alert to psychologists
    */
   private sendRealtimeAlert(
-    alertType: SecurityAlert['alertType'], 
-    description: string, 
+    alertType: SecurityAlert['alertType'],
+    description: string,
     additionalData?: any
   ): void {
     if (!this.attemptId || !this.candidateId) {
@@ -1366,8 +1686,8 @@ This incident has been logged for review.`);
         browserInfo: {
           userAgent: navigator.userAgent,
           viewport: `${window.innerWidth}x${window.innerHeight}`,
-          language: navigator.language
-        }
+          language: navigator.language,
+        },
       },
       this.tabSwitchWarnings,
       this.maxTabSwitchWarnings
@@ -1376,13 +1696,16 @@ This incident has been logged for review.`);
     // Send the alert
     this.securityAlertService.sendSecurityAlert(alert).subscribe({
       next: (response) => {
-        console.log(`🚨 Real-time ${alertType} alert sent successfully:`, response);
+        console.log(
+          `🚨 Real-time ${alertType} alert sent successfully:`,
+          response
+        );
       },
       error: (error) => {
         console.error(`❌ Failed to send ${alertType} alert:`, error);
         // Fallback: Store alert locally for later transmission
         this.storeFailedAlert(alert);
-      }
+      },
     });
   }
 
@@ -1390,12 +1713,14 @@ This incident has been logged for review.`);
    * Send critical security violation alert
    */
   private sendCriticalAlert(
-    alertType: SecurityAlert['alertType'], 
-    description: string, 
+    alertType: SecurityAlert['alertType'],
+    description: string,
     additionalData?: any
   ): void {
     if (!this.attemptId || !this.candidateId) {
-      console.warn('Cannot send critical alert: Missing attemptId or candidateId');
+      console.warn(
+        'Cannot send critical alert: Missing attemptId or candidateId'
+      );
       return;
     }
 
@@ -1411,7 +1736,7 @@ This incident has been logged for review.`);
         candidateName: this.candidateName,
         testName: this.testName,
         critical: true,
-        requiresImmediateAttention: true
+        requiresImmediateAttention: true,
       },
       this.tabSwitchWarnings,
       this.maxTabSwitchWarnings
@@ -1420,12 +1745,15 @@ This incident has been logged for review.`);
     // Send critical alert
     this.securityAlertService.sendCriticalViolation(alert).subscribe({
       next: (response) => {
-        console.log(`🚨 CRITICAL ${alertType} alert sent successfully:`, response);
+        console.log(
+          `🚨 CRITICAL ${alertType} alert sent successfully:`,
+          response
+        );
       },
       error: (error) => {
         console.error(`❌ Failed to send CRITICAL ${alertType} alert:`, error);
         this.storeFailedAlert(alert);
-      }
+      },
     });
   }
 
@@ -1434,9 +1762,14 @@ This incident has been logged for review.`);
    */
   private storeFailedAlert(alert: SecurityAlert): void {
     try {
-      const failedAlerts = JSON.parse(localStorage.getItem(`failed_alerts_${this.testId}`) || '[]');
+      const failedAlerts = JSON.parse(
+        localStorage.getItem(`failed_alerts_${this.testId}`) || '[]'
+      );
       failedAlerts.push(alert);
-      localStorage.setItem(`failed_alerts_${this.testId}`, JSON.stringify(failedAlerts));
+      localStorage.setItem(
+        `failed_alerts_${this.testId}`,
+        JSON.stringify(failedAlerts)
+      );
       console.log('Alert stored locally for retry');
     } catch (error) {
       console.error('Failed to store alert locally:', error);
@@ -1448,16 +1781,20 @@ This incident has been logged for review.`);
    */
   private retryFailedAlerts(): void {
     try {
-      const failedAlerts = JSON.parse(localStorage.getItem(`failed_alerts_${this.testId}`) || '[]');
+      const failedAlerts = JSON.parse(
+        localStorage.getItem(`failed_alerts_${this.testId}`) || '[]'
+      );
       if (failedAlerts.length > 0) {
         this.securityAlertService.sendBatchAlerts(failedAlerts).subscribe({
           next: () => {
             localStorage.removeItem(`failed_alerts_${this.testId}`);
-            console.log(`Successfully sent ${failedAlerts.length} failed alerts`);
+            console.log(
+              `Successfully sent ${failedAlerts.length} failed alerts`
+            );
           },
           error: (error) => {
             console.error('Failed to send batch alerts:', error);
-          }
+          },
         });
       }
     } catch (error) {
@@ -1473,8 +1810,10 @@ This incident has been logged for review.`);
     const threshold = 160;
 
     const detectDevTools = () => {
-      if (window.outerHeight - window.innerHeight > threshold || 
-          window.outerWidth - window.innerWidth > threshold) {
+      if (
+        window.outerHeight - window.innerHeight > threshold ||
+        window.outerWidth - window.innerWidth > threshold
+      ) {
         if (!devtools) {
           devtools = true;
           this.handleSecurityViolation('Developer tools detected');
@@ -1493,7 +1832,7 @@ This incident has been logged for review.`);
    */
   private updatePageVisibility(isVisible: boolean): void {
     this.isPageVisible = isVisible;
-    
+
     // Add visual feedback for loss of focus
     const testContainer = document.querySelector('.test-container');
     if (testContainer) {
@@ -1503,7 +1842,7 @@ This incident has been logged for review.`);
         testContainer.classList.add('blurred');
       }
     }
-    
+
     this.cdr.markForCheck();
   }
 
@@ -1514,13 +1853,17 @@ This incident has been logged for review.`);
     // Monitor for rapid window state changes (potential recording software)
     let focusChangeCount = 0;
     let lastFocusChange = 0;
-    
+
     const monitorFocusChanges = () => {
       const now = Date.now();
-      if (now - lastFocusChange < 1000) { // Less than 1 second between changes
+      if (now - lastFocusChange < 1000) {
+        // Less than 1 second between changes
         focusChangeCount++;
-        if (focusChangeCount > 5) { // More than 5 rapid changes
-          this.handleSecurityViolation('Rapid window state changes detected (potential recording software)');
+        if (focusChangeCount > 5) {
+          // More than 5 rapid changes
+          this.handleSecurityViolation(
+            'Rapid window state changes detected (potential recording software)'
+          );
         }
       } else {
         focusChangeCount = 0;
@@ -1530,5 +1873,90 @@ This incident has been logged for review.`);
 
     window.addEventListener('focus', monitorFocusChanges);
     window.addEventListener('blur', monitorFocusChanges);
+  }
+
+  /**
+   * Check if saved progress is still valid (not expired)
+   */
+  private isProgressValid(savedProgress: any): boolean {
+    if (!savedProgress || !savedProgress.progressStartTime) {
+      return false;
+    }
+
+    const now = Date.now();
+    const progressAge = now - savedProgress.progressStartTime;
+
+    if (progressAge > this.PROGRESS_EXPIRY_TIME) {
+      console.log(
+        `[ModernTest] Progress expired: ${progressAge}ms > ${this.PROGRESS_EXPIRY_TIME}ms`
+      );
+      return false;
+    }
+
+    console.log(
+      `[ModernTest] Progress is valid: ${progressAge}ms <= ${this.PROGRESS_EXPIRY_TIME}ms`
+    );
+    return true;
+  }
+  /**
+   * Start periodic cleanup of expired progress data
+   */
+  private startPeriodicCleanup(): void {
+    // Check for expired progress every 2 minutes
+    this.cleanupInterval = window.setInterval(() => {
+      this.cleanupExpiredProgress();
+    }, 2 * 60 * 1000); // 2 minutes
+
+    // Also run cleanup once on startup
+    this.cleanupExpiredProgress();
+  }
+
+  /**
+   * Clean up expired progress data from localStorage
+   */
+  private cleanupExpiredProgress(): void {
+    try {
+      const keys = Object.keys(localStorage).filter((key) =>
+        key.startsWith('domino_test_progress_')
+      );
+
+      let cleanedCount = 0;
+
+      for (const key of keys) {
+        const progressDataStr = localStorage.getItem(key);
+        if (progressDataStr) {
+          try {
+            const progressData = JSON.parse(progressDataStr);
+            if (!this.isProgressValid(progressData)) {
+              console.log(
+                `[Cleanup] Removing expired progress for key: ${key}`
+              );
+              localStorage.removeItem(key);
+              cleanedCount++;
+
+              // Also remove any associated security logs and failed alerts
+              const testId = key.replace('domino_test_progress_', '');
+              localStorage.removeItem(`security_logs_${testId}`);
+              localStorage.removeItem(`failed_alerts_${testId}`);
+            }
+          } catch (e) {
+            console.warn(
+              `[Cleanup] Failed to parse progress data for key ${key}, removing:`,
+              e
+            );
+            localStorage.removeItem(key);
+            cleanedCount++;
+          }
+        }
+      }
+
+      if (cleanedCount > 0) {
+        console.log(
+          `[Cleanup] Cleaned up ${cleanedCount} expired progress entries`
+        );
+      }
+    } catch (e) {
+      console.error('[Cleanup] Error during periodic cleanup:', e);
+    }
   }
 }
