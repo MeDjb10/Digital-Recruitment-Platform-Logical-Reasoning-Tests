@@ -20,12 +20,18 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class PerformanceAnalyzer:
     def __init__(self, model_dir: str = ""):
         self.predictor = PerformancePredictor(model_dir)
-        
         # Initialize OpenRouter client with API key
-        openrouter_api_key = os.getenv('OPENROUTER_API_KEY', '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')
+        openrouter_api_key = os.getenv('OPENROUTER_API_KEY', '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')
+        logging.info(f"Using OpenRouter API key: {openrouter_api_key[:20]}...")
+        
+        # Validate API key format
+        if not openrouter_api_key or not openrouter_api_key.startswith('sk-or-v1-'):
+            logging.error("Invalid OpenRouter API key format. Expected format: sk-or-v1-...")
+            logging.error("Please check your OPENROUTER_API_KEY environment variable")
+        
         self.openai_client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
-            api_key=openrouter_api_key,
+            api_key=openrouter_api_key
         )
         
         self.chroma_client = chromadb.PersistentClient(path="../chroma_db")
@@ -60,29 +66,30 @@ class PerformanceAnalyzer:
         self.metrics_collection = self.chroma_client.get_or_create_collection(
             name="performance_metrics",
             metadata={"hnsw:space": "cosine"},
-            embedding_function=sentence_transformer_ef
-        )
-
+            embedding_function=sentence_transformer_ef        )        
         # Test OpenRouter connectivity
         self._test_openrouter_connection()
 
     def _test_openrouter_connection(self):
         """Test if OpenRouter API is accessible"""
         try:
-            # Simple test request
+            logging.info("Testing OpenRouter API connection...")
+            # Simple test request with proper headers
             test_completion = self.openai_client.chat.completions.create(
                 extra_headers={
                     "HTTP-Referer": "https://localhost:3000",
-                    "X-Title": "Digital Recruitment Platform",
+                    "X-Title": "Digital Recruitment Platform"
                 },
-                model="meta-llama/llama-3.3-8b-instruct:free",  # Use free DeepSeek model for testing
+                model="deepseek/deepseek-r1-0528-qwen3-8b:free",
                 messages=[{"role": "user", "content": "Hello"}],
                 max_tokens=10
             )
-            logging.info("OpenRouter API connection test successful")
+            logging.info("✅ OpenRouter API connection test successful")
+            return True
         except Exception as e:
-            logging.warning(f"OpenRouter API connection test failed: {e}")
+            logging.warning(f"❌ OpenRouter API connection test failed: {e}")
             logging.warning("The service will continue but AI analysis may not work properly")
+            return False
 
     def analyze(self, metrics: PerformanceMetrics, testId: str = None, candidateId: str = None, attemptId: str = None, 
                 desired_position: str = "", education_level: str = "") -> Dict[str, Any]:
@@ -350,7 +357,7 @@ class PerformanceAnalyzer:
                         "X-Title": "Digital Recruitment Platform - AI Performance Analysis",
                     },
                     extra_body={},
-                    model="meta-llama/llama-3.3-8b-instruct:free",  # Changed to DeepSeek R1 free
+                    model="deepseek/deepseek-r1-0528-qwen3-8b:free",  # Changed to DeepSeek R1 free
                     messages=[
                         {
                             "role": "user",
@@ -425,7 +432,7 @@ class PerformanceAnalyzer:
                             "X-Title": "Digital Recruitment Platform - AI Feedback Analysis",
                         },
                         extra_body={},
-                        model="meta-llama/llama-3.3-8b-instruct:free",  # Changed to DeepSeek R1 free
+                        model="deepseek/deepseek-r1-0528-qwen3-8b:free",  # Changed to DeepSeek R1 free
                         messages=[
                             {
                                 "role": "user",
