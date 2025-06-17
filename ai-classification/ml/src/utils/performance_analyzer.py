@@ -21,8 +21,8 @@ class PerformanceAnalyzer:
         self.predictor = PerformancePredictor(model_dir)
         
         # Initialize Groq client with API key
-        groq_api_key = os.getenv('GROQ_API_KEY', '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')
-        self.groq_client = Groq(api_key=groq_api_key)
+        groq_api_key = os.getenv('GROQ_API_KEY', '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')
+        self.groq_client = Groq(api_key='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')
         
         self.chroma_client = chromadb.PersistentClient(path="../chroma_db")
         
