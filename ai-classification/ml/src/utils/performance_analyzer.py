@@ -22,7 +22,7 @@ class PerformanceAnalyzer:
         self.predictor = PerformancePredictor(model_dir)
         
         # Initialize OpenRouter client with API key
-        openrouter_api_key = os.getenv('OPENROUTER_API_KEY', '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')
+        openrouter_api_key = os.getenv('OPENROUTER_API_KEY', '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')
         self.openai_client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=openrouter_api_key,

@@ -2,7 +2,7 @@
 echo Starting all servers...
 
 REM Set environment variables
-set OPENROUTER_API_KEY=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
+set OPENROUTER_API_KEY=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
 
 REM Start Frontend
 start "Frontend" cmd /k "cd frontend && ng s --o"
@@ -29,7 +29,7 @@ REM Start Security Alert Service
 start "Security Alert Service" cmd /k "cd backend/security-alert-service && npm start"
 
 REM Start AI Classification
-start "AI Classification" cmd /k "cd ai-classification\ml && venv\Scripts\activate && set OPENROUTER_API_KEY=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 && cd src\api && python server.py"
+start "AI Classification" cmd /k "cd ai-classification\ml && venv\Scripts\activate && set OPENROUTER_API_KEY=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 && cd src\api && python server.py"
 
 echo All servers started in separate windows.
 pause
