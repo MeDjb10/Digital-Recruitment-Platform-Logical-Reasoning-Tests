@@ -12,7 +12,8 @@ from .db_schema import PerformanceMetrics, FeedbackEntry, PsychologistComment
 from pprint import pprint
 from pymongo import MongoClient
 import os
-from groq import Groq
+from openai import OpenAI
+import time
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -20,9 +21,12 @@ class PerformanceAnalyzer:
     def __init__(self, model_dir: str = ""):
         self.predictor = PerformancePredictor(model_dir)
         
-        # Initialize Groq client with API key
-        groq_api_key = os.getenv('GROQ_API_KEY', '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')
-        self.groq_client = Groq(api_key=groq_api_key)
+        # Initialize OpenRouter client with API key
+        openrouter_api_key = os.getenv('OPENROUTER_API_KEY', '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')
+        self.openai_client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=openrouter_api_key,
+        )
         
         self.chroma_client = chromadb.PersistentClient(path="../chroma_db")
         
@@ -58,6 +62,27 @@ class PerformanceAnalyzer:
             metadata={"hnsw:space": "cosine"},
             embedding_function=sentence_transformer_ef
         )
+
+        # Test OpenRouter connectivity
+        self._test_openrouter_connection()
+
+    def _test_openrouter_connection(self):
+        """Test if OpenRouter API is accessible"""
+        try:
+            # Simple test request
+            test_completion = self.openai_client.chat.completions.create(
+                extra_headers={
+                    "HTTP-Referer": "https://localhost:3000",
+                    "X-Title": "Digital Recruitment Platform",
+                },
+                model="meta-llama/llama-3.3-8b-instruct:free",  # Use free DeepSeek model for testing
+                messages=[{"role": "user", "content": "Hello"}],
+                max_tokens=10
+            )
+            logging.info("OpenRouter API connection test successful")
+        except Exception as e:
+            logging.warning(f"OpenRouter API connection test failed: {e}")
+            logging.warning("The service will continue but AI analysis may not work properly")
 
     def analyze(self, metrics: PerformanceMetrics, testId: str = None, candidateId: str = None, attemptId: str = None, 
                 desired_position: str = "", education_level: str = "") -> Dict[str, Any]:
@@ -187,7 +212,7 @@ class PerformanceAnalyzer:
 
     def _generate_ai_comment(self, metrics: PerformanceMetrics, prediction: Dict[str, Any], 
                            desired_position: str, education_level: str) -> str:
-        """Generate AI commentary using RAG with Groq API"""
+        """Generate AI commentary using RAG with OpenRouter API"""
         similar_cases = self._retrieve_similar_cases(metrics)
         
         # Generate similar cases text including AI comments
@@ -311,32 +336,45 @@ class PerformanceAnalyzer:
         Keep your tone professional, constructive, and evidence-based, matching the language patterns observed in expert psychological assessments from the historical data. and make it simple.
         """
 
-        try:
-            # Use Groq API instead of Ollama
-            completion = self.groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.7,  # Slightly lower for more consistent responses
-                max_completion_tokens=1024,
-                top_p=0.9,
-                stream=False,  # Set to False for simpler handling
-                stop=None,
-            )
-            
-            # Extract and return the response
-            return completion.choices[0].message.content.strip()
-            
-        except Exception as e:
-            logging.error(f"Failed to generate AI comment with Groq: {e}")
-            return "Unable to generate AI analysis at this time."
+        max_retries = 3
+        retry_delay = 1
+        
+        for attempt in range(max_retries):
+            try:
+                logging.info(f"Attempting OpenRouter API call (attempt {attempt + 1}/{max_retries})")
+                
+                # Use OpenRouter API with DeepSeek R1 free model
+                completion = self.openai_client.chat.completions.create(
+                    extra_headers={
+                        "HTTP-Referer": "https://localhost:3000",
+                        "X-Title": "Digital Recruitment Platform - AI Performance Analysis",
+                    },
+                    extra_body={},
+                    model="meta-llama/llama-3.3-8b-instruct:free",  # Changed to DeepSeek R1 free
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ]
+                )
+                
+                # Extract and return the response
+                return completion.choices[0].message.content.strip()
+                
+            except Exception as e:
+                logging.error(f"OpenRouter API attempt {attempt + 1} failed: {e}")
+                
+                if attempt < max_retries - 1:  # Don't sleep on the last attempt
+                    logging.info(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    logging.error("All retry attempts failed")
+                    return f"Unable to generate AI analysis at this time. Error: {str(e)}"
 
     def provide_feedback(self, metrics: PerformanceMetrics, ai_comment: str, is_good: bool, feedback_text: str = ""):
-        """Provide feedback on AI comment quality and get improved response using Groq"""
+        """Provide feedback on AI comment quality and get improved response using OpenRouter"""
         try:
             # Store feedback
             feedback_entry = {"feedback_text": feedback_text, "is_good": is_good}
@@ -373,23 +411,41 @@ class PerformanceAnalyzer:
             Please provide a {'similar style of analysis' if is_good else 'revised analysis addressing the feedback'}.
             """
 
-            # Use Groq API for improved analysis
-            completion = self.groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": feedback_prompt
-                    }
-                ],
-                temperature=0.7,
-                max_completion_tokens=1024,
-                top_p=0.9,
-                stream=False,
-                stop=None,
-            )
+            max_retries = 3
+            retry_delay = 1
             
-            improved_analysis = completion.choices[0].message.content.strip()
+            for attempt in range(max_retries):
+                try:
+                    logging.info(f"Attempting OpenRouter API call for feedback (attempt {attempt + 1}/{max_retries})")
+                    
+                    # Use OpenRouter API for improved analysis
+                    completion = self.openai_client.chat.completions.create(
+                        extra_headers={
+                            "HTTP-Referer": "https://localhost:3000",
+                            "X-Title": "Digital Recruitment Platform - AI Feedback Analysis",
+                        },
+                        extra_body={},
+                        model="meta-llama/llama-3.3-8b-instruct:free",  # Changed to DeepSeek R1 free
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": feedback_prompt
+                            }
+                        ]
+                    )
+                    
+                    improved_analysis = completion.choices[0].message.content.strip()
+                    break  # Success, exit retry loop
+                    
+                except Exception as api_error:
+                    logging.error(f"OpenRouter API attempt {attempt + 1} failed: {api_error}")
+                    
+                    if attempt < max_retries - 1:
+                        logging.info(f"Retrying in {retry_delay} seconds...")
+                        time.sleep(retry_delay)
+                        retry_delay *= 2
+                    else:
+                        return f"Unable to generate improved analysis at this time. Error: {str(api_error)}"
             
             # Update MongoDB with improved analysis if attemptId exists
             if metrics.get('attemptId'):
@@ -409,7 +465,7 @@ class PerformanceAnalyzer:
             return improved_analysis
         
         except Exception as e:
-            logging.error(f"Failed to process feedback with Groq: {e}")
+            logging.error(f"Failed to process feedback with OpenRouter: {e}")
             return "Unable to generate improved analysis at this time."
 
     def add_psychologist_comment(self, metrics: PerformanceMetrics, comment: str) -> bool:
