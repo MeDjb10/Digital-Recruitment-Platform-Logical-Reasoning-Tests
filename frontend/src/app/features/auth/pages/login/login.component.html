@@ -1,7 +1,9 @@
 <div class="auth-form w-full">
-  <h1 class="text-2xl sm:text-3xl font-bold mb-1">Welcome back</h1>
+  <h1 class="text-2xl sm:text-3xl font-bold mb-1">
+    {{ 'AUTH.LOGIN.WELCOME' | translate }}
+  </h1>
   <p class="text-gray-600 text-sm sm:text-base mb-4 sm:mb-6">
-    Sign in to your account to continue
+    {{'AUTH.LOGIN.CONNECTION_MESSAGE' | translate}}
   </p>
 
   <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
@@ -11,7 +13,7 @@
         <label
           for="email"
           class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
-          >Email</label
+          >{{'AUTH.LOGIN.EMAIL'| translate}}</label
         >
         <div
           class="relative input-icon-container"
@@ -40,17 +42,7 @@
             "
             class="text-red-500 text-xs sm:text-sm mt-1"
           >
-            <i class="fa-solid fa-triangle-exclamation"></i> Email is required
-          </p>
-          <p
-            *ngIf="
-              loginForm.controls['email'].hasError('email') &&
-              loginForm.controls['email'].touched
-            "
-            class="text-yellow-500 text-xs sm:text-sm mt-1"
-          >
-            <i class="fa-solid fa-circle-exclamation"></i> Please enter a valid
-            email address
+            <i class="fa-solid fa-triangle-exclamation"></i> {{ 'AUTH.LOGIN.EMAIL_REQUIRED' | translate }}
           </p>
         </div>
       </div>
@@ -60,7 +52,7 @@
         <label
           for="password"
           class="text-gray-700 font-medium mb-1 text-sm sm:text-base"
-          >Password</label
+          >{{'AUTH.LOGIN.PASSWORD'| translate}}</label
         >
         <div class="relative input-icon-container">
           <div
@@ -92,8 +84,7 @@
             "
             class="text-red-500 text-xs sm:text-sm mt-1"
           >
-            <i class="fa-solid fa-triangle-exclamation"></i> Password is
-            required
+            <i class="fa-solid fa-triangle-exclamation"></i> {{ 'AUTH.LOGIN.PASSWORD_REQUIRED' | translate }}
           </p>
           <p
             *ngIf="
@@ -102,8 +93,7 @@
             "
             class="text-yellow-500 text-xs sm:text-sm mt-1"
           >
-            <i class="fa-solid fa-circle-exclamation"></i> Password must be at
-            least 8 characters
+            <i class="fa-solid fa-circle-exclamation"></i> {{ 'AUTH.LOGIN.PASSWORD_MIN_LENGTH' | translate }}
           </p>
         </div>
       </div>
@@ -115,13 +105,13 @@
           formControlName="rememberMe"
           class="text-sm sm:text-base"
         >
-          Remember me
+          {{ 'AUTH.LOGIN.REMEMBER_ME' | translate }}
         </mat-checkbox>
         <a
           [routerLink]="['/auth/forgot-password']"
           class="text-red-500 text-sm sm:text-base font-medium hover:underline"
         >
-          Forgot password?
+          {{ 'AUTH.LOGIN.FORGOT_PASSWORD' | translate }}
         </a>
       </div>
     </div>
@@ -139,7 +129,7 @@
       [class.text-gray-400]="loginForm.invalid"
       [disabled]="loginForm.invalid || isLoading"
     >
-      <span *ngIf="!isLoading">Sign In</span>
+      <span *ngIf="!isLoading">{{ 'AUTH.LOGIN.LOGIN_BUTTON' | translate }}</span>
       <mat-spinner
         diameter="24"
         *ngIf="isLoading"
@@ -150,12 +140,12 @@
     <!-- Sign Up Link -->
     <div class="mt-6 text-center">
       <span class="text-gray-600 text-sm sm:text-base"
-        >Don't have an account?</span
+        >{{ 'AUTH.LOGIN.DONT_HAVE_AN_ACCOUNT' | translate }}</span
       >
       <a
         routerLink="/auth/signup"
         class="text-primary-main hover:underline ml-1 text-sm sm:text-base"
-        >Create account</a
+        >{{ 'AUTH.LOGIN.CREER_COMPTE' | translate }}</a
       >
     </div>
   </form>

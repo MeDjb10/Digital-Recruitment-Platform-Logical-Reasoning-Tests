@@ -1,13 +1,13 @@
 {
   "HOME": {
     "TITLE": "Bienvenido a Cofat",
-    "DESCRIPTION": "Plataforma de reclutamiento digital para pruebas de razonamiento lógico",
+    "DESCRIPTION": "Plataforma Digital de Reclutamiento para Pruebas de Razonamiento Lógico",
     "HERO": {
-      "HEADLINE": "Bienvenido a nuestra plataforma de pruebas psicotécnicas",
+      "HEADLINE": "Bienvenido a nuestra plataforma de pruebas psicométricas",
       "PARAGRAPH1": "Nos complace darle la bienvenida a este espacio donde evaluamos e identificamos talentos que ayudarán a dar forma al futuro de nuestra empresa.",
       "PARAGRAPH2": "En nuestro grupo, la excelencia es nuestro estándar, y creemos que cada candidato tiene el potencial de prosperar dentro de nuestro equipo dinámico.",
-      "CTA_BUTTON": "Comenzar prueba",
-      "DEMO_BUTTON": "Iniciar demostración"
+      "CTA_BUTTON": "Comenzar la prueba",
+      "DEMO_BUTTON": "Iniciar una demostración"
     },
     "ABOUT": {
       "TITLE": "Sobre Nosotros",
@@ -234,5 +234,192 @@
     "SESSION_EXPIRED": "Su sesión ha expirado. Por favor, inicie sesión de nuevo.",
     "CONNECTION_ERROR": "Error de conexión. Por favor revise su conexión a internet.",
     "SERVER_ERROR": "Error del servidor. Por favor intente más tarde."
+  },
+  "AUTH_LAYOUT": {
+    "WELCOME_TO": "Bienvenido a",
+    "PLATFORM_TITLE": "Plataforma Digital de Pruebas Psicométricas",
+    "PLATFORM_DESCRIPTION": "Encuentra los candidatos perfectos con nuestras herramientas de evaluación de razonamiento lógico basadas en IA.",
+    "TESTIMONIAL": {
+      "QUOTE": "Esta plataforma ha transformado nuestro proceso de reclutamiento, ayudándonos a identificar eficientemente el mejor talento y tomar decisiones de contratación basadas en datos con notable precisión.",
+      "AUTHOR": "Amel CHAMMEM",
+      "POSITION": "Gerente de Proyectos TI"
+    },
+    "FEATURES": {
+      "BETTER_HIRES": "Mejores Contrataciones",
+      "TIME_EFFICIENT": "Eficiencia en Tiempo",
+      "DATA_DRIVEN": "Basado en Datos",
+      "ACCELERATE": "Acelera tu Contratación"
+    },
+    "FOOTER": {
+      "COPYRIGHT": "© 2025 Plataforma de Pruebas Psicométricas. Todos los derechos reservados.",
+      "PRIVACY": "Privacidad",
+      "TERMS": "Términos",
+      "HELP": "Ayuda"
+    }
+  },
+  "AUTH": {
+    "LOGIN": {
+      "WELCOME": "Bienvenido de nuevo",
+      "CONNECTION_MESSAGE": "Inicia sesión en tu cuenta para continuar",
+      "EMAIL": "Correo electrónico",
+      "ADRESSE_VALIDE": "Por favor, introduce un correo electrónico válido",
+      "PASSWORD": "Contraseña",
+      "REMEMBER_ME": "Recordarme",
+      "FORGOT_PASSWORD": "Olvidaste tu contraseña?",
+      "LOGIN_BUTTON": "Iniciar sesión",
+      "LOGIN_SUCCESS": "Inicio de sesión exitoso!",
+      "DONT_HAVE_AN_ACCOUNT": "No tienes una cuenta?",
+      "CREER_COMPTE": "Crear cuenta",
+      "PASSWORD_MIN_LENGTH": "La contraseña debe tener al menos 8 caracteres",
+      "EMAIL_REQUIRED": "El correo electrónico es requerido",
+      "PASSWORD_REQUIRED": "La contraseña es requerida",
+      "SIGNING_IN": "Iniciando sesión...",
+      "LOGIN_ERROR": "Error al iniciar sesión. Por favor, inténtalo de nuevo."
+    }
+  },
+  "APPLICATION_FORM": {
+    "DEMANDE_AUTORISATION": "Solicitud de Autorización de Prueba",
+    "FORMULAIRE_INSCRIPTION": "Formulario de Registro",
+    "COMPLETER_PROFIL": "Complete su perfil para solicitar autorización para la prueba de evaluación.",
+    "PHOTO": "Foto de Perfil",
+    "INFORMATION_PERSONNELLE": "Información Personal",
+    "INFORMATION_PROFESSIONNELLE": "Información Profesional",
+    "INFORMATIONS_ENTREPRISE": "Información de la Empresa",
+    "CONFIRMATION": "Confirmación",
+    "OPTION": "Carga Opcional",
+    "TELECHARGEMENT_PHOTO": "Sube una foto profesional para tu perfil.",
+    "CHOIX_PHOTO": "Elegir foto",
+    "DEPOT_IMAGE": "Arrastra y suelta una imagen aquí",
+    "CONSIGNES_PHOTO": "Directrices para la foto de perfil",
+    "PHOTO_GUIDELINES": {
+      "ARRIERE_PLAN": "Usar un fondo neutro",
+      "VISAGE_VISIBLE": "Asegúrate de que tu rostro sea claramente visible",
+      "TAILLE": "Tamaño máximo del archivo: 1 MB"
+    },
+    "POSTE": "Puesto",
+    "ENTREPRISE": "Empresa",
+    "ADDITONAL_INFO": "Información Adicional",
+    "ADDITIONAL_INFO_DESC": "Si tienes comentarios o preguntas adicionales, indícalos aquí.",
+    "DEPARTEMENT": "Departamento",
+    "DEPARTEMENT_DESC": "Departamento",
+    "OPTIONAL": "Opcional",
+    "INCLURE_QUALIFICATION": "Incluir calificaciones específicas o motivaciones relacionadas con este puesto",
+    "RESUME_CANDIDATURE": "Resumen de la Candidatura",
+    "VERIFICATION_INFORMATIONS": "Verificación de Información",
+    "INFORMATIONS_ENTREPRISE_AIDENT": "Esta información nos ayuda a entender mejor su empresa y adaptar la prueba de evaluación en consecuencia",
+    "PERSONAL_INFO": {
+      "TITLE": "Información Personal",
+      "FIRST_NAME": "Nombre",
+      "LAST_NAME": "Apellidos",
+      "EMAIL": "Correo Electrónico",
+      "GENDER": "Género",
+      "GENDER_OPTIONS": {
+        "MALE": "Masculino",
+        "FEMALE": "Femenino",
+        "OTHER": "Otro",
+        "PREFER_NOT_SAY": "Prefiero no decirlo"
+      },
+      "DATE_OF_BIRTH": "Fecha de Nacimiento",
+      "WHY_WE_ASK": "Por qué pedimos esta información?",
+      "INFO_HELP": "Su información personal nos ayuda a adaptar la prueba a su perfil y proporcionarle una experiencia personalizada."
+    },
+    "PROFESSIONAL_INFO": {
+      "TITLE": "Información Profesional",
+      "CURRENT_POSITION": "Puesto Actual",
+      "DESIRED_POSITION": "Puesto Deseado",
+      "EDUCATION_LEVEL": "Nivel de Educación",
+      "EDUCATION_OPTIONS": {
+        "HIGH_SCHOOL": "Bachillerato",
+        "BACHELOR": "Grado Universitario",
+        "MASTER": "Máster",
+        "PHD": "Doctorado",
+        "OTHER": "Otro"
+      },
+      "AVAILABILITY": "Disponibilidad",
+      "AVAILABILITY_OPTIONS": {
+        "IMMEDIATE": "Inmediata",
+        "ONE_WEEK": "En 1 semana",
+        "TWO_WEEKS": "En 2 semanas",
+        "ONE_MONTH": "En 1 mes"
+      },
+      "EXPERIENCE": "Experiencia Profesional",
+      "YEARS_EXPERIENCE": "Años de Experiencia",
+      "SKILLS": "Habilidades",
+      "WHY_WE_ASK": "Por qué pedimos esta información?",
+      "INFO_HELP": "Esta información nos ayuda a entender mejor su trayectoria profesional y adaptar la prueba de evaluación en consecuencia."
+    },
+    "COMPANY_INFO": {
+      "TITLE": "Información de la Empresa",
+      "JOB_POSITION": "Puesto de Trabajo",
+      "COMPANY": "Empresa",
+      "DEPARTMENT": "Departamento",
+      "ADDITIONAL_INFO": "Información Adicional",
+      "WHY_WE_ASK": "Por qué pedimos esta información?",
+      "INFO_HELP": "Esta información nos ayuda a entender mejor su empresa y adaptar la prueba de evaluación en consecuencia."
+    },
+    "NAVIGATION": {
+      "PREVIOUS": "Anterior",
+      "NEXT": "Siguiente",
+      "SUBMIT": "Enviar",
+      "BACK": "Volver",
+      "CONTINUE": "Continuar",
+      "FINISH": "Finalizar",
+      "SAVE": "Guardar",
+      "CANCEL": "Cancelar"
+    },
+    "RESUME_APPLICATION": {
+      "TITLE": "Reanudar Solicitud",
+      "STEP1": "Paso 1: Foto de Perfil",
+      "STEP2": "Paso 2: Información Personal",
+      "STEP3": "Paso 3: Información Profesional",
+      "STEP4": "Paso 4: Información de la Empresa",
+      "STEP5": "Paso 5: Confirmación"
+    },
+    "SUMMARY": {
+      "TITLE": "Resumen de la Solicitud",
+      "REVIEW_INFO": "Por favor, revise su información antes de enviar",
+      "SUBTITLE": "Por favor, revise su solicitud",
+      "PROFILE_PICTURE": "Foto de Perfil",
+      "NO_PICTURE": "No se ha subido foto de perfil",
+      "PERSONAL_INFO": "Información Personal",
+      "PROFESSIONAL_INFO": "Información Profesional",
+      "COMPANY_INFO": "Información de la Empresa",
+      "NAME": "Nombre",
+      "EMAIL": "Correo",
+      "GENDER": "Género",
+      "DATE_OF_BIRTH": "Fecha de Nacimiento",
+      "CURRENT_POSITION": "Puesto Actual",
+      "DESIRED_POSITION": "Puesto Deseado",
+      "EDUCATION_LEVEL": "Nivel de Educación",
+      "AVAILABILITY": "Disponibilidad",
+      "JOB_POSITION": "Puesto de Trabajo",
+      "COMPANY": "Empresa",
+      "DEPARTMENT": "Departamento",
+      "NOT_SPECIFIED": "No especificado",
+      "ADDITIONAL_INFO": "Información Adicional",
+      "NEXT_BUTTON": "Siguiente: Información Personal",
+      "BACK_TO_PHOTO": "Volver a Subir Foto",
+      "SUBMIT_SUMMARY": "Enviar Solicitud"
+    },
+    "TERMS": {
+      "AGREE_TEXT": "Al hacer clic en \"Enviar Solicitud\", acepta nuestros",
+      "TERMS_SERVICE": "Términos de Servicio",
+      "AND": "y",
+      "PRIVACY_POLICY": "Política de Privacidad",
+      "REVIEW_NOTE": "Su solicitud de autorización de prueba será revisada por nuestro equipo. Recibirá una notificación una vez que sea aprobada."
+    },
+    "BUTTONS": {
+      "REMOVE_PHOTO": "Eliminar Foto",
+      "UPLOAD_PHOTO": "Subir Foto",
+      "CHOOSE_PHOTO": "Elegir Foto",
+      "SELECT_IMAGE": "Seleccionar Imagen",
+      "BROWSE": "Explorar",
+      "OR": "o",
+      "SUBMIT_APPLICATION": "Enviar Solicitud",
+      "PREVIOUS_STEP": "Paso Anterior",
+      "NEXT_STEP": "Siguiente Paso",
+      "FINALIZE": "Finalizar Solicitud"
+    },
+    "SUIVANT": "Siguiente"
   }
 }

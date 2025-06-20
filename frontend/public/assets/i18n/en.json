@@ -483,5 +483,224 @@
     "SESSION_EXPIRED": "Your session has expired. Please log in again.",
     "CONNECTION_ERROR": "Connection error. Please check your internet connection.",
     "SERVER_ERROR": "Server error. Please try again later."
+  },
+  "AUTH_LAYOUT": {
+    "WELCOME_TO": "Welcome to",
+    "PLATFORM_TITLE": "Digital Psychometric Testing Platform",
+    "PLATFORM_DESCRIPTION": "Find the perfect candidates with our AI-powered logical reasoning assessment tools.",
+    "TESTIMONIAL": {
+      "QUOTE": "This platform has transformed our recruitment process, helping us efficiently identify top talent and make data-driven hiring decisions with remarkable accuracy.",
+      "AUTHOR": "Amel CHAMMEM",
+      "POSITION": "IT Project Manager"
+    },
+    "FEATURES": {
+      "BETTER_HIRES": "Better Hires",
+      "TIME_EFFICIENT": "Time Efficient",
+      "DATA_DRIVEN": "Data Driven",
+      "ACCELERATE": "Accelerate Your Hiring"
+    },
+    "FOOTER": {
+      "COPYRIGHT": "© 2025 Psychometric Testing Platform. All rights reserved.",
+      "PRIVACY": "Privacy",
+      "TERMS": "Terms",
+      "HELP": "Help"
+    }
+  },
+  "AUTH": {
+    "LOGIN": {
+      "WELCOME": "Welcome back",
+      "CONNECTION_MESSAGE": "Sign in to your account to continue",
+      "EMAIL": "Email address",
+      "ADRESSE_VALIDE": "Please enter a valid email address",
+      "PASSWORD": "Password",
+      "REMEMBER_ME": "Remember me",
+      "FORGOT_PASSWORD": "Forgot password?",
+      "LOGIN_BUTTON": "Sign In",
+      "LOGIN_SUCCESS": "Login successful!",
+      "DONT_HAVE_AN_ACCOUNT": "Don't have an account?",
+      "CREER_COMPTE": "Create account",
+      "PASSWORD_MIN_LENGTH": "Password must be at least 8 characters",
+      "EMAIL_REQUIRED": "Email is required",
+      "PASSWORD_REQUIRED": "Password is required",
+      "SIGNING_IN": "Signing in...",
+      "LOGIN_ERROR": "Login failed. Please try again."
+    }
+  },
+  "APPLICATION_FORM": {
+    "DEMANDE_AUTORISATION": "Test Authorization Request",
+    "FORMULAIRE_INSCRIPTION": "Registration Form",
+    "COMPLETER_PROFIL": "Complete your profile to request authorization for the assessment test.",
+    "PHOTO": "Profile Picture",
+    "INFORMATION_PERSONNELLE": "Personal Information",
+    "INFORMATION_PROFESSIONNELLE": "Professional Information",
+    "INFORMATIONS_ENTREPRISE": "Company Information",
+    "CONFIRMATION": "Confirmation",
+    "OPTION": "Optional Upload",
+    "TELECHARGEMENT_PHOTO": "Upload a professional photo for your profile.",
+    "CHOIX_PHOTO": "Choose a photo",
+    "DEPOT_IMAGE": "Drag and drop an image here",
+    "CONSIGNES_PHOTO": "Profile Picture Guidelines",
+    "PHOTO_GUIDELINES": {
+      "ARRIERE_PLAN": "Use a neutral background",
+      "VISAGE_VISIBLE": "Make sure your face is clearly visible",
+      "TAILLE": "Maximum file size: 1 MB"
+    },
+    "POSTE": "Position",
+    "ENTREPRISE": "Company",
+    "ADDITONAL_INFO": "Additional Information",
+    "ADDITIONAL_INFO_DESC": "If you have any additional comments or questions, please indicate them here.",
+    "DEPARTEMENT": "Department",
+    "DEPARTEMENT_DESC": "Department",
+    "OPTIONAL": "Optional",
+    "INCLURE_QUALIFICATION": "Include specific qualifications or motivations related to this position",
+    "RESUME_CANDIDATURE": "Application Summary",
+    "VERIFICATION_INFORMATIONS": "Information Verification",
+    "PERSONAL_INFO": {
+      "TITLE": "Personal Information",
+      "FIRST_NAME": "First Name",
+      "LAST_NAME": "Last Name",
+      "EMAIL": "Email Address",
+      "GENDER": "Gender",
+      "GENDER_OPTIONS": {
+        "MALE": "Male",
+        "FEMALE": "Female",
+        "OTHER": "Other",
+        "PREFER_NOT_SAY": "Prefer not to say"
+      },
+      "DATE_OF_BIRTH": "Date of Birth",
+      "WHY_WE_ASK": "Why do we ask for this information?",
+      "INFO_HELP": "Your personal information helps us tailor the test to your profile and provide you with a personalized experience."
+    },
+    "PROFESSIONAL_INFO": {
+      "TITLE": "Professional Information",
+      "CURRENT_POSITION": "Current Position",
+      "DESIRED_POSITION": "Desired Position",
+      "EDUCATION_LEVEL": "Education Level",
+      "EDUCATION_OPTIONS": {
+        "HIGH_SCHOOL": "High School",
+        "BACHELOR": "Bachelor's Degree",
+        "MASTER": "Master's Degree",
+        "PHD": "Doctorate",
+        "OTHER": "Other"
+      },
+      "AVAILABILITY": "Availability",
+      "AVAILABILITY_OPTIONS": {
+        "IMMEDIATE": "Immediate",
+        "ONE_WEEK": "In 1 week",
+        "TWO_WEEKS": "In 2 weeks",
+        "ONE_MONTH": "In 1 month"
+      },
+      "EXPERIENCE": "Professional Experience",
+      "YEARS_EXPERIENCE": "Years of Experience",
+      "SKILLS": "Skills",
+      "WHY_WE_ASK": "Why do we ask for this information?",
+      "INFO_HELP": "This information helps us better understand your professional background and adapt the assessment test accordingly."
+    },
+    "COMPANY_INFO": {
+      "TITLE": "Company Information",
+      "JOB_POSITION": "Job Position",
+      "COMPANY": "Company",
+      "DEPARTMENT": "Department",
+      "ADDITIONAL_INFO": "Additional Information",
+      "WHY_WE_ASK": "Why do we ask for this information?",
+      "INFO_HELP": "This information helps us better understand your company and adapt the assessment test accordingly."
+    },
+    "INFORMATIONS_ENTREPRISE_AIDENT": "This information helps us better understand your company and adapt the assessment test accordingly",
+    "NAVIGATION": {
+      "PREVIOUS": "Previous",
+      "NEXT": "Next",
+      "SUBMIT": "Submit",
+      "BACK": "Back",
+      "CONTINUE": "Continue",
+      "FINISH": "Finish",
+      "SAVE": "Save",
+      "CANCEL": "Cancel"
+    },
+    "RESUME_APPLICATION": {
+      "TITLE": "Resume Application",
+      "STEP1": "Step 1: Profile Picture",
+      "STEP2": "Step 2: Personal Information",
+      "STEP3": "Step 3: Professional Information",
+      "STEP4": "Step 4: Company Information",
+      "STEP5": "Step 5: Confirmation"
+    },
+    "FORM_CONTROLS": {
+      "REQUIRED": "Required field",
+      "CHARACTERS_REMAINING": "characters remaining",
+      "UPLOAD_PROGRESS": "Upload progress",
+      "DROP_TO_UPLOAD": "Drop to upload",
+      "DRAG_HERE": "Drag files here"
+    },
+    "GENDER_OPTIONS": [
+      { "label": "Male", "value": "male" },
+      { "label": "Female", "value": "female" },
+      { "label": "Other", "value": "other" },
+      { "label": "Prefer not to say", "value": "prefer_not_say" }
+    ],
+    "EDUCATION_OPTIONS": [
+      { "label": "High School", "value": "high_school" },
+      { "label": "Bachelor's Degree", "value": "bachelor" },
+      { "label": "Master's Degree", "value": "master" },
+      { "label": "Doctorate", "value": "phd" },
+      { "label": "Other", "value": "other" }
+    ],
+    "AVAILABILITY_OPTIONS": [
+      { "label": "Immediate", "value": "immediate" },
+      { "label": "Within 1 week", "value": "one_week" },
+      { "label": "Within 2 weeks", "value": "two_weeks" },
+      { "label": "Within 1 month", "value": "one_month" }
+    ],
+    "SUMMARY": {
+      "TITLE": "Application Summary",
+      "SUBTITLE": "Please review your application",
+      "PROFILE_PICTURE": "Profile Picture",
+      "NO_PICTURE": "No profile picture uploaded",
+      "PERSONAL_INFO": "Personal Information",
+      "PROFESSIONAL_INFO": "Professional Information",
+      "COMPANY_INFO": "Company Information",
+      "NAME": "Name",
+      "EMAIL": "Email",
+      "GENDER": "Gender",
+      "DATE_OF_BIRTH": "Date of Birth",
+      "CURRENT_POSITION": "Current Position",
+      "DESIRED_POSITION": "Desired Position",
+      "EDUCATION_LEVEL": "Education Level",
+      "AVAILABILITY": "Availability",
+      "JOB_POSITION": "Job Position",
+      "COMPANY": "Company",
+      "DEPARTMENT": "Department",
+      "NOT_SPECIFIED": "Not specified",
+      "ADDITIONAL_INFO": "Additional Information",
+      "NEXT_BUTTON": "Next: Personal Information",
+      "BACK_TO_PHOTO": "Back to Photo Upload",
+      "SUBMIT_SUMMARY": "Submit Application"
+    },
+    "TERMS": {
+      "AGREE_TEXT": "By clicking \"Submit Application\", you agree to our",
+      "TERMS_SERVICE": "Terms of Service",
+      "AND": "and",
+      "PRIVACY_POLICY": "Privacy Policy",
+      "REVIEW_NOTE": "Your test authorization request will be reviewed by our team. You will receive a notification once it's approved."
+    },
+    "BUTTONS": {
+      "REMOVE_PHOTO": "Remove Photo",
+      "UPLOAD_PHOTO": "Upload Photo",
+      "CHOOSE_PHOTO": "Choose Photo",
+      "SELECT_IMAGE": "Select Image",
+      "BROWSE": "Browse",
+      "OR": "or",
+      "SUBMIT_APPLICATION": "Submit Application",
+      "PREVIOUS_STEP": "Previous Step",
+      "NEXT_STEP": "Next Step",
+      "FINALIZE": "Finalize Application"
+    },
+    "PROFILE_PICTURE": {
+      "TITLE": "Profile Picture",
+      "DESCRIPTION": "Upload your profile picture",
+      "UPLOAD_INSTRUCTIONS": "Click or drag and drop to upload",
+      "NEXT_BUTTON": "Next: Personal Information",
+      "SKIP_STEP": "Skip this step"
+    },
+    "SUIVANT": "Next"
   }
 }
