@@ -3,12 +3,12 @@
   <div class="flex justify-content-start gap-2 mb-3">
     <p-button [outlined]="activeView !== 'auth_requests'"
       [raised]="activeView === 'auth_requests'"
-      label="Authorization Requests"
+      label="Authorization Requests (All)"
       (click)="switchView('auth_requests')">
     </p-button>
     <p-button [outlined]="activeView !== 'test_progress'"
       [raised]="activeView === 'test_progress'"
-      label="Test Progress"
+      label="Test Progress (Approved Only)"
       (click)="switchView('test_progress')">
     </p-button>
   </div>
@@ -17,59 +17,119 @@
     <div class="flex items-center gap-2">
       <h2 class="text-2xl font-bold text-gray-800">Candidate Management</h2>
       <p-badge [value]="totalRecords.toString()" severity="info" styleClass="ml-2"></p-badge>
-    </div>
-
-    <div class="flex gap-2 flex-wrap">
+    </div>    <div class="flex gap-2 flex-wrap">
+      <!-- Enhanced Search Input -->
       <div class="p-input-icon-left relative">
         <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
-        <input #globalFilter pInputText type="text" (input)="onGlobalFilterChange($event)"
+        <input #globalFilter 
+          pInputText 
+          type="text" 
+          [(ngModel)]="globalFilterValue"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
           placeholder="Search candidates..."
-          class="p-inputtext rounded-full pl-10 pr-4 border-gray-300 w-full sm:w-64 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all" />
-        <button *ngIf="globalFilterValue" pButton icon="pi pi-times"
-          class="p-button-rounded p-button-text p-button-sm absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500"
-          (click)="clearGlobalFilter(globalFilter)"></button>
+          class="p-inputtext rounded-full pl-10 pr-10 border-gray-300 w-full sm:w-64 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all" />
+        <button *ngIf="globalFilterValue" 
+          pButton 
+          icon="pi pi-times"
+          class="p-button-rounded p-button-text p-button-sm absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:bg-gray-100"
+          (click)="clearGlobalFilter(globalFilter, dt)"></button>
       </div>
 
-      <button pButton icon="pi pi-filter" label="Test Requests" (click)="loadTestAuthRequests()"
-        class="p-button-outlined"></button>
-      <button pButton icon="pi pi-users" label="All Candidates" (click)="loadCandidates()"
-        class="p-button-outlined"></button>
-      <button pButton icon="pi pi-check" label="Bulk Actions" [disabled]="selectedCandidates.length === 0"
-        (click)="showBulkActionDialog()" class="p-button-success"></button>
+      <div *ngIf="activeView === 'auth_requests'" class="flex items-center gap-2">
+        <label class="text-sm font-medium text-gray-700">Status:</label>
+        <p-dropdown 
+          [(ngModel)]="quickStatusFilter"
+          [options]="testAuthStatuses" 
+          (onChange)="applyQuickStatusFilter($event.value)"
+          placeholder="All Statuses" 
+          [showClear]="true" 
+          styleClass="min-w-[160px]" 
+          optionLabel="label"
+          optionValue="value">
+          <ng-template pTemplate="item" let-option>
+            <p-tag [value]="option.label" [severity]="option.severity"></p-tag>
+          </ng-template>
+        </p-dropdown>
+      </div>
+
+      <div *ngIf="activeView === 'test_progress'" class="flex items-center gap-2">
+        <label class="text-sm font-medium text-gray-700">Test Status:</label>
+        <p-dropdown 
+          [(ngModel)]="quickTestStatusFilter"
+          [options]="testStatusOptions" 
+          (onChange)="applyQuickTestStatusFilter($event.value)"
+          placeholder="All Test Statuses" 
+          [showClear]="true" 
+          styleClass="min-w-[180px]" 
+          optionLabel="label"
+          optionValue="value">
+          <ng-template pTemplate="item" let-option>
+            <p-tag [value]="option.label" [severity]="option.severity"></p-tag>
+          </ng-template>
+        </p-dropdown>
+      </div>
+
+      <!-- Action Buttons -->
+      <!-- <button pButton 
+        icon="pi pi-filter" 
+        label="Test Requests" 
+        (click)="loadTestAuthRequests()"
+        [class]="'p-button-outlined ' + (activeView === 'auth_requests' ? 'p-button-primary' : 'p-button-secondary')"></button>
+      <button pButton 
+        icon="pi pi-users" 
+        label="Test Progress" 
+        (click)="switchView('test_progress')"
+        [class]="'p-button-outlined ' + (activeView === 'test_progress' ? 'p-button-primary' : 'p-button-secondary')"></button> -->
+      <button pButton 
+        icon="pi pi-check" 
+        label="Bulk Actions" 
+        [disabled]="selectedCandidates.length === 0"
+        (click)="showBulkActionDialog()" 
+        class="p-button-success"></button>
+      
+      <!-- Refresh Button -->
+      <button pButton 
+        icon="pi pi-refresh" 
+        label="Refresh" 
+        (click)="refreshData()"
+        class="p-button-outlined p-button-secondary"></button>
     </div>
   </div>
 
   <p-toast></p-toast>
   <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
-
   <!-- Data Table -->
-  <p-table #dt [value]="candidates" [loading]="loading"
-    [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10,25,50]"
-    [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-    [globalFilterFields]="[
-      'firstName',
-      'lastName',
-      'email'
-    ]" [tableStyle]="{ 'min-width': '75rem' }" [loading]="loading"
-    styleClass="p-datatable-striped p-datatable-gridlines p-datatable-sm" [rowHover]="true" selectionMode="multiple"
-    [(selection)]="selectedCandidates" dataKey="_id" (onLazyLoad)="loadCandidates($event)" [lazy]="true"
-    [totalRecords]="totalRecords">
+  <p-table #dt 
+    [value]="candidates" 
+    [loading]="loading"
+    [paginator]="true" 
+    [rows]="10" 
+    [rowsPerPageOptions]="[10,25,50]"
+    [showCurrentPageReport]="true" 
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} {{activeView === 'test_progress' ? 'approved' : ''}} candidates"
+    [globalFilterFields]="['firstName', 'lastName', 'email', 'educationLevel']" 
+    [tableStyle]="{ 'min-width': '75rem' }"
+    styleClass="p-datatable-striped p-datatable-gridlines p-datatable-sm" 
+    [rowHover]="true" 
+    selectionMode="multiple"
+    [(selection)]="selectedCandidates" 
+    dataKey="_id"
+    [totalRecords]="totalRecords"
+    [sortField]="'firstName'"
+    [sortOrder]="1">
+    
     <ng-template pTemplate="caption">
       <div class="flex justify-between items-center">
-        <h5 class="text-xl font-semibold">Candidates List</h5>
+        <h5 class="text-xl font-semibold">
+          {{ activeView === 'test_progress' ? 'Approved Candidates' : 'All Candidates' }}
+        </h5>
         <div class="flex items-center gap-2">
-          <p-button label="Clear" [outlined]="true" icon="pi pi-filter-slash" (click)="clearAllFilters(dt)"
+          <p-button 
+            label="Clear Filters" 
+            [outlined]="true" 
+            icon="pi pi-filter-slash" 
+            (click)="clearAllFilters(dt)"
             [disabled]="!hasActiveFilters()"></p-button>
-          <!-- <span class="p-input-icon-left ml-auto">
-            <i class="pi pi-search"></i>
-            <input
-              pInputText
-              type="text"
-              [(ngModel)]="globalFilterValue"
-              (input)="onGlobalFilterChange($event)"
-              placeholder="Search candidates..."
-            />
-          </span> -->
         </div>
       </div>
     </ng-template>
@@ -78,30 +138,29 @@
       <tr>
         <th style="width: 3rem">
           <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
-        </th>
-        <th pSortableColumn="firstName" style="width: 15%">
+        </th>        <th pSortableColumn="firstName" style="width: 15%">
           <div class="flex items-center">
             Name
             <p-sortIcon field="firstName"></p-sortIcon>
-            <p-columnFilter type="text" field="firstName" display="menu">
-              <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                <input type="text" pInputText [ngModel]="value" (ngModelChange)="
-                    filter($event); onColumnFilterChange('firstName', $event)
-                  " placeholder="Search by name" class="p-column-filter-element" />
-              </ng-template>
+            <p-columnFilter type="text" field="firstName" display="menu" placeholder="Search by name">
             </p-columnFilter>
           </div>
-        </th>
-        <th pSortableColumn="educationLevel" style="width: 15%">
+        </th>        <th pSortableColumn="educationLevel" style="width: 15%">
           <div class="flex items-center">
             Education
             <p-sortIcon field="educationLevel"></p-sortIcon>
-            <p-columnFilter type="text" field="educationLevel" display="menu">
+            <p-columnFilter field="educationLevel" matchMode="equals" display="menu">
               <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                <input type="text" pInputText [ngModel]="value" (ngModelChange)="
-                    filter($event);
-                    onColumnFilterChange('educationLevel', $event)
-                  " placeholder="Search by education" class="p-column-filter-element" />
+                <p-dropdown 
+                  [ngModel]="value" 
+                  [options]="educationLevelOptions" 
+                  (onChange)="filter($event.value)"
+                  placeholder="Select Education Level" 
+                  [showClear]="true" 
+                  styleClass="w-full" 
+                  optionLabel="label"
+                  optionValue="value">
+                </p-dropdown>
               </ng-template>
             </p-columnFilter>
           </div>
@@ -110,67 +169,29 @@
           <div class="flex items-center">
             Email
             <p-sortIcon field="email"></p-sortIcon>
-            <p-columnFilter type="text" field="email" display="menu">
-              <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                <input type="text" pInputText [ngModel]="value" (ngModelChange)="
-                    filter($event); onColumnFilterChange('email', $event)
-                  " placeholder="Search by email" class="p-column-filter-element" />
-              </ng-template>
+            <p-columnFilter type="text" field="email" display="menu" placeholder="Search by email">
             </p-columnFilter>
           </div>
         </th>
 
         <!-- Show test status columns only in test progress view -->
-        <ng-container *ngIf="activeView === 'test_progress'">
-          <th pSortableColumn="testProgress.status" style="width: 15%">
+        <ng-container *ngIf="activeView === 'test_progress'">          <th pSortableColumn="testProgress.status" style="width: 15%">
             <div class="flex items-center">
               Test Status
               <p-sortIcon field="testProgress.status"></p-sortIcon>
               <p-columnFilter field="testProgress.status" matchMode="equals" display="menu">
                 <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                  <p-dropdown [ngModel]="value" [options]="testStatusOptions" 
+                  <p-dropdown 
+                    [ngModel]="value" 
+                    [options]="testStatusOptions" 
                     (onChange)="filter($event.value)" 
-                    placeholder="Select Status" 
+                    placeholder="Select Test Status" 
                     [showClear]="true" 
-                    styleClass="w-full">
+                    styleClass="w-full"
+                    optionLabel="label"
+                    optionValue="value">
                     <ng-template pTemplate="item" let-option>
-                      <div [ngSwitch]="option.value">
-                        <span
-                          *ngSwitchCase="'completed'"
-                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700"
-                        >
-                          <i class="pi pi-check-circle"></i>
-                          {{ option.label }}
-                        </span>
-                        <span
-                          *ngSwitchCase="'in-progress'"
-                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
-                        >
-                          <i class="pi pi-spin pi-spinner"></i>
-                          {{ option.label }}
-                        </span>
-                        <span
-                          *ngSwitchCase="'timed_out'"
-                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700"
-                        >
-                          <i class="pi pi-clock"></i>
-                          {{ option.label }}
-                        </span>
-                        <span
-                          *ngSwitchCase="'abandoned'"
-                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700"
-                        >
-                          <i class="pi pi-times-circle"></i>
-                          {{ option.label }}
-                        </span>
-                        <span
-                          *ngSwitchDefault
-                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
-                        >
-                          <i class="pi pi-clock"></i>
-                          {{ option.label }}
-                        </span>
-                      </div>
+                      <p-tag [value]="option.label" [severity]="option.severity"></p-tag>
                     </ng-template>
                   </p-dropdown>
                 </ng-template>
@@ -192,17 +213,21 @@
         </ng-container>
 
         <!-- Show authorization status column only in auth_requests view -->
-        <ng-container *ngIf="activeView === 'auth_requests'">
-          <th pSortableColumn="testAuthorizationStatus" style="width: 15%">
+        <ng-container *ngIf="activeView === 'auth_requests'">          <th pSortableColumn="testAuthorizationStatus" style="width: 15%">
             <div class="flex items-center">
-              Status
+              Authorization Status
               <p-sortIcon field="testAuthorizationStatus"></p-sortIcon>
               <p-columnFilter field="testAuthorizationStatus" matchMode="equals" display="menu">
                 <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                  <p-dropdown [ngModel]="value" [options]="testAuthStatuses" (onChange)="
-                      filter($event.value); onStatusFilterChange($event.value)
-                    " placeholder="Select Status" [showClear]="true" styleClass="w-full" optionLabel="label"
-                    optionValue="value" appendTo="body">
+                  <p-dropdown 
+                    [ngModel]="value" 
+                    [options]="testAuthStatuses" 
+                    (onChange)="filter($event.value)"
+                    placeholder="Select Authorization Status" 
+                    [showClear]="true" 
+                    styleClass="w-full" 
+                    optionLabel="label"
+                    optionValue="value">
                     <ng-template pTemplate="item" let-option>
                       <p-tag [value]="option.label" [severity]="option.severity"></p-tag>
                     </ng-template>
@@ -282,7 +307,7 @@
                 Completed
               </span>
               <span
-                *ngSwitchCase="'in_progress'"
+                *ngSwitchCase="'in-progress'"
                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
               >
                 <i class="pi pi-spin pi-spinner"></i>
@@ -348,7 +373,7 @@
                 (click)="showAssignmentDialog(candidate)" pTooltip="Assign Test" tooltipPosition="top"></button>
             </ng-container>
 
-            <ng-container *ngIf="activeView === 'test_progress' && candidate.testProgress">
+            <ng-container *ngIf="activeView === 'test_progress' && candidate.testProgress &&candidate.testProgress?.status === 'completed'">
               <button pButton 
                 icon="pi pi-chart-bar" 
                 class="p-button-rounded p-button-info p-button-sm"

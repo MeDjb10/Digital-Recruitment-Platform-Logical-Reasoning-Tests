@@ -1,0 +1,20 @@
+.prose strong {
+  font-weight: 600;
+  color: #374151;
+}
+
+.prose h3 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: #1f2937;
+}
+
+.prose ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 1em 0;
+}
+
+.prose li {
+  margin: 0.5em 0;
+}

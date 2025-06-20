@@ -12,13 +12,16 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class PerformancePredictor:
     def __init__(self, model_dir: str):
         # Set absolute model paths
-        self.d70_path = r"C:\Users\tbfee\OneDrive\Desktop\pfe\Digital-Recruitment-Platform-Logical-Reasoning-Tests\ai-classification\ml\src\models\d70_model.joblib"
-        self.d2000_path = r"C:\Users\tbfee\OneDrive\Desktop\pfe\Digital-Recruitment-Platform-Logical-Reasoning-Tests\ai-classification\ml\src\models\d2000_model.joblib"
-        self.metadata_path = Path(self.d70_path).parent / "model_metadata.json"
+        current_dir = Path(__file__).parent  # utils directory
+        models_dir = current_dir.parent / "models"  # Navigate to models directory
+
+        self.d70_path = models_dir / "d70_model.joblib"
+        self.d2000_path = models_dir / "d2000_model.joblib"
+        self.metadata_path = models_dir / "model_metadata.json"
         # Features match the metadata
         self.features = [
             'questionsAnswered',
-            'correct answers', 
+            'correct_answers', 
             'timeSpent',
             'halfCorrect',
             'reversed',
@@ -46,9 +49,7 @@ class PerformancePredictor:
                 logging.info("D2000 model loaded successfully")
 
             if not self.d70_model and not self.d2000_model:
-                raise FileNotFoundError("No models found!")
-
-            # Load metadata
+                raise FileNotFoundError("No models found!")            # Load metadata
             if not os.path.exists(self.metadata_path):
                 raise FileNotFoundError(f"Metadata file not found at {self.metadata_path}")
             
@@ -66,11 +67,21 @@ class PerformancePredictor:
         try:
             # Determine which model to use based on test type
             test_type = features.get('test_type', '').lower()
-            if test_type == 'd70':
+            logging.info(f"Original test type: {features.get('test_type', '')}")
+            
+            # Convert test type to lowercase and remove any spaces or dashes
+            normalized_test_type = test_type.lower().replace('-', '').replace(' ', '')
+            logging.info(f"Normalized test type: {normalized_test_type}")
+            
+            # Check if contains 'd' and either '70' or '2000'
+            if 'd' in normalized_test_type and '70' in normalized_test_type:
                 model = self.d70_model
-            elif test_type == 'd2000':
+                logging.info("Using D70 model")
+            elif 'd' in normalized_test_type and '2000' in normalized_test_type:
                 model = self.d2000_model
+                logging.info("Using D2000 model")
             else:
+                logging.error(f"No matching model found for test type: {test_type} (normalized: {normalized_test_type})")
                 raise ValueError(f"Unknown test type: {test_type}")
 
             if not model:
@@ -110,7 +121,7 @@ class PerformancePredictor:
         try:
             # Extract key metrics
             questions_answered = metrics.get('questionsAnswered', 0)
-            correct_answers = metrics.get('correct answers', 0)
+            correct_answers = metrics.get('correct_answers', 0)
             time_spent = metrics.get('timeSpent', 0)
             
             # Calculate basic metrics
@@ -156,7 +167,7 @@ def main():
         test_features = {
             'test_type': 'd2000',  # or 'd2000'
             'questionsAnswered':40,
-            'correct answers': 20,
+            'correct_answers': 20,
             'timeSpent': 20,
             'halfCorrect': 0,
             'reversed': 0,

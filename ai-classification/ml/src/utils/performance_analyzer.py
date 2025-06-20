@@ -2,7 +2,6 @@ from .predict import PerformancePredictor
 import chromadb
 from chromadb.utils import embedding_functions
 from typing import List
-import requests 
 import json
 from bson import json_util, ObjectId
 import logging
@@ -13,13 +12,18 @@ from .db_schema import PerformanceMetrics, FeedbackEntry, PsychologistComment
 from pprint import pprint
 from pymongo import MongoClient
 import os
+from groq import Groq
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class PerformanceAnalyzer:
     def __init__(self, model_dir: str = ""):
         self.predictor = PerformancePredictor(model_dir)
-        self.ollama_url = "http://localhost:11434/api/chat"
+        
+        # Initialize Groq client with API key
+        groq_api_key = os.getenv('GROQ_API_KEY', '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')
+        self.groq_client = Groq(api_key='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')
+        
         self.chroma_client = chromadb.PersistentClient(path="../chroma_db")
         
         # Initialize MongoDB connection
@@ -93,8 +97,7 @@ class PerformanceAnalyzer:
               
             # Store in ChromaDB for RAG purposes
             self._store_interaction(metrics, ai_comment)
-            
-            # Combine results
+              # Combine results
             return {
                 "metrics": metrics,
                 "prediction": prediction_result,
@@ -111,12 +114,17 @@ class PerformanceAnalyzer:
         
         # Store metrics and AI response
         metrics_str = json.dumps(metrics, default=json_util.default)
+        
+        # Prepare metadata, filtering out None values
+        metadata = {
+            "timestamp": timestamp
+        }
+        if ai_comment is not None:
+            metadata["ai_comment"] = ai_comment
+        
         self.metrics_collection.add(
             documents=[metrics_str],
-            metadatas=[{
-                "timestamp": timestamp,
-                "ai_comment": ai_comment
-            }],
+            metadatas=[metadata],
             ids=[f"metrics_{timestamp}"]
         )
         
@@ -179,7 +187,7 @@ class PerformanceAnalyzer:
 
     def _generate_ai_comment(self, metrics: PerformanceMetrics, prediction: Dict[str, Any], 
                            desired_position: str, education_level: str) -> str:
-        """Generate AI commentary using RAG"""
+        """Generate AI commentary using RAG with Groq API"""
         similar_cases = self._retrieve_similar_cases(metrics)
         
         # Generate similar cases text including AI comments
@@ -190,10 +198,26 @@ class PerformanceAnalyzer:
             (f"Human Feedback: {case['feedback']}\n" if case['feedback'] else "No feedback available\n") +
             (f"Psychologist Comment: {case['psychologist_comment']}" if case['psychologist_comment'] else "No psychologist comment available")
             for i, case in enumerate(similar_cases)
-        ])
+        ])        
         
         # Add test-specific information
-        test_type = metrics.get('test_type', '').lower()
+        test_type_raw = metrics.get('test_type', '').lower()
+        # Normalize test type to match our internal keys
+        normalized_test_type = test_type_raw.lower().replace('-', '').replace(' ', '')
+        
+        logging.info(f"Test type detection - Raw: '{test_type_raw}', Normalized: '{normalized_test_type}'")
+        
+        # Determine the correct test key
+        if 'd' in normalized_test_type and '70' in normalized_test_type:
+            test_key = 'd70'
+            logging.info("Detected D70 test")
+        elif 'd' in normalized_test_type and '2000' in normalized_test_type:
+            test_key = 'd2000'
+            logging.info("Detected D2000 test")
+        else:
+            test_key = 'unknown'
+            logging.warning(f"Unknown test type detected: {test_type_raw}")
+        
         test_info = {
             'd70': {
                 'total_questions': 44,
@@ -204,64 +228,115 @@ class PerformanceAnalyzer:
                 'total_questions': 40,
                 'time_limit': 20,
                 'description': 'D-2000 Test (40 questions, 20 minutes time limit)'
+            },
+            'unknown': {
+                'total_questions': 'Unknown',
+                'time_limit': 'Unknown',
+                'description': f'Unknown test type: {test_type_raw}'
             }
-        }.get(test_type, {})
+        }.get(test_key, {})
 
         prompt = f"""
-        Analyze the following test performance data for a candidate, considering:
-        
-        Test Information:
+        You are an expert psychologist analyzing cognitive test performance. Your task is to provide a comprehensive evaluation by learning from historical cases to make informed judgments about the current candidate's performance.
+
+        CONTEXT AND TEST INFORMATION:
         {test_info.get('description', 'Unknown test type')}
         - Total Questions: {test_info.get('total_questions', 'N/A')}
         - Time Limit: {test_info.get('time_limit', 'N/A')} minutes
         
-        Candidate Profile:
+        CANDIDATE PROFILE:
         - Desired Position: {desired_position}
         - Education Level: {education_level}
 
-        Current Performance:
+        CURRENT PERFORMANCE METRICS TO ANALYZE:
         {json.dumps(metrics, indent=2)}
 
-        Predicted Level: {prediction['predicted_category']}
-        Confidence of the prediction: {prediction['confidence']:.1%}
-
-        Historical Similar Cases:
+        AI PREDICTION RESULTS:
+        - Predicted Performance Level: {prediction['predicted_category']}
+        - Model Confidence: {prediction['confidence']:.1%}       
+        HISTORICAL CASES FOR LEARNING AND COMPARISON (FROM OTHER CANDIDATES):
+        The following cases are from DIFFERENT candidates who took similar tests previously. These serve as your learning dataset to:
+        - Understand how previous AI analyses were evaluated by human experts
+        - Learn the professional language and terminology used by psychologists
+        - Identify what constitutes accurate vs. inaccurate assessments
+        - Observe patterns in how psychologists provide feedback and corrections
+        - Calibrate your analysis style to match expert expectations
+        
+        IMPORTANT: These are NOT the current candidate's previous attempts - they are examples from other users that help you understand:
+        • What language and tone psychologists expect in professional assessments
+        • How to properly interpret different performance metric combinations
+        • Common mistakes in AI analysis that received negative feedback
+        • Successful analysis patterns that received positive psychologist validation
+        
         {similar_cases_text}
 
-        Based on the test requirements, current metrics, similar historical cases, and the candidate's profile, provide a detailed analysis that:
-        1. Evaluates overall performance relative to test requirements (time management and completion rate)
-        2. Points out key strengths
-        3. Identifies areas for improvement
-        4. Assesses suitability for the desired position considering:
-           - Required cognitive abilities for the role
-           - Educational background alignment
-           - Performance compared to role expectations and test benchmarks
-        5. Provide a clear recommendation (Suitable/Not Suitable) with justification
-        
-        Keep the tone professional and constructive.
+        COMPREHENSIVE ANALYSIS REQUIRED:        
+        1. **PERFORMANCE METRIC EVALUATION** (Learn from other candidates' analyses):
+           - Study how psychologists interpreted similar metrics in other cases
+           - Identify what terminology and language psychologists used for comparable performance levels
+           - Learn from mistakes: observe where previous AI analyses were corrected or criticized
+           - Adopt the professional assessment language demonstrated in psychologist feedback
+           - Compare current metrics against patterns seen in other candidates' cases
+
+        2. **STRENGTHS IDENTIFICATION** (Mirror expert language):
+           - Use terminology and phrasing similar to how psychologists described strengths in other cases
+           - Learn from feedback patterns: what constituted valid vs. overstated strength assessments
+           - Adopt the professional tone and specific language used by experts in similar evaluations
+
+        3. **AREAS FOR IMPROVEMENT** (Professional assessment style):
+           - Emulate how psychologists diplomatically identified weaknesses in other candidates
+           - Learn the appropriate level of directness vs. constructive framing from expert feedback
+           - Use professional psychological assessment terminology demonstrated in other cases
+
+        4. **POSITION SUITABILITY ASSESSMENT** (Expert-calibrated judgment):
+           - Study how psychologists made suitability decisions for other candidates with similar profiles
+           - Learn the decision-making framework and reasoning patterns from expert assessments
+           - Adopt the level of confidence and qualification language used by professionals
+
+        5. **LEARNING FROM PSYCHOLOGIST LANGUAGE AND FEEDBACK PATTERNS**:
+           - Analyze the specific terminology, tone, and structure used by psychologists in other cases
+           - Identify common phrases and professional language patterns in expert assessments
+           - Learn from cases where AI analysis was corrected: understand what was wrong and why
+           - Observe how psychologists balance honesty with constructive feedback
+           - Study the level of detail and specificity that experts provide in their evaluations
+
+        6. **FINAL RECOMMENDATION** (Clear and justified):
+           - Provide a definitive recommendation: SUITABLE / NOT SUITABLE / NEEDS DEVELOPMENT
+           - Support your decision with specific metrics and historical comparisons
+           - Include confidence level and key deciding factors
+           - Suggest next steps or additional assessments if needed        
+           
+        IMPORTANT: Your analysis should demonstrate that you've learned from the other candidates' cases - particularly from psychologist feedback patterns, professional language, and assessment styles. Show that you understand what makes a quality psychological assessment by emulating the expert language and avoiding mistakes identified in previous AI analyses. Focus on the CURRENT candidate's metrics while using the communication style and professional standards demonstrated by psychologists in the historical cases.
+
+        Keep your tone professional, constructive, and evidence-based, matching the language patterns observed in expert psychological assessments from the historical data. and make it simple.
         """
 
-        # Prepare request
         try:
-            data = {
-                "model": "deepseek-r1:1.5b",
-                "messages": [{"role": "user", "content": prompt}],
-                "stream": False
-            }
+            # Use Groq API instead of Ollama
+            completion = self.groq_client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,  # Slightly lower for more consistent responses
+                max_completion_tokens=1024,
+                top_p=0.9,
+                stream=False,  # Set to False for simpler handling
+                stop=None,
+            )
             
-            # Make API request
-            response = requests.post(self.ollama_url, json=data)
-            response.raise_for_status()
-            
-            # Extract and return comment
-            return response.json()["message"]["content"].strip()
+            # Extract and return the response
+            return completion.choices[0].message.content.strip()
             
         except Exception as e:
-            logging.error(f"Failed to generate AI comment: {e}")
+            logging.error(f"Failed to generate AI comment with Groq: {e}")
             return "Unable to generate AI analysis at this time."
 
     def provide_feedback(self, metrics: PerformanceMetrics, ai_comment: str, is_good: bool, feedback_text: str = ""):
-        """Provide feedback on AI comment quality and get improved response"""
+        """Provide feedback on AI comment quality and get improved response using Groq"""
         try:
             # Store feedback
             feedback_entry = {"feedback_text": feedback_text, "is_good": is_good}
@@ -298,17 +373,23 @@ class PerformanceAnalyzer:
             Please provide a {'similar style of analysis' if is_good else 'revised analysis addressing the feedback'}.
             """
 
-            # Make new API request with feedback context
-            data = {
-                "model": "deepseek-r1:1.5b",
-                "messages": [{"role": "user", "content": feedback_prompt}],
-                "stream": False
-            }
+            # Use Groq API for improved analysis
+            completion = self.groq_client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": feedback_prompt
+                    }
+                ],
+                temperature=0.7,
+                max_completion_tokens=1024,
+                top_p=0.9,
+                stream=False,
+                stop=None,
+            )
             
-            response = requests.post(self.ollama_url, json=data)
-            response.raise_for_status()
-            
-            improved_analysis = response.json()["message"]["content"].strip()
+            improved_analysis = completion.choices[0].message.content.strip()
             
             # Update MongoDB with improved analysis if attemptId exists
             if metrics.get('attemptId'):
@@ -328,7 +409,7 @@ class PerformanceAnalyzer:
             return improved_analysis
         
         except Exception as e:
-            logging.error(f"Failed to process feedback: {e}")
+            logging.error(f"Failed to process feedback with Groq: {e}")
             return "Unable to generate improved analysis at this time."
 
     def add_psychologist_comment(self, metrics: PerformanceMetrics, comment: str) -> bool:

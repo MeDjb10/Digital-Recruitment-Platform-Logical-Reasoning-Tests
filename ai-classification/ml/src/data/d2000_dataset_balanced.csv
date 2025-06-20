@@ -1,4 +1,4 @@
-questionsAnswered,correct answers,timeSpent,halfCorrect,reversed,questionsSkipped,answerChanges,flaggedQuestions,label
+questionsAnswered,correct_answers,timeSpent,halfCorrect,reversed,questionsSkipped,answerChanges,flaggedQuestions,label
 28,18,10.9,4,4,8,1,1,moyen
 12,2,18.72,1,1,13,5,5,très faible
 31,31,15.53,0,0,6,3,0,fort

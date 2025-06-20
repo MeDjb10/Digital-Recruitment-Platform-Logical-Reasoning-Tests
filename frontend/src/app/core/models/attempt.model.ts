@@ -19,6 +19,25 @@ export interface TestAttempt {
     timePerQuestion?: Record<string, number>;
   };
   lastActivityAt?: Date; // Added to match backend
+  aiClassification?: {
+    prediction: string | null;
+    confidence: number | null;
+    classifiedAt: Date | null;
+  };
+  manualClassification?: {
+    classification: string | null;
+    classifiedBy: string | null;
+    classifiedAt: Date | null;
+  };
+  psychologistComment?: {
+    comment: string | null;
+    commentedBy: string | null;
+    commentedAt: Date | null;
+  };
+  aiComment?: {
+    comment: string | null;
+    commentedAt: Date | null;
+  };
 }
 
 export interface QuestionResponse {
@@ -101,6 +120,25 @@ export interface AttemptResultsResponse {
       device?: string;
       browser?: string;
       ipAddress?: string;
+      aiClassification?: {
+        prediction: string | null;
+        confidence: number | null;
+        classifiedAt: Date | null;
+      };
+      manualClassification?: {
+        classification: string | null;
+        classifiedBy: string | null;
+        classifiedAt: Date | null;
+      };
+      psychologistComment?: {
+        comment: string | null;
+        commentedBy: string | null;
+        commentedAt: Date | null;
+      };
+      aiComment?: {
+        comment: string | null;
+        commentedAt: Date | null;
+      };
     };
     questions: {
       question: {

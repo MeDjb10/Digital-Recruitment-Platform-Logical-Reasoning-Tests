@@ -1,8 +1,7 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'primeng/chart';
-import { Location } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import {
   ApexAxisChartSeries,
@@ -16,6 +15,36 @@ import {
   ApexNonAxisChartSeries,
 } from 'ng-apexcharts';
 import { TestService } from '../../../../../core/services/test.service';
+import { AiService } from '../../../../../core/services/ai.service';
+import { User } from '../../../../../core/models/user.model';
+import { AuthService } from '../../../../../core/auth/services/auth.service';
+import { TooltipModule } from 'primeng/tooltip';
+
+interface MetricsRequest {
+  test_type: string;
+  questionsAnswered: number;
+  correct_answers: number;
+  timeSpent: number;
+  halfCorrect: number;
+  reversed: number;
+  questionsSkipped: number;
+  answerChanges: number;
+  flaggedQuestions: number;
+  desired_position: string;
+  education_level: string;
+  attemptId: string; // Add optional attemptId field
+}
+
+interface ClassificationResponse {
+  prediction: string;
+  confidence: number;
+}
+
+interface ManualClassification {
+  value: string;
+  classifiedBy: string;
+  classifiedAt: Date;
+}
 
 export type ChartOptions = {
   series: ApexAxisChartSeries | ApexNonAxisChartSeries;
@@ -36,6 +65,7 @@ export type ChartOptions = {
     ChartModule,
     NgApexchartsModule,
     ButtonModule,
+    TooltipModule,
   ],
   templateUrl: './domino-test-section.component.html',
   styleUrl: './domino-test-section.component.css',
@@ -43,7 +73,7 @@ export type ChartOptions = {
 export class DominoTestSectionComponent implements OnInit {
   @ViewChild('chart') chart!: ChartComponent;
   @Input() attemptId!: string;
-
+  @Input() userInfo: User | null = null;
   public chartOptions: Partial<ChartOptions>;
   // Enhanced properties based on backend data
   testType: string = 'Logical Reasoning Assessment';
@@ -52,6 +82,8 @@ export class DominoTestSectionComponent implements OnInit {
   score: number = 0;
   totalQuestions: number = 0;
   percentageScore: number = 0;
+  halfCorrect: number = 0;
+  flaggedQuestions: number = 0;
   questionsAnswered: number = 0;
   skippedQuestions: number = 0;
   inversedAnswers: number = 0;
@@ -71,12 +103,12 @@ export class DominoTestSectionComponent implements OnInit {
     score: number;
     recommendation: string;
   } = {
-    level: 'Calculating...',
-    color: '#6b7280',
-    description: 'Performance analysis in progress',
-    score: 0,
-    recommendation: 'Analysis in progress...',
-  };
+      level: 'Calculating...',
+      color: '#6b7280',
+      description: 'Performance analysis in progress',
+      score: 0,
+      recommendation: 'Analysis in progress...',
+    };
   // Detailed analytics
   testAnalytics: {
     startTime: string;
@@ -90,23 +122,60 @@ export class DominoTestSectionComponent implements OnInit {
     fastestQuestion: { number: number; time: string };
     slowestQuestion: { number: number; time: string };
   } = {
-    startTime: '',
-    endTime: '',
-    totalDuration: 0,
-    browser: '',
-    device: '',
-    screenResolution: '',
-    averageQuestionTime: '',
-    questionsRevisited: 0,
-    fastestQuestion: { number: 0, time: '0:00' },
-    slowestQuestion: { number: 0, time: '0:00' },
-  };
+      startTime: '',
+      endTime: '',
+      totalDuration: 0,
+      browser: '',
+      device: '',
+      screenResolution: '',
+      averageQuestionTime: '',
+      questionsRevisited: 0,
+      fastestQuestion: { number: 0, time: '0:00' },
+      slowestQuestion: { number: 0, time: '0:00' },
+    };
 
   timeChartData: any;
   isAiAnalysisVisible: boolean = false;
   isLoading: boolean = true;
   chartInitialized: boolean = false;
-  constructor(private location: Location, private testService: TestService) {
+
+  // Add new properties
+  manualClassification: ManualClassification | null = null;
+  aiClassification: string = '';
+  aiConfidence: number = 0;
+  aiComment: string = '';
+  isLoadingAnalysis: boolean = false;
+  classificationLabels: string[] = [
+    'Very Strong',
+    'Strong',
+    'Average',
+    'Weak',
+    'Very Weak',
+  ];
+  userPosition: string = ''; // This should be populated from user data
+  userEducation: string = ''; // This should be populated from user data
+  showClassificationDropdown = true;
+  currentUser: User | null | undefined; // This should be populated from auth service
+  savedPsychologistComment: string = ''; // Tracks the saved comment from database
+  draftPsychologistComment: string = ''; // Tracks the draft being edited
+  psychologistCommentAuthor: string = ''; // Tracks who wrote the comment
+  psychologistCommentDate: Date | null = null; // Tracks when the comment was written
+  isSavingComment: boolean = false;
+  
+  // Feedback properties
+  showFeedbackSection: boolean = false;
+  feedbackText: string = '';
+  isSubmittingFeedback: boolean = false;
+  feedbackSubmitted: boolean = false;
+
+  attempt: any = null; // Add this property
+
+  constructor(
+    private location: Location,
+    private testService: TestService,
+    private aiService: AiService,
+    private authService: AuthService // Add AuthService
+  ) {
     this.chartOptions = {
       series: [
         {
@@ -134,18 +203,60 @@ export class DominoTestSectionComponent implements OnInit {
     };
   }
 
-  aiComments = [
-    {
-      text: 'Candidate performed well in logical reasoning. Lorem ipsum dolor sit amet consectetur adipisicing elit. Sunt neque, recusandae ut illum accusantium tempore hic aperiam quidem dolore et excepturi eveniet voluptatum cumque rem qui voluptatibus assumenda culpa ea!',
-      reaction: true,
-      likes: 0,
-      dislikes: 0,
-      feedback: '',
-    },
-  ];
-  psychologistComment: string = '';
+
   ngOnInit() {
+    this.userEducation = this.userInfo?.educationLevel || '';
+    this.userPosition = this.userInfo?.desiredPosition || '';
     if (this.attemptId) {
+      // First get the attempt to check classifications
+      this.testService.getAttempt(this.attemptId).subscribe({
+        next: (response) => {
+          console.log('Attempt data:', response);
+          this.attempt = response.data;
+
+          // Initialize AI classification if it exists
+          if (this.attempt.aiClassification?.prediction) {
+            this.aiClassification = this.attempt.aiClassification.prediction;
+            this.aiConfidence = this.attempt.aiClassification.confidence;
+          }
+
+          // Initialize manual classification if it exists
+          if (this.attempt.manualClassification?.classification) {
+            this.manualClassification = {
+              value: this.attempt.manualClassification.classification,
+              classifiedBy: this.attempt.manualClassification.classifiedBy,
+              classifiedAt: new Date(this.attempt.manualClassification.classifiedAt)
+            };
+          }
+          // Initialize AI comment if it exists
+          if (this.attempt.aiComment?.comment) {
+            this.aiComment = this.attempt.aiComment.comment;
+            this.isAiAnalysisVisible = true;
+          }          // Initialize psychologist comment if it exists
+          if (this.attempt.psychologistComment?.comment) {
+            this.savedPsychologistComment = this.attempt.psychologistComment.comment;
+            
+            // Set author and date from backend if available
+            if (this.attempt.psychologistComment.authorName) {
+              this.psychologistCommentAuthor = this.attempt.psychologistComment.authorName;
+            }
+            if (this.attempt.psychologistComment.createdAt) {
+              this.psychologistCommentDate = new Date(this.attempt.psychologistComment.createdAt);
+            }
+            
+            console.log('Psychologist comment loaded:', {
+              comment: this.savedPsychologistComment,
+              author: this.psychologistCommentAuthor,
+              date: this.psychologistCommentDate
+            });
+          }
+        },
+        error: (error) => {
+          console.error('Error loading attempt:', error);
+        }
+      });
+
+      // Then get the full results
       this.testService.getAttemptResults(this.attemptId).subscribe({
         next: (response) => {
           console.log('Domino test results:', response);
@@ -156,8 +267,12 @@ export class DominoTestSectionComponent implements OnInit {
           this.isLoading = false;
         },
       });
-    }
-    console.log('test details aaaaaaaaaaaaaaaaaaaaaa:' , this.testAnalytics);
+    }    console.log('test details aaaaaaaaaaaaaaaaaaaaaa:', this.testAnalytics);
+    this.currentUser = this.authService.getCurrentUser();
+    console.log('Current user:', this.currentUser?.role);
+    
+    // Update this line to use the new method
+    this.showClassificationDropdown = this.canManuallyClassify();
   }
 
   private initializeData(data: any) {
@@ -187,6 +302,8 @@ export class DominoTestSectionComponent implements OnInit {
     this.percentageScore = attempt.percentageScore || 0;
     this.questionsAnswered = analytics.questionsAnswered || 0;
     this.skippedQuestions = analytics.questionsSkipped || 0;
+    this.halfCorrect = analytics.halfCorrectAnswers || 0;
+    this.flaggedQuestions = analytics.questionsFlagged || 0;
     this.inversedAnswers = questions.filter(
       (q: any) => q.response?.isReversed
     ).length;
@@ -209,8 +326,10 @@ export class DominoTestSectionComponent implements OnInit {
       fastestQuestion: this.getFastestQuestion(questions),
       slowestQuestion: this.getSlowestQuestion(questions),
     };
-    console.log("aaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA23:",this.testAnalytics);
-    
+    console.log(
+      "aaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA23:",
+      this.testAnalytics
+    );
 
     // Calculate performance level based on percentage score
     this.calculatePerformanceLevel();
@@ -219,6 +338,33 @@ export class DominoTestSectionComponent implements OnInit {
     this.initializeTimeChart(questions);
     this.initializeTreeMap();
     this.isLoading = false;
+
+    // // Initialize AI classification
+    // if (data.attempt.aiClassification?.prediction) {
+    //   this.aiClassification = data.attempt.aiClassification.prediction;
+    //   this.aiConfidence = data.attempt.aiClassification.confidence || 0;
+    // }
+
+    // // Initialize manual classification
+    // if (data.attempt.manualClassification?.classification) {
+    //   this.manualClassification = {
+    //     value: data.attempt.manualClassification.classification,
+    //     classifiedBy: data.attempt.manualClassification.classifiedBy || 'Unknown',
+    //     classifiedAt: new Date(data.attempt.manualClassification.classifiedAt),
+    //   };
+    //   this.showClassificationDropdown = false;
+    // }
+
+    // // Initialize AI comment
+    // if (data.attempt.aiComment?.comment) {
+    //   this.aiComment = data.attempt.aiComment.comment;
+    //   this.isAiAnalysisVisible = true;
+    // }
+
+    // // Initialize psychologist comment
+    // if (data.attempt.psychologistComment?.comment) {
+    //   this.psychologistComment = data.attempt.psychologistComment.comment;
+    // }
   }
   private calculatePerformanceLevel() {
     if (this.percentageScore >= 90) {
@@ -442,11 +588,423 @@ export class DominoTestSectionComponent implements OnInit {
     }, 100);
   }
 
-  handleReaction(commentIndex: number, isLike: boolean) {
-    if (isLike) {
-      this.aiComments[commentIndex].likes++;
-    } else {
-      this.aiComments[commentIndex].dislikes++;
+
+
+  async classifyPerformance() {
+    // Add some validation
+    if (!this.userPosition || !this.userEducation) {
+      console.error('Missing required user data', this.userEducation);
+      return;
+    }
+
+    const metrics: MetricsRequest = {
+      attemptId: this.attemptId,
+      test_type: this.testName,
+      questionsAnswered: this.questionsAnswered,
+      correct_answers: this.score,
+      timeSpent: this.testAnalytics.totalDuration || 0,
+      halfCorrect: this.halfCorrect || 0,
+      reversed: this.inversedAnswers || 0,
+      questionsSkipped: this.skippedQuestions || 0,
+      answerChanges: this.testAnalytics.questionsRevisited || 0,
+      flaggedQuestions: this.flaggedQuestions || 0,
+      desired_position: this.userPosition,
+      education_level: this.userEducation,
+    };
+
+    console.log('Sending metrics:', metrics);
+
+    try {
+      this.aiService.classify(metrics).subscribe({
+        next: (response: ClassificationResponse) => {
+          this.aiClassification = response.prediction;
+          this.aiConfidence = response.confidence;
+
+          // Update the attempt with the classification
+          this.testService
+            .updateAiClassification(this.attemptId, {
+              prediction: response.prediction,
+              confidence: response.confidence,
+              timestamp: new Date().toISOString(),
+            })
+            .subscribe({
+              next: (updateResponse) => {
+                console.log('Classification saved to attempt:', updateResponse);
+              },
+              error: (updateError) => {
+                console.error('Error saving classification to attempt:', updateError);
+              },
+            });
+        },
+        error: (error) => {
+          console.error('Error getting AI classification:', error);
+          alert('Failed to get AI classification. Please try again.');
+        },
+      });
+    } catch (error) {
+      console.error('Error in classifyPerformance:', error);
+    }
+  }  onClassificationSelect(classification: string) {
+    if (!classification || !this.canManuallyClassify()) {
+      console.error('Unauthorized attempt to classify or invalid classification');
+      return;
+    }
+
+    // Get the full user name, fallback to email or 'Unknown'
+    const userName = this.currentUser 
+      ? `${this.currentUser.firstName || ''} ${this.currentUser.lastName || ''}`.trim() 
+        || this.currentUser.email 
+        || 'Unknown User'
+      : 'Unknown User';
+
+    const classificationData: ManualClassification = {
+      value: classification,
+      classifiedBy: userName,
+      classifiedAt: new Date(),
+    };
+
+    this.testService
+      .updateManualClassification(this.attemptId, classification)
+      .subscribe({
+        next: (response) => {
+          this.manualClassification = classificationData;
+          this.showClassificationDropdown = false;
+          console.log('Manual classification updated successfully');
+        },
+        error: (error) => {
+          console.error('Error updating manual classification:', error);
+          // Handle error - maybe show a notification
+        },
+      });
+  }
+
+  // Utility method to format date for tooltip
+  formatClassificationDate(date: Date): string {
+    return new Date(date).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+  get formattedAiComment(): string {
+    if (!this.aiComment) return '';
+
+    return this.aiComment
+      // Replace headers (## Title) with styled h3 tags
+      .replace(/##\s*(.*?)(?=\n|$)/g, '<h3 class="text-xl font-bold text-blue-700 my-4 border-b-2 border-blue-200 pb-2">$1</h3>')
+      // Replace subheaders (### Subtitle) with styled h4 tags
+      .replace(/###\s*(.*?)(?=\n|$)/g, '<h4 class="text-lg font-semibold text-gray-800 my-3">$1</h4>')
+      // Replace **text** with strong tags
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+      // Replace *text* with emphasized text
+      .replace(/\*(.*?)\*/g, '<em class="italic text-gray-700">$1</em>')
+      // Replace bullet points (- item) with styled list items
+      .replace(/^- (.+)$/gm, '<div class="flex items-start my-2"><span class="text-blue-500 mr-2">•</span><span class="text-gray-700">$1</span></div>')
+      // Replace numbered lists (1. item) with styled list items
+      .replace(/^\d+\.\s(.+)$/gm, '<div class="flex items-start my-2"><span class="text-blue-500 font-semibold mr-2">•</span><span class="text-gray-700">$1</span></div>')
+      // Replace specific sections with custom styling
+      .replace(/Assessment Summary:/gi, '<h3 class="text-xl font-bold text-blue-700 my-4 border-b-2 border-blue-200 pb-2">📊 Assessment Summary</h3>')
+      .replace(/Recommendation:/gi, '<h3 class="text-xl font-bold text-green-700 my-4 border-b-2 border-green-200 pb-2">💡 Recommendation</h3>')
+      .replace(/Performance Analysis:/gi, '<h3 class="text-xl font-bold text-purple-700 my-4 border-b-2 border-purple-200 pb-2">📈 Performance Analysis</h3>')
+      .replace(/Key Insights:/gi, '<h3 class="text-xl font-bold text-indigo-700 my-4 border-b-2 border-indigo-200 pb-2">🔍 Key Insights</h3>')
+      // Replace double newlines with proper paragraph spacing
+      .replace(/\n\n/g, '</p><p class="mb-4 text-gray-700 leading-relaxed">')
+      // Replace single newlines with br tags
+      .replace(/\n/g, '<br>')
+      // Wrap the entire content in paragraph tags
+      .replace(/^(.*)$/s, '<p class="mb-4 text-gray-700 leading-relaxed">$1</p>')
+      // Clean up empty paragraphs
+      .replace(/<p class="mb-4 text-gray-700 leading-relaxed"><\/p>/g, '');
+  }
+  async generateReport() {
+    if (!this.userPosition || !this.userEducation) {
+      console.error('Missing required user data');
+      return;
+    }
+
+    if (!this.hasAccessToAnalytics()) {
+      console.error('Unauthorized attempt to generate AI analysis');
+      return;
+    }
+
+    this.isLoadingAnalysis = true;
+    const metrics: MetricsRequest = {
+      attemptId: this.attemptId,
+      test_type: this.testName,
+      questionsAnswered: this.questionsAnswered,
+      correct_answers: this.score,
+      timeSpent: this.testAnalytics.totalDuration || 0,
+      halfCorrect: this.halfCorrect || 0,
+      reversed: this.inversedAnswers || 0,
+      questionsSkipped: this.skippedQuestions || 0,
+      answerChanges: this.testAnalytics.questionsRevisited || 0,
+      flaggedQuestions: this.flaggedQuestions || 0,
+      desired_position: this.userPosition,
+      education_level: this.userEducation,
+    };    try {
+      this.aiService.analyze(metrics).subscribe({
+        next: (response) => {
+          // Remove <think> tags if present in the response
+          this.aiComment = response.ai_analysis.replace(/<think>.*?<\/think>/g, '').trim();
+
+          // Reset feedback state for new analysis
+          this.feedbackSubmitted = false;
+          this.showFeedbackSection = false;
+          this.feedbackText = '';
+
+          this.testService.updateAiComment(this.attemptId, this.aiComment)
+            .subscribe({
+              next: (updateResponse) => {
+                console.log('AI analysis saved:', updateResponse);
+                this.isLoadingAnalysis = false;
+                this.isAiAnalysisVisible = true;
+              },
+              error: (updateError) => {
+                console.error('Error saving AI analysis:', updateError);
+                this.isLoadingAnalysis = false;
+              }
+            });
+        },
+        error: (error) => {
+          console.error('Error getting AI analysis:', error);
+          alert('Failed to generate AI report. Please try again.');
+          this.isLoadingAnalysis = false;
+        }      });
+    } catch (error) {
+      console.error('Error in generateReport:', error);
+      this.isLoadingAnalysis = false;
+    }
+  }
+
+  // Add method to submit psychologist comment
+  async submitPsychologistComment() {
+    if (!this.draftPsychologistComment.trim() || !this.canAddPsychologistComment()) {
+      console.error('Unauthorized attempt to add comment or empty comment');
+      return;
+    }
+
+    this.isSavingComment = true;
+    try {
+      // Save to main database via test service
+      await this.testService.updatePsychologistComment(
+        this.attemptId,
+        this.draftPsychologistComment
+      ).toPromise();
+
+      // Also send to AI service for RAG storage
+      const metrics: MetricsRequest = {
+        attemptId: this.attemptId,
+        test_type: this.testName,
+        questionsAnswered: this.questionsAnswered,
+        correct_answers: this.score,
+        timeSpent: this.testAnalytics.totalDuration || 0,
+        halfCorrect: this.halfCorrect || 0,
+        reversed: this.inversedAnswers || 0,
+        questionsSkipped: this.skippedQuestions || 0,
+        answerChanges: this.testAnalytics.questionsRevisited || 0,
+        flaggedQuestions: this.flaggedQuestions || 0,
+        desired_position: this.userPosition,
+        education_level: this.userEducation,
+      };
+
+      // Send to AI service for RAG storage (don't wait for this to complete)
+      this.aiService.addPsychologistComment(metrics, this.draftPsychologistComment).subscribe({
+        next: (response) => {
+          console.log('Psychologist comment stored in RAG system:', response);
+        },
+        error: (error) => {
+          console.error('Error storing comment in RAG system:', error);
+          // Don't block the UI for RAG storage errors
+        }
+      });
+
+      // Update saved comment and clear draft after successful save
+      this.savedPsychologistComment = this.draftPsychologistComment;
+      this.draftPsychologistComment = '';
+      
+      // Set author and date for the newly saved comment
+      const userName = this.currentUser 
+        ? `${this.currentUser.firstName || ''} ${this.currentUser.lastName || ''}`.trim() 
+          || this.currentUser.email 
+          || 'Unknown User'
+        : 'Unknown User';
+      
+      this.psychologistCommentAuthor = userName;
+      this.psychologistCommentDate = new Date();
+      
+      this.isSavingComment = false;
+      console.log('Psychologist comment saved successfully');
+    } catch (error) {
+      console.error('Error saving psychologist comment:', error);
+      this.isSavingComment = false;
+      // Optionally show error message
+    }
+  }
+
+  // Add method to get classification styling based on level
+  getClassificationStyle(classification: string): string {
+    switch (classification.toLowerCase()) {
+      case 'très fort':
+      case 'very strong':
+        return 'bg-gradient-to-r from-green-500 to-green-600 border-green-400';
+      case 'fort':
+      case 'strong':
+        return 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-400';
+      case 'moyen':
+      case 'average':
+        return 'bg-gradient-to-r from-yellow-500 to-yellow-600 border-yellow-400';
+      case 'faible':
+      case 'weak':
+        return 'bg-gradient-to-r from-orange-500 to-orange-600 border-orange-400';
+      case 'très faible':
+      case 'very weak':
+        return 'bg-gradient-to-r from-red-500 to-red-600 border-red-400';
+      default:
+        return 'bg-gradient-to-r from-gray-500 to-gray-600 border-gray-400';
+    }
+  }
+
+  // Add method to translate French classifications to English
+  translateClassification(classification: string): string {
+    const translations: { [key: string]: string } = {
+      'très fort': 'Very Strong',
+      'fort': 'Strong',
+      'moyen': 'Average',
+      'faible': 'Weak',
+      'très faible': 'Very Weak'
+    };
+    
+    return translations[classification.toLowerCase()] || classification;
+  }
+
+  // Helper method to format psychologist comment date
+  formatPsychologistCommentDate(date: Date | null): string {
+    if (!date) return 'Unknown date';
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // Role-based permission methods
+  canManuallyClassify(): boolean {
+    return this.currentUser?.role === 'psychologist' && !this.manualClassification;
+  }
+
+  canAddPsychologistComment(): boolean {
+    return this.currentUser?.role === 'psychologist' && !this.savedPsychologistComment;
+  }
+
+  canViewClassificationDetails(): boolean {
+    return this.currentUser?.role === 'psychologist' || this.currentUser?.role === 'admin';
+  }
+
+  isPsychologist(): boolean {
+    return this.currentUser?.role === 'psychologist';
+  }
+
+  isAdmin(): boolean {
+    return this.currentUser?.role === 'admin';
+  }
+
+  hasAccessToAnalytics(): boolean {
+    return this.isPsychologist() || this.isAdmin();
+  }
+
+  // Get user role display name
+  getUserRoleDisplay(): string {
+    switch (this.currentUser?.role) {
+      case 'psychologist':
+        return 'Psychologist';
+      case 'admin':
+        return 'Administrator';
+      case 'hr':
+        return 'HR Manager';
+      case 'candidate':
+        return 'Candidate';
+      default:
+        return 'User';
+    }
+  }
+
+  // Get permission message for restricted actions
+  getPermissionMessage(action: string): string {
+    switch (action) {
+      case 'classify':
+        return 'Only psychologists can manually classify test results';
+      case 'comment':
+        return 'Only psychologists can add professional analysis';
+      case 'generate':
+        return 'Only authorized personnel can generate AI analysis';
+      default:
+        return 'You do not have permission to perform this action';
+    }
+  }
+
+  // Check if user can view sensitive analytics
+  canViewDetailedAnalytics(): boolean {
+    return this.hasAccessToAnalytics();
+  }
+
+  // Feedback methods
+  toggleFeedbackSection(): void {
+    this.showFeedbackSection = !this.showFeedbackSection;
+    if (!this.showFeedbackSection) {
+      this.feedbackText = '';
+      this.feedbackSubmitted = false;
+    }
+  }
+
+  async submitFeedback(isGood: boolean): Promise<void> {
+    if (!this.aiComment) {
+      console.error('No AI comment to provide feedback on');
+      return;
+    }
+
+    this.isSubmittingFeedback = true;
+
+    const metrics: MetricsRequest = {
+      attemptId: this.attemptId,
+      test_type: this.testName,
+      questionsAnswered: this.questionsAnswered,
+      correct_answers: this.score,
+      timeSpent: this.testAnalytics.totalDuration || 0,
+      halfCorrect: this.halfCorrect || 0,
+      reversed: this.inversedAnswers || 0,
+      questionsSkipped: this.skippedQuestions || 0,
+      answerChanges: this.testAnalytics.questionsRevisited || 0,
+      flaggedQuestions: this.flaggedQuestions || 0,
+      desired_position: this.userPosition,
+      education_level: this.userEducation,
+    };
+
+    try {
+      await this.aiService.provideFeedback(
+        metrics,
+        this.aiComment,
+        isGood,
+        this.feedbackText
+      ).toPromise();
+
+      this.feedbackSubmitted = true;
+      this.showFeedbackSection = false;
+      this.feedbackText = '';
+      
+      console.log('Feedback submitted successfully');
+      
+      // Optionally show a success message
+      // You could add a toast notification here
+      
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      // Optionally show an error message
+    } finally {
+      this.isSubmittingFeedback = false;
     }
   }
 }

@@ -36,6 +36,11 @@ const TestSchema = new Schema(
       required: true,
       default: "medium",
     },
+    isOptional: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
     isActive: {
       type: Boolean,
       default: true,

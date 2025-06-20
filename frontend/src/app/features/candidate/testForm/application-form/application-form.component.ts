@@ -4,6 +4,9 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
+  AbstractControl,
+  ValidationErrors,
+  ValidatorFn,
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -37,6 +40,32 @@ import { SelectModule } from 'primeng/select';
 import { AvatarModule } from 'primeng/avatar';
 
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
+
+// Custom validator for age 18+
+export function ageValidator(minAge: number = 18): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) {
+      return null; // Let the required validator handle empty values
+    }
+
+    const birthDate = new Date(control.value);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    // Check if birthday hasn't occurred yet this year
+    const actualAge =
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+        ? age - 1
+        : age;
+
+    return actualAge < minAge
+      ? { minAge: { requiredAge: minAge, actualAge } }
+      : null;
+  };
+}
+
 @Component({
   selector: 'app-application-form',
   templateUrl: './application-form.component.html',
@@ -72,6 +101,7 @@ export class ApplicationFormComponent implements OnInit {
   companyInfoForm!: FormGroup; // New form for company information
   submitting = false;
   maxDate = new Date(); // For date of birth - can't be future date
+  minDate = new Date(); // For date of birth - minimum age 18
 
   // Profile picture handling
   profilePictureFile: File | undefined;
@@ -83,7 +113,6 @@ export class ApplicationFormComponent implements OnInit {
   genderOptions = [
     { label: 'Male', value: 'Male' },
     { label: 'Female', value: 'Female' },
-    { label: 'Other', value: 'Other' },
   ];
 
   educationOptions = [
@@ -95,7 +124,47 @@ export class ApplicationFormComponent implements OnInit {
     { label: 'Professional Certification', value: 'certification' },
   ];
 
-  availabilityOptions: any[] = []; // Déplacer la déclaration sans initialisation
+  availabilityOptions = [
+    { label: 'Immediately', value: 'immediately' },
+    { label: 'Within 1 week', value: 'one_week' },
+    { label: 'Within 2 weeks', value: 'two_weeks' },
+    { label: 'Within a month', value: 'one_month' },
+  ];
+
+  // Company information options
+  jobPositionOptions = [
+    { label: 'Software Engineer', value: 'software_engineer' },
+    { label: 'Frontend Developer', value: 'frontend_developer' },
+    { label: 'Backend Developer', value: 'backend_developer' },
+    { label: 'Full Stack Developer', value: 'fullstack_developer' },
+    { label: 'DevOps Engineer', value: 'devops_engineer' },
+    { label: 'Data Scientist', value: 'data_scientist' },
+    { label: 'Project Manager', value: 'project_manager' },
+    { label: 'UI/UX Designer', value: 'ui_ux_designer' },
+    { label: 'Quality Assurance Engineer', value: 'qa_engineer' },
+    { label: 'Business Analyst', value: 'business_analyst' },
+    { label: 'Product Manager', value: 'product_manager' },
+    { label: 'System Administrator', value: 'system_admin' },
+  ];
+
+  companyOptions = [
+    { label: 'Cofat Brazil', value: 'cofat_brazil' },
+    { label: 'Cofat Tunisia', value: 'cofat_tunisia' },
+    { label: 'Cofat Germany', value: 'cofat_germany' },
+  ];
+
+  departmentOptions = [
+    { label: 'Engineering', value: 'engineering' },
+    { label: 'Information Technology', value: 'it' },
+    { label: 'Human Resources', value: 'hr' },
+    { label: 'Marketing', value: 'marketing' },
+    { label: 'Sales', value: 'sales' },
+    { label: 'Finance', value: 'finance' },
+    { label: 'Operations', value: 'operations' },
+    { label: 'Research & Development', value: 'rd' },
+    { label: 'Quality Assurance', value: 'qa' },
+    { label: 'Customer Support', value: 'support' },
+  ];
 
   @ViewChild('fileUpload') fileUpload: any;
 
@@ -107,9 +176,17 @@ export class ApplicationFormComponent implements OnInit {
     private messageService: MessageService,
     private translate: TranslateService
   ) {}
-
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
+
+    // Set minimum date for 18+ validation (18 years ago from today)
+    this.minDate = new Date();
+    this.minDate.setFullYear(this.minDate.getFullYear() - 100); // Allow up to 100 years old
+
+    // Set maximum date for 18+ validation (18 years ago from today)
+    this.maxDate = new Date();
+    this.maxDate.setFullYear(this.maxDate.getFullYear() - 18);
+
     this.initializeForms();
 
     // Initialiser les options dans ngOnInit
@@ -161,7 +238,7 @@ export class ApplicationFormComponent implements OnInit {
         this.currentUser?.dateOfBirth
           ? new Date(this.currentUser?.dateOfBirth)
           : null,
-        Validators.required,
+        [Validators.required, ageValidator(18)], // Updated with custom validator
       ],
     });
 
@@ -189,12 +266,35 @@ export class ApplicationFormComponent implements OnInit {
       department: [''],
       additionalInfo: [''],
     });
-  }
-
-  // Profile picture handling methods
+  } // Profile picture handling methods
   onProfilePictureSelect(event: any): void {
     if (event.currentFiles && event.currentFiles.length > 0) {
-      this.profilePictureFile = event.currentFiles[0];
+      const selectedFile = event.currentFiles[0];
+
+      // Check file size (1MB = 1,000,000 bytes)
+      if (selectedFile.size > 1000000) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'File Too Large',
+          detail: `File size (${this.formatSize(
+            selectedFile.size
+          )}) exceeds the maximum limit of 1MB. Please select a smaller image.`,
+          life: 5000,
+        });
+
+        // Clear the file upload
+        if (this.fileUpload && this.fileUpload.clear) {
+          this.fileUpload.clear();
+        }
+
+        // Reset file variables
+        this.profilePictureFile = undefined;
+        this.profilePicturePreview = null;
+        this.uploadProgress = 0;
+        return;
+      }
+
+      this.profilePictureFile = selectedFile;
 
       // Create preview
       if (this.profilePictureFile) {
@@ -206,9 +306,14 @@ export class ApplicationFormComponent implements OnInit {
 
         // Show success message
         this.messageService.add({
-          severity: 'info',
+          severity: 'success',
           summary: 'File Selected',
-          detail: `Profile picture "${this.profilePictureFile.name}" selected successfully`,
+          detail: `Profile picture "${
+            this.profilePictureFile.name
+          }" (${this.formatSize(
+            this.profilePictureFile.size
+          )}) selected successfully`,
+          life: 3000,
         });
 
         this.uploadProgress = 100;
@@ -266,9 +371,7 @@ export class ApplicationFormComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver = false;
-  }
-
-  // Handle drop event
+  } // Handle drop event
   onDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -279,6 +382,24 @@ export class ApplicationFormComponent implements OnInit {
 
       // Check if it's an image
       if (file.type.startsWith('image/')) {
+        // Check file size (1MB = 1,000,000 bytes)
+        if (file.size > 1000000) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'File Too Large',
+            detail: `File size (${this.formatSize(
+              file.size
+            )}) exceeds the maximum limit of 1MB. Please select a smaller image.`,
+            life: 5000,
+          });
+
+          // Reset any existing file data
+          this.profilePictureFile = undefined;
+          this.profilePicturePreview = null;
+          this.uploadProgress = 0;
+          return;
+        }
+
         // Create a file list-like object that PrimeNG's FileUpload expects
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
@@ -316,12 +437,30 @@ export class ApplicationFormComponent implements OnInit {
     const option = this.educationOptions.find((e) => e.value === education);
     return option ? option.label : '';
   }
-
   get availabilityLabel(): string {
     const availability = this.jobInfoForm.get('availability')?.value;
     const option = this.availabilityOptions.find(
       (a) => a.value === availability
     );
+    return option ? option.label : '';
+  }
+
+  // New getter methods for company information labels
+  get jobPositionLabel(): string {
+    const jobPosition = this.companyInfoForm.get('jobPosition')?.value;
+    const option = this.jobPositionOptions.find((j) => j.value === jobPosition);
+    return option ? option.label : '';
+  }
+
+  get companyLabel(): string {
+    const company = this.companyInfoForm.get('company')?.value;
+    const option = this.companyOptions.find((c) => c.value === company);
+    return option ? option.label : '';
+  }
+
+  get departmentLabel(): string {
+    const department = this.companyInfoForm.get('department')?.value;
+    const option = this.departmentOptions.find((d) => d.value === department);
     return option ? option.label : '';
   }
 
@@ -383,7 +522,7 @@ export class ApplicationFormComponent implements OnInit {
           });
 
           setTimeout(() => {
-            this.router.navigate(['/dashboard']);
+            this.router.navigate(['/']);
           }, 2000);
         },
         error: (error) => {
@@ -397,6 +536,26 @@ export class ApplicationFormComponent implements OnInit {
         },
       });
   }
+
+  // Handle PrimeNG FileUpload error events (like file size exceeded)
+  onFileUploadError(event: any): void {
+    if (event.error && event.error.type === 'fileSize') {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'File Too Large',
+        detail: `File size exceeds the maximum limit of 1MB. Please select a smaller image.`,
+        life: 5000,
+      });
+    } else {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Upload Error',
+        detail: 'An error occurred while uploading the file. Please try again.',
+        life: 5000,
+      });
+    }
+  }
+
   // Helper for formatting file size
   formatSize(bytes: number): string {
     if (bytes === 0) {

@@ -89,7 +89,9 @@
 
                 <!-- Right side: Upload options -->
                 <div class="upload-options">
+
                   <h3 class="upload-options-title">{{ 'APPLICATION_FORM.OPTION' | translate }}</h3>
+
 
                   <!-- Hidden FileUpload component -->
                   <p-fileUpload
@@ -102,6 +104,7 @@
                     chooseLabel="Select Image"
                     styleClass="hidden-upload"
                     (onSelect)="onProfilePictureSelect($event)"
+                    (onError)="onFileUploadError($event)"
                   ></p-fileUpload>
 
                   <!-- Custom button that triggers the file upload -->
@@ -305,7 +308,6 @@
                       {{ 'ERRORS.REQUIRED' | translate }}
                     </small>
                   </div>
-
                   <!-- Date of Birth -->
                   <div class="field col-span-2">
                     <label
@@ -319,16 +321,30 @@
                       formControlName="dateOfBirth"
                       [showIcon]="true"
                       [maxDate]="maxDate"
+                      [minDate]="minDate"
                       dateFormat="dd/mm/yy"
                       styleClass="w-full"
                       [showButtonBar]="true"
+
                       [placeholder]="'APPLICATION_FORM.PERSONAL_INFO.DATE_OF_BIRTH' | translate"
+
                     ></p-datePicker>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(personalInfoForm, 'dateOfBirth')"
                     >
-                      {{ 'ERRORS.REQUIRED' | translate }}
+
+                      <span
+                        *ngIf="personalInfoForm.get('dateOfBirth')?.errors?.['required']"
+                      >
+                        {{ 'ERRORS.REQUIRED' | translate }}
+                      </span>
+                      <span
+                        *ngIf="personalInfoForm.get('dateOfBirth')?.errors?.['minAge']"
+                      >
+                        You must be at least 18 years old to apply
+                      </span>
+
                     </small>
                   </div>
                 </div>
@@ -388,6 +404,7 @@
                         pInputText
                         id="currentPosition"
                         formControlName="currentPosition"
+                        placeholder="Your current job title (e.g., Software Developer, Manager, Student)"
                         class="w-full"
                         [placeholder]="'APPLICATION_FORM.PROFESSIONAL_INFO.CURRENT_POSITION' | translate"
                       />
@@ -416,6 +433,7 @@
                         pInputText
                         id="desiredPosition"
                         formControlName="desiredPosition"
+                        placeholder="The position you dream of or want to achieve"
                         class="w-full"
                         [placeholder]="'APPLICATION_FORM.PROFESSIONAL_INFO.DESIRED_POSITION' | translate"
                       />
@@ -538,18 +556,18 @@
                     >
                       {{ 'APPLICATION_FORM.POSTE' | translate }} <span class="text-red-500">*</span>
                     </label>
-                    <div class="p-inputgroup w-full">
-                      <span class="p-inputgroup-addon">
-                        <i class="pi pi-id-card"></i>
-                      </span>
-                      <input
-                        pInputText
-                        id="jobPosition"
-                        formControlName="jobPosition"
-                        class="w-full"
-                        [placeholder]="'APPLICATION_FORM.POSTE' | translate"
-                      />
-                    </div>
+
+                    <p-select
+                      id="jobPosition"
+                      formControlName="jobPosition"
+                      [options]="jobPositionOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      [placeholder]="'APPLICATION_FORM.POSTE' | translate"
+                      [showClear]="true"
+                      styleClass="w-full"
+                    ></p-select>
+
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(companyInfoForm, 'jobPosition')"
@@ -566,18 +584,18 @@
                     >
                       {{ 'APPLICATION_FORM.ENTREPRISE' | translate }} <span class="text-red-500">*</span>
                     </label>
-                    <div class="p-inputgroup w-full">
-                      <span class="p-inputgroup-addon">
-                        <i class="pi pi-building"></i>
-                      </span>
-                      <input
-                        pInputText
-                        id="company"
-                        formControlName="company"
-                        class="w-full"
-                        [placeholder]="'APPLICATION_FORM.ENTREPRISE' | translate"
-                      />
-                    </div>
+
+                    <p-select
+                      id="company"
+                      formControlName="company"
+                      [options]="companyOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                       [placeholder]="'APPLICATION_FORM.ENTREPRISE' | translate"
+                      [showClear]="true"
+                      styleClass="w-full"
+                    ></p-select>
+
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(companyInfoForm, 'company')"
@@ -594,18 +612,18 @@
                     >
                       {{ 'APPLICATION_FORM.DEPARTEMENT' | translate }}
                     </label>
-                    <div class="p-inputgroup w-full">
-                      <span class="p-inputgroup-addon">
-                        <i class="pi pi-sitemap"></i>
-                      </span>
-                      <input
-                        pInputText
-                        id="department"
-                        formControlName="department"
-                        class="w-full"
-                        [placeholder]="'APPLICATION_FORM.DEPARTEMENT_DESC' | translate"
-                      />
-                    </div>
+
+                    <p-select
+                      id="department"
+                      formControlName="department"
+                      [options]="departmentOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      [placeholder]="'APPLICATION_FORM.DEPARTEMENT_DESC' | translate"
+                      [showClear]="true"
+                      styleClass="w-full"
+                    ></p-select>
+
                   </div>
 
                   <!-- Additional Info -->
@@ -803,21 +821,22 @@
                       <i class="pi pi-building mr-2"></i>{{ 'APPLICATION_FORM.SUMMARY.COMPANY_INFO' | translate }}
                     </h3>
                     <p-divider></p-divider>
-
                     <div class="grid grid-cols-1 gap-2">
                       <div class="flex justify-between">
+
                         <span class="font-medium">{{ 'APPLICATION_FORM.SUMMARY.JOB_POSITION' | translate }}:</span>
-                        <span>{{ companyInfoForm.get("jobPosition")?.value }}</span>
+                        <span>{{ jobPositionLabel }}</span>
                       </div>
 
                       <div class="flex justify-between">
                         <span class="font-medium">{{ 'APPLICATION_FORM.SUMMARY.COMPANY' | translate }}:</span>
-                        <span>{{ companyInfoForm.get("company")?.value }}</span>
+                        <span>{{ companyLabel }}</span>
                       </div>
 
                       <div class="flex justify-between">
                         <span class="font-medium">{{ 'APPLICATION_FORM.SUMMARY.DEPARTMENT' | translate }}:</span>
-                        <span>{{ companyInfoForm.get("department")?.value || ('APPLICATION_FORM.SUMMARY.NOT_SPECIFIED' | translate) }}</span>
+                        <span>{{ departmentLabel || "Not specified" }}</span>
+
                       </div>
                     </div>
 
