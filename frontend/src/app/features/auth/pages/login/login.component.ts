@@ -18,6 +18,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-login',
@@ -33,6 +34,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     MatCheckboxModule,
     MatProgressSpinnerModule,
     MatDividerModule,
+    TranslateModule,
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],

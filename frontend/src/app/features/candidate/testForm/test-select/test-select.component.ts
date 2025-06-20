@@ -10,6 +10,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { User, UserResponse } from '../../../../core/models/user.model';
 import { TestsListComponent } from "../../DominoTest/pages/tests-list/tests-list.component";
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   imports: [
@@ -19,7 +20,9 @@ import { TestsListComponent } from "../../DominoTest/pages/tests-list/tests-list
     ToastModule,
     DialogModule,
     ProgressSpinnerModule,
-    TestsListComponent
+    TestsListComponent,
+    TranslateModule,
+    
 ],
   selector: 'app-test-select',
   templateUrl: './test-select.component.html',

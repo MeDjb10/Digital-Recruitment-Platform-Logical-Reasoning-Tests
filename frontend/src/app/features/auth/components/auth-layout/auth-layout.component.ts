@@ -2,12 +2,13 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
 import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-auth-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, MatIcon,RouterLink],
+  imports: [CommonModule, RouterOutlet, MatIcon, RouterLink, TranslateModule],
   templateUrl: './auth-layout.component.html',
   styleUrl: './auth-layout.component.css',
 })

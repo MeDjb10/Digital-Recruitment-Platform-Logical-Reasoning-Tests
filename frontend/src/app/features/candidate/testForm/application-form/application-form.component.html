@@ -6,19 +6,15 @@
     <span
       class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold mb-2 animate-bounce"
     >
-      <i class="pi pi-file-edit mr-1"></i>Test Authorization Request
+      <i class="pi pi-file-edit mr-1"></i>{{ 'APPLICATION_FORM.DEMANDE_AUTORISATION' | translate }}
     </span>
-    <h1 class="text-3xl font-bold text-blue-800 mb-2">Application Form</h1>
+    <h1 class="text-3xl font-bold text-blue-800 mb-2">{{ 'APPLICATION_FORM.FORMULAIRE_INSCRIPTION' | translate }}</h1>
     <p class="text-gray-600">
-      Complete your profile to request permission for the assessment test
+      {{ 'APPLICATION_FORM.COMPLETER_PROFIL' | translate }}
     </p>
     <div class="relative mx-auto">
-      <div
-        class="h-1 w-24 bg-red-500 rounded-full mx-auto mt-4 shadow-sm"
-      ></div>
-      <div
-        class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-8 h-2 bg-red-400 rounded-full opacity-40 blur-sm"
-      ></div>
+      <div class="h-1 w-24 bg-red-500 rounded-full mx-auto mt-4 shadow-sm"></div>
+      <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-8 h-2 bg-red-400 rounded-full opacity-40 blur-sm"></div>
     </div>
   </div>
 
@@ -26,13 +22,14 @@
   <div class="card flex justify-center">
     <p-stepper [value]="1" class="w-full max-w-4xl">
       <p-step-list>
-        <p-step [value]="1">Profile Picture</p-step>
-        <p-step [value]="2">Personal Info</p-step>
-        <p-step [value]="3">Professional Info</p-step>
-        <p-step [value]="4">Company Info</p-step>
-        <p-step [value]="5">Confirmation</p-step>
+        <p-step [value]="1">{{ 'APPLICATION_FORM.PHOTO' | translate }}</p-step>
+        <p-step [value]="2">{{ 'APPLICATION_FORM.INFORMATION_PERSONNELLE' | translate }}</p-step>
+        <p-step [value]="3">{{ 'APPLICATION_FORM.INFORMATION_PROFESSIONNELLE' | translate }}</p-step>
+        <p-step [value]="4">{{ 'APPLICATION_FORM.INFORMATIONS_ENTREPRISE' | translate }}</p-step>
+        <p-step [value]="5">{{ 'APPLICATION_FORM.CONFIRMATION' | translate }}</p-step>
       </p-step-list>
 
+      <!-- Step content panels -->
       <p-step-panels>
         <!-- Step 1: Profile Picture -->
         <p-step-panel [value]="1">
@@ -40,10 +37,10 @@
             <p-card styleClass="shadow-lg">
               <div class="text-center mb-5">
                 <h2 class="text-2xl font-bold text-blue-800">
-                  Profile Picture
+                  {{ 'APPLICATION_FORM.PHOTO' | translate }}
                 </h2>
                 <p class="text-gray-600 mt-2">
-                  Upload a professional photo for your profile
+                  {{ 'APPLICATION_FORM.TELECHARGEMENT_PHOTO' | translate }}
                 </p>
                 <div
                   class="w-32 h-1 bg-blue-500 mx-auto mt-3 rounded-full"
@@ -92,7 +89,10 @@
 
                 <!-- Right side: Upload options -->
                 <div class="upload-options">
-                  <h3 class="upload-options-title">Upload Options</h3>
+
+                  <h3 class="upload-options-title">{{ 'APPLICATION_FORM.OPTION' | translate }}</h3>
+
+
                   <!-- Hidden FileUpload component -->
                   <p-fileUpload
                     #fileUpload
@@ -114,7 +114,7 @@
                     (click)="triggerFileInput()"
                   >
                     <i class="pi pi-image mr-2"></i>
-                    Browse Photos
+                    {{ 'APPLICATION_FORM.CHOIX_PHOTO' | translate }}
                   </button>
 
                   <p class="upload-divider"><span>or</span></p>
@@ -133,7 +133,7 @@
                     (keydown.enter)="triggerFileInput()"
                   >
                     <i class="pi pi-cloud-upload"></i>
-                    <p>Drag &amp; Drop Image Here</p>
+                    <p>{{ 'APPLICATION_FORM.DEPOT_IMAGE' | translate }}</p>
                   </div>
 
                   <!-- Remove button for when an image is selected -->
@@ -170,25 +170,23 @@
               >
                 <div class="guidelines-title">
                   <i class="pi pi-info-circle"></i>
-                  <h3>Profile Picture Guidelines</h3>
+                  <h3>{{ 'APPLICATION_FORM.CONSIGNES_PHOTO' | translate }}</h3>
                 </div>
                 <ul class="guidelines-list text-gray-600">
-                  <li>Upload a clear, professional headshot</li>
-                  <li>Use a neutral background</li>
-                  <li>Ensure your face is clearly visible</li>
-                  <li>Maximum file size: 1MB</li>
+                  <li>{{ 'APPLICATION_FORM.PHOTO_GUIDELINES.ARRIERE_PLAN' | translate }}</li>
+                  <li>{{ 'APPLICATION_FORM.PHOTO_GUIDELINES.VISAGE_VISIBLE' | translate }}</li>
+                  <li>{{ 'APPLICATION_FORM.PHOTO_GUIDELINES.TAILLE' | translate }}</li>
                 </ul>
               </div>
 
-              <!-- Navigation with improved styling -->
+              <!-- Navigation -->
               <div class="flex pt-4 justify-end">
                 <p-button
-                  label="Next"
+                  label="{{ 'APPLICATION_FORM.SUIVANT' | translate }}"
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   (onClick)="activateCallback(2)"
-                  styleClass="p-button-raised p-button-primary"
-                  [disabled]="!profilePictureFile"
+                  styleClass="p-button-raised"
                 ></p-button>
               </div>
             </p-card>
@@ -207,7 +205,7 @@
                       for="firstName"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      First Name <span class="text-red-500">*</span>
+                      {{ 'APPLICATION_FORM.PERSONAL_INFO.FIRST_NAME' | translate }} <span class="text-red-500">*</span>
                     </label>
                     <div class="p-inputgroup w-full">
                       <span class="p-inputgroup-addon">
@@ -218,13 +216,14 @@
                         id="firstName"
                         formControlName="firstName"
                         class="w-full"
+                        [placeholder]="'APPLICATION_FORM.PERSONAL_INFO.FIRST_NAME' | translate"
                       />
                     </div>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(personalInfoForm, 'firstName')"
                     >
-                      First name is required
+                      {{ 'ERRORS.REQUIRED' | translate }}
                     </small>
                   </div>
 
@@ -234,7 +233,7 @@
                       for="lastName"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Last Name <span class="text-red-500">*</span>
+                      {{ 'APPLICATION_FORM.PERSONAL_INFO.LAST_NAME' | translate }} <span class="text-red-500">*</span>
                     </label>
                     <div class="p-inputgroup w-full">
                       <span class="p-inputgroup-addon">
@@ -245,13 +244,14 @@
                         id="lastName"
                         formControlName="lastName"
                         class="w-full"
+                        [placeholder]="'APPLICATION_FORM.PERSONAL_INFO.LAST_NAME' | translate"
                       />
                     </div>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(personalInfoForm, 'lastName')"
                     >
-                      Last name is required
+                      {{ 'ERRORS.REQUIRED' | translate }}
                     </small>
                   </div>
 
@@ -261,7 +261,7 @@
                       for="email"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Email <span class="text-red-500">*</span>
+                      {{ 'APPLICATION_FORM.PERSONAL_INFO.EMAIL' | translate }} <span class="text-red-500">*</span>
                     </label>
                     <div class="p-inputgroup w-full">
                       <span class="p-inputgroup-addon">
@@ -272,13 +272,14 @@
                         id="email"
                         formControlName="email"
                         class="w-full"
+                        [placeholder]="'APPLICATION_FORM.PERSONAL_INFO.EMAIL' | translate"
                       />
                     </div>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(personalInfoForm, 'email')"
                     >
-                      Valid email is required
+                      {{ 'ERRORS.INVALID_EMAIL' | translate }}
                     </small>
                   </div>
 
@@ -288,7 +289,7 @@
                       for="gender"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Gender <span class="text-red-500">*</span>
+                      {{ 'APPLICATION_FORM.PERSONAL_INFO.GENDER' | translate }} <span class="text-red-500">*</span>
                     </label>
                     <p-select
                       id="gender"
@@ -296,7 +297,7 @@
                       [options]="genderOptions"
                       optionLabel="label"
                       optionValue="value"
-                      placeholder="Select Gender"
+                      [placeholder]="'APPLICATION_FORM.PERSONAL_INFO.GENDER' | translate"
                       [showClear]="true"
                       styleClass="w-full"
                     ></p-select>
@@ -304,7 +305,7 @@
                       class="text-red-500"
                       *ngIf="isFieldInvalid(personalInfoForm, 'gender')"
                     >
-                      Gender is required
+                      {{ 'ERRORS.REQUIRED' | translate }}
                     </small>
                   </div>
                   <!-- Date of Birth -->
@@ -313,7 +314,7 @@
                       for="dateOfBirth"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Date of Birth <span class="text-red-500">*</span>
+                      {{ 'APPLICATION_FORM.PERSONAL_INFO.DATE_OF_BIRTH' | translate }} <span class="text-red-500">*</span>
                     </label>
                     <p-datePicker
                       id="dateOfBirth"
@@ -324,51 +325,52 @@
                       dateFormat="dd/mm/yy"
                       styleClass="w-full"
                       [showButtonBar]="true"
-                      placeholder="Select Date (You must be 18 or older)"
+
+                      [placeholder]="'APPLICATION_FORM.PERSONAL_INFO.DATE_OF_BIRTH' | translate"
+
                     ></p-datePicker>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(personalInfoForm, 'dateOfBirth')"
                     >
+
                       <span
                         *ngIf="personalInfoForm.get('dateOfBirth')?.errors?.['required']"
                       >
-                        Date of birth is required
+                        {{ 'ERRORS.REQUIRED' | translate }}
                       </span>
                       <span
                         *ngIf="personalInfoForm.get('dateOfBirth')?.errors?.['minAge']"
                       >
                         You must be at least 18 years old to apply
                       </span>
+
                     </small>
                   </div>
                 </div>
               </form>
-              <div
-                class="bg-blue-50 p-4 rounded-lg mt-4 flex items-start border-l-4 border-blue-500 shadow-sm"
-              >
+              <div class="bg-blue-50 p-4 rounded-lg mt-4 flex items-start border-l-4 border-blue-500 shadow-sm">
                 <i class="pi pi-info-circle text-blue-500 mr-3 text-xl"></i>
                 <div>
                   <h4 class="text-blue-700 font-medium mb-1 text-sm">
-                    Why we ask for this information
+                    {{ 'APPLICATION_FORM.PERSONAL_INFO.WHY_WE_ASK' | translate }}
                   </h4>
                   <p class="text-sm text-gray-600">
-                    Your personal information helps us tailor the assessment to
-                    your profile and provide a personalized experience.
+                    {{ 'APPLICATION_FORM.PERSONAL_INFO.INFO_HELP' | translate }}
                   </p>
                 </div>
               </div>
               <!-- Navigation -->
               <div class="flex pt-4 justify-between">
                 <p-button
-                  label="Back"
+                  [label]="'BUTTONS.BACK' | translate"
                   icon="pi pi-arrow-left"
                   (onClick)="activateCallback(1)"
                   styleClass="p-button-outlined"
                 ></p-button>
 
                 <p-button
-                  label="Next"
+                  [label]="'BUTTONS.NEXT' | translate"
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   [disabled]="personalInfoForm.invalid"
@@ -392,7 +394,7 @@
                       for="currentPosition"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Current Position <span class="text-red-500">*</span>
+                      {{ 'APPLICATION_FORM.PROFESSIONAL_INFO.CURRENT_POSITION' | translate }} <span class="text-red-500">*</span>
                     </label>
                     <div class="p-inputgroup w-full">
                       <span class="p-inputgroup-addon">
@@ -404,13 +406,14 @@
                         formControlName="currentPosition"
                         placeholder="Your current job title (e.g., Software Developer, Manager, Student)"
                         class="w-full"
+                        [placeholder]="'APPLICATION_FORM.PROFESSIONAL_INFO.CURRENT_POSITION' | translate"
                       />
                     </div>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(jobInfoForm, 'currentPosition')"
                     >
-                      Current position is required
+                      {{ 'ERRORS.REQUIRED' | translate }}
                     </small>
                   </div>
 
@@ -420,7 +423,7 @@
                       for="desiredPosition"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Desired Position <span class="text-red-500">*</span>
+                      {{ 'APPLICATION_FORM.PROFESSIONAL_INFO.DESIRED_POSITION' | translate }} <span class="text-red-500">*</span>
                     </label>
                     <div class="p-inputgroup w-full">
                       <span class="p-inputgroup-addon">
@@ -432,13 +435,14 @@
                         formControlName="desiredPosition"
                         placeholder="The position you dream of or want to achieve"
                         class="w-full"
+                        [placeholder]="'APPLICATION_FORM.PROFESSIONAL_INFO.DESIRED_POSITION' | translate"
                       />
                     </div>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(jobInfoForm, 'desiredPosition')"
                     >
-                      Desired position is required
+                      {{ 'ERRORS.REQUIRED' | translate }}
                     </small>
                   </div>
 
@@ -448,7 +452,7 @@
                       for="educationLevel"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Education Level <span class="text-red-500">*</span>
+                      {{ 'APPLICATION_FORM.PROFESSIONAL_INFO.EDUCATION_LEVEL' | translate }} <span class="text-red-500">*</span>
                     </label>
                     <p-select
                       id="educationLevel"
@@ -456,7 +460,7 @@
                       [options]="educationOptions"
                       optionLabel="label"
                       optionValue="value"
-                      placeholder="Select Education Level"
+                      [placeholder]="'APPLICATION_FORM.PROFESSIONAL_INFO.EDUCATION_LEVEL' | translate"
                       [showClear]="true"
                       styleClass="w-full"
                     ></p-select>
@@ -464,7 +468,7 @@
                       class="text-red-500"
                       *ngIf="isFieldInvalid(jobInfoForm, 'educationLevel')"
                     >
-                      Education level is required
+                      {{ 'ERRORS.REQUIRED' | translate }}
                     </small>
                   </div>
 
@@ -474,7 +478,7 @@
                       for="availability"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Test Availability <span class="text-red-500">*</span>
+                      {{ 'APPLICATION_FORM.PROFESSIONAL_INFO.AVAILABILITY' | translate }} <span class="text-red-500">*</span>
                     </label>
                     <p-select
                       id="availability"
@@ -482,30 +486,27 @@
                       [options]="availabilityOptions"
                       optionLabel="label"
                       optionValue="value"
-                      placeholder="Select Availability"
+                      [placeholder]="'APPLICATION_FORM.PROFESSIONAL_INFO.AVAILABILITY' | translate"
                       styleClass="w-full"
                     ></p-select>
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(jobInfoForm, 'availability')"
                     >
-                      Availability is required
+                      {{ 'ERRORS.REQUIRED' | translate }}
                     </small>
                   </div>
                 </div>
               </form>
 
-              <div
-                class="bg-blue-50 p-4 rounded-lg mt-4 flex items-start border-l-4 border-blue-500 shadow-sm"
-              >
+              <div class="bg-blue-50 p-4 rounded-lg mt-4 flex items-start border-l-4 border-blue-500 shadow-sm">
                 <i class="pi pi-info-circle text-blue-500 mr-3 text-xl"></i>
                 <div>
                   <h4 class="text-blue-700 font-medium mb-1 text-sm">
-                    Professional Information
+                    {{ 'APPLICATION_FORM.PROFESSIONAL_INFO.TITLE' | translate }}
                   </h4>
                   <p class="text-sm text-gray-600">
-                    This information helps us understand your professional
-                    background and tailor the assessment accordingly.
+                    {{ 'APPLICATION_FORM.PROFESSIONAL_INFO.INFO_HELP' | translate }}
                   </p>
                 </div>
               </div>
@@ -513,14 +514,14 @@
               <!-- Navigation -->
               <div class="flex pt-4 justify-between">
                 <p-button
-                  label="Back"
+                  [label]="'BUTTONS.BACK' | translate"
                   icon="pi pi-arrow-left"
                   (onClick)="activateCallback(2)"
                   styleClass="p-button-outlined"
                 ></p-button>
 
                 <p-button
-                  label="Next"
+                  [label]="'BUTTONS.NEXT' | translate"
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   [disabled]="jobInfoForm.invalid"
@@ -538,10 +539,10 @@
             <p-card styleClass="shadow-lg">
               <div class="text-center mb-4">
                 <h2 class="text-xl font-semibold text-blue-800">
-                  Company Information
+                  {{ 'APPLICATION_FORM.INFORMATIONS_ENTREPRISE' | translate }}
                 </h2>
                 <p class="text-gray-600">
-                  Tell us about the company and position you're applying for
+                  {{ 'APPLICATION_FORM.INFORMATIONS_ENTREPRISE_AIDENT' | translate }}
                 </p>
               </div>
 
@@ -553,23 +554,25 @@
                       for="jobPosition"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Job Position <span class="text-red-500">*</span>
+                      {{ 'APPLICATION_FORM.POSTE' | translate }} <span class="text-red-500">*</span>
                     </label>
+
                     <p-select
                       id="jobPosition"
                       formControlName="jobPosition"
                       [options]="jobPositionOptions"
                       optionLabel="label"
                       optionValue="value"
-                      placeholder="Select Position"
+                      [placeholder]="'APPLICATION_FORM.POSTE' | translate"
                       [showClear]="true"
                       styleClass="w-full"
                     ></p-select>
+
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(companyInfoForm, 'jobPosition')"
                     >
-                      Job position is required
+                      {{ 'ERRORS.REQUIRED' | translate }}
                     </small>
                   </div>
 
@@ -579,23 +582,25 @@
                       for="company"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Company <span class="text-red-500">*</span>
+                      {{ 'APPLICATION_FORM.ENTREPRISE' | translate }} <span class="text-red-500">*</span>
                     </label>
+
                     <p-select
                       id="company"
                       formControlName="company"
                       [options]="companyOptions"
                       optionLabel="label"
                       optionValue="value"
-                      placeholder="Select Company"
+                       [placeholder]="'APPLICATION_FORM.ENTREPRISE' | translate"
                       [showClear]="true"
                       styleClass="w-full"
                     ></p-select>
+
                     <small
                       class="text-red-500"
                       *ngIf="isFieldInvalid(companyInfoForm, 'company')"
                     >
-                      Company name is required
+                      {{ 'ERRORS.REQUIRED' | translate }}
                     </small>
                   </div>
 
@@ -605,18 +610,20 @@
                       for="department"
                       class="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Department
+                      {{ 'APPLICATION_FORM.DEPARTEMENT' | translate }}
                     </label>
+
                     <p-select
                       id="department"
                       formControlName="department"
                       [options]="departmentOptions"
                       optionLabel="label"
                       optionValue="value"
-                      placeholder="Select Department (optional)"
+                      [placeholder]="'APPLICATION_FORM.DEPARTEMENT_DESC' | translate"
                       [showClear]="true"
                       styleClass="w-full"
                     ></p-select>
+
                   </div>
 
                   <!-- Additional Info -->
@@ -626,10 +633,11 @@
                     <div class="textarea-header">
                       <label for="additionalInfo" class="enhanced-label">
                         <i class="pi pi-align-left text-blue-600 mr-2"></i>
-                        Additional Information
+                        {{ 'APPLICATION_FORM.ADDITONAL_INFO' | translate }}
                       </label>
                       <span class="textarea-badge">
-                        <i class="pi pi-info-circle mr-1"></i>Optional
+                        <i class="pi pi-info-circle mr-1"></i>
+                        {{ 'APPLICATION_FORM.OPTIONAL' | translate }}
                       </span>
                     </div>
 
@@ -641,7 +649,7 @@
                         formControlName="additionalInfo"
                         class="enhanced-textarea"
                         rows="5"
-                        placeholder="Include any relevant details about your experience, skills, or special requirements for this position..."
+                        [placeholder]="'APPLICATION_FORM.ADDITIONAL_INFO_DESC' | translate"
                       ></textarea>
                       <div class="textarea-icon">
                         <i class="pi pi-pencil"></i>
@@ -652,10 +660,7 @@
                     <div class="textarea-footer">
                       <small class="textarea-hint">
                         <i class="pi pi-lightbulb text-yellow-500 mr-2"></i>
-                        <span
-                          >Include specific qualifications or motivations
-                          related to this position</span
-                        >
+                        <span>{{ 'APPLICATION_FORM.INCLURE_QUALIFICATION' | translate }}</span>
                       </small>
 
                       <span
@@ -678,11 +683,10 @@
                 <i class="pi pi-info-circle text-blue-500 mr-3 text-xl"></i>
                 <div>
                   <h4 class="text-blue-700 font-medium mb-1 text-sm">
-                    Why we need this information
+                    {{ 'APPLICATION_FORM.COMPANY_INFO.WHY_WE_ASK' | translate }}
                   </h4>
                   <p class="text-sm text-gray-600">
-                    This information helps us better understand the context of
-                    your application and identify appropriate assessment tests.
+                    {{ 'APPLICATION_FORM.COMPANY_INFO.INFO_HELP' | translate }}
                   </p>
                 </div>
               </div>
@@ -690,14 +694,14 @@
               <!-- Navigation -->
               <div class="flex pt-4 justify-between">
                 <p-button
-                  label="Back"
+                  [label]="'BUTTONS.BACK' | translate"
                   icon="pi pi-arrow-left"
                   (onClick)="activateCallback(3)"
                   styleClass="p-button-outlined"
                 ></p-button>
 
                 <p-button
-                  label="Next"
+                  [label]="'BUTTONS.NEXT' | translate"
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   [disabled]="companyInfoForm.invalid"
@@ -715,23 +719,21 @@
             <p-card styleClass="shadow-lg">
               <div class="mb-2">
                 <h2 class="text-2xl font-bold text-blue-800 mb-4 text-center">
-                  Application Summary
+                  {{ 'APPLICATION_FORM.SUMMARY.TITLE' | translate }}
                 </h2>
                 <p class="text-gray-600 mb-6 text-center">
-                  Please review your information before submitting the
-                  application
+                  {{ 'APPLICATION_FORM.SUMMARY.REVIEW_INFO' | translate }}
                 </p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <!-- Profile Picture Summary -->
-                  <div
-                    class="border rounded-lg p-4 bg-blue-50 flex flex-col items-center"
-                  >
+                  <div class="border rounded-lg p-4 bg-blue-50 flex flex-col items-center">
                     <h3 class="text-lg font-semibold mb-3 text-blue-700">
-                      <i class="pi pi-camera mr-2"></i>Profile Picture
+                      <i class="pi pi-camera mr-2"></i>{{ 'APPLICATION_FORM.SUMMARY.PROFILE_PICTURE' | translate }}
                     </h3>
                     <p-divider></p-divider>
 
+                    <!-- Profile picture preview section -->
                     <div
                       class="w-32 h-32 rounded-full border-2 border-blue-200 overflow-hidden mb-3 bg-gray-100 flex items-center justify-center"
                     >
@@ -754,46 +756,37 @@
                       {{ profilePictureFile.name }}<br />
                       {{ formatSize(profilePictureFile.size) }}
                     </p>
-                    <p
-                      *ngIf="!profilePictureFile"
-                      class="text-sm text-gray-600 text-center"
-                    >
-                      No profile picture uploaded
+                    <p *ngIf="!profilePictureFile" class="text-sm text-gray-600 text-center">
+                      {{ 'APPLICATION_FORM.SUMMARY.NO_PICTURE' | translate }}
                     </p>
                   </div>
 
                   <!-- Personal Information Summary -->
                   <div class="border rounded-lg p-4 bg-blue-50">
                     <h3 class="text-lg font-semibold mb-3 text-blue-700">
-                      <i class="pi pi-user mr-2"></i>Personal Information
+                      <i class="pi pi-user mr-2"></i>{{ 'APPLICATION_FORM.SUMMARY.PERSONAL_INFO' | translate }}
                     </h3>
                     <p-divider></p-divider>
 
                     <div class="grid grid-cols-1 gap-2">
                       <div class="flex justify-between">
-                        <span class="font-medium">Name:</span>
-                        <span
-                          >{{ personalInfoForm.get("firstName")?.value }}
-                          {{ personalInfoForm.get("lastName")?.value }}</span
-                        >
+                        <span class="font-medium">{{ 'APPLICATION_FORM.SUMMARY.NAME' | translate }}:</span>
+                        <span>{{ personalInfoForm.get("firstName")?.value }} {{ personalInfoForm.get("lastName")?.value }}</span>
                       </div>
 
                       <div class="flex justify-between">
-                        <span class="font-medium">Email:</span>
+                        <span class="font-medium">{{ 'APPLICATION_FORM.SUMMARY.EMAIL' | translate }}:</span>
                         <span>{{ personalInfoForm.get("email")?.value }}</span>
                       </div>
 
                       <div class="flex justify-between">
-                        <span class="font-medium">Gender:</span>
+                        <span class="font-medium">{{ 'APPLICATION_FORM.SUMMARY.GENDER' | translate }}:</span>
                         <span>{{ genderLabel }}</span>
                       </div>
 
                       <div class="flex justify-between">
-                        <span class="font-medium">Date of Birth:</span>
-                        <span>{{
-                          personalInfoForm.get("dateOfBirth")?.value
-                            | date : "dd/MM/yyyy"
-                        }}</span>
+                        <span class="font-medium">{{ 'APPLICATION_FORM.SUMMARY.DATE_OF_BIRTH' | translate }}:</span>
+                        <span>{{ personalInfoForm.get("dateOfBirth")?.value | date : "dd/MM/yyyy" }}</span>
                       </div>
                     </div>
                   </div>
@@ -803,22 +796,21 @@
                   <!-- Professional Information Summary -->
                   <div class="border rounded-lg p-4 bg-blue-50">
                     <h3 class="text-lg font-semibold mb-3 text-blue-700">
-                      <i class="pi pi-briefcase mr-2"></i>Professional
-                      Information
+                      <i class="pi pi-briefcase mr-2"></i>{{ 'APPLICATION_FORM.SUMMARY.PROFESSIONAL_INFO' | translate }}
                     </h3>
                     <p-divider></p-divider>
 
                     <div class="grid grid-cols-2 gap-y-2">
-                      <div class="font-semibold">Current Position:</div>
+                      <div class="font-semibold">{{ 'APPLICATION_FORM.SUMMARY.CURRENT_POSITION' | translate }}:</div>
                       <div>{{ jobInfoForm.get("currentPosition")?.value }}</div>
 
-                      <div class="font-semibold">Desired Position:</div>
+                      <div class="font-semibold">{{ 'APPLICATION_FORM.SUMMARY.DESIRED_POSITION' | translate }}:</div>
                       <div>{{ jobInfoForm.get("desiredPosition")?.value }}</div>
 
-                      <div class="font-semibold">Education Level:</div>
+                      <div class="font-semibold">{{ 'APPLICATION_FORM.SUMMARY.EDUCATION_LEVEL' | translate }}:</div>
                       <div>{{ educationLabel }}</div>
 
-                      <div class="font-semibold">Availability:</div>
+                      <div class="font-semibold">{{ 'APPLICATION_FORM.SUMMARY.AVAILABILITY' | translate }}:</div>
                       <div>{{ availabilityLabel }}</div>
                     </div>
                   </div>
@@ -826,31 +818,30 @@
                   <!-- Company Information Summary -->
                   <div class="border rounded-lg p-4 bg-blue-50">
                     <h3 class="text-lg font-semibold mb-3 text-blue-700">
-                      <i class="pi pi-building mr-2"></i>Company Information
+                      <i class="pi pi-building mr-2"></i>{{ 'APPLICATION_FORM.SUMMARY.COMPANY_INFO' | translate }}
                     </h3>
                     <p-divider></p-divider>
                     <div class="grid grid-cols-1 gap-2">
                       <div class="flex justify-between">
-                        <span class="font-medium">Job Position:</span>
+
+                        <span class="font-medium">{{ 'APPLICATION_FORM.SUMMARY.JOB_POSITION' | translate }}:</span>
                         <span>{{ jobPositionLabel }}</span>
                       </div>
 
                       <div class="flex justify-between">
-                        <span class="font-medium">Company:</span>
+                        <span class="font-medium">{{ 'APPLICATION_FORM.SUMMARY.COMPANY' | translate }}:</span>
                         <span>{{ companyLabel }}</span>
                       </div>
 
                       <div class="flex justify-between">
-                        <span class="font-medium">Department:</span>
+                        <span class="font-medium">{{ 'APPLICATION_FORM.SUMMARY.DEPARTMENT' | translate }}:</span>
                         <span>{{ departmentLabel || "Not specified" }}</span>
+
                       </div>
                     </div>
 
-                    <div
-                      *ngIf="companyInfoForm.get('additionalInfo')?.value"
-                      class="mt-2"
-                    >
-                      <span class="font-medium">Additional Information:</span>
+                    <div *ngIf="companyInfoForm.get('additionalInfo')?.value" class="mt-2">
+                      <span class="font-medium">{{ 'APPLICATION_FORM.SUMMARY.ADDITIONAL_INFO' | translate }}:</span>
                       <p class="text-sm mt-1 text-gray-600">
                         {{ companyInfoForm.get("additionalInfo")?.value }}
                       </p>
@@ -861,23 +852,16 @@
                 <!-- Terms and Privacy -->
                 <div class="text-center mt-6 border-t pt-4 border-gray-200">
                   <p class="text-sm text-gray-500 mb-4">
-                    By clicking "Submit Application", you agree to our
-                    <a href="#" class="text-blue-600 hover:underline"
-                      >Terms of Service</a
-                    >
-                    and
-                    <a href="#" class="text-blue-600 hover:underline"
-                      >Privacy Policy</a
-                    >
+                    {{ 'APPLICATION_FORM.TERMS.AGREE_TEXT' | translate }}
+                    <a href="#" class="text-blue-600 hover:underline">{{ 'APPLICATION_FORM.TERMS.TERMS_SERVICE' | translate }}</a>
+                    {{ 'APPLICATION_FORM.TERMS.AND' | translate }}
+                    <a href="#" class="text-blue-600 hover:underline">{{ 'APPLICATION_FORM.TERMS.PRIVACY_POLICY' | translate }}</a>
                   </p>
 
-                  <div
-                    class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-center max-w-lg mx-auto"
-                  >
+                  <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-center max-w-lg mx-auto">
                     <i class="pi pi-info-circle text-blue-500 text-xl mb-2"></i>
                     <p class="text-sm text-gray-700">
-                      Your test authorization request will be reviewed by our
-                      team. You will receive a notification once it's approved.
+                      {{ 'APPLICATION_FORM.TERMS.REVIEW_NOTE' | translate }}
                     </p>
                   </div>
                 </div>
@@ -886,14 +870,14 @@
               <!-- Navigation -->
               <div class="flex pt-4 justify-between">
                 <p-button
-                  label="Back"
+                  [label]="'BUTTONS.BACK' | translate"
                   icon="pi pi-arrow-left"
                   (onClick)="activateCallback(4)"
                   styleClass="p-button-outlined"
                 ></p-button>
 
                 <p-button
-                  label="Submit Application"
+                  [label]="'APPLICATION_FORM.BUTTONS.SUBMIT_APPLICATION' | translate"
                   icon="pi pi-check"
                   iconPos="right"
                   [disabled]="submitting"

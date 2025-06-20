@@ -9,6 +9,7 @@ import {
   ValidatorFn,
 } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { MessageService } from 'primeng/api';
 import { CommonModule } from '@angular/common';
@@ -89,6 +90,7 @@ export function ageValidator(minAge: number = 18): ValidatorFn {
     AvatarModule, // New
     InputGroupModule, // New
     InputGroupAddonModule, // New
+    TranslateModule,
   ],
   providers: [MessageService],
 })
@@ -121,6 +123,7 @@ export class ApplicationFormComponent implements OnInit {
     { label: 'Doctorate', value: 'doctorate' },
     { label: 'Professional Certification', value: 'certification' },
   ];
+
   availabilityOptions = [
     { label: 'Immediately', value: 'immediately' },
     { label: 'Within 1 week', value: 'one_week' },
@@ -170,7 +173,8 @@ export class ApplicationFormComponent implements OnInit {
     private authService: AuthService,
     private userService: UserService,
     private router: Router,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private translate: TranslateService
   ) {}
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
@@ -184,6 +188,34 @@ export class ApplicationFormComponent implements OnInit {
     this.maxDate.setFullYear(this.maxDate.getFullYear() - 18);
 
     this.initializeForms();
+
+    // Initialiser les options dans ngOnInit
+    this.availabilityOptions = [
+      {
+        label: this.translate.instant(
+          'APPLICATION_FORM.PROFESSIONAL_INFO.AVAILABILITY_OPTIONS.IMMEDIATE'
+        ),
+        value: 'immediate',
+      },
+      {
+        label: this.translate.instant(
+          'APPLICATION_FORM.PROFESSIONAL_INFO.AVAILABILITY_OPTIONS.ONE_WEEK'
+        ),
+        value: 'one_week',
+      },
+      {
+        label: this.translate.instant(
+          'APPLICATION_FORM.PROFESSIONAL_INFO.AVAILABILITY_OPTIONS.TWO_WEEKS'
+        ),
+        value: 'two_weeks',
+      },
+      {
+        label: this.translate.instant(
+          'APPLICATION_FORM.PROFESSIONAL_INFO.AVAILABILITY_OPTIONS.ONE_MONTH'
+        ),
+        value: 'one_month',
+      },
+    ];
   }
 
   initializeForms(): void {

@@ -20,11 +20,11 @@
         <div class="mb-8">
           <span class="inline-flex items-center bg-gradient-to-r from-red-50 to-blue-50 text-blue-800 font-semibold text-sm px-5 py-2 rounded-full shadow-sm border border-blue-300/30 relative overflow-hidden">
             <i class="fas fa-clipboard-check mr-2 text-red-600"></i>
-            {{'SELECT_TESTS.PORTAIL_EVALUATION' | translate}}
+            Assessment Portal
             <div class="absolute inset-0 animate-shine"></div>
           </span>
-          <h1 class="mt-4 text-2xl font-extrabold bg-gradient-to-r from-blue-800 to-red-600 bg-clip-text text-transparent tracking-tight">{{'SELECT_TESTS.PARCOUR_EVALUATION' | translate}}</h1>
-          <p class="text-gray-600 text-[0.95rem] mt-2">{{'SELECT_TESTS.MISE_EN_PLACE_TALENTS' | translate}}</p>
+          <h1 class="mt-4 text-2xl font-extrabold bg-gradient-to-r from-blue-800 to-red-600 bg-clip-text text-transparent tracking-tight">Your Assessment Journey</h1>
+          <p class="text-gray-600 text-[0.95rem] mt-2">Complete these tests to showcase your talents</p>
         </div>
 
         <!-- Recruitment Process -->
@@ -33,17 +33,17 @@
           <div class="recruitment-process">
             <h3 class="process-title">
               <i class="fas fa-building-user"></i>
-              {{'SELECT_TESTS.PROCESSUSS_RECRUTEMENT' | translate}}
+              Recruitment Process
             </h3>
             
             <div class="process-description">
-              <p>{{'SELECT_TESTS.PARAGRAPHE_WELCOME' | translate}}</p>
+              <p>Welcome to COFAT's digital assessment platform. These tests are an essential part of our talent acquisition process, designed to identify candidates who align with our company values and possess the skills needed for success.</p>
             </div>
             
             <!-- Toggle button for showing/hiding details -->
             <button class="toggle-details" (click)="toggleProcessDetails()">
-              <span *ngIf="!showProcessDetails">{{'SELECT_TESTS.VOIR_DETAILS' | translate}}</span>
-              <span *ngIf="showProcessDetails">{{'SELECT_TESTS.MASQUER_DETAILS' | translate}}</span>
+              <span *ngIf="!showProcessDetails">Show Process Details</span>
+              <span *ngIf="showProcessDetails">Hide Process Details</span>
               <i class="fas" [ngClass]="showProcessDetails ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
             </button>
             
@@ -58,9 +58,9 @@
                     <div class="step-connector"></div>
                   </div>
                   <div class="step-details">
-                    <h4>{{'SELECT_TESTS.EVALUATION _LIGNE' | translate}}</h4>
-                    <p>{{'SELECT_TESTS.COMPLETER_SERIE_TESTS' | translate}}</p>
-                    <span class="step-status">{{'SELECT_TESTS.VOUS_ETES_ICI' | translate}}</span>
+                    <h4>Online Assessment</h4>
+                    <p>Complete a series of tests to showcase your abilities</p>
+                    <span class="step-status">You are here</span>
                   </div>
                 </div>
                 
@@ -72,8 +72,8 @@
                     <div class="step-connector"></div>
                   </div>
                   <div class="step-details">
-                    <h4>{{'SELECT_TESTS.PHASE_ENTRETIEN' | translate}}</h4>
-                    <p>{{'SELECT_TESTS.RENCONTRE_EQUIPE' | translate}}</p>
+                    <h4>Interview Phase</h4>
+                    <p>Meet with our team to discuss your experience</p>
                   </div>
                 </div>
                 
@@ -84,8 +84,8 @@
                     </div>
                   </div>
                   <div class="step-details">
-                    <h4>{{'SELECT_TESTS.DECISION_FINALE' | translate}}</h4>
-                    <p>{{'SELECT_TESTS.CANDIDATS_SELECTIONNES' | translate}}</p>
+                    <h4>Final Decision</h4>
+                    <p>Selected candidates receive an offer</p>
                   </div>
                 </div>
               </div>
@@ -94,15 +94,15 @@
               <div class="brief-instructions">
                 <div class="instruction-item">
                   <i class="fas fa-arrow-right-long"></i>
-                  <span>{{'SELECT_TESTS.COMPLETER_TEST' | translate}}</span>
+                  <span>Complete tests in sequential order</span>
                 </div>
                 <div class="instruction-item">
                   <i class="fas fa-arrow-right-long"></i>
-                  <span>{{'SELECT_TESTS.DUREE_LIMITE' | translate}}</span>
+                  <span>Each test has a specific time limit</span>
                 </div>
                 <div class="instruction-item">
                   <i class="fas fa-arrow-right-long"></i>
-                  <span>{{'SELECT_TESTS.CONNEXION_STABLE' | translate}}</span>
+                  <span>Ensure a stable internet connection</span>
                 </div>
               </div>
             </div>
@@ -116,35 +116,35 @@
         <div class="tests-section">
           <h2 class="section-title">
             <i class="fas fa-list-check section-icon"></i>
-            {{'SELECT_TESTS.TESTS_EVALUATION' | translate}}
+            Assessment Tests
           </h2>
 
           <div class="tests-grid">
             <!-- Logical Test Card (Active) -->
             <div class="test-card active" >
               <div class="test-card-inner">
-                <div class="test-badge available"> {{'SELECT_TESTS.VEROUILLE' | translate}}</div>
+                <div class="test-badge available">Available Now</div>
                 <div class="test-card-icon-wrapper logical-icon">
                   <i class="fas fa-brain"></i>
                   <div class="icon-glow"></div>
                 </div>
                 <div class="test-card-content">
                   <div class="test-card-header">
-                    <h3>{{'SELECT_TESTS.RAISONNEMENT_LOGIQUE' | translate}}</h3>
+                    <h3>Logical Reasoning</h3>
                   </div>
                   <div class="test-stats">
                     <div class="test-stat">
                       <i class="fas fa-clock"></i>
-                      <span>{{'SELECT_TESTS.35_MINUTES' | translate}}</span>
+                      <span>35 min</span>
                     </div>
                     <div class="test-stat">
                       <i class="fas fa-question-circle"></i>
-                      <span>{{'SELECT_TESTS.30_QUESTIONS' | translate}}</span>
+                      <span>30 questions</span>
                     </div>
                   </div>
                   <button class="start-button" (click)="openTestList()">
                     <i class="fas fa-play-circle"></i>
-                    {{'SELECT_TESTS.COMMENCER' | translate}}
+                    Start Test
                   </button>
                 </div>
                 <div class="test-card-status active-status">1</div>
@@ -154,7 +154,7 @@
             <!-- Personality Test Card (Disabled) -->
             <div class="test-card disabled">
               <div class="test-card-inner">
-                <div class="test-badge locked">{{'SELECT_TESTS.VEROUILLE' | translate}}</div>
+                <div class="test-badge locked">Locked</div>
                 <div class="lock-overlay">
                   <i class="fas fa-lock lock-icon"></i>
                 </div>
@@ -163,20 +163,20 @@
                 </div>
                 <div class="test-card-content">
                   <div class="test-card-header">
-                    <h3>{{'SELECT_TESTS.EVALUATION_PERSONNALITE' | translate}}</h3>
+                    <h3>Personality Assessment</h3>
                   </div>
                   <div class="test-stats">
                     <div class="test-stat">
                       <i class="fas fa-clock"></i>
-                      <span>{{'SELECT_TESTS.25_MINUTES' | translate}}</span>
+                      <span>25 min</span>
                     </div>
                     <div class="test-stat">
                       <i class="fas fa-question-circle"></i>
-                      <span>{{'SELECT_TESTS.50_QUESTIONS' | translate}}</span>
+                      <span>50 questions</span>
                     </div>
                   </div>
                   <div class="locked-message">
-                    {{'SELECT_TESTS.COMPLETER_TESTS' | translate}}
+                    Complete previous test first
                   </div>
                 </div>
                 <div class="test-card-status">2</div>
@@ -186,7 +186,7 @@
             <!-- Verbal Test Card (Disabled) -->
             <div class="test-card disabled">
               <div class="test-card-inner">
-                <div class="test-badge locked">{{'SELECT_TESTS.VEROUILLE' | translate}}</div>
+                <div class="test-badge locked">Locked</div>
                 <div class="lock-overlay">
                   <i class="fas fa-lock lock-icon"></i>
                 </div>
@@ -195,20 +195,20 @@
                 </div>
                 <div class="test-card-content">
                   <div class="test-card-header">
-                    <h3>{{'SELECT_TESTS.Raisonnement_verbal' | translate}}</h3>
+                    <h3>Verbal Reasoning</h3>
                   </div>
                   <div class="test-stats">
                     <div class="test-stat">
                       <i class="fas fa-clock"></i>
-                      <span>{{'SELECT_TESTS.30_MINUTES' | translate}}</span>
+                      <span>30 min</span>
                     </div>
                     <div class="test-stat">
                       <i class="fas fa-question-circle"></i>
-                      <span>{{'SELECT_TESTS.25_QUESTIONS' | translate}}</span>
+                      <span>25 questions</span>
                     </div>
                   </div>
                   <div class="locked-message">
-                    {{'SELECT_TESTS.COMPLETER_TESTS' | translate}}
+                    Complete previous tests first
                   </div>
                 </div>
                 <div class="test-card-status">3</div>
@@ -218,7 +218,7 @@
             <!-- Cognitive Test Card (Disabled) -->
             <div class="test-card disabled">
               <div class="test-card-inner">
-                <div class="test-badge locked">{{'SELECT_TESTS.VEROUILLE' | translate}}</div>
+                <div class="test-badge locked">Locked</div>
                 <div class="lock-overlay">
                   <i class="fas fa-lock lock-icon"></i>
                 </div>
@@ -227,20 +227,20 @@
                 </div>
                 <div class="test-card-content">
                   <div class="test-card-header">
-                    <h3>{{'SELECT_TESTS.CAPACITE_COGNITIVE' | translate}}</h3>
+                    <h3>Cognitive Ability</h3>
                   </div>
                   <div class="test-stats">
                     <div class="test-stat">
                       <i class="fas fa-clock"></i>
-                      <span>{{'SELECT_TESTS.40_MINUTES' | translate}}</span>
+                      <span>40 min</span>
                     </div>
                     <div class="test-stat">
                       <i class="fas fa-question-circle"></i>
-                      <span>{{'SELECT_TESTS.35_QUESTIONS' | translate}}</span>
+                      <span>35 questions</span>
                     </div>
                   </div>
                   <div class="locked-message">
-                    {{'SELECT_TESTS.COMPLETER_TESTS' | translate}}
+                    Complete previous tests first
                   </div>
                 </div>
                 <div class="test-card-status">4</div>
@@ -255,8 +255,8 @@
     <div class="bg-gray-50 px-8 py-5 border-t border-black/10 flex-shrink-0">
       <div class="progress-container">
         <div class="progress-label">
-          <span>{{'SELECT_TESTS.TESTS_EVALUATION'| translate}} </span>
-          <span class="progress-percentage">{{'SELECT_TESTS.TERMINE'| translate}}</span>
+          <span>Your Progress: </span>
+          <span class="progress-percentage">0% Complete</span>
         </div>
         <div class="progress-bar-container">
           <div class="progress-bar" style="width: 0%"></div>
@@ -268,25 +268,25 @@
           <div class="step-icon">
             <i class="fas fa-brain"></i>
           </div>
-          <div class="step-label">{{'SELECT_TESTS.LOGIQUE'| translate}}</div>
+          <div class="step-label">Logical</div>
         </div>
         <div class="progress-step">
           <div class="step-icon">
             <i class="fas fa-user-gear"></i>
           </div>
-          <div class="step-label">{{'SELECT_TESTS.PERSONNALITE' | translate}}</div>
+          <div class="step-label">Personality</div>
         </div>
         <div class="progress-step">
           <div class="step-icon">
             <i class="fas fa-comment-dots"></i>
           </div>
-          <div class="step-label">{{'SELECT_TESTS.VERBAL'| translate}}</div>
+          <div class="step-label">Verbal</div>
         </div>
         <div class="progress-step">
           <div class="step-icon">
             <i class="fas fa-lightbulb"></i>
           </div>
-          <div class="step-label">{{'SELECT_TESTS.COGNITIVE'| translate}}</div>
+          <div class="step-label">Cognitive</div>
         </div>
       </div>
     </div>

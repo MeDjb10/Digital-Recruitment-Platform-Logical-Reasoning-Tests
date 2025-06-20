@@ -1,0 +1,78 @@
+{
+  "AUTH": {
+    "LOGIN": {
+      "WELCOME": "Bem-vindo de volta",
+      "CONNECTION_MESSAGE": "Entre na sua conta para continuar",
+      "EMAIL": "Endereço de e-mail",
+      "ADRESSE_VALIDE": "Por favor, insira um endereço de e-mail válido",
+      "PASSWORD": "Senha",
+      "REMEMBER_ME": "Lembrar-me",
+      "FORGOT_PASSWORD": "Esqueceu a senha?",
+      "LOGIN_BUTTON": "Entrar",
+      "LOGIN_SUCCESS": "Login realizado com sucesso!",
+      "DONT_HAVE_AN_ACCOUNT": "Não tem uma conta?",
+      "CREER_COMPTE": "Criar conta",
+      "PASSWORD_MIN_LENGTH": "A senha deve ter pelo menos 8 caracteres",
+      "EMAIL_REQUIRED": "O e-mail é obrigatório",
+      "PASSWORD_REQUIRED": "A senha é obrigatória",
+      "SIGNING_IN": "Entrando...",
+      "LOGIN_ERROR": "Falha no login. Por favor, tente novamente."
+    }
+  },
+  "AUTH_LAYOUT": {
+    "WELCOME_TO": "Bem-vindo à",
+    "PLATFORM_TITLE": "Plataforma Digital de Testes Psicométricos",
+    "PLATFORM_DESCRIPTION": "Encontre os candidatos perfeitos com nossas ferramentas de avaliação de raciocínio lógico baseadas em IA.",
+    "TESTIMONIAL": {
+      "QUOTE": "Esta plataforma transformou nosso processo de recrutamento, ajudando-nos a identificar eficientemente os melhores talentos e tomar decisões de contratação baseadas em dados com notável precisão.",
+      "AUTHOR": "Amel CHAMMEM",
+      "POSITION": "Gerente de Projetos TI"
+    },
+    "FEATURES": {
+      "BETTER_HIRES": "Melhores Contratações",
+      "TIME_EFFICIENT": "Eficiência de Tempo",
+      "DATA_DRIVEN": "Baseado em Dados",
+      "ACCELERATE": "Acelere Suas Contratações"
+    },
+    "FOOTER": {
+      "COPYRIGHT": "© 2025 Plataforma de Testes Psicométricos. Todos os direitos reservados.",
+      "PRIVACY": "Privacidade",
+      "TERMS": "Termos",
+      "HELP": "Ajuda"
+    }
+  },
+  "APPLICATION_FORM": {
+    "SUMMARY": {
+      "TITLE": "Resumo da candidatura",
+      "REVIEW_INFO": "Por favor, revise suas informações antes de enviar a candidatura",
+      "PROFILE_PICTURE": "Foto de perfil",
+      "NO_PICTURE": "Nenhuma foto de perfil carregada",
+      "PERSONAL_INFO": "Informações pessoais",
+      "PROFESSIONAL_INFO": "Informações profissionais",
+      "COMPANY_INFO": "Informações da empresa",
+      "NAME": "Nome",
+      "EMAIL": "E-mail",
+      "GENDER": "Gênero",
+      "DATE_OF_BIRTH": "Data de nascimento",
+      "CURRENT_POSITION": "Cargo atual",
+      "DESIRED_POSITION": "Cargo desejado",
+      "EDUCATION_LEVEL": "Nível de educação",
+      "AVAILABILITY": "Disponibilidade",
+      "JOB_POSITION": "Cargo",
+      "COMPANY": "Empresa",
+      "DEPARTMENT": "Departamento",
+      "NOT_SPECIFIED": "Não especificado",
+      "ADDITIONAL_INFO": "Informações adicionais"
+    },
+    "TERMS": {
+      "AGREE_TEXT": "Ao clicar em \"Enviar candidatura\", você concorda com nossos",
+      "TERMS_SERVICE": "Termos de serviço",
+      "AND": "e",
+      "PRIVACY_POLICY": "Política de privacidade",
+      "REVIEW_NOTE": "Sua solicitação de autorização de teste será analisada por nossa equipe. Você receberá uma notificação quando for aprovada."
+    },
+    "BUTTONS": {
+      "SUBMIT_APPLICATION": "Enviar candidatura"
+    }
+  }
+}
